@@ -35,6 +35,7 @@ class CalendarWidget extends FullCalendarWidget
         ];
     }
 
+
     protected function headerActions(): array
     {
         return [
@@ -126,8 +127,6 @@ class CalendarWidget extends FullCalendarWidget
 
     public function onEventDrop(array $event, array $oldEvent, array $relatedEvents, array $delta, ?array $oldResource, ?array $newResource): bool
     {
-        Log::info('Event drop triggered', ['event' => $event, 'oldEvent' => $oldEvent]);
-
         $order = Order::find($event['id']);
         if ($order) {
             try {
@@ -135,8 +134,6 @@ class CalendarWidget extends FullCalendarWidget
                 $order->update([
                     'actual_delivery_date' => $newDate,
                 ]);
-                Log::info('Order updated successfully', ['order_id' => $order->id, 'new_date' => $newDate]);
-
                 // Refresh the calendar
                 // $this->refreshCalendar();
                 $this->refreshRecords();
@@ -144,12 +141,34 @@ class CalendarWidget extends FullCalendarWidget
 
                 return true;
             } catch (\Exception $e) {
-                Log::error('Error updating order', ['order_id' => $order->id, 'error' => $e->getMessage()]);
                 return false;
             }
         }
-        Log::warning('Order not found', ['event_id' => $event['id']]);
+        Log::warning('Order not found', context: ['event_id' => $event['id']]);
         return false;
+    }
+
+
+
+    // Tooltip
+    public function eventDidMount(): string
+    {
+        return <<<JS
+        function({ event, el }) {
+            // Create the description element
+            const descriptionEl = document.createElement('div');
+            descriptionEl.className = 'fc-event-description';
+            descriptionEl.textContent = event.extendedProps.description || '';
+
+            // Append the description after the existing title
+            const eventMainEl = el.querySelector('.fc-event-main');
+            eventMainEl.appendChild(descriptionEl);
+
+            // Ensure the content is properly styled
+            eventMainEl.style.display = 'flex';
+            eventMainEl.style.flexDirection = 'column';
+        }
+        JS;
     }
 
 
@@ -173,6 +192,7 @@ class CalendarWidget extends FullCalendarWidget
                     'backgroundColor' => $order->actual_delivery_date ? 'light-blue' : 'grey',
                     'extendedProps' => [
                         'requestedDate' => $order->requested_delivery_date->format('Y-m-d'),
+                        'description' => "Requested: " . $order->requested_delivery_date->format('Y-m-d'),
                     ],
                     'description' => "Requested: " . $order->requested_delivery_date->format('Y-m-d'),
                     'url' => OrderResource::getUrl('edit', ['record' => $order]),
