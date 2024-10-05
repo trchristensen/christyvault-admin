@@ -39,6 +39,9 @@ class OrderResource extends Resource
                         Forms\Components\DatePicker::make('requested_delivery_date')
                             ->required()
                             ->minDate(now()),
+                        Forms\Components\DatePicker::make('actual_delivery_date')
+                            // ->required()
+                            ->minDate(now()),
                         Forms\Components\Select::make('status')
                             ->options([
                                 'pending' => 'Pending',
@@ -95,6 +98,9 @@ class OrderResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('requested_delivery_date')
+                    ->date()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('actual_delivery_date')
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
@@ -172,6 +178,8 @@ class OrderResource extends Resource
             'index' => Pages\ListOrders::route('/'),
             'create' => Pages\CreateOrder::route('/create'),
             'edit' => Pages\EditOrder::route('/{record}/edit'),
+            'calendar' => Pages\DeliveryCalendar::route('/calendar'),
+
         ];
     }
 

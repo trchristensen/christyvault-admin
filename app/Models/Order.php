@@ -19,11 +19,14 @@ class Order extends Model
         'customer_id',
         'status',
         'requested_delivery_date',
+        'actual_delivery_date',
         'special_instructions',
     ];
 
     protected $casts = [
-        'requested_delivery_date' => 'date',
+        'requested_delivery_date' => 'datetime',
+        'actual_delivery_date' => 'datetime',
+
     ];
 
     protected static function boot()
