@@ -3,14 +3,22 @@
 namespace App\Filament\Resources\OrderResource\Widgets;
 
 use App\Filament\Resources\OrderResource;
+use App\Models\Customer;
 use App\Models\Order;
+use App\Models\Product;
+use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use Saade\FilamentFullCalendar\Widgets\FullCalendarWidget;
 use Saade\FilamentFullCalendar\Actions;
 
@@ -39,9 +47,60 @@ class CalendarWidget extends FullCalendarWidget
     public function getFormSchema(): array
     {
         return [
-            DatePicker::make('actual_delivery_date')
-                ->label('Actual Delivery Date')
-                ->required(),
+            Section::make('Order Details')
+                ->schema([
+                    Select::make('customer_id')
+                        ->label('Customer')
+                        ->options(Customer::pluck('name', 'id'))
+                        ->required()
+                        ->searchable(),
+                    DatePicker::make('requested_delivery_date')
+                        ->required()
+                        ->minDate(now()),
+                    DatePicker::make('actual_delivery_date')
+                        // ->required()
+                        ->minDate(now()),
+                    Select::make('status')
+                        ->options([
+                            'pending' => 'Pending',
+                            'confirmed' => 'Confirmed',
+                            'in_production' => 'In Production',
+                            'ready_for_delivery' => 'Ready for Delivery',
+                            'out_for_delivery' => 'Out for Delivery',
+                            'delivered' => 'Delivered',
+                            'cancelled' => 'Cancelled',
+                        ])
+                        ->default('pending')
+                        ->required(),
+                    Textarea::make('special_instructions')
+                        ->maxLength(1000),
+                ])
+                ->columns(2),
+            Section::make('Products')
+                ->schema([
+                    Repeater::make('orderProducts')
+                        ->relationship()
+                        ->schema([
+                            Select::make('product_id')
+                                ->label('Product')
+                                ->options(Product::query()->pluck('name', 'id'))
+                                ->required()
+                                ->reactive()
+                                ->afterStateUpdated(
+                                    fn($state, callable $set) =>
+                                    $set('price', Product::find($state)?->price ?? 0)
+                                ),
+                            TextInput::make('quantity')
+                                ->numeric()
+                                ->default(1)
+                                ->required(),
+                            TextInput::make('price')
+                                ->numeric()
+                                ->prefix('$')
+                                ->required(),
+                        ])
+                        ->columns(3)
+                ])
         ];
     }
 
@@ -65,15 +124,39 @@ class CalendarWidget extends FullCalendarWidget
         ];
     }
 
-    // public function onEventDrop(array $event): void
-    // {
-    //     $order = Order::find($event['id']);
-    //     if ($order) {
-    //         $order->update([
-    //             'actual_delivery_date' => Carbon::parse($event['start'])->toDateString(),
-    //         ]);
-    //     }
-    // }
+    public function onEventDrop(array $event, array $oldEvent, array $relatedEvents, array $delta, ?array $oldResource, ?array $newResource): bool
+    {
+        Log::info('Event drop triggered', ['event' => $event, 'oldEvent' => $oldEvent]);
+
+        $order = Order::find($event['id']);
+        if ($order) {
+            try {
+                $newDate = Carbon::parse($event['start'])->toDateString();
+                $order->update([
+                    'actual_delivery_date' => $newDate,
+                ]);
+                Log::info('Order updated successfully', ['order_id' => $order->id, 'new_date' => $newDate]);
+
+                // Refresh the calendar
+                // $this->refreshCalendar();
+                $this->refreshRecords();
+
+
+                return true;
+            } catch (\Exception $e) {
+                Log::error('Error updating order', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+                return false;
+            }
+        }
+        Log::warning('Order not found', ['event_id' => $event['id']]);
+        return false;
+    }
+
+
+    public function refreshRecords(): void
+    {
+        $this->dispatch('filament-fullcalendar--refresh');
+    }
 
     public function fetchEvents(array $fetchInfo): array
     {
@@ -87,7 +170,7 @@ class CalendarWidget extends FullCalendarWidget
                     'title' => $order->customer?->name ?? $order->order_number,
                     'start' => $order->actual_delivery_date?->format('Y-m-d') ?? $order->requested_delivery_date->format('Y-m-d'),
                     'allDay' => true,
-                    'backgroundColor' => $order->actual_delivery_date ? 'green' : 'blue',
+                    'backgroundColor' => $order->actual_delivery_date ? 'light-blue' : 'grey',
                     'extendedProps' => [
                         'requestedDate' => $order->requested_delivery_date->format('Y-m-d'),
                     ],

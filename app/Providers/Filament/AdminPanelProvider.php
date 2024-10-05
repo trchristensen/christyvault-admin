@@ -40,10 +40,16 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Pages\Dashboard::class,
             ])
+            ->sidebarCollapsibleOnDesktop()
+            ->sidebarWidth('12rem')
+            // ->collapsedSidebarWidth('5rem')
             ->plugin(
                 FilamentFullCalendarPlugin::make()
                     ->selectable()
                     ->editable()
+                    ->config([
+                        'weekends' => false
+                    ])
             )
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
