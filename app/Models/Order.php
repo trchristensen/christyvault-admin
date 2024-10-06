@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -16,6 +17,7 @@ class Order extends Model
 
     protected $fillable = [
         'order_number',
+        'driver_id',
         'customer_id',
         'status',
         'requested_delivery_date',
@@ -58,5 +60,10 @@ class Order extends Model
             ->using(OrderProduct::class)
             ->withPivot('quantity', 'price')
             ->withTimestamps();
+    }
+
+    public function driver(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'driver_id');
     }
 }

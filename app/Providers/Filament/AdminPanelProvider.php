@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Resources\OrderResource\Pages\DeliveryCalendar;
 use App\Filament\Widgets\OrderStatisticsWidget;
 use App\Filament\Widgets\RecentOrdersWidget;
 use Filament\Http\Middleware\Authenticate;
@@ -35,10 +36,12 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => '#1c3366',
             ])
+
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Pages\Dashboard::class,
+                DeliveryCalendar::class
             ])
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('12rem')

@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource\RelationManagers;
 use App\Models\Customer;
+use App\Models\Employee;
 use App\Models\Order;
 use App\Models\Product;
 use Filament\Actions\Modal\Actions\Action;
@@ -82,7 +83,12 @@ class OrderResource extends Resource
                                     ->required(),
                             ])
                             ->columns(3)
-                    ])
+                    ]),
+                Forms\Components\Select::make('driver_id')
+                    ->label('Driver')
+                    ->options(Employee::where('position', 'driver')->pluck('name', 'id'))
+                    ->searchable()
+                    ->nullable(),
             ]);
     }
 

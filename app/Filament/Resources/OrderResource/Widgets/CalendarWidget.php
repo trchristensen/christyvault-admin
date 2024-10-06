@@ -21,6 +21,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Saade\FilamentFullCalendar\Widgets\FullCalendarWidget;
 use Saade\FilamentFullCalendar\Actions;
+use Illuminate\Support\Str;
+
 
 class CalendarWidget extends FullCalendarWidget
 {
@@ -150,25 +152,48 @@ class CalendarWidget extends FullCalendarWidget
 
 
 
-    // Tooltip
     public function eventDidMount(): string
     {
         return <<<JS
-        function({ event, el }) {
-            // Create the description element
-            const descriptionEl = document.createElement('div');
-            descriptionEl.className = 'fc-event-description';
-            descriptionEl.textContent = event.extendedProps.description || '';
+    function({ event, el }) {
+        // Create the description element
+        // const descriptionEl = document.createElement('div');
+        // descriptionEl.className = 'fc-event-description';
+        // descriptionEl.textContent = event.extendedProps.description || '';
 
-            // Append the description after the existing title
-            const eventMainEl = el.querySelector('.fc-event-main');
-            eventMainEl.appendChild(descriptionEl);
+        // Create additional elements for other extended props
+        // const orderNumberEl = document.createElement('div');
+        // orderNumberEl.className = 'fc-event-line';
+        // orderNumberEl.textContent = event.extendedProps.orderNumber;
 
-            // Ensure the content is properly styled
-            eventMainEl.style.display = 'flex';
-            eventMainEl.style.flexDirection = 'column';
-        }
-        JS;
+
+
+        const requestedDateEl = document.createElement('div');
+        requestedDateEl.className = 'fc-event-line';
+        requestedDateEl.textContent = '🙏🏽 ' + event.extendedProps.requestedDate;
+
+        const driverNameEl = document.createElement('div');
+        driverNameEl.className = 'fc-event-line';
+        driverNameEl.textContent = '🚚 ' + event.extendedProps.driverName;
+
+        const statusEl = document.createElement('div');
+        statusEl.className = 'fc-event-line';
+        statusEl.textContent = '📣 ' + event.extendedProps.status;
+
+        // Append all elements after the existing title
+        const eventMainEl = el.querySelector('.fc-event-main');
+        // eventMainEl.appendChild(descriptionEl);
+        // eventMainEl.appendChild(orderNumberEl);
+        eventMainEl.appendChild(requestedDateEl);
+        eventMainEl.appendChild(driverNameEl);
+        eventMainEl.appendChild(statusEl);
+
+        // Ensure the content is properly styled
+        eventMainEl.style.display = 'flex';
+        eventMainEl.style.flexDirection = 'column';
+
+    }
+    JS;
     }
 
 
@@ -189,11 +214,16 @@ class CalendarWidget extends FullCalendarWidget
                     'title' => $order->customer?->name ?? $order->order_number,
                     'start' => $order->actual_delivery_date?->format('Y-m-d') ?? $order->requested_delivery_date->format('Y-m-d'),
                     'allDay' => true,
-                    'backgroundColor' => $order->actual_delivery_date ? 'blue' : 'grey',
+                    'backgroundColor' => $order->actual_delivery_date ? $this->getEventColor($order) : 'grey',
+                    'borderColor' => 'transparent',
                     'extendedProps' => [
-                        'requestedDate' => $order->requested_delivery_date->format('Y-m-d'),
-                        'description' => "Requested: " . $order->requested_delivery_date->format('m/d'),
-
+                        // 'description' => "Requested: " . $order->requested_delivery_date->format('m/d') . " " .
+                        //     ($order->driver ? "Driver: " . $order->driver->name : "No driver assigned"),
+                        // 'orderNumber' => $order->order_number,
+                        'customerName' => $order->customer?->name,
+                        'requestedDate' => $order->requested_delivery_date->format('m/d'),
+                        'driverName' => $order->driver?->name ? Str::headline($order->driver?->name) : 'Unassigned',
+                        'status' => Str::headline($order->status),
                     ],
                     // 'description' => "Requested: " . $order->requested_delivery_date->format('m/d'),
                     'url' => OrderResource::getUrl('edit', ['record' => $order]),
@@ -201,5 +231,19 @@ class CalendarWidget extends FullCalendarWidget
                 ];
             })
             ->toArray();
+    }
+
+    protected function getEventColor(Order $order): string
+    {
+        return match ($order->status) {
+            'pending' => '#FFA500',
+            'confirmed' => '#4169E1',
+            'in_production' => '#32CD32',
+            'ready_for_delivery' => '#9370DB',
+            'out_for_delivery' => '#1E90FF',
+            'delivered' => '#228B22',
+            'cancelled' => '#DC143C',
+            default => '#808080',
+        };
     }
 }

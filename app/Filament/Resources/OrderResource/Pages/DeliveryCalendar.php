@@ -11,6 +11,10 @@ class DeliveryCalendar extends Page
 {
     protected static string $resource = OrderResource::class;
 
+    protected static ?string $navigationIcon = 'heroicon-o-calendar';
+    protected static ?string $navigationLabel = 'Delivery Calendar';
+    // protected static ?int $navigationSort = ; // Adjust this number to change the order in the sidebar
+    protected static ?string $slug = 'delivery-calendar';
     protected static string $view = 'filament.resources.order-resource.pages.delivery-calendar';
 
     public function getTitle(): string
