@@ -189,12 +189,13 @@ class CalendarWidget extends FullCalendarWidget
                     'title' => $order->customer?->name ?? $order->order_number,
                     'start' => $order->actual_delivery_date?->format('Y-m-d') ?? $order->requested_delivery_date->format('Y-m-d'),
                     'allDay' => true,
-                    'backgroundColor' => $order->actual_delivery_date ? 'light-blue' : 'grey',
+                    'backgroundColor' => $order->actual_delivery_date ? 'blue' : 'grey',
                     'extendedProps' => [
                         'requestedDate' => $order->requested_delivery_date->format('Y-m-d'),
-                        'description' => "Requested: " . $order->requested_delivery_date->format('Y-m-d'),
+                        'description' => "Requested: " . $order->requested_delivery_date->format('m/d'),
+
                     ],
-                    'description' => "Requested: " . $order->requested_delivery_date->format('Y-m-d'),
+                    // 'description' => "Requested: " . $order->requested_delivery_date->format('m/d'),
                     'url' => OrderResource::getUrl('edit', ['record' => $order]),
                     'shouldOpenInNewTab' => true,
                 ];
