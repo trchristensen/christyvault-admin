@@ -9,6 +9,7 @@ class Employee extends Model
 {
     use HasFactory;
     protected $fillable = [
+        'user_id',
         'name',
         'email',
         'address',
@@ -26,6 +27,11 @@ class Employee extends Model
 
 
     // ... other properties and methods ...
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function driver()
     {
