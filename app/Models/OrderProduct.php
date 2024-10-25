@@ -16,6 +16,7 @@ class OrderProduct extends Pivot
         'product_id',
         'quantity',
         'price',
+        'notes'
     ];
 
     public function order(): BelongsTo

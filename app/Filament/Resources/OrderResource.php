@@ -8,7 +8,7 @@ use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\Order;
 use App\Models\Product;
-use Filament\Actions\Modal\Actions\Action;
+use Filament\Tables\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -81,6 +81,9 @@ class OrderResource extends Resource
                                     ->numeric()
                                     ->prefix('$')
                                     ->required(),
+                                Forms\Components\TextInput::make('notes')
+                                    ->nullable()
+                                    ->columnSpanFull()
                             ])
                             ->columns(3)
                     ]),
@@ -148,6 +151,12 @@ class OrderResource extends Resource
                     }),
             ])
             ->actions([
+                Action::make('print preview')
+                    ->label(null)
+                    ->iconButton()
+                    ->icon('heroicon-o-printer')
+                    ->url(fn(Order $record): string => route('orders.print', $record))
+                    ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make(),
                 // Action::make('mark_delivered')
                 //     ->label('Mark Delivered')

@@ -6,9 +6,9 @@ use App\Filament\Resources\OrderResource;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
+use Barryvdh\Snappy\Facades\SnappyPdf;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
@@ -16,13 +16,15 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Support\Components\ViewComponent;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Saade\FilamentFullCalendar\Widgets\FullCalendarWidget;
 use Saade\FilamentFullCalendar\Actions;
 use Illuminate\Support\Str;
-
 
 class CalendarWidget extends FullCalendarWidget
 {
@@ -37,15 +39,16 @@ class CalendarWidget extends FullCalendarWidget
         ];
     }
 
-
-    protected function headerActions(): array
+    protected function getFormModel(): Model|string|null
     {
-        return [
-            Actions\CreateAction::make(),
-        ];
+        return $this->event ?? Order::class;
     }
 
-
+    // Resolve Event record into Model property
+    public function resolveEventRecord(array $data): Order
+    {
+        return Order::find($data['id']);
+    }
 
     public function getFormSchema(): array
     {
@@ -61,7 +64,6 @@ class CalendarWidget extends FullCalendarWidget
                         ->required()
                         ->minDate(now()),
                     DatePicker::make('actual_delivery_date')
-                        // ->required()
                         ->minDate(now()),
                     Select::make('status')
                         ->options([
@@ -102,30 +104,23 @@ class CalendarWidget extends FullCalendarWidget
                                 ->prefix('$')
                                 ->required(),
                         ])
-                        ->columns(3)
+                        ->columns(3),
                 ])
         ];
     }
 
+
     protected function modalActions(): array
     {
         return [
-            Actions\EditAction::make()
-                ->mountUsing(
-                    function (Order $record, Form $form, array $arguments) {
-                        $form->fill([
-                            'actual_delivery_date' => $arguments['event']['start'] ?? $record->actual_delivery_date,
-                        ]);
-                    }
-                )
-                ->action(function (Order $record, array $data): void {
-                    $record->update([
-                        'actual_delivery_date' => $data['actual_delivery_date'],
-                    ]);
-                }),
+            Actions\ViewAction::make(),
+            Actions\EditAction::make(),
             Actions\DeleteAction::make(),
         ];
     }
+
+
+
 
     public function onEventDrop(array $event, array $oldEvent, array $relatedEvents, array $delta, ?array $oldResource, ?array $newResource): bool
     {
@@ -136,11 +131,7 @@ class CalendarWidget extends FullCalendarWidget
                 $order->update([
                     'actual_delivery_date' => $newDate,
                 ]);
-                // Refresh the calendar
-                // $this->refreshCalendar();
                 $this->refreshRecords();
-
-
                 return true;
             } catch (\Exception $e) {
                 return false;
@@ -150,52 +141,33 @@ class CalendarWidget extends FullCalendarWidget
         return false;
     }
 
-
-
     public function eventDidMount(): string
     {
-        return <<<JS
-    function({ event, el }) {
-        // Create the description element
-        // const descriptionEl = document.createElement('div');
-        // descriptionEl.className = 'fc-event-description';
-        // descriptionEl.textContent = event.extendedProps.description || '';
+        return <<<'JS'
+        function({ event, el }) {
+            const eventMainEl = el.querySelector('.fc-event-main');
+            
+            const requestedDateEl = document.createElement('div');
+            requestedDateEl.className = 'fc-event-line';
+            requestedDateEl.textContent = '🙏🏽 ' + event.extendedProps.requestedDate;
 
-        // Create additional elements for other extended props
-        // const orderNumberEl = document.createElement('div');
-        // orderNumberEl.className = 'fc-event-line';
-        // orderNumberEl.textContent = event.extendedProps.orderNumber;
+            const driverNameEl = document.createElement('div');
+            driverNameEl.className = 'fc-event-line';
+            driverNameEl.textContent = '🚚 ' + event.extendedProps.driverName;
 
+            const statusEl = document.createElement('div');
+            statusEl.className = 'fc-event-line';
+            statusEl.textContent = '📣 ' + event.extendedProps.status;
 
+            eventMainEl.appendChild(requestedDateEl);
+            eventMainEl.appendChild(driverNameEl);
+            eventMainEl.appendChild(statusEl);
 
-        const requestedDateEl = document.createElement('div');
-        requestedDateEl.className = 'fc-event-line';
-        requestedDateEl.textContent = '🙏🏽 ' + event.extendedProps.requestedDate;
-
-        const driverNameEl = document.createElement('div');
-        driverNameEl.className = 'fc-event-line';
-        driverNameEl.textContent = '🚚 ' + event.extendedProps.driverName;
-
-        const statusEl = document.createElement('div');
-        statusEl.className = 'fc-event-line';
-        statusEl.textContent = '📣 ' + event.extendedProps.status;
-
-        // Append all elements after the existing title
-        const eventMainEl = el.querySelector('.fc-event-main');
-        // eventMainEl.appendChild(descriptionEl);
-        // eventMainEl.appendChild(orderNumberEl);
-        eventMainEl.appendChild(requestedDateEl);
-        eventMainEl.appendChild(driverNameEl);
-        eventMainEl.appendChild(statusEl);
-
-        // Ensure the content is properly styled
-        eventMainEl.style.display = 'flex';
-        eventMainEl.style.flexDirection = 'column';
-
+            eventMainEl.style.display = 'flex';
+            eventMainEl.style.flexDirection = 'column';
+        }
+        JS;
     }
-    JS;
-    }
-
 
     public function refreshRecords(): void
     {
@@ -205,6 +177,7 @@ class CalendarWidget extends FullCalendarWidget
     public function fetchEvents(array $fetchInfo): array
     {
         return Order::query()
+            ->with(['customer', 'orderProducts.product'])
             ->whereDate('requested_delivery_date', '>=', $fetchInfo['start'])
             ->whereDate('requested_delivery_date', '<=', $fetchInfo['end'])
             ->get()
@@ -217,17 +190,11 @@ class CalendarWidget extends FullCalendarWidget
                     'backgroundColor' => $order->actual_delivery_date ? $this->getEventColor($order) : 'grey',
                     'borderColor' => 'transparent',
                     'extendedProps' => [
-                        // 'description' => "Requested: " . $order->requested_delivery_date->format('m/d') . " " .
-                        //     ($order->driver ? "Driver: " . $order->driver->name : "No driver assigned"),
-                        // 'orderNumber' => $order->order_number,
                         'customerName' => $order->customer?->name,
                         'requestedDate' => $order->requested_delivery_date->format('m/d'),
                         'driverName' => $order->driver?->name ? Str::headline($order->driver?->name) : 'Unassigned',
                         'status' => Str::headline($order->status),
                     ],
-                    // 'description' => "Requested: " . $order->requested_delivery_date->format('m/d'),
-                    'url' => OrderResource::getUrl('edit', ['record' => $order]),
-                    'shouldOpenInNewTab' => true,
                 ];
             })
             ->toArray();
@@ -236,13 +203,13 @@ class CalendarWidget extends FullCalendarWidget
     protected function getEventColor(Order $order): string
     {
         return match ($order->status) {
-            'pending' => '#FFA500',
-            'confirmed' => '#4169E1',
-            'in_production' => '#32CD32',
-            'ready_for_delivery' => '#9370DB',
+            'pending' => '#808080',
+            'confirmed' => '#1E90FF',
+            'in_production' => '#1E90FF',
+            'ready_for_delivery' => '#1E90FF',
             'out_for_delivery' => '#1E90FF',
-            'delivered' => '#228B22',
-            'cancelled' => '#DC143C',
+            'delivered' => '#1c3366',
+            'cancelled' => '#B80C09',
             default => '#808080',
         };
     }
