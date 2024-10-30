@@ -16,7 +16,13 @@ class OrderProduct extends Pivot
         'product_id',
         'quantity',
         'price',
-        'notes'
+        'notes',
+        'location',
+        'fill_load'
+    ];
+
+    protected $casts = [
+        'fill_load' => 'boolean',
     ];
 
     public function order(): BelongsTo

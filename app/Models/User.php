@@ -49,4 +49,18 @@ class User extends Authenticatable
     {
         return $this->hasOne(Employee::class);
     }
+
+    public function getCalendarFeedUrl(): string
+    {
+        return url()->signedRoute('calendar.feed', [
+            'token' => $this->id // or use a specific calendar token
+        ]);
+    }
+
+    public function getLeaveCalendarFeedUrl(): string
+    {
+        return url()->signedRoute('calendar.leave-feed', [
+            'token' => $this->id
+        ]);
+    }
 }

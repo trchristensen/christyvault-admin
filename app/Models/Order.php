@@ -21,13 +21,13 @@ class Order extends Model
         'customer_id',
         'status',
         'requested_delivery_date',
-        'actual_delivery_date',
+        'assigned_delivery_date',
         'special_instructions',
     ];
 
     protected $casts = [
         'requested_delivery_date' => 'datetime',
-        'actual_delivery_date' => 'datetime',
+        'assigned_delivery_date' => 'datetime',
 
     ];
 
@@ -39,8 +39,13 @@ class Order extends Model
             // Generate UUID
             $model->uuid = (string) Str::uuid();
 
-            // Generate order number (you may want to customize this format)
-            $model->order_number = 'ORD-' . date('Y') . '-' . str_pad(static::max('id') + 1, 5, '0', STR_PAD_LEFT);
+            // Get the highest order number and increment
+            $latestOrder = static::withTrashed()->latest()->first();
+            $lastNumber = $latestOrder ? intval(substr($latestOrder->order_number, -5)) : 0;
+            $nextNumber = $lastNumber + 1;
+
+            // Generate order number
+            $model->order_number = 'ORD-' . date('Y') . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
         });
     }
 

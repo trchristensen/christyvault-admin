@@ -10,13 +10,16 @@
             width: 100%;
             height: 100%;
             font-size: 18px;
+            font-family: Arial, sans-serif;
+            color: #333;
+            font-weight: bold;
         }
 
-
+        /* Keep your existing positioning styles */
         .customer-info {
             position: absolute;
-            top: 200px;
-            left: 60px;
+            top: 210px;
+            left: 80px;
             width: 1000px;
         }
 
@@ -27,6 +30,7 @@
             text-align: left;
         }
 
+        /* Existing display block styles */
         .customer-name,
         .customer-address,
         .customer-phone,
@@ -44,16 +48,20 @@
             margin-bottom: 25px;
         }
 
+        /* Updated items section */
         .items {
             position: absolute;
-            top: 365px;
+            top: 375px;
             left: 30px;
             width: calc(100% - 60px);
         }
 
         .item {
-            margin-bottom: 22px;
+            margin-bottom: 23px;
+            /* Increased for better spacing */
             position: relative;
+            width: 1050px;
+            /* background: #ccc; */
         }
 
         .item-quantity {
@@ -61,19 +69,55 @@
             text-align: center;
             position: absolute;
             left: 0;
-            top: 0;
-            bottom: 0;
+            font-size: 20px;
+            font-weight: bold;
         }
 
-        .item-id {
+        .item-details {
             margin-left: 55px;
         }
 
+        .item-price {
+            position: absolute;
+            right: 165px;
+            top: 4px;
+        }
+
+        .item-amount {
+            position: absolute;
+            right: 35px;
+            top: 4px;
+        }
+
+        .item-location {
+            position: absolute;
+            left: 460px;
+            top: 4px;
+        }
+
+        .item-sku {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .item-name {
+            font-size: 16px;
+            margin-left: 8px;
+            font-weight: lighter;
+        }
+
+        .item-notes {
+            margin-left: 40px;
+            margin-top: 10px;
+            font-size: 18px;
+            line-height: 1.4;
+        }
+
+        /* Keep existing delivery info styles */
         .delivery-info {
             position: absolute;
             bottom: 160px;
             left: 30px;
-            background: #ccc;
         }
 
         .delivery-date {
@@ -99,69 +143,59 @@
 <body>
     <img src="{{ public_path('images/form.jpeg') }}" style="width: 100%; object-fit: contain; object-position: top left;">
 
-
     <article>
-
         {{-- Customer Info Section --}}
         <div class="customer-info">
-            <span class="customer-name">
-                {{ $order->customer->name }}
-            </span>
-
-            <span class="customer-address">
-                {{ $order->customer->address ?? null }}
-            </span>
-            <span class="customer-phone">
-                {{ $order->customer->phone ?? null }}
-            </span>
-            {{-- {{ optional($order->customer->city) }}, {{ optional($order->customer->state) }} --}}
-            {{-- {{ optional($order->customer->zip) }} --}}
+            <span class="customer-name">{{ $order->customer->name }}</span>
+            <span class="customer-address">{{ $order->customer->address ?? null }}</span>
+            <span class="customer-phone">{{ $order->customer->phone ?? null }}</span>
         </div>
 
         {{-- Order Info Section --}}
         <div class="order-info">
-            <span class="invoice-date">
-            </span>
-            <span class="order-number">
-                {{ $order->order_number }}
-            </span>
-            <span class="order-date">
-                {{ $order->created_at->format('m/d/Y') }}
-            </span>
-
+            <span class="invoice-date"></span>
+            <span class="order-number">{{ $order->order_number }}</span>
+            <span class="order-date">{{ $order->created_at->format('m/d/Y') }}</span>
         </div>
 
-        {{-- Items Section --}}
+        {{-- Items Section with Updated Format --}}
         <div class="items">
             @foreach ($order->orderProducts as $item)
                 <div class="item">
-                    <span class="item-quantity">
-                        <strong>
-                            {{ $item->quantity }}
-                        </strong>
-                    </span>
-                    <span class="item-id">
-                        <strong>{{ $item->product->sku }}</strong> ⋅ {{ $item->product->name }}
-                    </span>
-                    @if ($item->notes)
-                        <p style="margin-left: 80px">
-                            {{ $item->notes }}
-                        </p>
+                    @if (!$item->fill_load)
+                        <span class="item-quantity">{{ $item->quantity }}</span>
+                    @else
+                        <span class="item-quantity">*</span>
                     @endif
-
-                    {{-- ${{ number_format($item->price, 2) }} --}}
-                    {{-- ${{ number_format($item->price * $item->quantity, 2) }} --}}
+                    <div class="item-details">
+                        <span class="item-sku">{{ $item->product->sku }}</span>
+                        <span class="item-name">{{ $item->product->name }}</span>
+                        @if ($item->notes or $item->fill_load)
+                            <div class="item-notes">
+                                └ @if ($item->fill_load)
+                                    <strong style="margin-right:12px;text-decoration:underline">FILL OUT LOAD</strong>
+                                @endif{{ $item->notes }}
+                            </div>
+                        @endif
+                    </div>
+                    <div class="item-location">
+                        {{ $item->location }}
+                    </div>
+                    {{-- <div class="item-price">
+                        ${{ $item->price }}
+                    </div> --}}
+                    {{-- <div class="item-amount">
+                        ${{ $item->price * $item->quantity }}
+                    </div> --}}
                 </div>
             @endforeach
         </div>
 
         {{-- Delivery Info --}}
         <div class="delivery-info">
-
             <span class="delivery-date">
                 {{ $order->requested_delivery_date->format('m/d/Y') }}
             </span>
-
         </div>
 
         {{-- Instructions --}}
@@ -170,7 +204,6 @@
                 {{ $order->special_instructions }}
             </div>
         @endif
-
     </article>
 
     <script>

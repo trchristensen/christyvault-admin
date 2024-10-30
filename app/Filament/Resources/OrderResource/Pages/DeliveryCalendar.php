@@ -11,7 +11,9 @@ class DeliveryCalendar extends Page
 {
     protected static string $resource = OrderResource::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-calendar';
+    protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
+
+    protected static ?string $navigationGroup = 'Delivery Management';
     protected static ?string $navigationLabel = 'Delivery Calendar';
     // protected static ?int $navigationSort = ; // Adjust this number to change the order in the sidebar
     protected static ?string $slug = 'delivery-calendar';

@@ -24,13 +24,17 @@ class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+
+    protected static ?string $navigationGroup = 'Delivery Management';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\Section::make('Order Details')
+                    ->description(fn(Order $order): mixed => $order->order_number)
+
                     ->schema([
                         Forms\Components\Select::make('customer_id')
                             ->label('Customer')
@@ -40,7 +44,7 @@ class OrderResource extends Resource
                         Forms\Components\DatePicker::make('requested_delivery_date')
                             ->required()
                             ->minDate(now()),
-                        Forms\Components\DatePicker::make('actual_delivery_date')
+                        Forms\Components\DatePicker::make('assigned_delivery_date')
                             // ->required()
                             ->minDate(now()),
                         Forms\Components\Select::make('status')
@@ -63,24 +67,63 @@ class OrderResource extends Resource
                     ->schema([
                         Forms\Components\Repeater::make('orderProducts')
                             ->relationship()
+                            ->reorderable(true)
                             ->schema([
                                 Forms\Components\Select::make('product_id')
                                     ->label('Product')
-                                    ->options(Product::query()->pluck('name', 'id'))
+                                    ->options(
+                                        Product::query()
+                                            ->get()
+                                            ->mapWithKeys(fn(Product $product) => [
+                                                $product->id => view('filament.components.product-option', [
+                                                    'sku' => $product->sku,
+                                                    'name' => $product->name,
+                                                ])->render()
+                                            ])
+                                    )
+                                    ->getOptionLabelsUsing(
+                                        fn(array $values): array =>
+                                        Product::whereIn(
+                                            'id',
+                                            $values
+                                        )
+                                            ->get()
+                                            ->mapWithKeys(fn(Product $product) => [
+                                                $product->id => view('filament.components.product-option', [
+                                                    'sku' => $product->sku,
+                                                    'name' => $product->name,
+                                                ])->render()
+                                            ])
+
+                                            ->toArray()
+                                    )
+                                    ->allowHtml()
                                     ->required()
                                     ->reactive()
                                     ->afterStateUpdated(
                                         fn($state, callable $set) =>
                                         $set('price', Product::find($state)?->price ?? 0)
                                     ),
+                                Forms\Components\Checkbox::make('fill_load')
+                                    ->label('Fill out load')
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set) {
+                                        if ($state) {
+                                            $set('quantity', null);
+                                        }
+                                    }),
                                 Forms\Components\TextInput::make('quantity')
                                     ->numeric()
                                     ->default(1)
-                                    ->required(),
+                                    ->required(fn(Forms\Get $get): bool => !$get('fill_load'))
+                                    ->disabled(fn(Forms\Get $get): bool => $get('fill_load'))
+                                    ->dehydrated(fn(Forms\Get $get): bool => !$get('fill_load')),
                                 Forms\Components\TextInput::make('price')
                                     ->numeric()
                                     ->prefix('$')
                                     ->required(),
+                                Forms\Components\TextInput::make('location')
+                                    ->nullable(),
                                 Forms\Components\TextInput::make('notes')
                                     ->nullable()
                                     ->columnSpanFull()
@@ -109,7 +152,7 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('requested_delivery_date')
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('actual_delivery_date')
+                Tables\Columns\TextColumn::make('assigned_delivery_date')
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
@@ -122,6 +165,7 @@ class OrderResource extends Resource
                     }),
             ])
             ->filters([
+                Tables\Filters\TrashedFilter::make(),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'pending' => 'Pending',

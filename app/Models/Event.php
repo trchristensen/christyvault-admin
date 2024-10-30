@@ -19,6 +19,8 @@ class Event extends Model
         'type',
         'employee_id',
         'status',
+        'eventable_type',
+        'eventable_id'
     ];
 
     protected $casts = [
@@ -26,6 +28,11 @@ class Event extends Model
         'end' => 'datetime',
         'all_day' => 'boolean',
     ];
+
+    public function eventable()
+    {
+        return $this->morphTo();
+    }
 
     public function employee()
     {

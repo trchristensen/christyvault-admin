@@ -33,6 +33,11 @@ class Employee extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function leaveRequests()
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
     public function driver()
     {
         return $this->hasOne(Driver::class);

@@ -8,6 +8,7 @@ use App\Filament\Widgets\RecentOrdersWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -36,15 +37,22 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => '#1c3366',
             ])
-
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Pages\Dashboard::class,
-                DeliveryCalendar::class
+                DeliveryCalendar::class,
+            ])
+            ->navigationGroups([
+                NavigationGroup::make()
+                    ->label('Human Resources'),
+                NavigationGroup::make()
+                    ->label('Delivery Management'),
+                NavigationGroup::make()
+                    ->label('Directories'),
             ])
             ->sidebarCollapsibleOnDesktop()
-            ->sidebarWidth('12rem')
+            ->sidebarWidth('13rem')
             // ->collapsedSidebarWidth('5rem')
             ->plugin(
                 FilamentFullCalendarPlugin::make()
