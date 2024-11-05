@@ -46,6 +46,7 @@ class OrderResource extends Resource
                             ->minDate(now()),
                         Forms\Components\DatePicker::make('assigned_delivery_date')
                             // ->required()
+                            ->time()
                             ->minDate(now()),
                         Forms\Components\Select::make('status')
                             ->options([

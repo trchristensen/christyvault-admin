@@ -9,10 +9,12 @@
             padding: 0;
             width: 100%;
             height: 100%;
-            font-size: 18px;
-            font-family: Arial, sans-serif;
-            color: #333;
-            font-weight: bold;
+            font-size: 20px;
+            line-height: 18px;
+            /* font-family: Arial, sans-serif; */
+            font-family: 'Monaco';
+            color: #000;
+            /* font-weight: bold; */
         }
 
         /* Keep your existing positioning styles */
@@ -25,9 +27,16 @@
 
         .order-info {
             position: absolute;
-            top: 230px;
-            right: 90px;
+            top: 220px;
+            right: 25px;
             text-align: left;
+            /* background: #ccc; */
+            width: 220px;
+            padding-left: 10px;
+        }
+
+        .invoice-date {
+            padding-left: 15px;
         }
 
         /* Existing display block styles */
@@ -48,6 +57,7 @@
             margin-bottom: 25px;
         }
 
+
         /* Updated items section */
         .items {
             position: absolute;
@@ -57,7 +67,7 @@
         }
 
         .item {
-            margin-bottom: 23px;
+            margin-bottom: 26px;
             /* Increased for better spacing */
             position: relative;
             width: 1050px;
@@ -101,14 +111,14 @@
         }
 
         .item-name {
-            font-size: 16px;
+            font-size: 20px;
             margin-left: 8px;
-            font-weight: lighter;
+            /* font-weight: lighter; */
         }
 
         .item-notes {
             margin-left: 40px;
-            margin-top: 10px;
+            margin-top: 15px;
             font-size: 18px;
             line-height: 1.4;
         }
@@ -141,7 +151,7 @@
 </head>
 
 <body>
-    <img src="{{ public_path('images/form.jpeg') }}" style="width: 100%; object-fit: contain; object-position: top left;">
+    {{-- <img src="{{ public_path('images/form.jpeg') }}" style="width: 100%; object-fit: contain; object-position: top left;"> --}}
 
     <article>
         {{-- Customer Info Section --}}
@@ -153,9 +163,9 @@
 
         {{-- Order Info Section --}}
         <div class="order-info">
-            <span class="invoice-date"></span>
-            <span class="order-number">{{ $order->order_number }}</span>
-            <span class="order-date">{{ $order->created_at->format('m/d/Y') }}</span>
+            <div class="invoice-date" style="height:18px;"></div>
+            <div class="order-number" style="height:18px;">{{ $order->order_number }}</div>
+            <div class="order-date" style="height:18px;">{{ $order->created_at->format('m/d/Y') }}</div>
         </div>
 
         {{-- Items Section with Updated Format --}}

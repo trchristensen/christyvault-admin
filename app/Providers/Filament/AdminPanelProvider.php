@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use Althinect\FilamentSpatieRolesPermissions\FilamentSpatieRolesPermissionsPlugin;
 use App\Filament\Resources\OrderResource\Pages\DeliveryCalendar;
 use App\Filament\Widgets\OrderStatisticsWidget;
 use App\Filament\Widgets\RecentOrdersWidget;
@@ -54,14 +55,15 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('13rem')
             // ->collapsedSidebarWidth('5rem')
-            ->plugin(
+            ->plugins([
+                FilamentSpatieRolesPermissionsPlugin::make(),
                 FilamentFullCalendarPlugin::make()
                     ->selectable()
                     ->editable()
                     ->config([
                         'weekends' => false
                     ])
-            )
+            ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 // Widgets\AccountWidget::class,
