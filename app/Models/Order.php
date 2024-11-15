@@ -71,4 +71,9 @@ class Order extends Model
     {
         return $this->belongsTo(Employee::class, 'driver_id');
     }
+
+    public function trip()
+    {
+        return $this->belongsTo(Trip::class);
+    }
 }
