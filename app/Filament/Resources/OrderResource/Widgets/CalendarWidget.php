@@ -90,6 +90,7 @@ class CalendarWidget extends FullCalendarWidget
                         ->schema([
                             Select::make('product_id')
                                 ->label('Product')
+                                ->columnSpanFull()
                                 ->options(
                                     Product::query()
                                         ->get()
@@ -113,6 +114,7 @@ class CalendarWidget extends FullCalendarWidget
                                         ->toArray()
                                 )
                                 ->allowHtml()
+                                ->searchable()
                                 ->required()
                                 ->reactive()
                                 ->afterStateUpdated(
@@ -181,7 +183,7 @@ class CalendarWidget extends FullCalendarWidget
     function({ event, el }) {
         const eventMainEl = el.querySelector('.fc-event-main');
         eventMainEl.style.padding = '12px';
-        
+
         // Main heading - Customer Name/Order Number
         const titleEl = document.createElement('div');
         titleEl.style.fontSize = '14px';
@@ -210,7 +212,7 @@ class CalendarWidget extends FullCalendarWidget
             productsEl.style.marginTop = '8px';
             productsEl.style.borderTop = '1px solid rgba(255, 255, 255, 0.1)';
             productsEl.style.paddingTop = '8px';
-            
+
             productsEl.innerHTML = event.extendedProps.products
                 .map(p => `
                     <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
@@ -218,7 +220,7 @@ class CalendarWidget extends FullCalendarWidget
                         <span>${p.sku}</span> ${p.fill_load ? '<span style="opacity: 0.6">(fill load)</span>' : '' }
                     </div>
                 `).join('');
-            
+
             infoContainer.appendChild(productsEl);
         }
 

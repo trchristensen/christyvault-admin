@@ -3,16 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrderResource\Pages;
-use App\Filament\Resources\OrderResource\RelationManagers;
 use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\Order;
 use App\Models\Product;
 use Filament\Tables\Actions\Action;
 use Filament\Forms;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -74,6 +70,7 @@ class OrderResource extends Resource
                                     ->label('Product')
                                     ->options(
                                         Product::query()
+                                            ->where('is_active', true)
                                             ->get()
                                             ->mapWithKeys(fn(Product $product) => [
                                                 $product->id => view('filament.components.product-option', [
@@ -101,6 +98,7 @@ class OrderResource extends Resource
                                     ->allowHtml()
                                     ->required()
                                     ->reactive()
+                                    ->searchable()
                                     ->afterStateUpdated(
                                         fn($state, callable $set) =>
                                         $set('price', Product::find($state)?->price ?? 0)
