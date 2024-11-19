@@ -69,7 +69,14 @@ class EmployeeResource extends Resource
                             ->label('Notes'),
                     ])
                     ->visible(fn(callable $get) => $get('position') === 'driver'),
-
+                Forms\Components\Section::make('User Account')
+                    ->schema([
+                        Forms\Components\Select::make('user_id')
+                            ->label('Associated User Account')
+                            ->relationship('user', 'name')
+                            ->preload()
+                            ->searchable(),
+                    ]),
             ]);
     }
 

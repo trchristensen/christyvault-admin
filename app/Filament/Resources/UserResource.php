@@ -43,26 +43,12 @@ class UserResource extends Resource
                             ->multiple()
                             ->relationship('roles', 'name')
                             ->preload(),
-
-                        Select::make('linked_employee')
+                        Select::make('employee.id')  // Change from employee_id to employee.id
                             ->label('Associated Employee')
-                            ->options(function () {
-                                return \App\Models\Employee::whereNull('user_id')
-                                    ->orWhere('user_id', $this->record?->id)
-                                    ->pluck('name', 'id');
-                            })
-                            ->afterStateUpdated(function ($state, $set, Model $record) {
-                                if ($state) {
-                                    // Unlink previous employee if exists
-                                    \App\Models\Employee::where('user_id', $record->id)
-                                        ->update(['user_id' => null]);
+                            ->relationship('employee', 'name')
+                            ->preload()
+                            ->disabled()
 
-                                    // Link new employee
-                                    \App\Models\Employee::find($state)
-                                        ->update(['user_id' => $record->id]);
-                                }
-                            })
-                            ->dehydrated(false) // Don't save this field directly
                     ])->columns(2),
             ]);
     }
