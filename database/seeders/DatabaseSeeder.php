@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         $this->call([
-            OrderSeeder::class,
+            // OrderSeeder::class,
             // Add any other seeders you have here
             ProductSeeder::class,
         ]);
@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'Todd',
             'email' => 'tchristensen@christyvault.com',
-            'password' => bcrypt('password')
+            'password' => bcrypt('badP@nda40')
         ]);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\CustomerResource\Pages;
 use App\Filament\Resources\CustomerResource\RelationManagers;
 use App\Models\Customer;
+use App\Models\Location;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -25,15 +26,18 @@ class CustomerResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required(),
-                Forms\Components\TextInput::make('email')
-                    ->email()
-                    ->required(),
-                Forms\Components\TextInput::make('phone')
-                    ->tel(),
-                Forms\Components\TextInput::make('address')
-                    ->required(),
+                Forms\Components\Section::make('Customer Information')
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('email')
+                            ->email()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('phone')
+                            ->tel()
+                            ->maxLength(255),
+                    ]),
             ]);
     }
 
@@ -43,12 +47,16 @@ class CustomerResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('address')
+                Tables\Columns\TextColumn::make('email')
                     ->searchable(),
-
                 Tables\Columns\TextColumn::make('phone')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('email')
+                Tables\Columns\TextColumn::make('locations.address_line1')
+                    ->label('Primary Address')
+                    ->getStateUsing(function (Customer $record) {
+                        $primary = $record->primaryLocation();
+                        return $primary ? $primary->address_line1 : '';
+                    })
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -75,7 +83,8 @@ class CustomerResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\LocationsRelationManager::class,
+
         ];
     }
 

@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\TripResource\Pages;
 use App\Filament\Resources\TripResource\RelationManagers;
 use App\Models\Employee;
+use App\Models\Location;
 use App\Models\Trip;
 use App\Models\User;
 use Filament\Forms;
@@ -25,39 +26,57 @@ class TripResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('trip_number')
-                    ->required()
-                    ->default('TRIP-' . date('Y') . '-' . str_pad(Trip::count() + 1, 5, '0', STR_PAD_LEFT))
-                    ->disabled(),
-                Forms\Components\Select::make('driver_id')
-                    ->label('Driver')
-                    ->options(
-                        Employee::query()
-                            ->where('position', 'driver')
-                            ->pluck('name', 'id')
-                    )
-                    ->searchable()
-                    ->required()
-                    ->preload(),
-                Forms\Components\Select::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'in_progress' => 'In Progress',
-                        'completed' => 'Completed',
-                        'cancelled' => 'Cancelled',
-                    ])
-                    ->default('pending')
-                    ->required(),
-                Forms\Components\DatePicker::make('scheduled_date')
-                    ->required()
-                    ->default(now()),
-                Forms\Components\TimePicker::make('start_time')
-                    ->seconds(false),
-                Forms\Components\TimePicker::make('end_time')
-                    ->seconds(false),
-                Forms\Components\Textarea::make('notes')
-                    ->columnSpanFull()
-                    ->maxLength(65535),
+                // ... existing basic fields ...
+
+                Forms\Components\Section::make('Locations')
+                    ->schema([
+                        Forms\Components\Select::make('start_location')
+                            ->relationship('locations')
+                            ->label('Start Location')
+                            ->options(Location::pluck('name', 'id'))
+                            ->searchable()
+                            ->required()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name'),
+                                Forms\Components\TextInput::make('address_line1')->required(),
+                                Forms\Components\TextInput::make('city')->required(),
+                                Forms\Components\TextInput::make('state')->required(),
+                                Forms\Components\TextInput::make('postal_code')->required(),
+                                Forms\Components\Select::make('location_type')
+                                    ->options([
+                                        'funeral_home' => 'Funeral Home',
+                                        'other' => 'Other',
+                                    ])
+                                    ->default('funeral_home'),
+                            ]),
+
+                        Forms\Components\Repeater::make('delivery_locations')
+                            ->relationship('locations')
+                            ->label('Delivery Locations')
+                            ->schema([
+                                Forms\Components\Select::make('location_id')
+                                    ->label('Cemetery')
+                                    ->options(Location::where('location_type', 'cemetery')->pluck('name', 'id'))
+                                    ->searchable()
+                                    ->required()
+                                    ->createOptionForm([
+                                        Forms\Components\TextInput::make('name')->required(),
+                                        Forms\Components\TextInput::make('address_line1')->required(),
+                                        Forms\Components\TextInput::make('city')->required(),
+                                        Forms\Components\TextInput::make('state')->required(),
+                                        Forms\Components\TextInput::make('postal_code')->required(),
+                                        Forms\Components\Hidden::make('location_type')
+                                            ->default('cemetery'),
+                                    ]),
+                                Forms\Components\TextInput::make('sequence')
+                                    ->numeric()
+                                    ->default(1)
+                                    ->hidden(),
+                            ])
+                            ->defaultItems(1)
+                            ->maxItems(2) // Limit to maximum 2 delivery locations
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 

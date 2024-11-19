@@ -2,13 +2,20 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Order;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class OrderSeeder extends Seeder
 {
     public function run()
     {
-        Order::factory()->count(50)->create();
+        // Clear existing orders
+        DB::table('orders')->delete();
+
+        // Create new orders
+        Order::factory()
+            ->count(10)
+            ->create();
     }
 }

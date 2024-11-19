@@ -3,12 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 class Trip extends Model
 {
-    use SoftDeletes;
-
     protected $fillable = [
         'trip_number',
         'driver_id',
@@ -16,33 +14,32 @@ class Trip extends Model
         'scheduled_date',
         'start_time',
         'end_time',
-        'notes'
+        'notes',
     ];
 
-    protected $casts = [
-        'scheduled_date' => 'date',
-        'start_time' => 'datetime',
-        'end_time' => 'datetime'
-    ];
-
-    // Auto-generate trip_number when creating
-    protected static function boot()
+    public function locations(): MorphToMany
     {
-        parent::boot();
+        return $this->morphToMany(Location::class, 'locationable')
+            ->withPivot('type', 'sequence')
+            ->withTimestamps();
+    }
 
-        static::creating(function ($trip) {
-            $trip->trip_number = 'TRIP-' . date('Y') . '-' .
-                str_pad((static::max('id') ?? 0) + 1, 5, '0', STR_PAD_LEFT);
-        });
+    public function startLocation()
+    {
+        return $this->locations()
+            ->wherePivot('type', 'start_location')
+            ->first();
+    }
+
+    public function deliveryLocations()
+    {
+        return $this->locations()
+            ->wherePivot('type', 'delivery')
+            ->orderBy('sequence');
     }
 
     public function driver()
     {
-        return $this->belongsTo(Employee::class, 'driver_id');
-    }
-
-    public function orders()
-    {
-        return $this->hasMany(Order::class)->orderBy('stop_number');
+        return $this->belongsTo(User::class, 'driver_id');
     }
 }
