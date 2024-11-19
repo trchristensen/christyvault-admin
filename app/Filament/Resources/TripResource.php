@@ -32,7 +32,7 @@ class TripResource extends Resource
                     ->label('Driver')
                     ->options(
                         User::query()
-                            ->where('role', 'driver')
+                            ->where('position', 'driver')
                             ->pluck('name', 'id')
                     )
                     ->searchable()
