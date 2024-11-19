@@ -5,6 +5,8 @@ use App\Http\Controllers\DeliveryTagController;
 use App\Http\Controllers\LeaveCalendarFeedController;
 use Illuminate\Support\Facades\Route;
 
+
+
 Route::get('/', function () {
     return view('welcome');
 });

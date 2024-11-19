@@ -10,7 +10,9 @@
         "barryvdh/laravel-snappy": "^1.0",
         "filament/filament": "^3.2",
         "h4cc/wkhtmltopdf-amd64": "0.12.x",
+        "jeffgreco13/filament-breezy": "^2.4",
         "laravel/framework": "^11.9",
+        "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "saade/filament-fullcalendar": "^3.2",
         "spatie/icalendar-generator": "^2.8"
