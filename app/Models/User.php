@@ -55,6 +55,11 @@ class User extends Authenticatable
         return $this->hasOne(Employee::class);
     }
 
+    public function driver()
+    {
+        return $this->hasOneThrough(Driver::class, Employee::class);
+    }
+
     public function getCalendarFeedUrl(): string
     {
         return url()->signedRoute('calendar.feed', [

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Trip;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class TripController extends Controller
 {
@@ -12,15 +13,18 @@ class TripController extends Controller
         try {
             $user = $request->user();
 
-            // Check if user exists
             if (!$user) {
                 return response()->json(['error' => 'User not authenticated'], 401);
             }
 
-            // Check if user has a driver relationship
-            $driver = $user->driver;
+            $employee = $user->employee;
+            if (!$employee) {
+                return response()->json(['error' => 'User is not associated with an employee record'], 403);
+            }
+
+            $driver = $employee->driver;
             if (!$driver) {
-                return response()->json(['error' => 'User is not associated with a driver account'], 403);
+                return response()->json(['error' => 'Employee is not associated with a driver record'], 403);
             }
 
             $trips = Trip::where('driver_id', $driver->id)
@@ -51,7 +55,7 @@ class TripController extends Controller
 
             return response()->json($trips);
         } catch (\Exception $e) {
-            \Log::error('Trip fetch error: ' . $e->getMessage());
+            Log::error('Trip fetch error: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Failed to fetch trips',
                 'message' => $e->getMessage()
