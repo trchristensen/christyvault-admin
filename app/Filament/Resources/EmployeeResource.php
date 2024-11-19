@@ -4,7 +4,9 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
+use App\Models\Driver;
 use App\Models\Employee;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Navigation\NavigationGroup;
@@ -13,6 +15,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Hash;
 
 class EmployeeResource extends Resource
 {
@@ -122,5 +125,33 @@ class EmployeeResource extends Resource
             'create' => Pages\CreateEmployee::route('/create'),
             'edit' => Pages\EditEmployee::route('/{record}/edit'),
         ];
+    }
+
+
+    protected function handleRecordCreation(array $data): Model
+    {
+        // Create user first
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make('temporary-password'), // You might want to generate this randomly
+        ]);
+
+        // Add employee data
+        $data['user_id'] = $user->id;
+        $employee = static::getModel()::create($data);
+
+        // If position is driver, create driver record
+        if ($data['position'] === 'driver') {
+            $driverData = [
+                'employee_id' => $employee->id,
+                'license_number' => $data['driver']['license_number'] ?? null,
+                'license_expiration' => $data['driver']['license_expiration'] ?? null,
+                'notes' => $data['driver']['notes'] ?? null,
+            ];
+            Driver::create($driverData);
+        }
+
+        return $employee;
     }
 }
