@@ -4,79 +4,54 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\TripResource\Pages;
 use App\Filament\Resources\TripResource\RelationManagers;
-use App\Models\Employee;
-use App\Models\Location;
+use App\Models\Driver;
 use App\Models\Trip;
-use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class TripResource extends Resource
 {
     protected static ?string $model = Trip::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Operations';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                // ... existing basic fields ...
-
-                Forms\Components\Section::make('Locations')
+                Forms\Components\Section::make('Trip Information')
                     ->schema([
-                        Forms\Components\Select::make('start_location')
-                            ->relationship('locations')
-                            ->label('Start Location')
-                            ->options(Location::pluck('name', 'id'))
-                            ->searchable()
+                        Forms\Components\TextInput::make('trip_number')
                             ->required()
-                            ->createOptionForm([
-                                Forms\Components\TextInput::make('name'),
-                                Forms\Components\TextInput::make('address_line1')->required(),
-                                Forms\Components\TextInput::make('city')->required(),
-                                Forms\Components\TextInput::make('state')->required(),
-                                Forms\Components\TextInput::make('postal_code')->required(),
-                                Forms\Components\Select::make('location_type')
-                                    ->options([
-                                        'funeral_home' => 'Funeral Home',
-                                        'other' => 'Other',
-                                    ])
-                                    ->default('funeral_home'),
-                            ]),
+                            ->default('TRIP-' . date('Y') . '-' . str_pad(Trip::count() + 1, 5, '0', STR_PAD_LEFT))
+                            ->readOnly(), // Change from disabled() to readOnly()
 
-                        Forms\Components\Repeater::make('delivery_locations')
-                            ->relationship('locations')
-                            ->label('Delivery Locations')
-                            ->schema([
-                                Forms\Components\Select::make('location_id')
-                                    ->label('Cemetery')
-                                    ->options(Location::where('location_type', 'cemetery')->pluck('name', 'id'))
-                                    ->searchable()
-                                    ->required()
-                                    ->createOptionForm([
-                                        Forms\Components\TextInput::make('name')->required(),
-                                        Forms\Components\TextInput::make('address_line1')->required(),
-                                        Forms\Components\TextInput::make('city')->required(),
-                                        Forms\Components\TextInput::make('state')->required(),
-                                        Forms\Components\TextInput::make('postal_code')->required(),
-                                        Forms\Components\Hidden::make('location_type')
-                                            ->default('cemetery'),
-                                    ]),
-                                Forms\Components\TextInput::make('sequence')
-                                    ->numeric()
-                                    ->default(1)
-                                    ->hidden(),
+                        Forms\Components\Select::make('driver_id')
+                            ->relationship('driver', 'name')
+                            ->required()
+                            // ->options(Driver::all()->pluck('name', 'id'))
+                            ->searchable(),
+                        Forms\Components\Select::make('status')
+                            ->options([
+                                'pending' => 'Pending',
+                                'in_progress' => 'In Progress',
+                                'completed' => 'Completed',
+                                'cancelled' => 'Cancelled',
                             ])
-                            ->defaultItems(1)
-                            ->maxItems(2) // Limit to maximum 2 delivery locations
+                            ->default('pending')
+                            ->required(),
+                        Forms\Components\DatePicker::make('scheduled_date')
+                            ->required(),
+                        Forms\Components\TimePicker::make('start_time'),
+                        // ->required(),
+                        Forms\Components\TimePicker::make('end_time'),
+                        Forms\Components\Textarea::make('notes')
                             ->columnSpanFull(),
-                    ]),
+                    ])->columns(2),
             ]);
     }
 
@@ -129,7 +104,7 @@ class TripResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\LocationsRelationManager::class,
         ];
     }
 
