@@ -46,8 +46,7 @@ class TripController extends Controller
                 return response()->json(['error' => 'Employee is not associated with a driver record'], 403);
             }
 
-            $trips = Trip::where('driver_id', $driver->id)
-                ->orderBy('scheduled_date', 'desc')
+            $trips = Trip::orderBy('scheduled_date', 'desc')
                 ->with(['locations' => function ($query) {
                     $query->orderBy('locationables.sequence', 'asc');
                 }])
