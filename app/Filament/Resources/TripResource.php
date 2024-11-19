@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\TripResource\Pages;
 use App\Filament\Resources\TripResource\RelationManagers;
+use App\Models\Employee;
 use App\Models\Trip;
 use App\Models\User;
 use Filament\Forms;
@@ -31,7 +32,7 @@ class TripResource extends Resource
                 Forms\Components\Select::make('driver_id')
                     ->label('Driver')
                     ->options(
-                        User::query()
+                        Employee::query()
                             ->where('position', 'driver')
                             ->pluck('name', 'id')
                     )
