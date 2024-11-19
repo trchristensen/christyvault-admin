@@ -44,28 +44,28 @@ class UserResource extends Resource
                             ->relationship('roles', 'name')
                             ->preload(),
 
-                        Select::make('employee_id')
+                        Select::make('linked_employee')
                             ->label('Associated Employee')
-                            ->relationship('employee', 'name')
-                            ->preload()
-                            ->searchable()
-                            ->createOptionForm([
-                                Forms\Components\TextInput::make('name')
-                                    ->required(),
-                                Forms\Components\TextInput::make('email')
-                                    ->email()
-                                    ->required(),
-                                Forms\Components\Select::make('position')
-                                    ->options([
-                                        'driver' => 'Driver',
-                                        'production' => 'Production',
-                                    ])
-                                    ->required(),
-                            ]),
+                            ->options(function () {
+                                return \App\Models\Employee::whereNull('user_id')
+                                    ->orWhere('user_id', $this->record?->id)
+                                    ->pluck('name', 'id');
+                            })
+                            ->afterStateUpdated(function ($state, $set, Model $record) {
+                                if ($state) {
+                                    // Unlink previous employee if exists
+                                    \App\Models\Employee::where('user_id', $record->id)
+                                        ->update(['user_id' => null]);
+
+                                    // Link new employee
+                                    \App\Models\Employee::find($state)
+                                        ->update(['user_id' => $record->id]);
+                                }
+                            })
+                            ->dehydrated(false) // Don't save this field directly
                     ])->columns(2),
             ]);
     }
-
     public static function table(Table $table): Table
     {
         return $table
