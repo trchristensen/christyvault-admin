@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\TripResource\Pages;
 use App\Filament\Resources\TripResource\RelationManagers;
 use App\Models\Trip;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -24,17 +25,38 @@ class TripResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('trip_number')
-                    ->required(),
-                Forms\Components\TextInput::make('driver_id')
-                    ->numeric(),
-                Forms\Components\TextInput::make('status')
+                    ->required()
+                    ->default('TRIP-' . date('Y') . '-' . str_pad(Trip::count() + 1, 5, '0', STR_PAD_LEFT))
+                    ->disabled(),
+                Forms\Components\Select::make('driver_id')
+                    ->label('Driver')
+                    ->options(
+                        User::query()
+                            ->where('role', 'driver')
+                            ->pluck('name', 'id')
+                    )
+                    ->searchable()
+                    ->required()
+                    ->preload(),
+                Forms\Components\Select::make('status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'in_progress' => 'In Progress',
+                        'completed' => 'Completed',
+                        'cancelled' => 'Cancelled',
+                    ])
+                    ->default('pending')
                     ->required(),
                 Forms\Components\DatePicker::make('scheduled_date')
-                    ->required(),
-                Forms\Components\TextInput::make('start_time'),
-                Forms\Components\TextInput::make('end_time'),
+                    ->required()
+                    ->default(now()),
+                Forms\Components\TimePicker::make('start_time')
+                    ->seconds(false),
+                Forms\Components\TimePicker::make('end_time')
+                    ->seconds(false),
                 Forms\Components\Textarea::make('notes')
-                    ->columnSpanFull(),
+                    ->columnSpanFull()
+                    ->maxLength(65535),
             ]);
     }
 
@@ -44,25 +66,29 @@ class TripResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('trip_number')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('driver_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('status')
+                Tables\Columns\TextColumn::make('driver.name')
+                    ->sortable()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'pending' => 'gray',
+                        'in_progress' => 'warning',
+                        'completed' => 'success',
+                        'cancelled' => 'danger',
+                    }),
                 Tables\Columns\TextColumn::make('scheduled_date')
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('start_time'),
-                Tables\Columns\TextColumn::make('end_time'),
+                Tables\Columns\TextColumn::make('start_time')
+                    ->time(),
+                Tables\Columns\TextColumn::make('end_time')
+                    ->time(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('deleted_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
