@@ -45,7 +45,7 @@ class TripController extends Controller
 
 
 
-            $trips = Trip::where('driver_id', $driver->id)  // Add this line
+            $trips = Trip::where('driver_id', $employee->id)  // Add this line
                 ->orderBy('scheduled_date', 'desc')
                 ->with('driver')
                 ->with(['locations' => function ($query) {
