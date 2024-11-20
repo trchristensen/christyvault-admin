@@ -12,23 +12,12 @@ class TripController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('User attempting to fetch trips:', [
-                'user_id' => $user->id,
-                'user_email' => $user->email
-            ]);
 
             if (!$user) {
                 return response()->json(['error' => 'User not authenticated'], 401);
             }
 
             $employee = $user->employee;
-            Log::info('Employee check:', [
-                'user_id' => $user->id,
-                'employee' => $employee ? [
-                    'id' => $employee->id,
-                    'name' => $employee->name
-                ] : 'No employee found'
-            ]);
 
             if (!$employee) {
                 return response()->json(['error' => 'User is not associated with an employee record'], 403);
@@ -40,7 +29,8 @@ class TripController extends Controller
                 return response()->json(['error' => 'Employee is not associated with a driver record'], 403);
             }
 
-            $trips = Trip::orderBy('scheduled_date', 'desc')
+            $trips = Trip::where('driver_id', $driver->id)  // Add this line
+                ->orderBy('scheduled_date', 'desc')
                 ->with('driver')
                 ->with(['locations' => function ($query) {
                     $query->orderBy('locationables.sequence', 'asc');
