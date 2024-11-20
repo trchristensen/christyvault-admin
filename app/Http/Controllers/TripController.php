@@ -13,6 +13,15 @@ class TripController extends Controller
         try {
             $user = $request->user();
 
+            Log::info('User and relationships:', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'has_employee' => $user->employee ? true : false,
+                'employee_id' => $user->employee?->id,
+                'has_driver' => $user->employee?->driver ? true : false,
+                'driver_id' => $user->employee?->driver?->id
+            ]);
+
             if (!$user) {
                 return response()->json(['error' => 'User not authenticated'], 401);
             }
@@ -28,6 +37,13 @@ class TripController extends Controller
             if (!$driver) {
                 return response()->json(['error' => 'Employee is not associated with a driver record'], 403);
             }
+
+            Log::info('Driver check:', [
+                'driver_id' => $driver->id,
+                'driver' => $driver
+            ]);
+
+
 
             $trips = Trip::where('driver_id', $driver->id)  // Add this line
                 ->orderBy('scheduled_date', 'desc')
