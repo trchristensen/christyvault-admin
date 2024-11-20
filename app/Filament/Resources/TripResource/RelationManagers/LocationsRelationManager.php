@@ -34,6 +34,7 @@ class LocationsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->reorderable()
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
@@ -41,7 +42,8 @@ class LocationsRelationManager extends RelationManager
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'cemetery' => 'danger',
-                        'funeral_home' => 'warning',
+                        'section' => 'warning',
+                        'funeral_home' => 'info',
                         'other' => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('full_address')
@@ -53,7 +55,6 @@ class LocationsRelationManager extends RelationManager
                         'delivery' => 'info',
                     }),
                 Tables\Columns\TextColumn::make('sequence')
-                    ->sortable(),
             ])
             ->filters([
                 //

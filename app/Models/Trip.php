@@ -38,8 +38,13 @@ class Trip extends Model
             ->orderBy('sequence');
     }
 
+    // public function driver()
+    // {
+    //     return $this->belongsTo(Employee::class, 'driver_id');
+    // }
+
     public function driver()
     {
-        return $this->belongsTo(Employee::class, 'driver_id');
+        return $this->belongsTo(Employee::class, 'driver_id', 'id');
     }
 }

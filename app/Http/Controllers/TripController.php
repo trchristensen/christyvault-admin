@@ -35,41 +35,24 @@ class TripController extends Controller
             }
 
             $driver = $employee->driver;
-            Log::info('Driver check:', [
-                'employee_id' => $employee->id,
-                'driver' => $driver ? [
-                    'id' => $driver->id,
-                    'license_number' => $driver->license_number
-                ] : 'No driver found'
-            ]);
+
             if (!$driver) {
                 return response()->json(['error' => 'Employee is not associated with a driver record'], 403);
             }
 
             $trips = Trip::orderBy('scheduled_date', 'desc')
-                ->with(['locations' => function ($query) {
-                    $query->orderBy('locationables.sequence', 'asc');
-                }])
-                ->get()
-                ->map(function ($trip) {
-                    return [
-                        'id' => $trip->id,
-                        'trip_number' => $trip->trip_number,
-                        'status' => $trip->status,
-                        'scheduled_date' => $trip->scheduled_date,
-                        'start_time' => $trip->start_time,
-                        'end_time' => $trip->end_time,
-                        'notes' => $trip->notes,
-                        'start_location' => $trip->locations
-                            ->where('pivot.type', 'start_location')
-                            ->first(),
-                        'delivery_locations' => $trip->locations
-                            ->where('pivot.type', 'delivery')
-                            ->values(),
-                        'created_at' => $trip->created_at,
-                        'updated_at' => $trip->updated_at,
-                    ];
-                });
+                ->with('driver')
+                ->get();
+
+            // Debug the first trip
+            $firstTrip = $trips->first();
+            Log::info('First trip details:', [
+                'trip_id' => $firstTrip->id,
+                'driver_id' => $firstTrip->driver_id,
+                'raw_driver' => $firstTrip->driver,
+                'driver_relation_loaded' => $firstTrip->relationLoaded('driver'),
+                'all_relations_loaded' => $firstTrip->getRelations()
+            ]);
 
             return response()->json($trips);
         } catch (\Exception $e) {
