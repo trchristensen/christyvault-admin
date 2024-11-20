@@ -38,20 +38,20 @@
             "Tests\\": "tests/"
         }
     },
-      "scripts": {
+         "scripts": {
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi",
             "@php artisan filament:upgrade"
         ],
         "post-install-cmd": [
-            "sudo apt-get update",
-            "sudo apt-get install -y wkhtmltopdf"
+            "chmod +x setup-production.sh",
+            "./setup-production.sh"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
-            "sudo apt-get update",
-            "sudo apt-get install -y wkhtmltopdf"
+            "chmod +x setup-production.sh",
+            "./setup-production.sh"
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
