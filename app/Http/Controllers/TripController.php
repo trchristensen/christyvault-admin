@@ -42,17 +42,35 @@ class TripController extends Controller
 
             $trips = Trip::orderBy('scheduled_date', 'desc')
                 ->with('driver')
-                ->get();
-
-            // Debug the first trip
-            $firstTrip = $trips->first();
-            Log::info('First trip details:', [
-                'trip_id' => $firstTrip->id,
-                'driver_id' => $firstTrip->driver_id,
-                'raw_driver' => $firstTrip->driver,
-                'driver_relation_loaded' => $firstTrip->relationLoaded('driver'),
-                'all_relations_loaded' => $firstTrip->getRelations()
-            ]);
+                ->with(['locations' => function ($query) {
+                    $query->orderBy('locationables.sequence', 'asc');
+                }])
+                ->get()
+                ->map(function ($trip) {
+                    return [
+                        'id' => $trip->id,
+                        'trip_number' => $trip->trip_number,
+                        'status' => $trip->status,
+                        'scheduled_date' => $trip->scheduled_date,
+                        'start_time' => $trip->start_time,
+                        'end_time' => $trip->end_time,
+                        'notes' => $trip->notes,
+                        'driver' => $trip->driver ? [
+                            'id' => $trip->driver->id,
+                            'name' => $trip->driver->name,
+                            'email' => $trip->driver->email,
+                            'position' => $trip->driver->position
+                        ] : null,
+                        'start_location' => $trip->locations
+                            ->where('pivot.type', 'start_location')
+                            ->first(),
+                        'delivery_locations' => $trip->locations
+                            ->where('pivot.type', 'delivery')
+                            ->values(),
+                        'created_at' => $trip->created_at,
+                        'updated_at' => $trip->updated_at,
+                    ];
+                });
 
             return response()->json($trips);
         } catch (\Exception $e) {
