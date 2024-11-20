@@ -87,4 +87,99 @@ class TripController extends Controller
             ], 500);
         }
     }
+
+
+    public function show(Request $request, Trip $trip)
+    {
+        try {
+            $user = $request->user();
+            $tripId = $trip->id;
+
+
+            // Add the query to find the trip
+            $trip = Trip::where('id', $tripId)
+                ->where('driver_id', $user->employee->id)  // Ensure driver can only see their trips
+                ->with(['driver', 'locations' => function ($query) {
+                    $query->orderBy('locationables.sequence', 'asc');
+                }])
+                ->first();
+
+            if (!$trip) {
+                Log::warning('Trip not found or unauthorized', [
+                    'trip_id' => $tripId,
+                    'user_id' => $user->id
+                ]);
+                return response()->json(['error' => 'Trip not found'], 404);
+            }
+
+            Log::info('Trip show request:', [
+                'trip_id' => $trip->id,
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'has_employee' => $user->employee ? true : false,
+                'employee_id' => $user->employee?->id,
+                'trip_driver_id' => $trip->driver_id
+            ]);
+
+
+
+            if (!$user->employee) {
+                Log::warning('User has no employee record', ['user_id' => $user->id]);
+                return response()->json(['error' => 'User is not associated with an employee record'], 403);
+            }
+
+            // Check if the trip belongs to this driver
+            if ($trip->driver_id !== $user->employee->id) {
+                Log::warning('Trip access denied', [
+                    'trip_driver_id' => $trip->driver_id,
+                    'user_employee_id' => $user->employee->id
+                ]);
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+
+            $trip->load(['driver', 'locations' => function ($query) {
+                $query->orderBy('locationables.sequence', 'asc');
+            }]);
+
+            Log::info('Trip data loaded:', [
+                'trip_number' => $trip->trip_number,
+                'has_driver' => $trip->driver ? true : false,
+                'locations_count' => $trip->locations->count()
+            ]);
+
+            return response()->json([
+                'id' => $trip->id,
+                'trip_number' => $trip->trip_number,
+                'status' => $trip->status,
+                'scheduled_date' => $trip->scheduled_date,
+                'start_time' => $trip->start_time,
+                'end_time' => $trip->end_time,
+                'notes' => $trip->notes,
+                'driver' => $trip->driver ? [
+                    'id' => $trip->driver->id,
+                    'name' => $trip->driver->name,
+                    'email' => $trip->driver->email,
+                    'position' => $trip->driver->position
+                ] : null,
+                'start_location' => $trip->locations
+                    ->where('pivot.type', 'start_location')
+                    ->first(),
+                'delivery_locations' => $trip->locations
+                    ->where('pivot.type', 'delivery')
+                    ->values(),
+                'created_at' => $trip->created_at,
+                'updated_at' => $trip->updated_at,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Trip fetch error:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'trip_id' => $trip->id ?? null
+            ]);
+            return response()->json([
+                'error' => 'Failed to fetch trip details',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
