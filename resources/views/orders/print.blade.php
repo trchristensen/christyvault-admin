@@ -27,10 +27,11 @@
             font-size: 20px;
             line-height: 18px;
             /* font-family: Arial, sans-serif; */
-            font-family: 'Monaco';
+            font-family: 'Monaco-Bold', 'Monaco';
+            font-weight: bold;
             /* font-family: 'Courier New', Courier, monospace; */
             color: #000;
-            font-weight: 700;
+            /* font-weight: 700; */
         }
 
         /* Keep your existing positioning styles */
