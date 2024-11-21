@@ -157,7 +157,7 @@
         {{-- Customer Info Section --}}
         <div class="customer-info">
             <span class="customer-name">{{ $order->customer->name }}</span>
-            <span class="customer-address">{{ $order->customer->address ?? null }}</span>
+            <span class="customer-address">{{ $order->location->full_address ?? null }}</span>
             <span class="customer-phone">{{ $order->customer->phone ?? null }}</span>
         </div>
 
