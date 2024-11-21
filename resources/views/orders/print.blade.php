@@ -145,6 +145,7 @@
             position: absolute;
             bottom: 160px;
             left: 30px;
+            min-width: 300px;
         }
 
         .delivery-date {
@@ -228,7 +229,7 @@
         {{-- Delivery Info --}}
         <div class="delivery-info">
             <span class="delivery-date">
-                {{ $order->requested_delivery_date->format('m/d/Y') }}
+                {{ $order->requested_delivery_date->format('D m/d/Y') }}
             </span>
         </div>
 
