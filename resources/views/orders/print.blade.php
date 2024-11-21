@@ -27,7 +27,8 @@
             font-size: 20px;
             line-height: 18px;
             /* font-family: Arial, sans-serif; */
-            font-family: 'Monaco';
+            /* font-family: 'Monaco'; */
+            font-family: 'Courier New', Courier, monospace;
             color: #000;
             /* font-weight: bold; */
         }
@@ -158,6 +159,7 @@
             bottom: 10px;
             left: 30px;
             width: calc(100% - 80px);
+            min-width: 760px;
             text-indent: 100px;
             height: 122px;
             line-height: 30px;
