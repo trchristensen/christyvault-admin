@@ -165,7 +165,8 @@
         <div class="order-info">
             <div class="invoice-date" style="height:18px;"></div>
             <div class="order-number" style="height:18px;">{{ $order->order_number }}</div>
-            <div class="order-date" style="height:18px;">{{ $order->created_at->format('m/d/Y') }}</div>
+            <div class="order-date" style="height:18px;">
+                {{ $order->order_date->format('m/d/Y') ?? $order->created_at->format('m/d/Y') }}</div>
         </div>
 
         {{-- Items Section with Updated Format --}}

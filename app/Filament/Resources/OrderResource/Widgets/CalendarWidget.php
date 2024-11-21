@@ -58,11 +58,44 @@ class CalendarWidget extends FullCalendarWidget
                         ->label('Customer')
                         ->options(Customer::pluck('name', 'id'))
                         ->required()
-                        ->searchable(),
+                        ->searchable()
+                        ->reactive()
+                        ->afterStateUpdated(function (callable $set, $state) {
+                            if (!$state) {
+                                $set('location_id', null);
+                                return;
+                            }
+
+                            // Get the customer's locations
+                            $locations = Customer::find($state)?->locations()->get();
+
+                            // If there's exactly one location, set it automatically
+                            if ($locations && $locations->count() === 1) {
+                                $set('location_id', $locations->first()->id);
+                            } else {
+                                $set('location_id', null);
+                            }
+                        }),
+
+                    Select::make('location_id')
+                        ->label('Delivery Location')
+                        ->options(function (callable $get) {
+                            $customerId = $get('customer_id');
+                            if (!$customerId) return [];
+
+                            return Customer::find($customerId)
+                                ?->locations()
+                                ->get()
+                                ->mapWithKeys(fn($location) => [
+                                    $location->id => $location->full_address
+                                ]) ?? [];
+                        })
+                        ->required()
+                        ->searchable()
+                        ->visible(fn(callable $get) => (bool) $get('customer_id')),
                     DatePicker::make('requested_delivery_date')
                         ->required()
-                        ->default(now())
-                        ->minDate(now()),
+                        ->default(now()),
                     DatePicker::make('assigned_delivery_date')
                         ->minDate(now()),
                     Select::make('status')

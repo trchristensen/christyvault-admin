@@ -19,6 +19,7 @@ class Order extends Model
         'order_number',
         'driver_id',
         'customer_id',
+        'location_id',
         'status',
         'requested_delivery_date',
         'assigned_delivery_date',
@@ -26,9 +27,9 @@ class Order extends Model
     ];
 
     protected $casts = [
-        'requested_delivery_date' => 'datetime',
-        'assigned_delivery_date' => 'datetime',
-
+        'order_date' => 'date',
+        'requested_delivery_date' => 'date',
+        'assigned_delivery_date' => 'date',
     ];
 
     protected static function boot()
@@ -47,6 +48,11 @@ class Order extends Model
             // Generate order number
             $model->order_number = 'ORD-' . date('Y') . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
         });
+    }
+
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
     }
 
     public function customer(): BelongsTo
