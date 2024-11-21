@@ -255,6 +255,7 @@ class CalendarWidget extends FullCalendarWidget
     {
         return [
             Actions\EditAction::make(),
+            Actions\DeleteAction::make(),
         ];
     }
 
