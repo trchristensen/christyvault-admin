@@ -17,22 +17,6 @@
     margin: 0;
 }
 
-.item-sku {
-    font-weight: bold;
-}
-
-.item-quantity {
-    font-weight: bold;
-}
-
-.delivery-date {
-    font-weight: bold;
-}
-
-.customer-name {
-    font-weight: bold;
-}
-
         body {
             min-height: 965px;
             position: relative;
@@ -46,7 +30,7 @@
             font-family: 'Monaco';
             /* font-family: 'Courier New', Courier, monospace; */
             color: #000;
-            /* font-weight: bold; */
+            font-weight: bold;
         }
 
         /* Keep your existing positioning styles */
