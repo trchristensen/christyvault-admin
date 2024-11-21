@@ -30,7 +30,7 @@
             font-family: 'Monaco';
             /* font-family: 'Courier New', Courier, monospace; */
             color: #000;
-            font-weight: bold;
+            font-weight: 700;
         }
 
         /* Keep your existing positioning styles */
