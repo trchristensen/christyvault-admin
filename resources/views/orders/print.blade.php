@@ -171,7 +171,7 @@
 
 <body>
     <!-- <img class="template" src="{{ public_path('images/form.jpeg') }}" style="width: 100%; object-fit: contain; object-position: top left;"> -->
-    <div class="page-container">
+    <!-- <div class="page-container"> -->
     <article>
         {{-- Customer Info Section --}}
         <div class="customer-info">
@@ -236,7 +236,7 @@
             </div>
         @endif
     </article>
-    </div>
+    <!-- </div> -->
 
     <script>
         window.status = 'ready';
