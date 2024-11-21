@@ -4,7 +4,22 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <style>
+
+        /* .page-container {
+    position: relative;
+    width: 100%;
+    height: 1056px; /* Adjust this to match your form height exactly */
+    page-break-after: avoid;
+} */
+
+@page {
+    size: letter;
+    margin: 0;
+}
+
         body {
+            min-height: 965px;
+            position: relative;
             margin: 0;
             padding: 0;
             width: 100%;
@@ -147,12 +162,16 @@
             height: 122px;
             line-height: 30px;
         }
+        .template {
+            /* opacity: 1; */
+            /* opacity: 0; */
+        }
     </style>
 </head>
 
 <body>
-    {{-- <img src="{{ public_path('images/form.jpeg') }}" style="width: 100%; object-fit: contain; object-position: top left;"> --}}
-
+    <!-- <img class="template" src="{{ public_path('images/form.jpeg') }}" style="width: 100%; object-fit: contain; object-position: top left;"> -->
+    <div class="page-container">
     <article>
         {{-- Customer Info Section --}}
         <div class="customer-info">
@@ -164,9 +183,10 @@
         {{-- Order Info Section --}}
         <div class="order-info">
             <div class="invoice-date" style="height:18px;"></div>
-            <div class="order-number" style="height:18px;">{{ $order->order_number }}</div>
+            <!-- <div class="order-number" style="height:18px;">{{ $order->order_number }}</div> -->
             <div class="order-date" style="height:18px;">
-                {{ $order->order_date->format('m/d/Y') ?? $order->created_at->format('m/d/Y') }}</div>
+                {{ $order->order_date->format('m/d/Y') ?? $order->created_at->format('m/d/Y') }}
+            </div>
         </div>
 
         {{-- Items Section with Updated Format --}}
@@ -216,6 +236,7 @@
             </div>
         @endif
     </article>
+    </div>
 
     <script>
         window.status = 'ready';
