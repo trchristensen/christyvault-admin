@@ -17,6 +17,22 @@
     margin: 0;
 }
 
+.item-sku {
+    font-weight: bold;
+}
+
+.item-quantity {
+    font-weight: bold;
+}
+
+.delivery-date {
+    font-weight: bold;
+}
+
+.customer-name {
+    font-weight: bold;
+}
+
         body {
             min-height: 965px;
             position: relative;
