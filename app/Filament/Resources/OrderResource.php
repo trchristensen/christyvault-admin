@@ -15,6 +15,11 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Notifications\Notification;
+use Closure;
+
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 
 class OrderResource extends Resource
 {
@@ -139,8 +144,14 @@ class OrderResource extends Resource
                             ->default(now()),
                         Forms\Components\DatePicker::make('assigned_delivery_date')
                             // ->required()
-                            ->time()
-                            ->minDate(now()),
+                            // ->time()
+                            ->rules(['date', 'after_or_equal:today',  fn (): Closure => function (string $attribute, $value, Closure $fail) {
+                                if (Carbon::parse($value)->isWeekend()) {
+                                    $fail('Weekend delivery dates are not allowed.');
+                                }
+                            }])
+                            ->minDate(today()),
+                        
                         Forms\Components\Select::make('status')
                             ->options([
                                 'pending' => 'Pending',

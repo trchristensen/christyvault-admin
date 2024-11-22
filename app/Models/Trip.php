@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;  // Add this import
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Trip extends Model
 {
@@ -16,6 +18,12 @@ class Trip extends Model
         'end_time',
         'notes',
     ];
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
 
     public function locations(): MorphToMany
     {
@@ -38,13 +46,9 @@ class Trip extends Model
             ->orderBy('sequence');
     }
 
-    // public function driver()
-    // {
-    //     return $this->belongsTo(Employee::class, 'driver_id');
-    // }
-
     public function driver()
     {
         return $this->belongsTo(Employee::class, 'driver_id', 'id');
     }
+    
 }

@@ -25,6 +25,9 @@ class Order extends Model
         'requested_delivery_date',
         'assigned_delivery_date',
         'special_instructions',
+        'trip_id',           // Add these
+        'stop_number',       // three
+        'delivery_notes',    // fields
     ];
 
     protected $casts = [
@@ -50,6 +53,7 @@ class Order extends Model
             $model->order_number = 'ORD-' . date('Y') . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
         });
     }
+    
 
     public function location(): BelongsTo
     {
@@ -79,7 +83,7 @@ class Order extends Model
         return $this->belongsTo(Employee::class, 'driver_id');
     }
 
-    public function trip()
+    public function trip(): BelongsTo
     {
         return $this->belongsTo(Trip::class);
     }

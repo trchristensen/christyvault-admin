@@ -11,6 +11,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use App\Models\Order;
+
 
 class TripResource extends Resource
 {
@@ -25,10 +27,15 @@ class TripResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Trip Information')
                     ->schema([
-                        Forms\Components\TextInput::make('trip_number')
-                            ->required()
-                            ->default('TRIP-' . date('Y') . '-' . str_pad(Trip::count() + 1, 5, '0', STR_PAD_LEFT))
-                            ->readOnly(), // Change from disabled() to readOnly()
+                       Forms\Components\TextInput::make('trip_number')
+    ->required()
+    ->default(function () {
+        $latestTrip = Trip::latest()->first();
+        $lastNumber = $latestTrip ? intval(substr($latestTrip->trip_number, -5)) : 0;
+        $nextNumber = $lastNumber + 1;
+        return 'TRIP-' . date('Y') . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+    })
+    ->readOnly(),
 
                         Forms\Components\Select::make('driver_id')
                             ->relationship('driver', 'name')
@@ -52,6 +59,8 @@ class TripResource extends Resource
                         Forms\Components\Textarea::make('notes')
                             ->columnSpanFull(),
                     ])->columns(2),
+
+                
             ]);
     }
 
@@ -104,7 +113,7 @@ class TripResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\LocationsRelationManager::class,
+             RelationManagers\OrdersRelationManager::class,
         ];
     }
 
