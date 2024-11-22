@@ -12,7 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use App\Models\Order;
-
+use App\Models\Employee;
 
 class TripResource extends Resource
 {
@@ -39,9 +39,10 @@ class TripResource extends Resource
 
                         Forms\Components\Select::make('driver_id')
                             ->relationship('driver', 'name')
+                            ->placeholder('Select Driver')
                             ->required()
-                            // ->options(Driver::all()->pluck('name', 'id'))
-                            ->searchable(),
+                            ->options(Employee::where('position', 'driver')->pluck('name', 'id'))
+                            ->preload(),
                         Forms\Components\Select::make('status')
                             ->options([
                                 'pending' => 'Pending',
@@ -73,6 +74,23 @@ class TripResource extends Resource
                 Tables\Columns\TextColumn::make('driver.name')
                     ->sortable()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('orders')
+                    ->label('Customers')
+                    ->formatStateUsing(function ($record) {
+                        $orders = $record->orders()->orderBy('stop_number')->get();
+                        
+                        // If only one order, show without stop number
+                        if ($orders->count() === 1) {
+                            $order = $orders->first();
+                            return "{$order->customer->name} ({$order->location->city})";
+                        }
+                        
+                        // Multiple orders, show with stop numbers
+                        return $orders
+                            ->map(fn ($order) => "Stop {$order->stop_number} - {$order->customer->name} ({$order->location->city})")
+                            ->implode('<br>');
+                    })
+                    ->html(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
@@ -96,6 +114,13 @@ class TripResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->defaultGroup('scheduled_date')
+            ->groups([
+                Tables\Grouping\Group::make('scheduled_date')
+                    ->label('Delivery Date')
+                    ->date()
+                    ->collapsible()
             ])
             ->filters([
                 //

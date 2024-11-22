@@ -65,15 +65,16 @@ class OrdersRelationManager extends RelationManager
                         return [
                             Forms\Components\Select::make('order_id')
                                 ->label('Order')
-                                ->options(function () {
-                                    return Order::query()
+                                ->options(
+                                    Order::query()
                                         ->whereNull('trip_id')
                                         ->whereNotIn('status', ['delivered', 'cancelled'])
                                         ->get()
                                         ->mapWithKeys(fn ($order) => [
                                             $order->id => "{$order->order_number} - {$order->customer->name} ({$order->location->city})"
-                                        ]);
-                                })
+                                        ])
+                                        ->toArray()
+                                )
                                 ->searchable()
                                 ->required()
                                 ->preload(),
@@ -87,17 +88,26 @@ class OrdersRelationManager extends RelationManager
                     })
                     ->action(function (array $data): void {
                         $trip = $this->getOwnerRecord();
-                        $order = Order::find($data['order_id']);
-                        $order->update([
-                            'trip_id' => $trip->id,
-                            'stop_number' => $data['stop_number'],
-                            'delivery_notes' => $data['delivery_notes'] ?? null,
-                        ]); 
+                        $order = Order::findOrFail($data['order_id']);
+                        
+                        try {
+                            $order->update([
+                                'trip_id' => $trip->id,
+                                'stop_number' => $data['stop_number'],
+                                'delivery_notes' => $data['delivery_notes'] ?? null,
+                            ]); 
 
-                        Notification::make()
-                            ->title('Order added to trip')
-                            ->success()
-                            ->send();
+                            Notification::make()
+                                ->title('Order added to trip')
+                                ->success()
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Error adding order')
+                                ->danger()
+                                ->body($e->getMessage())
+                                ->send();
+                        }
                     })
             ]);
     }
