@@ -21,6 +21,7 @@ class Order extends Model
         'customer_id',
         'location_id',
         'status',
+        'order_date',
         'requested_delivery_date',
         'assigned_delivery_date',
         'special_instructions',
