@@ -187,7 +187,7 @@
         {{-- Order Info Section --}}
         <div class="order-info">
             <div class="invoice-date" style="height:18px;"></div>
-            <!-- <div class="order-number" style="height:18px;">{{ $order->order_number }}</div> -->
+            <div class="order-number" style="height:18px;"></div>
             <div class="order-date" style="height:18px;">
                 {{ $order->order_date->format('m/d/Y') ?? $order->created_at->format('m/d/Y') }}
             </div>
@@ -228,9 +228,10 @@
 
         {{-- Delivery Info --}}
         <div class="delivery-info">
-            <span class="delivery-date">
+            <div class="delivery-date">
                 {{ $order->assigned_delivery_date->format('D m/d/Y') }}
-            </span>
+            </div>
+            
         </div>
 
         {{-- Instructions --}}
