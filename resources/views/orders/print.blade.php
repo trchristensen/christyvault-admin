@@ -229,7 +229,7 @@
         {{-- Delivery Info --}}
         <div class="delivery-info">
             <span class="delivery-date">
-                {{ $order->requested_delivery_date->format('D m/d/Y') }}
+                {{ $order->assigned_delivery_date->format('D m/d/Y') }}
             </span>
         </div>
 
