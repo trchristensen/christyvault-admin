@@ -60,8 +60,6 @@ class TripResource extends Resource
                         Forms\Components\Textarea::make('notes')
                             ->columnSpanFull(),
                     ])->columns(2),
-
-
             ]);
     }
 

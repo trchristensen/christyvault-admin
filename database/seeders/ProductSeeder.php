@@ -292,7 +292,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'name' => 'Companion Garden Crypt (straight wall)',
-                'sku' => 'G3690-4',
+                'sku' => 'G3086-4',
                 'price' => 0,
                 'stock' => 0,
                 'is_active' => true,
