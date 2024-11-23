@@ -51,13 +51,12 @@ class OrdersRelationManager extends RelationManager
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('remove')
-                    ->action(fn (Order $record) => $record->update(['trip_id' => null]))
+                    ->action(fn(Order $record) => $record->update(['trip_id' => null]))
                     ->requiresConfirmation(),
             ])
             ->headerActions([
                 Tables\Actions\Action::make('add_order')
                     ->form(function () {
-                        // Calculate the next stop number
                         $nextStopNumber = $this->getOwnerRecord()
                             ->orders()
                             ->max('stop_number') ?? 0;
@@ -69,10 +68,16 @@ class OrdersRelationManager extends RelationManager
                                     Order::query()
                                         ->whereNull('trip_id')
                                         ->whereNotIn('status', ['delivered', 'cancelled'])
+                                        ->with(['customer', 'location'])
                                         ->get()
-                                        ->mapWithKeys(fn ($order) => [
-                                            $order->id => "{$order->order_number} - {$order->customer->name} ({$order->location->city})"
-                                        ])
+                                        ->mapWithKeys(function ($order) {
+                                            $customerName = $order->customer?->name ?? 'No Customer';
+                                            $cityName = $order->location?->city ?? 'No Location';
+
+                                            return [
+                                                $order->id => "{$order->order_number} - {$customerName} ({$cityName})"
+                                            ];
+                                        })
                                         ->toArray()
                                 )
                                 ->searchable()
@@ -89,13 +94,13 @@ class OrdersRelationManager extends RelationManager
                     ->action(function (array $data): void {
                         $trip = $this->getOwnerRecord();
                         $order = Order::findOrFail($data['order_id']);
-                        
+
                         try {
                             $order->update([
                                 'trip_id' => $trip->id,
                                 'stop_number' => $data['stop_number'],
                                 'delivery_notes' => $data['delivery_notes'] ?? null,
-                            ]); 
+                            ]);
 
                             Notification::make()
                                 ->title('Order added to trip')

@@ -27,15 +27,15 @@ class TripResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Trip Information')
                     ->schema([
-                       Forms\Components\TextInput::make('trip_number')
-    ->required()
-    ->default(function () {
-        $latestTrip = Trip::latest()->first();
-        $lastNumber = $latestTrip ? intval(substr($latestTrip->trip_number, -5)) : 0;
-        $nextNumber = $lastNumber + 1;
-        return 'TRIP-' . date('Y') . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
-    })
-    ->readOnly(),
+                        Forms\Components\TextInput::make('trip_number')
+                            ->required()
+                            ->default(function () {
+                                $latestTrip = Trip::latest()->first();
+                                $lastNumber = $latestTrip ? intval(substr($latestTrip->trip_number, -5)) : 0;
+                                $nextNumber = $lastNumber + 1;
+                                return 'TRIP-' . date('Y') . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+                            })
+                            ->readOnly(),
 
                         Forms\Components\Select::make('driver_id')
                             ->relationship('driver', 'name')
@@ -61,7 +61,7 @@ class TripResource extends Resource
                             ->columnSpanFull(),
                     ])->columns(2),
 
-                
+
             ]);
     }
 
@@ -78,16 +78,21 @@ class TripResource extends Resource
                     ->label('Customers')
                     ->formatStateUsing(function ($record) {
                         $orders = $record->orders()->orderBy('stop_number')->get();
-                        
+
                         // If only one order, show without stop number
                         if ($orders->count() === 1) {
                             $order = $orders->first();
-                            return "{$order->customer->name} ({$order->location->city})";
+                            return ($order->customer?->name ?? 'No Customer') .
+                                ' (' . ($order->location?->city ?? 'No Location') . ')';
                         }
-                        
+
                         // Multiple orders, show with stop numbers
                         return $orders
-                            ->map(fn ($order) => "Stop {$order->stop_number} - {$order->customer->name} ({$order->location->city})")
+                            ->map(function ($order) {
+                                $customerName = $order->customer?->name ?? 'No Customer';
+                                $cityName = $order->location?->city ?? 'No Location';
+                                return "Stop {$order->stop_number} - {$customerName} ({$cityName})";
+                            })
                             ->implode('<br>');
                     })
                     ->html(),
@@ -138,7 +143,7 @@ class TripResource extends Resource
     public static function getRelations(): array
     {
         return [
-             RelationManagers\OrdersRelationManager::class,
+            RelationManagers\OrdersRelationManager::class,
         ];
     }
 
