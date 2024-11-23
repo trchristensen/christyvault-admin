@@ -4,7 +4,10 @@ namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Filament\Resources\OrderResource;
 use Filament\Actions;
+use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Database\Eloquent\Builder;
+
 
 class ListOrders extends ListRecords
 {
@@ -14,6 +17,17 @@ class ListOrders extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+        ];
+    }
+
+    public function getTabs(): array
+    {
+        return [
+            'active' => Tab::make()
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', '!=', ['delivered', 'cancelled'])),
+            'all' => Tab::make(),
+            'inactive' => Tab::make()
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'delivered')),
         ];
     }
 }

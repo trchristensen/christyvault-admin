@@ -162,6 +162,8 @@ class OrdersRelationManager extends RelationManager
                                 'trip_id' => $trip->id,
                                 'stop_number' => $data['stop_number'],
                                 'delivery_notes' => $data['delivery_notes'] ?? null,
+                                'assigned_delivery_date' => $trip->scheduled_date,
+                                'status' => 'assigned'
                             ]);
 
                             Notification::make()

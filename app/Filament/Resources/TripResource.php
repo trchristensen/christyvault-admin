@@ -16,13 +16,14 @@ use App\Models\Employee;
 use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class TripResource extends Resource
 {
     protected static ?string $model = Trip::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $navigationGroup = 'Operations';
+    protected static ?string $navigationGroup = 'Delivery Management';
 
     public static function form(Form $form): Form
     {
@@ -36,7 +37,7 @@ class TripResource extends Resource
                                 $latestTrip = Trip::latest()->first();
                                 $lastNumber = $latestTrip ? intval(substr($latestTrip->trip_number, -5)) : 0;
                                 $nextNumber = $lastNumber + 1;
-                                return 'TRIP-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+                                return 'TRIP-' . $nextNumber;
                             })
                             ->readOnly(),
 
@@ -120,6 +121,33 @@ class TripResource extends Resource
                 Tables\Columns\TextColumn::make('scheduled_date')
                     ->date()
                     ->sortable(),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('updateStatus')
+                        ->label('Update Status')
+                        ->icon('heroicon-o-truck')
+                        ->action(function (Collection $records, array $data): void {
+                            $records->each(function ($record) use ($data) {
+                                $record->update(['status' => $data['status']]);
+                            });
+                        })
+                        ->form([
+                            Forms\Components\Select::make('status')
+                                ->options([
+                                    'pending' => 'Pending',
+                                    'in_progress' => 'In Progress',
+                                    'completed' => 'Completed',
+                                    'cancelled' => 'Cancelled',
+                                ])
+                                ->required(),
+                        ]),
+                ]),
             ])
             ->defaultGroup('scheduled_date')
             ->groups([

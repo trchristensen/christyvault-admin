@@ -50,7 +50,7 @@ class Order extends Model
             $nextNumber = $lastNumber + 1;
 
             // Generate order number
-            $model->order_number = 'ORD-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+            $model->order_number = 'ORD-' . $nextNumber;
         });
     }
 
@@ -86,5 +86,19 @@ class Order extends Model
     public function trip(): BelongsTo
     {
         return $this->belongsTo(Trip::class);
+    }
+
+    public function getStatusColorAttribute(): string
+    {
+        return match ($this->status) {
+            'cancelled' => '#EF4444',   // red
+            'pending' => '#F59E0B',     // yellow
+            'confirmed' => '#3B82F6',   // blue
+            'in_production' => '#8B5CF6', // purple
+            'ready_for_delivery' => '#10B981', // green
+            'out_for_delivery' => '#F59E0B', // yellow
+            'delivered' => '#10B981',   // green
+            default => '#6B7280',       // gray
+        };
     }
 }

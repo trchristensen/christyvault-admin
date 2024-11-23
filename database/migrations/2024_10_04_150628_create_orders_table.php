@@ -14,15 +14,7 @@ return new class extends Migration
             $table->string('order_number')->unique(); // For human-readable reference
             $table->date('requested_delivery_date');
             $table->text('special_instructions')->nullable();
-            $table->enum('status', [
-                'pending',
-                'confirmed',
-                'in_production',
-                'ready_for_delivery',
-                'out_for_delivery',
-                'delivered',
-                'cancelled'
-            ])->default('pending');
+            $table->string('status')->default('pending');
             $table->timestamps();
             $table->softDeletes();
         });
