@@ -50,10 +50,10 @@ class Order extends Model
             $nextNumber = $lastNumber + 1;
 
             // Generate order number
-            $model->order_number = 'ORD-' . date('Y') . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+            $model->order_number = 'ORD-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
         });
     }
-    
+
 
     public function location(): BelongsTo
     {

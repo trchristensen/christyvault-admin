@@ -36,7 +36,7 @@ class TripResource extends Resource
                                 $latestTrip = Trip::latest()->first();
                                 $lastNumber = $latestTrip ? intval(substr($latestTrip->trip_number, -5)) : 0;
                                 $nextNumber = $lastNumber + 1;
-                                return 'TRIP-' . date('Y') . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+                                return 'TRIP-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
                             })
                             ->readOnly(),
 
