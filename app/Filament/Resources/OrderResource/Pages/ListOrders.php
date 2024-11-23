@@ -25,6 +25,8 @@ class ListOrders extends ListRecords
         return [
             'active' => Tab::make()
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('status', '!=', ['delivered', 'cancelled'])),
+            'unassigned' => Tab::make()
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('trip_id', null)),
             'all' => Tab::make(),
             'inactive' => Tab::make()
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'delivered')),

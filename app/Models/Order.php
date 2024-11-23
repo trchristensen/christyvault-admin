@@ -44,13 +44,21 @@ class Order extends Model
             // Generate UUID
             $model->uuid = (string) Str::uuid();
 
-            // Get the highest order number and increment
-            $latestOrder = static::withTrashed()->latest()->first();
-            $lastNumber = $latestOrder ? intval(substr($latestOrder->order_number, -5)) : 0;
+            // Get the highest order number including soft-deleted records
+            $latestOrder = static::withTrashed()
+                ->orderBy('id', 'desc')  // Ensure we get the absolute latest
+                ->first();
+
+            $lastNumber = 0;
+            if ($latestOrder && $latestOrder->order_number) {
+                preg_match('/ORD-(\d+)/', $latestOrder->order_number, $matches);
+                $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+            }
+
             $nextNumber = $lastNumber + 1;
 
-            // Generate order number
-            $model->order_number = 'ORD-' . $nextNumber;
+            // Generate order number with padding
+            $model->order_number = sprintf('ORD-%05d', $nextNumber);
         });
     }
 

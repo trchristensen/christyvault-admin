@@ -88,18 +88,22 @@ class TripResource extends Resource
                     ->label('Delivery Details')
                     ->html()
                     ->state(function (Trip $record): string {
+                        $orders = $record->orders()->orderBy('stop_number')->get();
                         $ordersHtml = '';
+                        $totalStops = $orders->count();
 
-                        foreach ($record->orders()->orderBy('stop_number')->get() as $order) {
+                        foreach ($orders as $order) {
                             $productsHtml = '';
                             foreach ($order->orderProducts as $orderProduct) {
                                 $quantity = $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity;
                                 $productsHtml .= "• {$quantity} x {$orderProduct->product->name}<br>";
                             }
 
+                            $stopLabel = $totalStops > 1 ? "Stop {$order->stop_number} - " : '';
+
                             $ordersHtml .= "
                                 <div class='mb-3 p-2 bg-gray-50 rounded'>
-                                    <div class='font-medium'>Stop {$order->stop_number} - {$order->customer->name}</div>
+                                    <div class='font-medium'>{$stopLabel}{$order->customer->name}</div>
                                     <div class='text-sm text-gray-600'>{$order->location->full_address}</div>
                                     <div class='mt-1 text-sm text-gray-500'>{$productsHtml}</div>
                                 </div>

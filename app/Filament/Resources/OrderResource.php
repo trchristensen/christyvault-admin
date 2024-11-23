@@ -38,7 +38,6 @@ class OrderResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Order Details')
                     ->description(fn(Order $order): mixed => $order->order_number)
-
                     ->schema([
                         Forms\Components\Select::make('customer_id')
                             ->label('Customer')
@@ -240,11 +239,8 @@ class OrderResource extends Resource
                                     ->required(fn(Forms\Get $get): bool => !$get('fill_load'))
                                     ->disabled(fn(Forms\Get $get): bool => $get('fill_load'))
                                     ->dehydrated(fn(Forms\Get $get): bool => !$get('fill_load')),
-                                Forms\Components\TextInput::make('price')
-                                    ->hidden()
-                                    ->numeric()
-                                    ->prefix('$')
-                                    ->required(),
+                                Forms\Components\Hidden::make('price')
+                                    ->default(0),
                                 Forms\Components\TextInput::make('location')
                                     ->nullable(),
                                 Forms\Components\TextInput::make('notes')
