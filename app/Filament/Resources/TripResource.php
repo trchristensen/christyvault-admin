@@ -13,6 +13,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use App\Models\Order;
 use App\Models\Employee;
+use Filament\Notifications\Actions\Action;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 
 class TripResource extends Resource
@@ -54,9 +56,17 @@ class TripResource extends Resource
                             ->default('pending')
                             ->required(),
                         Forms\Components\DatePicker::make('scheduled_date')
-                            ->required(),
+                            ->required()
+                            ->afterStateUpdated(function ($state, $record) {
+                                if ($record && $record->scheduled_date) {
+                                    Notification::make()
+                                        ->warning()
+                                        ->title('Note')
+                                        ->body('Changing the trip date will automatically update all associated order delivery dates.')
+                                        ->send();
+                                }
+                            }),
                         Forms\Components\TimePicker::make('start_time'),
-                        // ->required(),
                         Forms\Components\TimePicker::make('end_time'),
                         Forms\Components\Textarea::make('notes')
                             ->columnSpanFull(),
