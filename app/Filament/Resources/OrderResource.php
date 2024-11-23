@@ -37,105 +37,105 @@ class OrderResource extends Resource
                     ->description(fn(Order $order): mixed => $order->order_number)
 
                     ->schema([
-                      Forms\Components\Select::make('customer_id')
-    ->label('Customer')
-    ->options(Customer::pluck('name', 'id'))
-    ->required()
-    ->searchable()
-    ->reactive()
-    ->createOptionForm([
-        Forms\Components\TextInput::make('name')
-            ->required()
-            ->maxLength(255),
-        Forms\Components\TextInput::make('email')
-            ->email()
-            ->required()
-            ->maxLength(255),
-        Forms\Components\TextInput::make('phone')
-            ->tel()
-            ->required()
-            ->maxLength(255),
-    ])
-    ->createOptionUsing(function (array $data) {
-        return Customer::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'phone' => $data['phone'],
-        ])->id;
-    })
-    ->afterStateUpdated(function (callable $set, $state) {
-        if (!$state) {
-            $set('location_id', null);
-            return;
-        }
+                        Forms\Components\Select::make('customer_id')
+                            ->label('Customer')
+                            ->options(Customer::pluck('name', 'id'))
+                            ->required()
+                            ->searchable()
+                            ->reactive()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('email')
+                                    ->email()
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('phone')
+                                    ->tel()
+                                    ->required()
+                                    ->maxLength(255),
+                            ])
+                            ->createOptionUsing(function (array $data) {
+                                return Customer::create([
+                                    'name' => $data['name'],
+                                    'email' => $data['email'],
+                                    'phone' => $data['phone'],
+                                ])->id;
+                            })
+                            ->afterStateUpdated(function (callable $set, $state) {
+                                if (!$state) {
+                                    $set('location_id', null);
+                                    return;
+                                }
 
-        // Get the customer's locations
-        $locations = Customer::find($state)?->locations()->get();
+                                // Get the customer's locations
+                                $locations = Customer::find($state)?->locations()->get();
 
-        // If there's exactly one location, set it automatically
-        if ($locations && $locations->count() === 1) {
-            $set('location_id', $locations->first()->id);
-        } else {
-            $set('location_id', null);
-        }
-    }),
-    Forms\Components\Select::make('location_id')
-    ->label('Delivery Location')
-    ->options(function (callable $get) {
-        $customerId = $get('customer_id');
-        if (!$customerId) return [];
+                                // If there's exactly one location, set it automatically
+                                if ($locations && $locations->count() === 1) {
+                                    $set('location_id', $locations->first()->id);
+                                } else {
+                                    $set('location_id', null);
+                                }
+                            }),
+                        Forms\Components\Select::make('location_id')
+                            ->label('Delivery Location')
+                            ->options(function (callable $get) {
+                                $customerId = $get('customer_id');
+                                if (!$customerId) return [];
 
-        return Customer::find($customerId)
-            ?->locations()
-            ->get()
-            ->mapWithKeys(fn($location) => [
-                $location->id => $location->full_address
-            ]) ?? [];
-    })
-    ->required()
-    ->searchable()
-    ->createOptionForm([
-        Forms\Components\TextInput::make('name')
-            ->required()
-            ->maxLength(255),
-        Forms\Components\TextInput::make('address_line1')  // Changed from 'address'
-            ->required()
-            ->maxLength(255),
-        Forms\Components\TextInput::make('address_line2')  // Added this optional field
-            ->maxLength(255),
-        Forms\Components\TextInput::make('city')
-            ->required()
-            ->maxLength(255),
-        Forms\Components\TextInput::make('state')
-            ->required()
-            ->maxLength(255),
-        Forms\Components\TextInput::make('postal_code')    // Changed from 'zip'
-            ->required()
-            ->maxLength(20),
-        Forms\Components\Select::make('location_type')     // Added required field
-            ->options([
-                'business' => 'Business',
-                'residential' => 'Residential',
-                'funeral_home' => 'Funeral Home',
-                'cemetery' => 'Cemetery',
-                'other' => 'Other',
-            ])
-            ->required(),
-    ])
-    ->createOptionUsing(function (array $data, callable $get) {
-        $customerId = $get('customer_id');
-        
-        return Customer::find($customerId)->locations()->create([
-            'name' => $data['name'],
-            'address_line1' => $data['address_line1'],
-            'address_line2' => $data['address_line2'],
-            'city' => $data['city'],
-            'state' => $data['state'],
-            'postal_code' => $data['postal_code'],
-            'location_type' => $data['location_type'],
-        ])->id;
-    })
-    ->visible(fn(callable $get) => (bool) $get('customer_id')),
+                                return Customer::find($customerId)
+                                    ?->locations()
+                                    ->get()
+                                    ->mapWithKeys(fn($location) => [
+                                        $location->id => $location->full_address
+                                    ]) ?? [];
+                            })
+                            ->required()
+                            ->searchable()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('address_line1')  // Changed from 'address'
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('address_line2')  // Added this optional field
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('city')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('state')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('postal_code')    // Changed from 'zip'
+                                    ->required()
+                                    ->maxLength(20),
+                                Forms\Components\Select::make('location_type')     // Added required field
+                                    ->options([
+                                        'business' => 'Business',
+                                        'residential' => 'Residential',
+                                        'funeral_home' => 'Funeral Home',
+                                        'cemetery' => 'Cemetery',
+                                        'other' => 'Other',
+                                    ])
+                                    ->required(),
+                            ])
+                            ->createOptionUsing(function (array $data, callable $get) {
+                                $customerId = $get('customer_id');
+
+                                return Customer::find($customerId)->locations()->create([
+                                    'name' => $data['name'],
+                                    'address_line1' => $data['address_line1'],
+                                    'address_line2' => $data['address_line2'],
+                                    'city' => $data['city'],
+                                    'state' => $data['state'],
+                                    'postal_code' => $data['postal_code'],
+                                    'location_type' => $data['location_type'],
+                                ])->id;
+                            })
+                            ->disabled(fn(callable $get) => empty($get('customer_id'))),
                         Forms\Components\DatePicker::make('order_date')
                             ->required()
                             ->default(now()->toDateString()),
@@ -145,13 +145,13 @@ class OrderResource extends Resource
                         Forms\Components\DatePicker::make('assigned_delivery_date')
                             // ->required()
                             // ->time()
-                            ->rules(['date', 'after_or_equal:today',  fn (): Closure => function (string $attribute, $value, Closure $fail) {
+                            ->rules(['date', 'after_or_equal:today',  fn(): Closure => function (string $attribute, $value, Closure $fail) {
                                 if (Carbon::parse($value)->isWeekend()) {
                                     $fail('Weekend delivery dates are not allowed.');
                                 }
                             }])
                             ->minDate(today()),
-                        
+
                         Forms\Components\Select::make('status')
                             ->options([
                                 'pending' => 'Pending',
@@ -237,11 +237,6 @@ class OrderResource extends Resource
                             ])
                             ->columns(3)
                     ]),
-                Forms\Components\Select::make('driver_id')
-                    ->label('Driver')
-                    ->options(Employee::where('position', 'driver')->pluck('name', 'id'))
-                    ->searchable()
-                    ->nullable(),
             ]);
     }
 
@@ -255,7 +250,11 @@ class OrderResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('customer.name')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->description(
+                        fn(Order $record): string =>
+                        $record->location?->full_address ?? ''
+                    ),
                 Tables\Columns\TextColumn::make('requested_delivery_date')
                     ->date()
                     ->sortable(),
@@ -264,13 +263,29 @@ class OrderResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->sortable()
-                    ->color(fn(string $state): string => match ($state) {
-                        'cancelled' => 'danger',
-                        'pending' => 'warning',
-                        'delivered' => 'success',
-                        default => 'primary',
-                    }),
+                    ->badge()
+                    ->formatStateUsing(function (string $state): string {
+                        return str($state)->headline();
+                    })
+                    ->color(function (string $state): string {
+                        return match ($state) {
+                            'cancelled' => 'danger',
+                            'pending' => 'warning',
+                            'confirmed' => 'success',
+                            'in_production' => 'info',
+                            'ready_for_delivery' => 'gray',
+                            'out_for_delivery' => 'warning',
+                            'delivered' => 'success',
+                            default => 'primary',
+                        };
+                    })
             ])
+            ->groups([
+                Tables\Grouping\Group::make('assigned_delivery_date')
+                    ->label('Delivery Date')
+                    ->date()
+            ])
+            ->defaultGroup('assigned_delivery_date')
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
                 Tables\Filters\SelectFilter::make('status')

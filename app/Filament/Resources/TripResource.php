@@ -13,6 +13,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use App\Models\Order;
 use App\Models\Employee;
+use Illuminate\Database\Eloquent\Builder;
 
 class TripResource extends Resource
 {
@@ -72,28 +73,32 @@ class TripResource extends Resource
                 Tables\Columns\TextColumn::make('driver.name')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('orders')
-                    ->label('Customers')
-                    ->formatStateUsing(function ($record) {
-                        $orders = $record->orders()->orderBy('stop_number')->get();
+                Tables\Columns\TextColumn::make('delivery_details')
+                    ->label('Delivery Details')
+                    ->html()
+                    ->state(function (Trip $record): string {
+                        $ordersHtml = '';
 
-                        // If only one order, show without stop number
-                        if ($orders->count() === 1) {
-                            $order = $orders->first();
-                            return ($order->customer?->name ?? 'No Customer') .
-                                ' (' . ($order->location?->city ?? 'No Location') . ')';
+                        foreach ($record->orders()->orderBy('stop_number')->get() as $order) {
+                            $productsHtml = '';
+                            foreach ($order->orderProducts as $orderProduct) {
+                                $quantity = $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity;
+                                $productsHtml .= "• {$quantity} x {$orderProduct->product->name}<br>";
+                            }
+
+                            $ordersHtml .= "
+                                <div class='mb-3 p-2 bg-gray-50 rounded'>
+                                    <div class='font-medium'>Stop {$order->stop_number} - {$order->customer->name}</div>
+                                    <div class='text-sm text-gray-600'>{$order->location->full_address}</div>
+                                    <div class='mt-1 text-sm text-gray-500'>{$productsHtml}</div>
+                                </div>
+                            ";
                         }
 
-                        // Multiple orders, show with stop numbers
-                        return $orders
-                            ->map(function ($order) {
-                                $customerName = $order->customer?->name ?? 'No Customer';
-                                $cityName = $order->location?->city ?? 'No Location';
-                                return "Stop {$order->stop_number} - {$customerName} ({$cityName})";
-                            })
-                            ->implode('<br>');
+                        return "<div class='space-y-1'>{$ordersHtml}</div>";
                     })
-                    ->html(),
+                    ->alignLeft()
+                    ->wrap(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
@@ -105,18 +110,6 @@ class TripResource extends Resource
                 Tables\Columns\TextColumn::make('scheduled_date')
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('start_time')
-                    ->time(),
-                Tables\Columns\TextColumn::make('end_time')
-                    ->time(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultGroup('scheduled_date')
             ->groups([
@@ -124,17 +117,6 @@ class TripResource extends Resource
                     ->label('Delivery Date')
                     ->date()
                     ->collapsible()
-            ])
-            ->filters([
-                //
-            ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
             ]);
     }
 
@@ -152,5 +134,16 @@ class TripResource extends Resource
             'create' => Pages\CreateTrip::route('/create'),
             'edit' => Pages\EditTrip::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'orders.customer',
+                'orders.location',
+                'orders.orderProducts.product',
+                'driver'
+            ]);
     }
 }

@@ -9,6 +9,8 @@ use App\Models\Employee;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Navigation\NavigationGroup;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -16,6 +18,10 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Hash;
+use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
+use Ysfkaya\FilamentPhoneInput\Infolists\PhoneEntry;
+use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
+use Ysfkaya\FilamentPhoneInput\Tables\PhoneColumn;
 
 class EmployeeResource extends Resource
 {
@@ -29,54 +35,79 @@ class EmployeeResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required(),
-                Forms\Components\TextInput::make('address'),
-                Forms\Components\TextInput::make('email')
-                    ->email()
-                    ->required(),
-                Forms\Components\TextInput::make('phone')
-                    ->tel(),
-                Forms\Components\Select::make('position')
-                    ->options([
-                        'driver' => 'Driver',
-                        'production' => 'Production',
-                    ])
-                    ->live()
-                    ->required(),
-                Forms\Components\Select::make(name: 'christy_location')
-                    ->options([
-                        'colma' => 'Colma',
-                        'tulare' => 'Tulare',
-                    ])
-                    ->required(),
-                Forms\Components\DatePicker::make('hire_date')
-                    ->required(),
-                Forms\Components\DatePicker::make('birth_date')
-                    ->label('Birthdate'),
-                Forms\Components\Toggle::make('is_active')
-                    ->default(true)
-                    ->required(),
+                Forms\Components\Section::make('User Association')
+                    ->description('Select an existing user account to link to this employee')
+                    ->schema([
+                        Forms\Components\Select::make('user_id')
+                            ->label('Associated User Account')
+                            ->relationship('user', 'name')
+                            ->preload()
+                            ->searchable()
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set, ?string $state) {
+                                if (!$state) return;
+
+                                $user = User::find($state);
+                                if (!$user) return;
+
+                                // Only set values if they're empty
+                                if (empty($get('name'))) {
+                                    $set('name', $user->name);
+                                }
+                                if (empty($get('email'))) {
+                                    $set('email', $user->email);
+                                }
+                            }),
+                    ])->columnSpanFull(),
+
+                Forms\Components\Section::make('Employee Details')
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->readOnly(fn(Get $get): bool => (bool) $get('user_id')),
+                        Forms\Components\TextInput::make('email')
+                            ->email()
+                            ->required()
+                            ->readOnly(fn(Get $get): bool => (bool) $get('user_id')),
+                        PhoneInput::make('phone')->defaultCountry('US'),
+                        Forms\Components\TextInput::make('address'),
+                        Forms\Components\Select::make('position')
+                            ->options([
+                                'driver' => 'Driver',
+                                'production' => 'Production',
+                                'foreman' => 'Foreman',
+                                'manager' => 'Manager',
+                            ])
+                            ->live()
+                            ->required(),
+                        Forms\Components\Select::make('christy_location')
+                            ->options([
+                                'colma' => 'Colma',
+                                'tulare' => 'Tulare',
+                            ])
+                            ->required(),
+                        Forms\Components\DatePicker::make('hire_date')
+                            ->required(),
+                        Forms\Components\DatePicker::make('birth_date')
+                            ->label('Birthdate')
+                            ->required(),
+                        Forms\Components\Toggle::make('is_active')
+                            ->default(true)
+                            ->required(),
+                    ])->columns(2),
+
                 Forms\Components\Section::make('Driver Details')
                     ->schema([
                         Forms\Components\TextInput::make('driver.license_number')
                             ->label('License Number'),
                         Forms\Components\DatePicker::make('driver.license_expiration')
                             ->label('License Expiration'),
-                        // Forms\Components\TextInput::make('driver.vehicle_type')
-                        //     ->label('Vehicle Type'),
                         Forms\Components\Textarea::make('driver.notes')
                             ->label('Notes'),
                     ])
-                    ->visible(fn(callable $get) => $get('position') === 'driver'),
-                Forms\Components\Section::make('User Account')
-                    ->schema([
-                        Forms\Components\Select::make('user_id')
-                            ->label('Associated User Account')
-                            ->relationship('user', 'name')
-                            ->preload()
-                            ->searchable(),
-                    ]),
+                    ->visible(fn(Get $get) => $get('position') === 'driver')
+                    ->columns(2),
             ]);
     }
 
@@ -88,8 +119,7 @@ class EmployeeResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('phone')
-                    ->searchable(),
+                PhoneColumn::make('phone')->displayFormat(PhoneInputNumberType::INTERNATIONAL),
                 Tables\Columns\TextColumn::make('position')
                     ->searchable(),
                 Tables\Columns\IconColumn::make('is_active')

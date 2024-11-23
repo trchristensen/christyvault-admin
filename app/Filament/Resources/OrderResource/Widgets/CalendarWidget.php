@@ -53,210 +53,205 @@ class CalendarWidget extends FullCalendarWidget
     public function getFormSchema(): array
     {
         return [
-                Section::make('Order Details')
-                    ->description(fn(Order $order): mixed => $order->order_number)
+            Section::make('Order Details')
+                ->description(fn(Order $order): mixed => $order->order_number)
 
-                    ->schema([
-                      Select::make('customer_id')
-    ->label('Customer')
-    ->options(Customer::pluck('name', 'id'))
-    ->required()
-    ->searchable()
-    ->reactive()
-    ->createOptionForm([
-        TextInput::make('name')
-            ->required()
-            ->maxLength(255),
-        TextInput::make('email')
-            ->email()
-            ->required()
-            ->maxLength(255),
-        TextInput::make('phone')
-            ->tel()
-            ->required()
-            ->maxLength(255),
-    ])
-    ->createOptionUsing(function (array $data) {
-        return Customer::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'phone' => $data['phone'],
-        ])->id;
-    })
-    ->afterStateUpdated(function (callable $set, $state) {
-        if (!$state) {
-            $set('location_id', null);
-            return;
-        }
+                ->schema([
+                    Select::make('customer_id')
+                        ->label('Customer')
+                        ->options(Customer::pluck('name', 'id'))
+                        ->required()
+                        ->searchable()
+                        ->reactive()
+                        ->createOptionForm([
+                            TextInput::make('name')
+                                ->required()
+                                ->maxLength(255),
+                            TextInput::make('email')
+                                ->email()
+                                ->required()
+                                ->maxLength(255),
+                            TextInput::make('phone')
+                                ->tel()
+                                ->required()
+                                ->maxLength(255),
+                        ])
+                        ->createOptionUsing(function (array $data) {
+                            return Customer::create([
+                                'name' => $data['name'],
+                                'email' => $data['email'],
+                                'phone' => $data['phone'],
+                            ])->id;
+                        })
+                        ->afterStateUpdated(function (callable $set, $state) {
+                            if (!$state) {
+                                $set('location_id', null);
+                                return;
+                            }
 
-        // Get the customer's locations
-        $locations = Customer::find($state)?->locations()->get();
+                            // Get the customer's locations
+                            $locations = Customer::find($state)?->locations()->get();
 
-        // If there's exactly one location, set it automatically
-        if ($locations && $locations->count() === 1) {
-            $set('location_id', $locations->first()->id);
-        } else {
-            $set('location_id', null);
-        }
-    }),
-    Select::make('location_id')
-    ->label('Delivery Location')
-    ->options(function (callable $get) {
-        $customerId = $get('customer_id');
-        if (!$customerId) return [];
+                            // If there's exactly one location, set it automatically
+                            if ($locations && $locations->count() === 1) {
+                                $set('location_id', $locations->first()->id);
+                            } else {
+                                $set('location_id', null);
+                            }
+                        }),
+                    Select::make('location_id')
+                        ->label('Delivery Location')
+                        ->options(function (callable $get) {
+                            $customerId = $get('customer_id');
+                            if (!$customerId) return [];
 
-        return Customer::find($customerId)
-            ?->locations()
-            ->get()
-            ->mapWithKeys(fn($location) => [
-                $location->id => $location->full_address
-            ]) ?? [];
-    })
-    ->required()
-    ->searchable()
-    ->createOptionForm([
-        TextInput::make('name')
-            ->required()
-            ->maxLength(255),
-        TextInput::make('address_line1')  // Changed from 'address'
-            ->required()
-            ->maxLength(255),
-        TextInput::make('address_line2')  // Added this optional field
-            ->maxLength(255),
-        TextInput::make('city')
-            ->required()
-            ->maxLength(255),
-        TextInput::make('state')
-            ->required()
-            ->maxLength(255),
-        TextInput::make('postal_code')    // Changed from 'zip'
-            ->required()
-            ->maxLength(20),
-        Select::make('location_type')     // Added required field
-            ->options([
-                'business' => 'Business',
-                'residential' => 'Residential',
-                'funeral_home' => 'Funeral Home',
-                'cemetery' => 'Cemetery',
-                'other' => 'Other',
-            ])
-            ->required(),
-    ])
-    ->createOptionUsing(function (array $data, callable $get) {
-        $customerId = $get('customer_id');
-        
-        return Customer::find($customerId)->locations()->create([
-            'name' => $data['name'],
-            'address_line1' => $data['address_line1'],
-            'address_line2' => $data['address_line2'],
-            'city' => $data['city'],
-            'state' => $data['state'],
-            'postal_code' => $data['postal_code'],
-            'location_type' => $data['location_type'],
-        ])->id;
-    })
-    ->visible(fn(callable $get) => (bool) $get('customer_id')),
-                        DatePicker::make('order_date')
-                            ->required()
-                            ->default(now()->toDateString()),
-                        DatePicker::make('requested_delivery_date')
-                            ->required()
-                            ->default(now()),
-                        DatePicker::make('assigned_delivery_date')
-                            // ->required()
-                            ->time()
-                            ->minDate(now()),
-                        Select::make('status')
-                            ->options([
-                                'pending' => 'Pending',
-                                'confirmed' => 'Confirmed',
-                                'in_production' => 'In Production',
-                                'ready_for_delivery' => 'Ready for Delivery',
-                                'out_for_delivery' => 'Out for Delivery',
-                                'delivered' => 'Delivered',
-                                'cancelled' => 'Cancelled',
-                            ])
-                            ->default('pending')
-                            ->required(),
-                        Textarea::make('special_instructions')
-                            ->maxLength(1000),
-                    ])
-                    ->columns(2),
-                Section::make('Products')
-                    ->schema([
-                        Repeater::make('orderProducts')
-                            ->relationship()
-                            ->reorderable(true)
-                            ->schema([
-                                Select::make('product_id')
-                                    ->label('Product')
-                                    ->options(
-                                        Product::query()
-                                            ->where('is_active', true)
-                                            ->get()
-                                            ->mapWithKeys(fn(Product $product) => [
-                                                $product->id => view('filament.components.product-option', [
-                                                    'sku' => $product->sku,
-                                                    'name' => $product->name,
-                                                ])->render()
-                                            ])
+                            return Customer::find($customerId)
+                                ?->locations()
+                                ->get()
+                                ->mapWithKeys(fn($location) => [
+                                    $location->id => $location->full_address
+                                ]) ?? [];
+                        })
+                        ->required()
+                        ->searchable()
+                        ->createOptionForm([
+                            TextInput::make('name')
+                                ->required()
+                                ->maxLength(255),
+                            TextInput::make('address_line1')  // Changed from 'address'
+                                ->required()
+                                ->maxLength(255),
+                            TextInput::make('address_line2')  // Added this optional field
+                                ->maxLength(255),
+                            TextInput::make('city')
+                                ->required()
+                                ->maxLength(255),
+                            TextInput::make('state')
+                                ->required()
+                                ->maxLength(255),
+                            TextInput::make('postal_code')    // Changed from 'zip'
+                                ->required()
+                                ->maxLength(20),
+                            Select::make('location_type')     // Added required field
+                                ->options([
+                                    'business' => 'Business',
+                                    'residential' => 'Residential',
+                                    'funeral_home' => 'Funeral Home',
+                                    'cemetery' => 'Cemetery',
+                                    'other' => 'Other',
+                                ])
+                                ->required(),
+                        ])
+                        ->createOptionUsing(function (array $data, callable $get) {
+                            $customerId = $get('customer_id');
+
+                            return Customer::find($customerId)->locations()->create([
+                                'name' => $data['name'],
+                                'address_line1' => $data['address_line1'],
+                                'address_line2' => $data['address_line2'],
+                                'city' => $data['city'],
+                                'state' => $data['state'],
+                                'postal_code' => $data['postal_code'],
+                                'location_type' => $data['location_type'],
+                            ])->id;
+                        })
+                        ->visible(fn(callable $get) => (bool) $get('customer_id')),
+                    DatePicker::make('order_date')
+                        ->required()
+                        ->default(now()->toDateString()),
+                    DatePicker::make('requested_delivery_date')
+                        ->required()
+                        ->default(now()),
+                    DatePicker::make('assigned_delivery_date')
+                        // ->required()
+                        ->time()
+                        ->minDate(now()),
+                    Select::make('status')
+                        ->options([
+                            'pending' => 'Pending',
+                            'confirmed' => 'Confirmed',
+                            'in_production' => 'In Production',
+                            'ready_for_delivery' => 'Ready for Delivery',
+                            'out_for_delivery' => 'Out for Delivery',
+                            'delivered' => 'Delivered',
+                            'cancelled' => 'Cancelled',
+                        ])
+                        ->default('pending')
+                        ->required(),
+                    Textarea::make('special_instructions')
+                        ->maxLength(1000),
+                ])
+                ->columns(2),
+            Section::make('Products')
+                ->schema([
+                    Repeater::make('orderProducts')
+                        ->relationship()
+                        ->reorderable(true)
+                        ->schema([
+                            Select::make('product_id')
+                                ->label('Product')
+                                ->options(
+                                    Product::query()
+                                        ->where('is_active', true)
+                                        ->get()
+                                        ->mapWithKeys(fn(Product $product) => [
+                                            $product->id => view('filament.components.product-option', [
+                                                'sku' => $product->sku,
+                                                'name' => $product->name,
+                                            ])->render()
+                                        ])
+                                )
+                                ->getOptionLabelsUsing(
+                                    fn(array $values): array =>
+                                    Product::whereIn(
+                                        'id',
+                                        $values
                                     )
-                                    ->getOptionLabelsUsing(
-                                        fn(array $values): array =>
-                                        Product::whereIn(
-                                            'id',
-                                            $values
-                                        )
-                                            ->get()
-                                            ->mapWithKeys(fn(Product $product) => [
-                                                $product->id => view('filament.components.product-option', [
-                                                    'sku' => $product->sku,
-                                                    'name' => $product->name,
-                                                ])->render()
-                                            ])
+                                        ->get()
+                                        ->mapWithKeys(fn(Product $product) => [
+                                            $product->id => view('filament.components.product-option', [
+                                                'sku' => $product->sku,
+                                                'name' => $product->name,
+                                            ])->render()
+                                        ])
 
-                                            ->toArray()
-                                    )
-                                    ->allowHtml()
-                                    ->required()
-                                    ->reactive()
-                                    ->searchable()
-                                    ->afterStateUpdated(
-                                        fn($state, callable $set) =>
-                                        $set('price', Product::find($state)?->price ?? 0)
-                                    ),
-                                Checkbox::make('fill_load')
-                                    ->label('Fill out load')
-                                    ->reactive()
-                                    ->afterStateUpdated(function ($state, callable $set) {
-                                        if ($state) {
-                                            $set('quantity', null);
-                                        }
-                                    }),
-                                 TextInput::make('quantity')
-        ->numeric()
-        ->default(1)
-        ->required(fn(Get $get): bool => !$get('fill_load'))
-        ->disabled(fn(Get $get): bool => $get('fill_load'))
-        ->dehydrated(fn(Get $get): bool => !$get('fill_load')),
-                                TextInput::make('price')
-                                    ->numeric()
-                                    ->prefix('$')
-                                    ->required(),
-                                TextInput::make('location')
-                                    ->nullable(),
-                                TextInput::make('notes')
-                                    ->nullable()
-                                    ->columnSpanFull()
-                            ])
-                            ->columns(3)
-                    ]),
-                Select::make('driver_id')
-                    ->label('Driver')
-                    ->options(Employee::where('position', 'driver')->pluck('name', 'id'))
-                    ->searchable()
-                    ->nullable(),
-                ];
+                                        ->toArray()
+                                )
+                                ->allowHtml()
+                                ->required()
+                                ->reactive()
+                                ->searchable()
+                                ->afterStateUpdated(
+                                    fn($state, callable $set) =>
+                                    $set('price', Product::find($state)?->price ?? 0)
+                                ),
+                            Checkbox::make('fill_load')
+                                ->label('Fill out load')
+                                ->reactive()
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    if ($state) {
+                                        $set('quantity', null);
+                                    }
+                                }),
+                            TextInput::make('quantity')
+                                ->numeric()
+                                ->default(1)
+                                ->required(fn(Get $get): bool => !$get('fill_load'))
+                                ->disabled(fn(Get $get): bool => $get('fill_load'))
+                                ->dehydrated(fn(Get $get): bool => !$get('fill_load')),
+                            TextInput::make('price')
+                                ->numeric()
+                                ->prefix('$')
+                                ->required(),
+                            TextInput::make('location')
+                                ->nullable(),
+                            TextInput::make('notes')
+                                ->nullable()
+                                ->columnSpanFull()
+                        ])
+                        ->columns(3)
+                ]),
+        ];
     }
 
 
@@ -306,7 +301,6 @@ class CalendarWidget extends FullCalendarWidget
         // Meta info
         infoContainer.innerHTML = `
             <div><span>requested: </span>${event.extendedProps.requestedDate}</div>
-            <div><span>driver: </span>${event.extendedProps.driverName || 'Unassigned'}</div>
             <div><span>status: </span>${event.extendedProps.status}</div>
         `;
 
@@ -407,7 +401,6 @@ class CalendarWidget extends FullCalendarWidget
                     'extendedProps' => [
                         'customerName' => $order->customer?->name,
                         'requestedDate' => $order->requested_delivery_date->format('m/d'),
-                        'driverName' => $order->driver?->name ? Str::headline($order->driver?->name) : 'Unassigned',
                         'status' => Str::headline($order->status),
                         'products' => $order->orderProducts->map(function ($orderProduct) {
                             return [

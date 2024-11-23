@@ -55,9 +55,10 @@ class CustomerResource extends Resource
                     ->label('Primary Address')
                     ->getStateUsing(function (Customer $record) {
                         $primary = $record->primaryLocation();
-                        return $primary ? $primary->address_line1 : '';
+                        return $primary ? $primary->full_address : '';
                     })
                     ->searchable(),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
