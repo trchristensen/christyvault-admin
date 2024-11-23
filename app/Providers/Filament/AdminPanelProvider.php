@@ -59,7 +59,7 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 BreezyCore::make()
                     ->myProfile(),
-                FilamentSpatieRolesPermissionsPlugin::make(),
+                // FilamentSpatieRolesPermissionsPlugin::make(),
                 FilamentFullCalendarPlugin::make()
                     ->selectable()
                     ->editable()

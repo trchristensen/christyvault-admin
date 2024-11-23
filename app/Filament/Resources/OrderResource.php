@@ -20,6 +20,7 @@ use Closure;
 
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Components\Tab;
 
 class OrderResource extends Resource
@@ -167,7 +168,7 @@ class OrderResource extends Resource
                             ->default('pending')
                             ->required(),
                         Forms\Components\Textarea::make('special_instructions')
-                            ->maxLength(1000),
+                            ->columnSpanFull(),
                     ])
                     ->columns(2),
                 Forms\Components\Section::make('Products')
@@ -177,6 +178,7 @@ class OrderResource extends Resource
                             ->reorderable(true)
                             ->schema([
                                 Forms\Components\Select::make('product_id')
+                                    ->columnSpanFull()
                                     ->label('Product')
                                     ->options(
                                         Product::query()
@@ -213,14 +215,25 @@ class OrderResource extends Resource
                                         fn($state, callable $set) =>
                                         $set('price', Product::find($state)?->price ?? 0)
                                     ),
-                                Forms\Components\Checkbox::make('fill_load')
+                                Toggle::make('fill_load')
                                     ->label('Fill out load')
+
+                                    ->inline(false)
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         if ($state) {
                                             $set('quantity', null);
                                         }
                                     }),
+
+                                // Forms\Components\Checkbox::make('fill_load')
+                                //     ->label('Fill out load')
+                                //     ->reactive()
+                                //     ->afterStateUpdated(function ($state, callable $set) {
+                                //         if ($state) {
+                                //             $set('quantity', null);
+                                //         }
+                                //     }),
                                 Forms\Components\TextInput::make('quantity')
                                     ->numeric()
                                     ->default(1)
@@ -228,6 +241,7 @@ class OrderResource extends Resource
                                     ->disabled(fn(Forms\Get $get): bool => $get('fill_load'))
                                     ->dehydrated(fn(Forms\Get $get): bool => !$get('fill_load')),
                                 Forms\Components\TextInput::make('price')
+                                    ->hidden()
                                     ->numeric()
                                     ->prefix('$')
                                     ->required(),
