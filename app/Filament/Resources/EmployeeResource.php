@@ -120,9 +120,15 @@ class EmployeeResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
-                PhoneColumn::make('phone')->displayFormat(PhoneInputNumberType::INTERNATIONAL),
+                PhoneColumn::make('phone')
+                    ->displayFormat(PhoneInputNumberType::INTERNATIONAL),
                 Tables\Columns\TextColumn::make('position')
-                    ->searchable(),
+                    ->searchable()
+                    ->badge(),
+                Tables\Columns\TextColumn::make('christy_location')
+                    ->label('Location')
+                    ->formatStateUsing(fn(string $state): string => ucfirst($state))
+                    ->badge(),
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -138,13 +144,17 @@ class EmployeeResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->defaultGroup('christy_location')
             ->groups([
                 Tables\Grouping\Group::make('christy_location')
                     ->label('Location')
                     ->getTitleFromRecordUsing(fn(Employee $record): string => ucfirst($record->christy_location))
-                    ->collapsible()
+                    ->collapsible(),
+                Tables\Grouping\Group::make('position')
+                    ->label('Position')
+                    ->getTitleFromRecordUsing(fn(Employee $record): string => ucfirst($record->position))
+                    ->collapsible(),
             ])
+            ->defaultGroup('christy_location')
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
             ])
