@@ -138,6 +138,13 @@ class EmployeeResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultGroup('christy_location')
+            ->groups([
+                Tables\Grouping\Group::make('christy_location')
+                    ->label('Location')
+                    ->getTitleFromRecordUsing(fn(Employee $record): string => ucfirst($record->christy_location))
+                    ->collapsible()
+            ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
             ])
