@@ -34,10 +34,18 @@ class TripResource extends Resource
                         Forms\Components\TextInput::make('trip_number')
                             ->required()
                             ->default(function () {
-                                $latestTrip = Trip::latest()->first();
-                                $lastNumber = $latestTrip ? intval(substr($latestTrip->trip_number, -5)) : 0;
+                                $latestTrip = Trip::withTrashed()
+                                    ->orderBy('id', 'desc')
+                                    ->first();
+
+                                $lastNumber = 0;
+                                if ($latestTrip && $latestTrip->trip_number) {
+                                    preg_match('/TRIP-(\d+)/', $latestTrip->trip_number, $matches);
+                                    $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+                                }
+
                                 $nextNumber = $lastNumber + 1;
-                                return 'TRIP-' . $nextNumber;
+                                return sprintf('TRIP-%05d', $nextNumber);
                             })
                             ->readOnly(),
 
