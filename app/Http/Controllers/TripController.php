@@ -136,10 +136,7 @@ class TripController extends Controller
     public function show(Request $request, Trip $trip)
     {
         try {
-            $user = $request->user();
-
             $trip = Trip::where('id', $trip->id)
-                ->where('driver_id', $user->employee->id)
                 ->with([
                     'driver',
                     'orders' => function ($query) {
@@ -147,7 +144,7 @@ class TripController extends Controller
                     },
                     'orders.customer',
                     'orders.location',
-                    'orders.orderProducts.product',
+                    'orders.orderProducts.product'
                 ])
                 ->first();
 
@@ -155,44 +152,35 @@ class TripController extends Controller
                 return response()->json(['error' => 'Trip not found'], 404);
             }
 
-            $formattedOrders = $trip->orders->map(function ($order) {
+            $deliveryDetails = $trip->orders->map(function ($order) {
                 return [
-                    'id' => $order->id,
-                    'order_number' => $order->order_number,
                     'stop_number' => $order->stop_number,
-                    'status' => $order->status,
-                    'delivery_notes' => $order->delivery_notes,
-                    'special_instructions' => $order->special_instructions,
-                    'customer' => [
-                        'id' => $order->customer->id,
-                        'name' => $order->customer->name,
-                        'phone' => $order->customer->phone,
-                        'email' => $order->customer->email,
-                    ],
+                    'customer_name' => $order->customer->name,
+                    'customer_phone' => $order->customer->phone,
                     'location' => [
-                        'id' => $order->location->id,
                         'name' => $order->location->name,
-                        'address_line1' => $order->location->address_line1,
-                        'address_line2' => $order->location->address_line2,
+                        'address' => $order->location->address_line1,
                         'city' => $order->location->city,
                         'state' => $order->location->state,
                         'postal_code' => $order->location->postal_code,
                         'latitude' => $order->location->latitude,
                         'longitude' => $order->location->longitude,
+                        'full_address' => implode(', ', array_filter([
+                            $order->location->address_line1,
+                            $order->location->city,
+                            $order->location->state,
+                            $order->location->postal_code
+                        ]))
                     ],
                     'products' => $order->orderProducts->map(function ($orderProduct) {
                         return [
-                            'id' => $orderProduct->id,
-                            'product' => [
-                                'id' => $orderProduct->product->id,
-                                'name' => $orderProduct->product->name,
-                                'sku' => $orderProduct->product->sku,
-                            ],
-                            'quantity' => $orderProduct->quantity,
-                            'fill_load' => $orderProduct->fill_load,
-                            'notes' => $orderProduct->notes,
+                            'quantity' => $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity,
+                            'product_name' => $orderProduct->product->name,
+                            'notes' => $orderProduct->notes
                         ];
                     }),
+                    'delivery_notes' => $order->delivery_notes,
+                    'special_instructions' => $order->special_instructions,
                 ];
             });
 
@@ -204,13 +192,14 @@ class TripController extends Controller
                 'start_time' => $trip->start_time,
                 'end_time' => $trip->end_time,
                 'notes' => $trip->notes,
-                'driver' => $trip->driver ? [
+                'driver' => [
                     'id' => $trip->driver->id,
                     'name' => $trip->driver->name,
                     'email' => $trip->driver->email,
                     'phone' => $trip->driver->phone,
-                ] : null,
-                'orders' => $formattedOrders,
+                ],
+                'delivery_details' => $deliveryDetails,
+                'orders' => $trip->orders,
                 'created_at' => $trip->created_at,
                 'updated_at' => $trip->updated_at,
             ]);
@@ -221,6 +210,32 @@ class TripController extends Controller
             ]);
             return response()->json([
                 'error' => 'Failed to fetch trip details',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateStatus(Request $request, Trip $trip)
+    {
+        try {
+            $request->validate([
+                'status' => 'required|in:pending,in_progress,completed,cancelled'
+            ]);
+
+            $trip->status = $request->status;
+            $trip->save();
+
+            return response()->json([
+                'message' => 'Trip status updated successfully',
+                'status' => $trip->status
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Trip status update error:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error' => 'Failed to update trip status',
                 'message' => $e->getMessage()
             ], 500);
         }

@@ -265,7 +265,6 @@
                 </div>
             @endif
 
-
             {{-- Service Date --}}
             @if ($order->service_date)
                 <div class="service-date">

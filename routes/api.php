@@ -49,5 +49,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/trips', [TripController::class, 'index']);
     Route::get('/trips/{trip}', [TripController::class, 'show']); // Add this line
-
+    Route::patch('/trips/{trip}/status', [TripController::class, 'updateStatus']);
 });
