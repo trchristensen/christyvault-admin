@@ -259,10 +259,11 @@
             <div class="delivery-date">
                 {{ $order->assigned_delivery_date->format('D m/d/Y') }}
             </div>
-
-            <div class="delivery-time">
-                {{ $order->delivery_time->format('g:i A') ?? null }}
-            </div>
+            @if ($order->delivery_time)
+                <div class="delivery-time">
+                    {{ $order->delivery_time->format('g:i A') ?? null }}
+                </div>
+            @endif
 
 
             {{-- Service Date --}}
