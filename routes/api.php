@@ -6,6 +6,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 
+
+Route::get('/test', function (Request $request) {
+    return response()->json([
+        'message' => 'Hello World'
+    ]);
+});
+
 // Public routes
 Route::post('/tokens/create', function (Request $request) {
 

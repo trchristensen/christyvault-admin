@@ -174,14 +174,14 @@ class OrderResource extends Resource
                     ->schema([
                         Forms\Components\Repeater::make('orderProducts')
                             ->relationship()
-                            ->reorderable(true)
+
                             ->schema([
                                 Forms\Components\Select::make('product_id')
                                     ->columnSpanFull()
                                     ->label('Product')
                                     ->options(
                                         Product::query()
-                                            ->where('is_active', true)
+                                            ->active()
                                             ->get()
                                             ->mapWithKeys(fn(Product $product) => [
                                                 $product->id => view('filament.components.product-option', [
@@ -219,6 +219,7 @@ class OrderResource extends Resource
 
                                     ->inline(false)
                                     ->reactive()
+                                    ->dehydrateStateUsing(fn($state) => (bool) $state)
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         if ($state) {
                                             $set('quantity', null);

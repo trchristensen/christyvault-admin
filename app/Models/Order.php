@@ -34,6 +34,7 @@ class Order extends Model
         'order_date' => 'date',
         'requested_delivery_date' => 'date',
         'assigned_delivery_date' => 'date',
+        'is_active' => 'boolean',
     ];
 
     protected static function boot()
@@ -59,6 +60,21 @@ class Order extends Model
 
             // Generate order number with padding
             $model->order_number = sprintf('ORD-%05d', $nextNumber);
+        });
+
+        static::created(function ($order) {
+            if (request()->has('data.orderProducts')) {
+                foreach (request()->input('data.orderProducts') as $product) {
+                    $order->orderProducts()->create([
+                        'product_id' => $product['product_id'],
+                        'fill_load' => (bool) ($product['fill_load'] ?? false),
+                        'quantity' => $product['quantity'] ?? null,
+                        'price' => $product['price'] ?? 0,
+                        'location' => $product['location'] ?? null,
+                        'notes' => $product['notes'] ?? null,
+                    ]);
+                }
+            }
         });
     }
 

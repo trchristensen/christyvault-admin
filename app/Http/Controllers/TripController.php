@@ -10,6 +10,7 @@ class TripController extends Controller
 {
     public function index(Request $request)
     {
+
         try {
             $user = $request->user();
 
@@ -46,6 +47,7 @@ class TripController extends Controller
                             'customer_name' => $order->customer->name,
                             'location' => [
                                 'name' => $order->location->name,
+                                'full_address' => $order->location->full_address,
                                 'address' => $order->location->address_line1,
                                 'city' => $order->location->city,
                                 'state' => $order->location->state,

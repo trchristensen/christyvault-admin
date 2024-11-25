@@ -27,6 +27,11 @@ class Product extends Model
         'specifications' => 'array',
     ];
 
+    public function scopeActive($query)
+    {
+        return $query->whereRaw('is_active IS TRUE');
+    }
+
     public function orders(): BelongsToMany
     {
         return $this->belongsToMany(Order::class)
