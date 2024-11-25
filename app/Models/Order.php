@@ -24,17 +24,21 @@ class Order extends Model
         'order_date',
         'requested_delivery_date',
         'assigned_delivery_date',
+        'delivery_time',
+        'service_date',
         'special_instructions',
-        'trip_id',           // Add these
-        'stop_number',       // three
-        'delivery_notes',    // fields
+        'trip_id',
+        'stop_number',
+        'delivery_notes',
     ];
 
     protected $casts = [
         'order_date' => 'date',
         'requested_delivery_date' => 'date',
         'assigned_delivery_date' => 'date',
+        'service_date' => 'datetime',
         'is_active' => 'boolean',
+        'delivery_time' => 'datetime:g:i A', // This will format the time as desired
     ];
 
     protected static function boot()

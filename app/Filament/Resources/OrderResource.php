@@ -166,6 +166,12 @@ class OrderResource extends Resource
                             ])
                             ->default('pending')
                             ->required(),
+                        Forms\Components\TimePicker::make('delivery_time')
+                            ->nullable()
+                            ->seconds(false),
+                        Forms\Components\DateTimePicker::make('service_date')
+                            ->nullable()
+                            ->seconds(false),
                         Forms\Components\Textarea::make('special_instructions')
                             ->columnSpanFull(),
                     ])

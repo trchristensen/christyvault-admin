@@ -4,18 +4,17 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <style>
-
         /* .page-container {
     position: relative;
     width: 100%;
     height: 1056px; /* Adjust this to match your form height exactly */
-    page-break-after: avoid;
-} */
+        page-break-after: avoid;
+        }
 
-@page {
-    size: letter;
-    margin: 0;
-}
+        */ @page {
+            size: letter;
+            margin: 0;
+        }
 
         body {
             min-height: 965px;
@@ -143,15 +142,43 @@
         /* Keep existing delivery info styles */
         .delivery-info {
             position: absolute;
-            bottom: 160px;
+            top: 815px;
             left: 30px;
-            min-width: 300px;
+            min-width: 1025px;
+        }
+
+        .delivery-time {
+            position: absolute;
+            left: 220px;
+            top: 0;
+            bottom: 0;
+        }
+
+        .service-date {
+            position: absolute;
+            left: 585px;
+            top: 0;
+            bottom: 0;
+        }
+
+        .service-time {
+            position: absolute;
+            left: 907px;
+            top: 0;
+            bottom: 0;
         }
 
         .delivery-date {
             font-weight: bold;
             position: absolute;
             left: 60px;
+            top: 0;
+            bottom: 0;
+        }
+
+        .delivery-time {
+            position: absolute;
+            left: 400px;
             top: 0;
             bottom: 0;
         }
@@ -166,6 +193,7 @@
             height: 122px;
             line-height: 30px;
         }
+
         .template {
             /* opacity: 1; */
             /* opacity: 0; */
@@ -174,7 +202,7 @@
 </head>
 
 <body>
-    <!-- <img class="template" src="{{ public_path('images/form.jpeg') }}" style="width: 100%; object-fit: contain; object-position: top left;"> -->
+    {{-- <img class="template" src="{{ public_path('images/form.jpeg') }}" style="width: 100%; object-fit: contain; object-position: top left;"> --}}
     <!-- <div class="page-container"> -->
     <article>
         {{-- Customer Info Section --}}
@@ -227,11 +255,27 @@
         </div>
 
         {{-- Delivery Info --}}
-        <div class="delivery-info">
+        <div class="delivery-info" style="min-height: 30px;">
             <div class="delivery-date">
                 {{ $order->assigned_delivery_date->format('D m/d/Y') }}
             </div>
-            
+
+            <div class="delivery-time">
+                {{ $order->delivery_time->format('g:i A') ?? null }}
+            </div>
+
+
+            {{-- Service Date --}}
+            @if ($order->service_date)
+                <div class="service-date">
+                    {{ $order->service_date->format('D m/d/Y') }}
+                </div>
+
+                <div class="service-time">
+                    {{ $order->service_date->format('g:i A') }}
+                </div>
+            @endif
+
         </div>
 
         {{-- Instructions --}}
@@ -240,6 +284,8 @@
                 {{ $order->special_instructions }}
             </div>
         @endif
+
+
     </article>
     <!-- </div> -->
 
