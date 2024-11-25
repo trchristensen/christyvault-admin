@@ -25,11 +25,14 @@ class Order extends Model
         'requested_delivery_date',
         'assigned_delivery_date',
         'delivery_time',
+        'arrived_at',
+        'delivered_at',
         'service_date',
         'special_instructions',
         'trip_id',
         'stop_number',
         'delivery_notes',
+        'signature_path',
     ];
 
     protected $casts = [
@@ -38,7 +41,8 @@ class Order extends Model
         'assigned_delivery_date' => 'date',
         'service_date' => 'datetime',
         'is_active' => 'boolean',
-        'delivery_time' => 'datetime:g:i A', // This will format the time as desired
+        'arrived_at' => 'datetime',
+        'delivered_at' => 'datetime',
     ];
 
     protected static function boot()

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Trip;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class TripController extends Controller
 {
@@ -179,6 +180,10 @@ class TripController extends Controller
                             'notes' => $orderProduct->notes
                         ];
                     }),
+                    'status' => $order->status ?? 'pending',
+                    'arrival_time' => $order->arrived_at,
+                    'delivery_time' => $order->delivered_at,
+                    'signature' => $order->signature_path ? Storage::url($order->signature_path) : null,
                     'delivery_notes' => $order->delivery_notes,
                     'special_instructions' => $order->special_instructions,
                 ];
@@ -236,6 +241,101 @@ class TripController extends Controller
             ]);
             return response()->json([
                 'error' => 'Failed to update trip status',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function markStopArrival(Request $request, Trip $trip, $stopNumber)
+    {
+        try {
+            $order = $trip->orders()
+                ->where('stop_number', $stopNumber)
+                ->firstOrFail();
+
+            $order->update([
+                'arrived_at' => now(),
+                'status' => 'arrived'
+            ]);
+
+            return response()->json([
+                'message' => 'Stop arrival marked successfully',
+                'arrived_at' => $order->arrived_at
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Mark stop arrival error:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error' => 'Failed to mark stop arrival',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function completeStop(Request $request, Trip $trip, $stopNumber)
+    {
+        try {
+            $order = $trip->orders()
+                ->where('stop_number', $stopNumber)
+                ->firstOrFail();
+
+            $order->update([
+                'delivered_at' => now(),
+                'status' => 'completed'
+            ]);
+
+            return response()->json([
+                'message' => 'Stop completed successfully',
+                'delivered_at' => $order->delivered_at
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Complete stop error:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error' => 'Failed to complete stop',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function uploadSignature(Request $request, Trip $trip, $stopNumber)
+    {
+        try {
+            $request->validate([
+                'signature' => 'required|string'  // Base64 encoded signature
+            ]);
+
+            // Generate a unique filename for the signature
+            $filename = 'signature_' . $trip->id . '_' . $stopNumber . '_' . time() . '.png';
+            $path = 'signatures/' . $filename;
+
+            // Decode base64 and save to storage
+            $signatureData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->signature));
+            Storage::disk('public')->put($path, $signatureData);
+
+            $order = $trip->orders()
+                ->where('stop_number', $stopNumber)
+                ->firstOrFail();
+
+            $order->update([
+                'signature_path' => $path
+            ]);
+
+            return response()->json([
+                'message' => 'Signature uploaded successfully',
+                'signature_path' => Storage::url($path)
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Upload signature error:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error' => 'Failed to upload signature',
                 'message' => $e->getMessage()
             ], 500);
         }

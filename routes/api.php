@@ -50,4 +50,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/trips', [TripController::class, 'index']);
     Route::get('/trips/{trip}', [TripController::class, 'show']); // Add this line
     Route::patch('/trips/{trip}/status', [TripController::class, 'updateStatus']);
+    Route::patch('/trips/{trip}/stops/{stop}/arrive', [TripController::class, 'markStopArrival']);
+    Route::patch('/trips/{trip}/stops/{stop}/complete', [TripController::class, 'completeStop']);
+    Route::post('/trips/{trip}/stops/{stop}/signature', [TripController::class, 'uploadSignature']);
 });
