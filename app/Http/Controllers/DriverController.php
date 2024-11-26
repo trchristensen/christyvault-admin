@@ -19,6 +19,8 @@ class DriverController extends Controller
                 ], 404);
             }
 
+            dd($driver->toJson());
+
             $location = Location::getChristyVaultByName($driver->christy_location);
 
             if (!$location) {
