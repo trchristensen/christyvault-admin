@@ -54,7 +54,4 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::patch('/trips/{trip}/stops/{stop}/arrive', [TripController::class, 'markStopArrival']);
     Route::patch('/trips/{trip}/stops/{stop}/complete', [TripController::class, 'completeStop']);
     Route::post('/trips/{trip}/stops/{stop}/signature', [TripController::class, 'uploadSignature']);
-
-    // Add this new route for fetching the driver's Christy Vault location
-    Route::get('/driver/christy-vault-location', [DriverController::class, 'getChristyVaultLocation']);
 });

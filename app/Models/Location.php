@@ -17,12 +17,9 @@ class Location extends Model
         'city',
         'state',
         'postal_code',
-        // 'country',
         'latitude',
         'longitude',
         'location_type',
-        'latitude',
-        'longitude',
         'notes',
     ];
 
@@ -67,17 +64,5 @@ class Location extends Model
             $this->state,
             $this->postal_code,
         ])->filter()->join(', ');
-    }
-
-    public function isChristyVault(): bool
-    {
-        return $this->location_type === 'christy_vault';
-    }
-
-    public static function getChristyVaultByName(string $locationName)
-    {
-        return self::where('location_type', 'christy_vault')
-            ->where('name', 'like', '%' . $locationName . '%')
-            ->first();
     }
 }
