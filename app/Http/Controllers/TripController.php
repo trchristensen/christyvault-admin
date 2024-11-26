@@ -40,6 +40,7 @@ class TripController extends Controller
                                 'quantity' => $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity,
                                 'product_name' => $orderProduct->product->name,
                                 'sku' => $orderProduct->product->sku,
+                                'notes' => $orderProduct->notes,
                                 'quantity_delivered' => $orderProduct->quantity_delivered,
                                 'delivery_notes' => $orderProduct->delivery_notes
                             ];
