@@ -6,6 +6,7 @@ use App\Models\Trip;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Resources\TripResource;
 
 class TripController extends Controller
 {
@@ -22,79 +23,14 @@ class TripController extends Controller
                 ->orderBy('scheduled_date', 'desc')
                 ->with([
                     'driver',
-                    'orders' => function ($query) {
-                        $query->orderBy('stop_number', 'asc');
-                    },
+                    'orders' => fn($q) => $q->orderBy('stop_number', 'asc'),
                     'orders.customer',
                     'orders.location',
                     'orders.orderProducts.product'
                 ])
-                ->get()
-                ->map(function ($trip) {
-                    return [
-                        'id' => $trip->id,
-                        'trip_number' => $trip->trip_number,
-                        'status' => $trip->status,
-                        'scheduled_date' => $trip->scheduled_date,
-                        'start_time' => $trip->start_time,
-                        'end_time' => $trip->end_time,
-                        'notes' => $trip->notes,
-                        'driver' => [
-                            'id' => $trip->driver->id,
-                            'name' => $trip->driver->name,
-                            'email' => $trip->driver->email,
-                            'phone' => $trip->driver->phone,
-                        ],
-                        'stops' => $trip->orders->map(function ($order) {
-                            return [
-                                'id' => $order->id,
-                                'order_number' => $order->order_number,
-                                'stop_number' => $order->stop_number,
-                                'status' => $order->status,
-                                'customer' => [
-                                    'name' => $order->customer->name,
-                                    'phone' => $order->customer->phone,
-                                    'email' => $order->customer->email,
-                                ],
-                                'location' => [
-                                    'name' => $order->location->name,
-                                    'full_address' => implode(', ', array_filter([
-                                        $order->location->address_line1,
-                                        $order->location->city,
-                                        $order->location->state,
-                                        $order->location->postal_code
-                                    ])),
-                                    'address' => $order->location->address_line1,
-                                    'city' => $order->location->city,
-                                    'state' => $order->location->state,
-                                    'postal_code' => $order->location->postal_code,
-                                    'latitude' => $order->location->latitude,
-                                    'longitude' => $order->location->longitude,
-                                ],
-                                'products' => $order->orderProducts->map(function ($orderProduct) {
-                                    return [
-                                        'id' => $orderProduct->id,
-                                        'quantity' => $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity,
-                                        'sku' => $orderProduct->product->sku,
-                                        'product_name' => $orderProduct->product->name,
-                                        'notes' => $orderProduct->notes,
-                                        'delivery_notes' => $orderProduct->delivery_notes,
-                                        'quantity_delivered' => $orderProduct->quantity_delivered,
-                                    ];
-                                }),
-                                'arrival_time' => $order->arrival_time,
-                                'delivery_time' => $order->delivery_time,
-                                'signature' => $order->signature_path ? Storage::url($order->signature_path) : null,
-                                'delivery_notes' => $order->delivery_notes,
-                                'special_instructions' => $order->special_instructions,
-                            ];
-                        }),
-                        'created_at' => $trip->created_at,
-                        'updated_at' => $trip->updated_at,
-                    ];
-                });
+                ->get();
 
-            return response()->json($trips);
+            return TripResource::collection($trips);
         } catch (\Exception $e) {
             Log::error('Trip fetch error:', [
                 'error' => $e->getMessage(),
@@ -110,80 +46,15 @@ class TripController extends Controller
     public function show(Request $request, Trip $trip)
     {
         try {
-            $trip = Trip::where('id', $trip->id)
-                ->with([
-                    'driver',
-                    'orders' => function ($query) {
-                        $query->orderBy('stop_number', 'asc');
-                    },
-                    'orders.customer',
-                    'orders.location',
-                    'orders.orderProducts.product'
-                ])
-                ->first();
-
-            if (!$trip) {
-                return response()->json(['error' => 'Trip not found'], 404);
-            }
-
-            $deliveryDetails = $trip->orders->map(function ($order) {
-                return [
-                    'stop_number' => $order->stop_number,
-                    'customer_name' => $order->customer->name,
-                    'customer_phone' => $order->customer->phone,
-                    'location' => [
-                        'name' => $order->location->name,
-                        'address' => $order->location->address_line1,
-                        'city' => $order->location->city,
-                        'state' => $order->location->state,
-                        'postal_code' => $order->location->postal_code,
-                        'latitude' => $order->location->latitude,
-                        'longitude' => $order->location->longitude,
-                        'full_address' => implode(', ', array_filter([
-                            $order->location->address_line1,
-                            $order->location->city,
-                            $order->location->state,
-                            $order->location->postal_code
-                        ]))
-                    ],
-                    'products' => $order->orderProducts->map(function ($orderProduct) {
-                        return [
-                            'quantity' => $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity,
-                            'sku' => $orderProduct->product->sku,
-                            'product_name' => $orderProduct->product->name,
-                            'notes' => $orderProduct->notes,
-                            'quantity_delivered' => $orderProduct->quantity_delivered,
-                            'delivery_notes' => $orderProduct->delivery_notes
-                        ];
-                    }),
-                    'status' => $order->status ?? 'pending',
-                    'arrival_time' => $order->arrived_at,
-                    'delivery_time' => $order->delivered_at,
-                    'signature' => $order->signature_path ? Storage::url($order->signature_path) : null,
-                    'delivery_notes' => $order->delivery_notes,
-                    'special_instructions' => $order->special_instructions,
-                ];
-            });
-
-            return response()->json([
-                'id' => $trip->id,
-                'trip_number' => $trip->trip_number,
-                'status' => $trip->status,
-                'scheduled_date' => $trip->scheduled_date,
-                'start_time' => $trip->start_time,
-                'end_time' => $trip->end_time,
-                'notes' => $trip->notes,
-                'driver' => [
-                    'id' => $trip->driver->id,
-                    'name' => $trip->driver->name,
-                    'email' => $trip->driver->email,
-                    'phone' => $trip->driver->phone,
-                ],
-                'delivery_details' => $deliveryDetails,
-                'orders' => $trip->orders,
-                'created_at' => $trip->created_at,
-                'updated_at' => $trip->updated_at,
+            $trip->load([
+                'driver',
+                'orders' => fn($q) => $q->orderBy('stop_number', 'asc'),
+                'orders.customer',
+                'orders.location',
+                'orders.orderProducts.product'
             ]);
+
+            return new TripResource($trip);
         } catch (\Exception $e) {
             Log::error('Trip fetch error:', [
                 'error' => $e->getMessage(),
