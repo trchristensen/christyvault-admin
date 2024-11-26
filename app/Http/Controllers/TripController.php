@@ -110,7 +110,8 @@ class TripController extends Controller
                                         'sku' => $orderProduct->product->sku,
                                         'product_name' => $orderProduct->product->name,
                                         'notes' => $orderProduct->notes,
-                                        'delivery_notes' => $orderProduct->delivery_notes
+                                        'delivery_notes' => $orderProduct->delivery_notes,
+                                        'quantity_delivered' => $orderProduct->quantity_delivered
                                     ];
                                 }),
                             ];
