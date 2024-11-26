@@ -11,7 +11,6 @@ class TripController extends Controller
 {
     public function index(Request $request)
     {
-
         try {
             $user = $request->user();
 
@@ -32,38 +31,6 @@ class TripController extends Controller
                 ])
                 ->get()
                 ->map(function ($trip) {
-                    // Get all orders with their products
-                    $deliveryDetails = $trip->orders->map(function ($order) {
-
-                        $products = $order->orderProducts->map(function ($orderProduct) {
-                            return [
-                                'quantity' => $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity,
-                                'product_name' => $orderProduct->product->name,
-                                'sku' => $orderProduct->product->sku,
-                                'notes' => $orderProduct->notes,
-                                'quantity_delivered' => $orderProduct->quantity_delivered,
-                                'delivery_notes' => $orderProduct->delivery_notes
-                            ];
-                        });
-
-                        return [
-                            'stop_number' => $order->stop_number,
-                            'customer_name' => $order->customer->name,
-                            'location' => [
-                                'name' => $order->location->name,
-                                'full_address' => $order->location->full_address,
-                                'address' => $order->location->address_line1,
-                                'city' => $order->location->city,
-                                'state' => $order->location->state,
-                                'postal_code' => $order->location->postal_code,
-                                'latitude' => $order->location->latitude,
-                                'longitude' => $order->location->longitude,
-                            ],
-                            'products' => $products,
-                            'status' => $order->status,
-                        ];
-                    });
-
                     return [
                         'id' => $trip->id,
                         'trip_number' => $trip->trip_number,
@@ -78,26 +45,26 @@ class TripController extends Controller
                             'email' => $trip->driver->email,
                             'phone' => $trip->driver->phone,
                         ],
-                        'delivery_details' => $deliveryDetails,
-                        'orders' => $trip->orders->map(function ($order) {
+                        'stops' => $trip->orders->map(function ($order) {
                             return [
                                 'id' => $order->id,
                                 'order_number' => $order->order_number,
                                 'stop_number' => $order->stop_number,
                                 'status' => $order->status,
-                                'delivery_notes' => $order->delivery_notes,
-                                'special_instructions' => $order->special_instructions,
                                 'customer' => [
-                                    'id' => $order->customer->id,
                                     'name' => $order->customer->name,
                                     'phone' => $order->customer->phone,
                                     'email' => $order->customer->email,
                                 ],
                                 'location' => [
-                                    'id' => $order->location->id,
                                     'name' => $order->location->name,
-                                    'address_line1' => $order->location->address_line1,
-                                    'address_line2' => $order->location->address_line2,
+                                    'full_address' => implode(', ', array_filter([
+                                        $order->location->address_line1,
+                                        $order->location->city,
+                                        $order->location->state,
+                                        $order->location->postal_code
+                                    ])),
+                                    'address' => $order->location->address_line1,
                                     'city' => $order->location->city,
                                     'state' => $order->location->state,
                                     'postal_code' => $order->location->postal_code,
@@ -107,15 +74,19 @@ class TripController extends Controller
                                 'products' => $order->orderProducts->map(function ($orderProduct) {
                                     return [
                                         'id' => $orderProduct->id,
-                                        'product_id' => $orderProduct->product_id,
                                         'quantity' => $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity,
                                         'sku' => $orderProduct->product->sku,
                                         'product_name' => $orderProduct->product->name,
                                         'notes' => $orderProduct->notes,
                                         'delivery_notes' => $orderProduct->delivery_notes,
-                                        'quantity_delivered' => $orderProduct->quantity_delivered
+                                        'quantity_delivered' => $orderProduct->quantity_delivered,
                                     ];
                                 }),
+                                'arrival_time' => $order->arrival_time,
+                                'delivery_time' => $order->delivery_time,
+                                'signature' => $order->signature_path ? Storage::url($order->signature_path) : null,
+                                'delivery_notes' => $order->delivery_notes,
+                                'special_instructions' => $order->special_instructions,
                             ];
                         }),
                         'created_at' => $trip->created_at,
@@ -135,7 +106,6 @@ class TripController extends Controller
             ], 500);
         }
     }
-
 
     public function show(Request $request, Trip $trip)
     {
@@ -181,7 +151,9 @@ class TripController extends Controller
                             'quantity' => $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity,
                             'sku' => $orderProduct->product->sku,
                             'product_name' => $orderProduct->product->name,
-                            'notes' => $orderProduct->notes
+                            'notes' => $orderProduct->notes,
+                            'quantity_delivered' => $orderProduct->quantity_delivered,
+                            'delivery_notes' => $orderProduct->delivery_notes
                         ];
                     }),
                     'status' => $order->status ?? 'pending',
