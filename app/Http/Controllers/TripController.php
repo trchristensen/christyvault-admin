@@ -36,11 +36,12 @@ class TripController extends Controller
                     $deliveryDetails = $trip->orders->map(function ($order) {
 
                         $products = $order->orderProducts->map(function ($orderProduct) {
-                            $quantity = $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity;
                             return [
-                                'quantity' => $quantity,
+                                'quantity' => $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity,
                                 'product_name' => $orderProduct->product->name,
                                 'sku' => $orderProduct->product->sku,
+                                'quantity_delivered' => $orderProduct->quantity_delivered,
+                                'delivery_notes' => $orderProduct->delivery_notes
                             ];
                         });
 
