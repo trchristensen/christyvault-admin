@@ -27,6 +27,7 @@ use Filament\Forms\Get;
 class CalendarWidget extends FullCalendarWidget
 {
     public Model | string | null $model = Order::class;
+    public ?Model $event = null;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
 
@@ -192,7 +193,7 @@ class CalendarWidget extends FullCalendarWidget
                                 ->label('Product')
                                 ->options(
                                     Product::query()
-                                        ->where('is_active', true)
+                                        ->whereRaw('is_active = true')
                                         ->get()
                                         ->mapWithKeys(fn(Product $product) => [
                                             $product->id => view('filament.components.product-option', [
@@ -257,23 +258,29 @@ class CalendarWidget extends FullCalendarWidget
 
     public function onEventDrop(array $event, array $oldEvent, array $relatedEvents, array $delta, ?array $oldResource, ?array $newResource): bool
     {
-
         $order = Order::find($event['id']);
-        if ($order) {
-
-            try {
-                $newDate = Carbon::parse($event['start'])->toDateString();
-                $order->update([
-                    'assigned_delivery_date' => $newDate,
-                ]);
-                $this->refreshRecords();
-                return true;
-            } catch (\Exception $e) {
-                return false;
-            }
+        if (!$order) {
+            Log::warning('Order not found', context: ['event_id' => $event['id']]);
+            return false;
         }
-        Log::warning('Order not found', context: ['event_id' => $event['id']]);
-        return false;
+
+        // Prevent moving orders that are in progress or completed
+        if (in_array($order->status, ['in_progress', 'completed', 'delivered'])) {
+            // Optionally show a notification to the user
+            $this->notification()->danger('Cannot modify delivery date for orders that are in progress or completed.');
+            return false;
+        }
+
+        try {
+            $newDate = Carbon::parse($event['start'])->toDateString();
+            $order->update([
+                'assigned_delivery_date' => $newDate,
+            ]);
+            $this->refreshRecords();
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     public function eventDidMount(): string
@@ -282,6 +289,21 @@ class CalendarWidget extends FullCalendarWidget
     function({ event, el }) {
         const eventMainEl = el.querySelector('.fc-event-main');
         eventMainEl.style.padding = '12px';
+
+        // Add locked indicator for in_progress/completed orders
+        if (['in_progress', 'completed', 'delivered'].includes(event.extendedProps.status.toLowerCase())) {
+            el.style.cursor = 'not-allowed';
+            el.style.opacity = '0.8';
+
+            // Add a lock icon
+            const lockIcon = document.createElement('div');
+            lockIcon.innerHTML = '🔒';
+            lockIcon.style.position = 'absolute';
+            lockIcon.style.top = '4px';
+            lockIcon.style.right = '4px';
+            lockIcon.style.fontSize = '12px';
+            el.appendChild(lockIcon);
+        }
 
         // Main heading - Customer Name/Order Number
         const titleEl = document.createElement('div');
@@ -342,6 +364,13 @@ class CalendarWidget extends FullCalendarWidget
 
     protected function modalActions(): array
     {
+        $order = $this->event;
+
+        // If order is in progress or completed, return empty array (no actions)
+        if ($order && in_array($order->status, ['in_progress', 'completed', 'delivered'])) {
+            return [];
+        }
+
         return [
             Actions\EditAction::make()
                 ->modalSubmitActionLabel('Save changes'),
@@ -351,6 +380,13 @@ class CalendarWidget extends FullCalendarWidget
 
     protected function getActions(): array
     {
+        $order = $this->event;
+
+        // If order is in progress or completed, return empty array (no actions)
+        if ($order && in_array($order->status, ['in_progress', 'completed', 'delivered'])) {
+            return [];
+        }
+
         return [
             Actions\EditAction::make(),
             Actions\DeleteAction::make(),
@@ -386,22 +422,25 @@ class CalendarWidget extends FullCalendarWidget
     public function fetchEvents(array $fetchInfo): array
     {
         return Order::query()
-            ->with(['customer', 'orderProducts.product'])  // Make sure we're eager loading products
+            ->with(['customer', 'orderProducts.product'])
             ->whereDate('requested_delivery_date', '>=', $fetchInfo['start'])
             ->whereDate('requested_delivery_date', '<=', $fetchInfo['end'])
             ->get()
             ->map(function (Order $order) {
+                $isLocked = in_array($order->status, ['in_progress', 'completed', 'delivered']);
                 return [
                     'id' => $order->id,
                     'title' => $order->customer?->name ?? $order->order_number,
                     'start' => $order->assigned_delivery_date?->format('Y-m-d') ?? $order->requested_delivery_date->format('Y-m-d'),
                     'allDay' => true,
+                    'editable' => !$isLocked,
                     'backgroundColor' => $order->assigned_delivery_date ? $this->getEventColor($order) : 'grey',
                     'borderColor' => 'transparent',
                     'extendedProps' => [
                         'customerName' => $order->customer?->name,
                         'requestedDate' => $order->requested_delivery_date->format('m/d'),
                         'status' => Str::headline($order->status),
+                        'isLocked' => in_array($order->status, ['in_progress', 'completed', 'delivered']),
                         'products' => $order->orderProducts->map(function ($orderProduct) {
                             return [
                                 'quantity' => $orderProduct->quantity,
