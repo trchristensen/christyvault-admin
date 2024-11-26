@@ -176,6 +176,8 @@ class CalendarWidget extends FullCalendarWidget
                             'out_for_delivery' => 'Out for Delivery',
                             'delivered' => 'Delivered',
                             'cancelled' => 'Cancelled',
+                            'in_progress' => 'In Progress',
+                            'completed' => 'Completed',
                         ])
                         ->default('pending')
                         ->required(),
@@ -193,7 +195,7 @@ class CalendarWidget extends FullCalendarWidget
                                 ->label('Product')
                                 ->options(
                                     Product::query()
-                                        ->whereRaw('is_active = true')
+                                        ->whereRaw('is_active IS TRUE')
                                         ->get()
                                         ->mapWithKeys(fn(Product $product) => [
                                             $product->id => view('filament.components.product-option', [
@@ -427,13 +429,11 @@ class CalendarWidget extends FullCalendarWidget
             ->whereDate('requested_delivery_date', '<=', $fetchInfo['end'])
             ->get()
             ->map(function (Order $order) {
-                $isLocked = in_array($order->status, ['in_progress', 'completed', 'delivered']);
                 return [
                     'id' => $order->id,
                     'title' => $order->customer?->name ?? $order->order_number,
                     'start' => $order->assigned_delivery_date?->format('Y-m-d') ?? $order->requested_delivery_date->format('Y-m-d'),
                     'allDay' => true,
-                    'editable' => !$isLocked,
                     'backgroundColor' => $order->assigned_delivery_date ? $this->getEventColor($order) : 'grey',
                     'borderColor' => 'transparent',
                     'extendedProps' => [
