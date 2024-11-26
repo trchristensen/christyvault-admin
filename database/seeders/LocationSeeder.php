@@ -10,6 +10,30 @@ class LocationSeeder extends Seeder
     public function run(): void
     {
         $locations = [
+            // christy vault locations
+            [
+                'name' => 'Christy Vault - Colma',
+                'address_line1' => '1000 Collins Ave',
+                'city' => 'Colma',
+                'state' => 'CA',
+                'postal_code' => '94014',
+                'location_type' => 'christy_vault',
+                'latitude' => 37.6688,
+                'longitude' => -122.4619,
+                'radius_feet' => 1000,
+            ],
+            [
+                'name' => 'Christy Vault - Tulare',
+                'address_line1' => '9700 Ave 256',
+                'city' => 'Tulare',
+                'state' => 'CA',
+                'postal_code' => '93274',
+                'location_type' => 'christy_vault',
+                'latitude' => 36.4415,
+                'longitude' => -119.3850,
+                'radius_feet' => 1000,
+            ],
+
             [
                 'name' => 'Skylawn Memorial Park',
                 'address_line1' => 'Hwy 92 at Skyline Blvd',

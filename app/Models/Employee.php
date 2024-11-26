@@ -48,4 +48,10 @@ class Employee extends Model
     {
         return $this->position === 'driver' && $this->driver()->exists();
     }
+
+    public function christyVaultLocation()
+    {
+        return Location::where('location_type', 'christy_vault')
+            ->where('name', 'like', '%' . $this->christy_location . '%');
+    }
 }

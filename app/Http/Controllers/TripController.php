@@ -222,17 +222,17 @@ class TripController extends Controller
     {
         try {
             $request->validate([
-                'status' => 'required|in:pending,in_progress,completed,cancelled'
+                'status' => 'required|in:pending,in_progress,completed,cancelled',
+                'completion_note' => 'nullable|string'
             ]);
 
-            $updates = ['status' => $request->status];
+            $updates = [
+                'status' => $request->status,
+                'notes' => $request->completion_note
+                    ? ($trip->notes ? $trip->notes . "\n\n" : '') . "Completion Note: " . $request->completion_note
+                    : $trip->notes
+            ];
 
-            // Set start_time when trip begins
-            if ($request->status === 'in_progress' && !$trip->start_time) {
-                $updates['start_time'] = now();
-            }
-
-            // Set end_time when trip completes
             if ($request->status === 'completed' && !$trip->end_time) {
                 $updates['end_time'] = now();
             }
@@ -242,7 +242,6 @@ class TripController extends Controller
             return response()->json([
                 'message' => 'Trip status updated successfully',
                 'status' => $trip->status,
-                'start_time' => $trip->start_time,
                 'end_time' => $trip->end_time
             ]);
         } catch (\Exception $e) {

@@ -68,4 +68,16 @@ class Location extends Model
             $this->postal_code,
         ])->filter()->join(', ');
     }
+
+    public function isChristyVault(): bool
+    {
+        return $this->location_type === 'christy_vault';
+    }
+
+    public static function getChristyVaultByName(string $locationName)
+    {
+        return self::where('location_type', 'christy_vault')
+            ->where('name', 'like', '%' . $locationName . '%')
+            ->first();
+    }
 }
