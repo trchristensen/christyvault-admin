@@ -104,10 +104,13 @@ class TripController extends Controller
                                 ],
                                 'products' => $order->orderProducts->map(function ($orderProduct) {
                                     return [
+                                        'id' => $orderProduct->id,
+                                        'product_id' => $orderProduct->product_id,
                                         'quantity' => $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity,
                                         'sku' => $orderProduct->product->sku,
                                         'product_name' => $orderProduct->product->name,
                                         'notes' => $orderProduct->notes,
+                                        'delivery_notes' => $orderProduct->delivery_notes
                                     ];
                                 }),
                             ];
@@ -351,6 +354,44 @@ class TripController extends Controller
             ]);
             return response()->json([
                 'error' => 'Failed to upload signature',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateDeliveredQuantities(Request $request, Trip $trip, $stopNumber)
+    {
+        try {
+            $order = $trip->orders()
+                ->where('stop_number', $stopNumber)
+                ->firstOrFail();
+
+            $request->validate([
+                'products' => 'required|array',
+                'products.*.id' => 'required|exists:order_product,id',
+                'products.*.quantity_delivered' => 'required|integer|min:0',
+                'products.*.delivery_notes' => 'nullable|string'
+            ]);
+
+            foreach ($request->products as $product) {
+                $orderProduct = $order->orderProducts()->findOrFail($product['id']);
+                $orderProduct->update([
+                    'quantity_delivered' => $product['quantity_delivered'],
+                    'delivery_notes' => $product['delivery_notes'] ?? null
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'Delivery quantities updated successfully',
+                'order' => $order->load('orderProducts.product')
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Update delivered quantities error:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error' => 'Failed to update delivered quantities',
                 'message' => $e->getMessage()
             ], 500);
         }

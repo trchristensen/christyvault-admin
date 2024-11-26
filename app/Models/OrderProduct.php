@@ -16,6 +16,8 @@ class OrderProduct extends Pivot
         'order_id',
         'product_id',
         'quantity',
+        'quantity_delivered',
+        'delivery_notes',
         'price',
         'notes',
         'location',
