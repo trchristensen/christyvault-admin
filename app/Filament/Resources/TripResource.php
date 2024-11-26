@@ -76,8 +76,8 @@ class TripResource extends Resource
                                         ->send();
                                 }
                             }),
-                        Forms\Components\TimePicker::make('start_time'),
-                        Forms\Components\TimePicker::make('end_time'),
+                        // Forms\Components\TimePicker::make('start_time'),
+                        // Forms\Components\TimePicker::make('end_time'),
                         Forms\Components\Textarea::make('notes')
                             ->columnSpanFull(),
                     ])->columns(2),

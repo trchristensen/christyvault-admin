@@ -167,6 +167,7 @@ class OrderResource extends Resource
                             ->default('pending')
                             ->required(),
                         Forms\Components\TimePicker::make('delivery_time')
+                            ->label("Deliver By")
                             ->nullable()
                             ->seconds(false),
                         Forms\Components\DateTimePicker::make('service_date')

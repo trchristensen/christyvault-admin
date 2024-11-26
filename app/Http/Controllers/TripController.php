@@ -233,6 +233,10 @@ class TripController extends Controller
                     : $trip->notes
             ];
 
+            if ($request->status === 'in_progress' && !$trip->start_time) {
+                $updates['start_time'] = now();
+            }
+
             if ($request->status === 'completed' && !$trip->end_time) {
                 $updates['end_time'] = now();
             }
@@ -242,6 +246,7 @@ class TripController extends Controller
             return response()->json([
                 'message' => 'Trip status updated successfully',
                 'status' => $trip->status,
+                'start_time' => $trip->start_time,
                 'end_time' => $trip->end_time
             ]);
         } catch (\Exception $e) {
