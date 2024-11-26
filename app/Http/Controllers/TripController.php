@@ -39,7 +39,8 @@ class TripController extends Controller
                             $quantity = $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity;
                             return [
                                 'quantity' => $quantity,
-                                'product_name' => $orderProduct->product->name
+                                'product_name' => $orderProduct->product->name,
+                                'sku' => $orderProduct->product->sku,
                             ];
                         });
 
@@ -56,7 +57,8 @@ class TripController extends Controller
                                 'latitude' => $order->location->latitude,
                                 'longitude' => $order->location->longitude,
                             ],
-                            'products' => $products
+                            'products' => $products,
+                            'status' => $order->status,
                         ];
                     });
 
@@ -102,14 +104,9 @@ class TripController extends Controller
                                 ],
                                 'products' => $order->orderProducts->map(function ($orderProduct) {
                                     return [
-                                        'id' => $orderProduct->id,
-                                        'product' => [
-                                            'id' => $orderProduct->product->id,
-                                            'name' => $orderProduct->product->name,
-                                            'sku' => $orderProduct->product->sku,
-                                        ],
-                                        'quantity' => $orderProduct->quantity,
-                                        'fill_load' => $orderProduct->fill_load,
+                                        'quantity' => $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity,
+                                        'sku' => $orderProduct->product->sku,
+                                        'product_name' => $orderProduct->product->name,
                                         'notes' => $orderProduct->notes,
                                     ];
                                 }),
@@ -176,6 +173,7 @@ class TripController extends Controller
                     'products' => $order->orderProducts->map(function ($orderProduct) {
                         return [
                             'quantity' => $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity,
+                            'sku' => $orderProduct->product->sku,
                             'product_name' => $orderProduct->product->name,
                             'notes' => $orderProduct->notes
                         ];
@@ -227,12 +225,25 @@ class TripController extends Controller
                 'status' => 'required|in:pending,in_progress,completed,cancelled'
             ]);
 
-            $trip->status = $request->status;
-            $trip->save();
+            $updates = ['status' => $request->status];
+
+            // Set start_time when trip begins
+            if ($request->status === 'in_progress' && !$trip->start_time) {
+                $updates['start_time'] = now();
+            }
+
+            // Set end_time when trip completes
+            if ($request->status === 'completed' && !$trip->end_time) {
+                $updates['end_time'] = now();
+            }
+
+            $trip->update($updates);
 
             return response()->json([
                 'message' => 'Trip status updated successfully',
-                'status' => $trip->status
+                'status' => $trip->status,
+                'start_time' => $trip->start_time,
+                'end_time' => $trip->end_time
             ]);
         } catch (\Exception $e) {
             Log::error('Trip status update error:', [

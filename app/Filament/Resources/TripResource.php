@@ -58,6 +58,7 @@ class TripResource extends Resource
                         Forms\Components\Select::make('status')
                             ->options([
                                 'pending' => 'Pending',
+                                'confirmed' => 'Confirmed',
                                 'in_progress' => 'In Progress',
                                 'completed' => 'Completed',
                                 'cancelled' => 'Cancelled',
@@ -127,6 +128,8 @@ class TripResource extends Resource
                     ->color(fn(string $state): string => match ($state) {
                         'pending' => 'gray',
                         'in_progress' => 'warning',
+                        // need a color for confirmed
+                        'confirmed' => 'purple',
                         'completed' => 'success',
                         'cancelled' => 'danger',
                     }),
