@@ -266,13 +266,6 @@ class CalendarWidget extends FullCalendarWidget
             return false;
         }
 
-        // Prevent moving orders that are in progress or completed
-        if (in_array($order->status, ['in_progress', 'completed', 'delivered'])) {
-            // Optionally show a notification to the user
-            $this->notification()->danger('Cannot modify delivery date for orders that are in progress or completed.');
-            return false;
-        }
-
         try {
             $newDate = Carbon::parse($event['start'])->toDateString();
             $order->update([
@@ -429,6 +422,7 @@ class CalendarWidget extends FullCalendarWidget
             ->whereDate('requested_delivery_date', '<=', $fetchInfo['end'])
             ->get()
             ->map(function (Order $order) {
+                $isLocked = in_array($order->status, ['in_progress', 'completed', 'delivered']);
                 return [
                     'id' => $order->id,
                     'title' => $order->customer?->name ?? $order->order_number,
@@ -436,11 +430,12 @@ class CalendarWidget extends FullCalendarWidget
                     'allDay' => true,
                     'backgroundColor' => $order->assigned_delivery_date ? $this->getEventColor($order) : 'grey',
                     'borderColor' => 'transparent',
+                    'editable' => !$isLocked,
                     'extendedProps' => [
                         'customerName' => $order->customer?->name,
                         'requestedDate' => $order->requested_delivery_date->format('m/d'),
                         'status' => Str::headline($order->status),
-                        'isLocked' => in_array($order->status, ['in_progress', 'completed', 'delivered']),
+                        'isLocked' => $isLocked,
                         'products' => $order->orderProducts->map(function ($orderProduct) {
                             return [
                                 'quantity' => $orderProduct->quantity,
