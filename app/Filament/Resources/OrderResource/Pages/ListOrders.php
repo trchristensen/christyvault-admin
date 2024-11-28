@@ -24,12 +24,12 @@ class ListOrders extends ListRecords
     {
         return [
             'active' => Tab::make()
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', '!=', ['delivered', 'cancelled'])),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', '!=', ['delivered', 'cancelled', 'completed'])),
             'unassigned' => Tab::make()
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('trip_id', null)),
             'all' => Tab::make(),
             'inactive' => Tab::make()
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'delivered')),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'delivered', 'cancelled', 'completed')),
         ];
     }
 }
