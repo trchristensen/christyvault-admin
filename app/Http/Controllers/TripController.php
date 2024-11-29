@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrderStatus;
+use App\Enums\TripStatus;
 use App\Models\Trip;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -71,7 +73,7 @@ class TripController extends Controller
     {
         try {
             $request->validate([
-                'status' => 'required|in:pending,in_progress,completed,cancelled',
+                'status' => 'required|in:' . implode(',', array_column(TripStatus::cases(), 'value')),
                 'completion_note' => 'nullable|string'
             ]);
 
@@ -82,18 +84,21 @@ class TripController extends Controller
                     : $trip->notes
             ];
 
-            if ($request->status === 'in_progress' && !$trip->start_time) {
+            if ($request->status === TripStatus::IN_PROGRESS->value && !$trip->start_time) {
                 $updates['start_time'] = now();
             }
 
-            if ($request->status === 'completed' && !$trip->end_time) {
+            if ($request->status === TripStatus::COMPLETED->value && !$trip->end_time) {
                 $updates['end_time'] = now();
             }
 
             // Update all pending/confirmed orders to out_for_delivery
             $trip->orders()
-                ->whereIn('status', ['pending', 'confirmed'])
-                ->update(['status' => 'out_for_delivery']);
+                ->whereIn('status', [
+                    OrderStatus::PENDING->value,
+                    OrderStatus::CONFIRMED->value,
+                    OrderStatus::READY_FOR_DELIVERY->value
+                ]);
 
             $trip->update($updates);
 
@@ -124,7 +129,7 @@ class TripController extends Controller
 
             $order->update([
                 'arrived_at' => now(),
-                'status' => 'arrived'
+                'status' => OrderStatus::ARRIVED->value
             ]);
 
             return response()->json([
@@ -152,7 +157,7 @@ class TripController extends Controller
 
             $order->update([
                 'delivered_at' => now(),
-                'status' => 'delivered'
+                'status' => OrderStatus::DELIVERED->value
             ]);
 
             return response()->json([
