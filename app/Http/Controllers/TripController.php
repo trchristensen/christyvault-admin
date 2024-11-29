@@ -90,6 +90,11 @@ class TripController extends Controller
                 $updates['end_time'] = now();
             }
 
+            // Update all pending/confirmed orders to out_for_delivery
+            $trip->orders()
+                ->whereIn('status', ['pending', 'confirmed'])
+                ->update(['status' => 'out_for_delivery']);
+
             $trip->update($updates);
 
             return response()->json([
@@ -147,7 +152,7 @@ class TripController extends Controller
 
             $order->update([
                 'delivered_at' => now(),
-                'status' => 'completed'
+                'status' => 'delivered'
             ]);
 
             return response()->json([

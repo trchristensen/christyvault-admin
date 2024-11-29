@@ -288,6 +288,7 @@ class OrderResource extends Resource
 
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
+                    ->sortable()
                     ->formatStateUsing(fn($state): string => ucfirst(str_replace('_', ' ', (string) $state)))
                     ->color(fn($state): string => match ((string) $state) {
                         'cancelled' => 'danger',
@@ -348,6 +349,8 @@ class OrderResource extends Resource
                         'out_for_delivery' => 'Out for Delivery',
                         'delivered' => 'Delivered',
                         'cancelled' => 'Cancelled',
+                        'invoiced' => 'Invoiced',
+                        'completed' => 'Completed',
                     ])
                     ->multiple(),
                 Tables\Filters\Filter::make('requested_delivery_date')
