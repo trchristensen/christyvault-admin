@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\OrderResource\Widgets;
 
+use App\Enums\OrderStatus;
 use App\Filament\Resources\OrderResource;
 use App\Models\Customer;
 use App\Models\Employee;
@@ -168,18 +169,8 @@ class CalendarWidget extends FullCalendarWidget
                         ->time()
                         ->minDate(now()),
                     Select::make('status')
-                        ->options([
-                            'pending' => 'Pending',
-                            'confirmed' => 'Confirmed',
-                            'in_production' => 'In Production',
-                            'ready_for_delivery' => 'Ready for Delivery',
-                            'out_for_delivery' => 'Out for Delivery',
-                            'delivered' => 'Delivered',
-                            'cancelled' => 'Cancelled',
-                            'in_progress' => 'In Progress',
-                            'completed' => 'Completed',
-                        ])
-                        ->default('pending')
+                        ->options(OrderStatus::class)
+                        ->default(OrderStatus::PENDING->value)
                         ->required(),
                     Textarea::make('special_instructions')
                         ->maxLength(1000),
@@ -396,13 +387,14 @@ class CalendarWidget extends FullCalendarWidget
     protected function getEventColor(Order $order): string
     {
         return match ($order->status) {
-            'pending' => '#64748B',      // Slate
-            'confirmed' => '#3B82F6',    // Blue
-            'in_production' => '#3B82F6',
-            'ready_for_delivery' => '#3B82F6',
-            'out_for_delivery' => '#3B82F6',
-            'delivered' => '#1E3A8A',    // Dark Blue
-            'cancelled' => '#7F1D1D',    // Dark Red
+            OrderStatus::PENDING->value => '#64748B',      // Slate
+            OrderStatus::CONFIRMED->value => '#3B82F6',    // Blue
+            OrderStatus::IN_PRODUCTION->value => '#3B82F6',
+            OrderStatus::READY_FOR_DELIVERY->value => '#3B82F6',
+            OrderStatus::OUT_FOR_DELIVERY->value => '#3B82F6',
+            OrderStatus::DELIVERED->value => '#1E3A8A',
+            OrderStatus::INVOICED->value => '#1E3A8A',
+            OrderStatus::CANCELLED->value => '#7F1D1D',
             default => '#64748B',
         };
     }

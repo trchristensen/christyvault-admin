@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\OrderStatus;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Models\Customer;
 use App\Models\Employee;
@@ -341,17 +342,7 @@ class OrderResource extends Resource
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
                 Tables\Filters\SelectFilter::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'confirmed' => 'Confirmed',
-                        'in_production' => 'In Production',
-                        'ready_for_delivery' => 'Ready for Delivery',
-                        'out_for_delivery' => 'Out for Delivery',
-                        'delivered' => 'Delivered',
-                        'cancelled' => 'Cancelled',
-                        'invoiced' => 'Invoiced',
-                        'completed' => 'Completed',
-                    ])
+                    ->options(OrderStatus::class)
                     ->multiple(),
                 Tables\Filters\Filter::make('requested_delivery_date')
                     ->form([

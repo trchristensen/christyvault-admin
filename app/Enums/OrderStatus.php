@@ -12,6 +12,7 @@ enum OrderStatus: string
     case ARRIVED = 'arrived';
     case DELIVERED = 'delivered';
     case CANCELLED = 'cancelled';
+    case INVOICED = 'invoiced';
     case COMPLETED = 'completed';
 
     public function label(): string
@@ -24,6 +25,7 @@ enum OrderStatus: string
             self::OUT_FOR_DELIVERY => 'Out for Delivery',
             self::DELIVERED => 'Delivered',
             self::CANCELLED => 'Cancelled',
+            self::INVOICED => 'Invoiced',
             self::COMPLETED => 'Completed',
         };
     }
@@ -38,6 +40,7 @@ enum OrderStatus: string
             self::OUT_FOR_DELIVERY => 'orange',
             self::DELIVERED => 'success',
             self::CANCELLED => 'danger',
+            self::INVOICED => 'info',
             self::COMPLETED => 'success',
         };
     }
