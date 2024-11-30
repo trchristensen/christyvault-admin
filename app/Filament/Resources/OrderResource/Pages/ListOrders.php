@@ -29,7 +29,7 @@ class ListOrders extends ListRecords
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('trip_id', null)),
             'all' => Tab::make(),
             'inactive' => Tab::make()
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'delivered', 'cancelled', 'completed')),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', ['delivered', 'cancelled', 'completed'])),
         ];
     }
 }

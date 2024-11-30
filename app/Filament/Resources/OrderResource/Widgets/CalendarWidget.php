@@ -369,7 +369,7 @@ class CalendarWidget extends FullCalendarWidget
         $order = $this->event;
 
         // If order is in progress or completed, return empty array (no actions)
-        if ($order && in_array($order->status, ['in_progress', 'completed', 'delivered'])) {
+        if ($order && in_array($order->status, [OrderStatus::OUT_FOR_DELIVERY, OrderStatus::COMPLETED, OrderStatus::DELIVERED])) {
             return [];
         }
 
@@ -386,17 +386,11 @@ class CalendarWidget extends FullCalendarWidget
 
     protected function getEventColor(Order $order): string
     {
-        return match ($order->status) {
-            OrderStatus::PENDING->value => '#64748B',      // Slate
-            OrderStatus::CONFIRMED->value => '#3B82F6',    // Blue
-            OrderStatus::IN_PRODUCTION->value => '#3B82F6',
-            OrderStatus::READY_FOR_DELIVERY->value => '#3B82F6',
-            OrderStatus::OUT_FOR_DELIVERY->value => '#3B82F6',
-            OrderStatus::DELIVERED->value => '#1E3A8A',
-            OrderStatus::INVOICED->value => '#1E3A8A',
-            OrderStatus::CANCELLED->value => '#7F1D1D',
-            default => '#64748B',
-        };
+        // Cast the string status to enum instance
+        $status = OrderStatus::from($order->status);
+
+        // Call color() on the enum instance
+        return $status->color();
     }
 
 

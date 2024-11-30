@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -14,5 +16,18 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void {}
+    public function boot(): void
+    {
+        LogViewer::auth(function ($request) {
+            config(['sanctum.stateful' => array_merge(
+                config('sanctum.stateful', []),
+                [parse_url(env('APP_URL'), PHP_URL_HOST)]
+            )]);
+
+            return $request->user()
+                && in_array($request->user()->email, [
+                    'tchristensen@christyvault.com'
+                ]);
+        });
+    }
 }

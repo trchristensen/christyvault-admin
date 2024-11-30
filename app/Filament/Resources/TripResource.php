@@ -76,8 +76,8 @@ class TripResource extends Resource
                                         ->send();
                                 }
                             }),
-                        // Forms\Components\TimePicker::make('start_time'),
-                        // Forms\Components\TimePicker::make('end_time'),
+                        // Forms\Components\DateTime::make('start_time'),
+                        // Forms\Components\DateTime::make('end_time'),
                         Forms\Components\Textarea::make('notes')
                             ->columnSpanFull(),
                     ])->columns(2),
@@ -111,7 +111,7 @@ class TripResource extends Resource
                             $stopLabel = $totalStops > 1 ? "Stop {$order->stop_number} - " : '';
 
                             $ordersHtml .= "
-                                <div class='mb-3 p-2 bg-gray-50 rounded'>
+                                <div class='p-2 mb-3 rounded bg-gray-50'>
                                     <div class='font-medium'>{$stopLabel}{$order->customer->name}</div>
                                     <div class='text-sm text-gray-600'>{$order->location->full_address}</div>
                                     <div class='mt-1 text-sm text-gray-500'>{$productsHtml}</div>

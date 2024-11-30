@@ -24,6 +24,8 @@ class Trip extends Model
 
     protected $casts = [
         'scheduled_date' => 'date',
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
     ];
 
     protected static function boot()
