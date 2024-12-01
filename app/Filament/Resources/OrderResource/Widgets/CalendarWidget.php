@@ -248,18 +248,18 @@ class CalendarWidget extends FullCalendarWidget
     }
 
     // config
-    public function config(): array
-    {
-        return [
-            'initialView' => 'multiMonthYear',
-            'multiMonthMaxColumns' => 1,
-            'duration' => [
-                'months' => 6,
-            ],
-            'plugins' => self::plugins(),
+    // public function config(): array
+    // {
+    //     return [
+    //         'initialView' => 'dayGridMonth',
+    //         // 'multiMonthMaxColumns' => 1,
+    //         'duration' => [
+    //             'months' => 6,
+    //         ],
+    //         // 'plugins' => self::plugins(),
 
-        ];
-    }
+    //     ];
+    // }
 
     public function plugins()
     {
