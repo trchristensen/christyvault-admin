@@ -66,6 +66,8 @@ class TestCalendarComponent extends Component implements HasForms
         $this->data = [
             'requested_delivery_date' => $date,
             'assigned_delivery_date' => $date,
+            'status' => OrderStatus::PENDING->value,
+            'order_date' => now(),
             // Set any other default values you need
         ];
         $this->form->fill($this->data);
