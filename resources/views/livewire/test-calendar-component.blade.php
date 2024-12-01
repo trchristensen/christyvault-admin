@@ -1,4 +1,11 @@
 <div>
+    <style>
+        /* Hide default event content */
+        .fc-event-main>div:not(.custom-event-content) {
+            display: none !important;
+        }
+    </style>
+
     <div x-data="{
         calendar: null
     }" x-init="(() => {
@@ -48,30 +55,32 @@
                 const el = info.el;
                 const eventMainEl = el.querySelector('.fc-event-main');
 
-                eventMainEl.style.padding = '12px';
+                // Clear the content first
+                eventMainEl.innerHTML = '';
 
-                if (event.extendedProps.isLocked) {
-                    el.style.cursor = 'not-allowed';
-                    el.style.opacity = '0.8';
-                }
+                // Create wrapper with custom class
+                const wrapper = document.createElement('div');
+                wrapper.className = 'custom-event-content';
+                wrapper.style.padding = '12px';
+                wrapper.style.overflow = 'hidden';
 
+                // Create title element
                 const titleEl = document.createElement('div');
                 titleEl.style.fontSize = '14px';
                 titleEl.style.fontWeight = '500';
                 titleEl.style.marginBottom = '8px';
                 titleEl.textContent = event.title;
 
+                // Create info container
                 const infoContainer = document.createElement('div');
                 infoContainer.style.fontSize = '12px';
-                {{-- TODO: make the event title wrap --}}
-                eventMainEl.style.overflow = 'hidden';
                 infoContainer.style.color = 'rgba(255, 255, 255, 0.8)';
 
                 // Basic info
                 let infoHTML = `
-                        <div>Requested: ${event.extendedProps.requestedDate}</div>
-                        <div>Status: ${event.extendedProps.status}</div>
-                    `;
+                                                                        <div>Requested: ${event.extendedProps.requestedDate}</div>
+                                                                        <div>Status: ${event.extendedProps.status}</div>
+                                                                    `;
 
                 // Products info
                 if (event.extendedProps.products && event.extendedProps.products.length > 0) {
@@ -84,9 +93,9 @@
 
                 infoContainer.innerHTML = infoHTML;
 
-                eventMainEl.innerHTML = '';
-                eventMainEl.appendChild(titleEl);
-                eventMainEl.appendChild(infoContainer);
+                wrapper.appendChild(titleEl);
+                wrapper.appendChild(infoContainer);
+                eventMainEl.appendChild(wrapper);
             },
             eventClick: function(info) {
                 const orderId = info.event.id;
