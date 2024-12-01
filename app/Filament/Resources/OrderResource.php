@@ -141,20 +141,32 @@ class OrderResource extends Resource
                             ->disabled(fn(callable $get) => empty($get('customer_id'))),
                         Forms\Components\DatePicker::make('order_date')
                             ->required()
+                            ->native(false)
+                            ->prefixIcon('heroicon-o-calendar')
                             ->default(now()->toDateString()),
                         Forms\Components\DatePicker::make('requested_delivery_date')
+                            ->native(false)
                             ->required()
+                            ->prefixIcon('heroicon-o-calendar')
                             ->default(now()),
                         Forms\Components\DatePicker::make('assigned_delivery_date')
-                            // ->required()
-                            // ->time()
-                            ->rules(['date', 'after_or_equal:today',  fn(): Closure => function (string $attribute, $value, Closure $fail) {
-                                if (Carbon::parse($value)->isWeekend()) {
-                                    $fail('Weekend delivery dates are not allowed.');
-                                }
-                            }])
-                            ->minDate(today()),
+                            ->native(false)
+                            ->disabledDates(
+                                function () {
+                                    $dates = [];
+                                    $startDate = today();
+                                    $endDate = today()->addYear();
 
+                                    foreach (CarbonPeriod::create($startDate, $endDate) as $date) {
+                                        if ($date->isWeekend()) {
+                                            $dates[] = $date->format('Y-m-d');
+                                        }
+                                    }
+
+                                    return  $dates;
+                                }
+                            )
+                            ->minDate(today()),
                         Forms\Components\Select::make('status')
                             ->options([
                                 'pending' => 'Pending',
@@ -173,6 +185,8 @@ class OrderResource extends Resource
                             ->seconds(false),
                         Forms\Components\DateTimePicker::make('service_date')
                             ->nullable()
+                            ->prefixIcon('heroicon-o-calendar')
+                            ->native(false)
                             ->seconds(false),
                         Forms\Components\Textarea::make('special_instructions')
                             ->columnSpanFull(),

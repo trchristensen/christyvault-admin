@@ -16,6 +16,7 @@
         "laravel/tinker": "^2.9",
         "opcodesio/log-viewer": "^3.12",
         "saade/filament-fullcalendar": "^3.2",
+        "savannabits/filament-flatpickr": "^3.1",
         "spatie/icalendar-generator": "^2.8",
         "ysfkaya/filament-phone-input": "^3.1"
     },
