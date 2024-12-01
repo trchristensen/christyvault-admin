@@ -42,35 +42,4 @@ class DeliveryCalendar extends Page
     //         ],
     //     ];
     // }
-
-    // public function getCalendarEvents(): array
-    // {
-    //     return Order::query()
-    //         ->get()
-    //         ->map(function (Order $order) {
-    //             return [
-    //                 'id' => $order->id,
-    //                 'title' => "Order #{$order->order_number} - " . ($order->customer ? $order->customer->name : 'No Customer'),
-    //                 'start' => $order->requested_delivery_date,
-    //                 // 'url' => route('filament.resources.orders.edit', $order),
-    //                 'backgroundColor' => $this->getEventColor($order),
-    //                 'borderColor' => $this->getEventColor($order),
-    //             ];
-    //         })
-    //         ->toArray();
-    // }
-
-    // protected function getEventColor(Order $order): string
-    // {
-    //     return match ($order->status) {
-    //         'pending' => '#FFA500',
-    //         'confirmed' => '#4169E1',
-    //         'in_production' => '#32CD32',
-    //         'ready_for_delivery' => '#9370DB',
-    //         'out_for_delivery' => '#1E90FF',
-    //         'delivered' => '#228B22',
-    //         'cancelled' => '#DC143C',
-    //         default => '#808080',
-    //     };
-    // }
 }

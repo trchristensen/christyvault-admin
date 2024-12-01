@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6ad8ead1b732a4dd1b0f05e668b781f2",
+    "content-hash": "bcbf54530570a4edf3438852603c3ecf",
     "packages": [
         {
             "name": "althinect/filament-spatie-roles-permissions",
@@ -5624,16 +5624,16 @@
         },
         {
             "name": "saade/filament-fullcalendar",
-            "version": "v3.2.2",
+            "version": "4.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/saade/filament-fullcalendar.git",
-                "reference": "d40410e6bc46057628fb9fa8f62b6090452914d3"
+                "reference": "e918564c4bcfce142774e6b0ad8b2450bc9aa5af"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/saade/filament-fullcalendar/zipball/d40410e6bc46057628fb9fa8f62b6090452914d3",
-                "reference": "d40410e6bc46057628fb9fa8f62b6090452914d3",
+                "url": "https://api.github.com/repos/saade/filament-fullcalendar/zipball/e918564c4bcfce142774e6b0ad8b2450bc9aa5af",
+                "reference": "e918564c4bcfce142774e6b0ad8b2450bc9aa5af",
                 "shasum": ""
             },
             "require": {
@@ -5686,7 +5686,7 @@
             ],
             "support": {
                 "issues": "https://github.com/saade/filament-fullcalendar/issues",
-                "source": "https://github.com/saade/filament-fullcalendar/tree/v3.2.2"
+                "source": "https://github.com/saade/filament-fullcalendar/tree/4.x"
             },
             "funding": [
                 {
@@ -5694,81 +5694,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-05-02T13:04:39+00:00"
-        },
-        {
-            "name": "savannabits/filament-flatpickr",
-            "version": "v3.1.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/savannabits/filament-flatpickr.git",
-                "reference": "4130212d286762cfe9d0e12ca0da2d6054711e8a"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/savannabits/filament-flatpickr/zipball/4130212d286762cfe9d0e12ca0da2d6054711e8a",
-                "reference": "4130212d286762cfe9d0e12ca0da2d6054711e8a",
-                "shasum": ""
-            },
-            "require": {
-                "filament/filament": "^3.0",
-                "illuminate/contracts": "^10.0|^11.0",
-                "php": "^8.1",
-                "spatie/laravel-package-tools": "^1.14.0"
-            },
-            "require-dev": {
-                "laravel/pint": "^1.0",
-                "nunomaduro/collision": "^7.9",
-                "nunomaduro/larastan": "^2.0.1",
-                "orchestra/testbench": "^8.0|^9.0",
-                "pestphp/pest": "^2.0",
-                "pestphp/pest-plugin-arch": "^2.0",
-                "pestphp/pest-plugin-laravel": "^2.0",
-                "phpstan/extension-installer": "^1.1",
-                "phpstan/phpstan-deprecation-rules": "^1.0",
-                "phpstan/phpstan-phpunit": "^1.0",
-                "spatie/laravel-ray": "^1.26"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Coolsam\\FilamentFlatpickr\\FilamentFlatpickrServiceProvider"
-                    ],
-                    "aliases": {
-                        "FilamentFlatpickr": "Coolsam\\FilamentFlatpickr\\Facades\\FilamentFlatpickr"
-                    }
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Coolsam\\FilamentFlatpickr\\": "src/",
-                    "Coolsam\\FilamentFlatpickr\\Database\\Factories\\": "database/factories/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Sam Maosa",
-                    "email": "smaosa@savannabits.com",
-                    "role": "Developer"
-                }
-            ],
-            "description": "Integrate Flatpickr with FilamentPHP",
-            "homepage": "https://github.com/savannabits/filament-flatpickr",
-            "keywords": [
-                "coolsam",
-                "filament-flatpickr",
-                "laravel"
-            ],
-            "support": {
-                "issues": "https://github.com/savannabits/filament-flatpickr/issues",
-                "source": "https://github.com/savannabits/filament-flatpickr/tree/v3.1.1"
-            },
-            "time": "2024-09-19T12:32:24+00:00"
+            "time": "2024-07-12T01:29:14+00:00"
         },
         {
             "name": "spatie/color",
@@ -6026,16 +5952,16 @@
         },
         {
             "name": "spatie/laravel-package-tools",
-            "version": "1.16.5",
+            "version": "1.16.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/spatie/laravel-package-tools.git",
-                "reference": "c7413972cf22ffdff97b68499c22baa04eddb6a2"
+                "reference": "1f26942dc1e5c49eacfced34fdbc29ed234bd7b3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/spatie/laravel-package-tools/zipball/c7413972cf22ffdff97b68499c22baa04eddb6a2",
-                "reference": "c7413972cf22ffdff97b68499c22baa04eddb6a2",
+                "url": "https://api.github.com/repos/spatie/laravel-package-tools/zipball/1f26942dc1e5c49eacfced34fdbc29ed234bd7b3",
+                "reference": "1f26942dc1e5c49eacfced34fdbc29ed234bd7b3",
                 "shasum": ""
             },
             "require": {
@@ -6074,7 +6000,7 @@
             ],
             "support": {
                 "issues": "https://github.com/spatie/laravel-package-tools/issues",
-                "source": "https://github.com/spatie/laravel-package-tools/tree/1.16.5"
+                "source": "https://github.com/spatie/laravel-package-tools/tree/1.16.6"
             },
             "funding": [
                 {
@@ -6082,7 +6008,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-08-27T18:56:10+00:00"
+            "time": "2024-11-18T15:02:02+00:00"
         },
         {
             "name": "spatie/laravel-permission",
@@ -11829,8 +11755,10 @@
         }
     ],
     "aliases": [],
-    "minimum-stability": "stable",
-    "stability-flags": [],
+    "minimum-stability": "dev",
+    "stability-flags": {
+        "saade/filament-fullcalendar": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

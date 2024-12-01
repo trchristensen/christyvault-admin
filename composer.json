@@ -15,8 +15,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "opcodesio/log-viewer": "^3.12",
-        "saade/filament-fullcalendar": "^3.2",
-        "savannabits/filament-flatpickr": "^3.1",
+        "saade/filament-fullcalendar": "^4.x-dev",
         "spatie/icalendar-generator": "^2.8",
         "ysfkaya/filament-phone-input": "^3.1"
     },
@@ -73,6 +72,6 @@
             "php-http/discovery": true
         }
     },
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "prefer-stable": true
 }

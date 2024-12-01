@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use Althinect\FilamentSpatieRolesPermissions\FilamentSpatieRolesPermissionsPlugin;
+use App\Filament\Pages\TestCalendar;
 use App\Filament\Resources\OrderResource\Pages\DeliveryCalendar;
 use App\Filament\Widgets\OrderStatisticsWidget;
 use App\Filament\Widgets\RecentOrdersWidget;
@@ -24,6 +25,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
+use App\Filament\Resources\OrderResource\Widgets\CalendarWidget;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -46,6 +48,7 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Pages\Dashboard::class,
                 DeliveryCalendar::class,
+                TestCalendar::class,
             ])
             ->navigationGroups([
                 NavigationGroup::make()
@@ -65,12 +68,10 @@ class AdminPanelProvider extends PanelProvider
                 FilamentFullCalendarPlugin::make()
                     ->selectable()
                     ->editable()
-                    ->config([
-                        'weekends' => false
-                    ])
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
+                CalendarWidget::class,
                 // Widgets\AccountWidget::class,
                 // Widgets\FilamentInfoWidget::class,
                 RecentOrdersWidget::class,

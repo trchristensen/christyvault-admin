@@ -18,5 +18,6 @@
             /* margin-bottom: 0.2em; */
         }
     </style>
+
     @livewire(\App\Filament\Resources\OrderResource\Widgets\CalendarWidget::class)
 </x-filament-panels::page>

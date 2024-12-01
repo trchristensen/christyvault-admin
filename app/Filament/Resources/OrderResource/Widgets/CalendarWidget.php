@@ -246,4 +246,28 @@ class CalendarWidget extends FullCalendarWidget
             })
             ->toArray();
     }
+
+    // config
+    public function config(): array
+    {
+        return [
+            'initialView' => 'multiMonthYear',
+            'multiMonthMaxColumns' => 1,
+            'duration' => [
+                'months' => 6,
+            ],
+            'plugins' => self::plugins(),
+
+        ];
+    }
+
+    public function plugins()
+    {
+        return [
+
+            "interaction",
+            "multiMonth",
+
+        ];
+    }
 }
