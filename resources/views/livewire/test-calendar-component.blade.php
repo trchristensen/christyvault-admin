@@ -31,6 +31,10 @@
                 dayMaxEvents: false,
                 dayMaxEventRows: 10,
                 editable: true,
+                dateClick: function(info) {
+                    // Call Livewire method to create new order
+                    @this.createOrder(info.dateStr);
+                },
                 eventDrop: function(info) {
                     // Prevent locked events from being moved
                     if (info.event.extendedProps.isLocked) {
@@ -79,9 +83,9 @@
 
                     // Basic info
                     let infoHTML = `
-                                                                                <div>Requested: ${event.extendedProps.requestedDate}</div>
-                                                                                <div>Status: ${event.extendedProps.status}</div>
-                                                                            `;
+                                                                                                <div>Requested: ${event.extendedProps.requestedDate}</div>
+                                                                                                <div>Status: ${event.extendedProps.status}</div>
+                                                                                            `;
 
                     // Products info
                     if (event.extendedProps.products && event.extendedProps.products.length > 0) {
@@ -114,8 +118,31 @@
         <div x-ref="calendar"></div>
     </div>
 
-    {{-- Add the Filament modal --}}
-    <x-filament::modal id="edit-order" width="7xl">
+    {{-- Add a new modal for creating orders --}}
+    <x-filament::modal id="create-order" width="2xl">
+        <x-slot name="header">
+            Create New Order
+        </x-slot>
+
+        @if ($creating)
+            <form wire:submit="saveNewOrder">
+                {{ $this->form }}
+
+                <div class="mt-4 flex justify-end gap-x-4">
+                    <x-filament::button color="gray" x-on:click="$dispatch('close-modal', { id: 'create-order' })">
+                        Cancel
+                    </x-filament::button>
+
+                    <x-filament::button type="submit">
+                        Create
+                    </x-filament::button>
+                </div>
+            </form>
+        @endif
+    </x-filament::modal>
+
+    {{-- Add the Filament modal for editing orders --}}
+    <x-filament::modal id="edit-order" width="2xl">
         <x-slot name="header">
             Edit Order {{ $editing?->order_number }}
         </x-slot>
