@@ -42,6 +42,7 @@ class TestCalendarComponent extends Component implements HasForms
             $this->dispatch('close-modal', id: 'edit-order');
             $this->editing = null;
             $this->data = [];
+            $this->dispatch('calendar-updated');
         }
     }
 
