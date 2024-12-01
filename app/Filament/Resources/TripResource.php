@@ -67,6 +67,8 @@ class TripResource extends Resource
                             ->required(),
                         Forms\Components\DatePicker::make('scheduled_date')
                             ->required()
+                            ->native(false)
+                            ->suffixIcon('heroicon-o-calendar')
                             ->afterStateUpdated(function ($state, $record) {
                                 if ($record && $record->scheduled_date) {
                                     Notification::make()
