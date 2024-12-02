@@ -25,108 +25,68 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TimePicker;
 use App\Models\Trip;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Illuminate\Database\Eloquent\Model;
+use Filament\Actions\Actions;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
 
-class TestCalendarComponent extends Component implements HasForms
+class TestCalendarComponent extends Component implements HasForms, HasActions
 {
     use HasOrderForm;
     use InteractsWithForms;
+    use InteractsWithActions;
 
-    public ?Order $editing = null;
-    public ?Order $creating = null;
+    public ?Order $event = null;
     public ?array $data = [];
 
-    public function mount(): void
+    protected function getFormModel(): Model|string|null
     {
-        $this->form->fill();
+        return $this->event ?? Order::class;
     }
 
-    public function editOrder($orderId): void
+    protected function getActions(): array
     {
-        $this->editing = Order::find($orderId);
-        $this->data = $this->editing->toArray();
-        $this->form->fill($this->data);
-        $this->dispatch('open-modal', id: 'edit-order');
-    }
-
-    public function saveOrder(): void
-    {
-        $data = $this->form->getState();
-
-        if ($this->editing) {
-            $this->editing->update($data);
-            $this->dispatch('close-modal', id: 'edit-order');
-            $this->editing = null;
-            $this->data = [];
-            $this->dispatch('calendar-updated');
-        }
+        return [
+            CreateAction::make()
+                ->model(Order::class)
+                ->form($this->getOrderFormSchema())
+                ->mutateFormDataUsing(function (array $data): array {
+                    return [
+                        ...$data,
+                        'order_date' => now(),
+                        'status' => OrderStatus::PENDING->value,
+                    ];
+                }),
+            EditAction::make()
+                ->model(Order::class)
+                ->form($this->getOrderFormSchema()),
+        ];
     }
 
     public function createOrder($date): void
     {
-        $this->creating = new Order();
         $this->data = [
             'requested_delivery_date' => $date,
             'assigned_delivery_date' => $date,
-            'status' => OrderStatus::PENDING->value,
-            'order_date' => now(),
-            // Set any other default values you need
+            'orderProducts' => [
+                ['product_id' => null, 'quantity' => 1, 'fill_load' => false, 'price' => 0]
+            ]
         ];
-        $this->form->fill($this->data);
-        $this->dispatch('open-modal', id: 'create-order');
+
+        $this->mountAction('create', ['data' => $this->data]);
     }
 
-    public function saveNewOrder(): void
+    public function editOrder($orderId): void
     {
-        $data = $this->form->getState();
-
-        DB::beginTransaction();
-
-        try {
-            // Create the order
-            $order = Order::create([
-                'requested_delivery_date' => $data['requested_delivery_date'],
-                'assigned_delivery_date' => $data['assigned_delivery_date'],
-                'customer_id' => $data['customer_id'] ?? null,
-                'location_id' => $data['location_id'] ?? null,
-                'status' => $data['status'] ?? 'pending',
-                'special_instructions' => $data['special_instructions'] ?? null,
-                'order_date' => $data['order_date'] ?? now(),
-                'delivery_time' => $data['delivery_time'] ?? null,
-                'service_date' => $data['service_date'] ?? null,
-            ]);
-
-            // Handle order products
-            if (!empty($data['orderProducts'])) {
-                foreach ($data['orderProducts'] as $productData) {
-                    $order->orderProducts()->create([
-                        'product_id' => $productData['product_id'],
-                        'quantity' => $productData['fill_load'] ? null : ($productData['quantity'] ?? null),
-                        'fill_load' => $productData['fill_load'] ?? false,
-                        'price' => $productData['price'] ?? 0,
-                        'location' => $productData['location'] ?? null,
-                        'notes' => $productData['notes'] ?? null,
-                    ]);
-                }
-            }
-
-            DB::commit();
-
-            $this->dispatch('close-modal', id: 'create-order');
-            $this->creating = null;
-            $this->data = [];
-            $this->dispatch('calendar-updated');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
+        $this->event = Order::find($orderId);
+        if ($this->event) {
+            $this->data = $this->event->toArray();
+            $this->mountAction('edit', ['record' => $this->event]);
         }
-    }
-
-    public function form(Form $form): Form
-    {
-        return $form
-            ->schema($this->getCreateOrderFormSchema())
-            ->model($this->editing ?? $this->creating ?? new Order())
-            ->statePath('data');
     }
 
     public function render()
@@ -136,7 +96,7 @@ class TestCalendarComponent extends Component implements HasForms
             ->get()
             ->map(function (Trip $trip) {
                 return [
-                    'id' => 'trip_' . $trip->id,
+                    'id' => $trip->id,
                     'title' => "<div style='line-height: 1.2'>" .
                         "{$trip->trip_number}" .
                         "<div style='font-size: 0.9em; opacity: 0.9'>{$trip->driver?->name}</div>" .
@@ -174,7 +134,7 @@ class TestCalendarComponent extends Component implements HasForms
             ->map(function (Order $order) {
                 $isLocked = in_array($order->status, ['in_progress', 'completed', 'delivered']);
                 return [
-                    'id' => 'order_' . $order->id,
+                    'id' => $order->id,
                     'title' => $order->customer?->name ?? $order->order_number,
                     'start' => $order->assigned_delivery_date?->format('Y-m-d') ?? $order->requested_delivery_date->format('Y-m-d'),
                     'allDay' => true,
@@ -185,7 +145,8 @@ class TestCalendarComponent extends Component implements HasForms
                         'customerName' => $order->customer?->name,
                         'requestedDate' => $order->requested_delivery_date->format('m/d'),
                         'status' => Str::headline($order->status),
-                        'isLocked' => $isLocked,
+                        // 'isLocked' => $isLocked,
+                        'isLocked' => false,
                         'products' => $order->orderProducts->map(function ($orderProduct) {
                             return [
                                 'quantity' => $orderProduct->quantity,

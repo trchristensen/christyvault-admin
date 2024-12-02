@@ -35,6 +35,8 @@ class CalendarWidget extends FullCalendarWidget
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
 
+    protected bool $selectable = true;
+    protected bool $editable = true;
 
     public function getViewData(): array
     {
@@ -170,6 +172,7 @@ class CalendarWidget extends FullCalendarWidget
         }
 
         return [
+            Actions\CreateAction::make(),
             Actions\EditAction::make()
                 ->modalSubmitActionLabel('Save changes'),
             Actions\DeleteAction::make(),
@@ -186,9 +189,17 @@ class CalendarWidget extends FullCalendarWidget
         }
 
         return [
+            Actions\CreateAction::make(),
             Actions\EditAction::make(),
             Actions\DeleteAction::make(),
         ];
+    }
+
+    protected function createEventAction(): Actions\CreateAction
+    {
+        return Actions\CreateAction::make()
+            ->modalSubmitActionLabel('Create order')
+            ->modalHeading('Create new order');
     }
 
     protected function viewAction(): \Filament\Actions\Action
@@ -248,26 +259,17 @@ class CalendarWidget extends FullCalendarWidget
     }
 
     // config
-    // public function config(): array
-    // {
-    //     return [
-    //         'initialView' => 'dayGridMonth',
-    //         // 'multiMonthMaxColumns' => 1,
-    //         'duration' => [
-    //             'months' => 6,
-    //         ],
-    //         // 'plugins' => self::plugins(),
-
-    //     ];
-    // }
-
-    public function plugins()
+    public function config(): array
     {
         return [
-
-            "interaction",
-            "multiMonth",
-
+            'initialView' => 'dayGridMonth',
+            'selectable' => true,
+            'editable' => true,
+            'headerToolbar' => [
+                'left' => 'prev,next today',
+                'center' => 'title',
+                'right' => 'dayGridMonth,timeGridWeek,timeGridDay',
+            ],
         ];
     }
 }
