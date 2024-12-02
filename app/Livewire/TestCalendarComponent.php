@@ -28,7 +28,6 @@ use App\Models\Trip;
 
 class TestCalendarComponent extends Component implements HasForms
 {
-    use HasOrderForm;
     use InteractsWithForms;
 
     public ?Order $editing = null;
@@ -37,12 +36,17 @@ class TestCalendarComponent extends Component implements HasForms
 
     public function mount(): void
     {
+        dd($this->form);
         $this->form->fill();
     }
 
     public function editOrder($orderId): void
     {
-        $this->editing = Order::find($orderId);
+        $id = (int) str_replace('order_', '', $orderId);
+
+        $this->editing = Order::find($id);
+        if (!$this->editing) return;
+
         $this->data = $this->editing->toArray();
         $this->form->fill($this->data);
         $this->dispatch('open-modal', id: 'edit-order');
