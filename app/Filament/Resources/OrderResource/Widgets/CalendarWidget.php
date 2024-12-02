@@ -24,12 +24,16 @@ use Illuminate\Support\Str;
 use Saade\FilamentFullCalendar\Actions\ViewAction;
 use Filament\Forms\Get;
 use App\Filament\Resources\Traits\HasOrderForm;
+use App\Filament\Resources\Traits\HasTripForm;
 use App\Models\Trip;
-
+use Saade\FilamentFullCalendar\Actions\CreateAction;
+use Saade\FilamentFullCalendar\Actions\EditAction;
 
 class CalendarWidget extends FullCalendarWidget
 {
     use HasOrderForm;
+    use HasTripForm;
+
 
     public Model | string | null $model = Order::class;
     public ?Model $event = null;
@@ -53,34 +57,38 @@ class CalendarWidget extends FullCalendarWidget
     protected function getFormModel(): Model|string|null
     {
         if ($this->event instanceof Trip) {
-            return $this->event ?? Trip::class;
+            return $this->record ?? Trip::class;
         }
-        return $this->event ?? Order::class;
+        return $this->record ?? Order::class;
     }
 
-    // Resolve Event record into Model property
-    public function resolveEventRecord(array $data): ?Model
-    {
-        $id = $data['id'];
-
-        if (str_starts_with($id, 'trip_')) {
-            $tripId = (int)substr($id, 5);
-            return Trip::find($tripId);
-        } else if (str_starts_with($id, 'order_')) {
-            $orderId = (int)substr($id, 6);
-            return Order::find($orderId);
-        }
-
-        return null;
-    }
     public function getFormSchema(): array
     {
-        if ($this->event instanceof Trip) {
-            return [
-                // Trip form schema here
-            ];
+        if ($this->record instanceof Trip) {
+            return static::getTripFormSchema();
         }
         return static::getOrderFormSchema();
+    }
+
+    protected function getViewAction(): ViewAction
+    {
+        return ViewAction::make()
+            ->modalWidth('2xl')
+            ->form(fn() => $this->getFormSchema());
+    }
+
+    public function onEventClick(array $event): void
+    {
+        $uuid = $event['extendedProps']['uuid'];
+        $type = $event['extendedProps']['type'];
+
+        if ($type === 'trip') {
+            $this->record = Trip::with(['orders.customer', 'driver'])->where('uuid', $uuid)->first();
+        } else {
+            $this->record = Order::with(['customer', 'orderProducts.product'])->where('uuid', $uuid)->first();
+        }
+
+        $this->mountAction('view');
     }
 
 
@@ -88,9 +96,10 @@ class CalendarWidget extends FullCalendarWidget
     {
         // Extract the numeric ID from the prefixed string
         $id = $event['id'];
+        $uuid = $event['extendedProps']['uuid'];
         if (str_starts_with($id, 'order_')) {
             $orderId = substr($id, 6); // Remove 'order_' prefix
-            $order = Order::find($orderId);
+            $order = Order::where('uuid', $uuid)->first();
 
             if (!$order) {
                 return false;
@@ -108,7 +117,8 @@ class CalendarWidget extends FullCalendarWidget
             }
         } else if (str_starts_with($id, 'trip_')) {
             $tripId = substr($id, 5); // Remove 'trip_' prefix
-            $trip = Trip::find($tripId);
+            $trip = Trip::where('uuid', $uuid)->first();
+
 
             if (!$trip) {
                 return false;
@@ -173,35 +183,6 @@ class CalendarWidget extends FullCalendarWidget
                 ->label('Create New')
                 ->modalHeading('Create New')
                 ->modalWidth('2xl')
-                ->form([
-                    Select::make('type')
-                        ->label('What would you like to create?')
-                        ->options([
-                            'order' => 'New Order',
-                            'trip' => 'New Trip',
-                        ])
-                        ->required()
-                        ->live(),
-
-                    // Order Form (shown when type = order)
-                    ...collect(static::getOrderFormSchema())->map(
-                        fn($field) =>
-                        $field->visible(fn(Get $get) => $get('type') === 'order')
-                    ),
-
-                    // Trip Form (shown when type = trip)
-                    DatePicker::make('scheduled_date')
-                        ->required()
-                        ->native(false)
-                        ->visible(fn(Get $get) => $get('type') === 'trip'),
-                    Select::make('driver_id')
-                        ->relationship('driver', 'name')
-                        ->required()
-                        ->visible(fn(Get $get) => $get('type') === 'trip'),
-                    TextInput::make('notes')
-                        ->maxLength(255)
-                        ->visible(fn(Get $get) => $get('type') === 'trip'),
-                ])
                 ->action(function (array $data) {
                     if ($data['type'] === 'order') {
                         Order::create([
@@ -224,36 +205,6 @@ class CalendarWidget extends FullCalendarWidget
                 }),
         ];
     }
-
-
-
-    // protected function getActions(): array
-    // {
-    //     $event = $this->event;
-
-
-    //     // If it's a Trip
-    //     if ($event instanceof Trip) {
-    //         return [
-    //             Actions\EditAction::make(),
-    //             Actions\DeleteAction::make(),
-    //         ];
-    //     }
-
-    //     // If it's an Order and is in progress or completed, return empty array (no actions)
-    //     if ($event instanceof Order && in_array($event->status, [OrderStatus::OUT_FOR_DELIVERY, OrderStatus::COMPLETED, OrderStatus::DELIVERED])) {
-    //         return [];
-    //     }
-
-    //     // Default actions for Orders
-    //     return [
-    //         Actions\EditAction::make(),
-    //         Actions\DeleteAction::make(),
-    //     ];
-    // }
-
-
-
 
 
     protected function viewAction(): \Filament\Actions\Action
@@ -286,7 +237,7 @@ class CalendarWidget extends FullCalendarWidget
             ->get()
             ->map(function (Trip $trip) {
                 return [
-                    'id' => $trip->id, // Prefix to distinguish from orders
+                    'id' => 'trip_' . $trip->id,
                     'title' => "{$trip->trip_number}\n{$trip->driver?->name}",
                     'start' => $trip->scheduled_date->format('Y-m-d'),
                     'allDay' => true,
@@ -295,6 +246,7 @@ class CalendarWidget extends FullCalendarWidget
                     'classNames' => ['trip-event'],
                     'extendedProps' => [
                         'type' => 'trip',
+                        'uuid' => $trip->uuid,
                         'orders' => $trip->orders->map(fn($order) => [
                             'id' => $order->id,
                             'title' => $order->customer?->name ?? $order->order_number,
@@ -327,6 +279,7 @@ class CalendarWidget extends FullCalendarWidget
                     'editable' => !$isLocked,
                     'extendedProps' => [
                         'type' => 'order',
+                        'uuid' => $order->uuid,
                         'customerName' => $order->customer?->name,
                         'requestedDate' => $order->requested_delivery_date->format('m/d'),
                         'status' => Str::headline($order->status),
@@ -343,6 +296,8 @@ class CalendarWidget extends FullCalendarWidget
         return $tripEvents->concat($orderEvents)->toArray();
     }
 
+
+
     // config
     public function config(): array
     {
@@ -355,6 +310,22 @@ class CalendarWidget extends FullCalendarWidget
                 'center' => 'title',
                 'right' => 'dayGridMonth,timeGridWeek,timeGridDay',
             ],
+        ];
+    }
+
+    protected function getActions(): array
+    {
+        return [
+            ViewAction::make()
+                ->modalWidth('2xl')
+                ->form(fn() => $this->getFormSchema()),
+            EditAction::make()
+                ->modalWidth('2xl')
+                ->form(fn() => $this->getFormSchema())
+                ->action(function (array $data) {
+                    $this->event->update($data);
+                    $this->refreshRecords();
+                }),
         ];
     }
 }
