@@ -1,166 +1,227 @@
 <div>
-    <style>
-        /* Hide default event content */
-        .fc-event-main>div:not(.custom-event-content) {
-            display: none !important;
-        }
-    </style>
+    {{-- Styles section --}}
+    <div>
+        <style>
+            /* Hide default event content */
+            .fc-event-main>div:not(.custom-event-content) {
+                display: none !important;
+            }
 
-    <div x-data="{
-        calendar: null
-    }" x-init="(() => {
-        if (!calendar) {
-            calendar = new FullCalendar.Calendar($refs.calendar, {
-                initialView: 'multiMonth',
-                initialDate: '{{ now()->format('Y-m-d') }}',
-                duration: { months: 6 },
-                {{-- validRange: {
-                    start: '2024-10-01', // Can't scroll earlier than 2 months ago
-                    end: '2025-03-31' // Can't scroll later than 4 months from now
-                }, --}}
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'multiMonthYear,dayGridMonth'
-                },
-                displayEventTime: false,
-                weekends: false,
-                multiMonthMaxColumns: 1,
-                showNonCurrentDates: true,
-                fixedWeekCount: false,
-                dayMaxEvents: false,
-                dayMaxEventRows: 10,
-                editable: true,
-                dateClick: function(info) {
-                    // Call Livewire method to create new order
-                    @this.createOrder(info.dateStr);
-                },
-                eventDrop: function(info) {
-                    // Prevent locked events from being moved
-                    if (info.event.extendedProps.isLocked) {
-                        info.revert();
-                        return;
-                    }
+            .trip-event {
+                border-left: 4px solid #1E40AF !important;
+            }
 
-                    const orderId = info.event.id;
-                    const newDate = info.event.start.toISOString().split('T')[0];
+            .nested-order {
+                transition: all 0.2s ease;
+            }
 
-                    @this.updateOrderDate(orderId, newDate)
-                        .then(() => {
-                            // Success notification could go here
-                        })
-                        .catch(() => {
-                            info.revert();
-                            // Error notification could go here
-                        });
-                },
-                events: {{ Js::from($events) }},
-                eventDidMount: function(info) {
-                    const event = info.event;
-                    const el = info.el;
-                    const eventMainEl = el.querySelector('.fc-event-main');
-
-                    // Clear the content first
-                    eventMainEl.innerHTML = '';
-
-                    // Create wrapper with custom class
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'custom-event-content';
-                    wrapper.style.padding = '12px';
-                    wrapper.style.overflow = 'hidden';
-
-                    // Create title element
-                    const titleEl = document.createElement('div');
-                    titleEl.style.fontSize = '14px';
-                    titleEl.style.fontWeight = '500';
-                    titleEl.style.marginBottom = '8px';
-                    titleEl.textContent = event.title;
-
-                    // Create info container
-                    const infoContainer = document.createElement('div');
-                    infoContainer.style.fontSize = '12px';
-                    infoContainer.style.color = 'rgba(255, 255, 255, 0.8)';
-
-                    // Basic info
-                    let infoHTML = `
-                                                                                                <div>Requested: ${event.extendedProps.requestedDate}</div>
-                                                                                                <div>Status: ${event.extendedProps.status}</div>
-                                                                                            `;
-
-                    // Products info
-                    if (event.extendedProps.products && event.extendedProps.products.length > 0) {
-                        infoHTML += '<hr class=\'my-2\' / > ';
-                        event.extendedProps.products.forEach(product => {
-                            const quantity = product.fill_load ? ['*', '(fill load)'] : [`${product.quantity}`, ' '];
-                            infoHTML += `<div>${quantity[0]} <span class='text-xs text-opacity-10'>x</span> ${product.sku}</span> ${quantity[1]}</div>`;
-                        });
-                    }
-
-                    infoContainer.innerHTML = infoHTML;
-
-                    wrapper.appendChild(titleEl);
-                    wrapper.appendChild(infoContainer);
-                    eventMainEl.appendChild(wrapper);
-                },
-                eventClick: function(info) {
-                    const orderId = info.event.id;
-                    @this.editOrder(orderId);
-                }
-            });
-            calendar.render();
-
-            // Re-render calendar when Livewire updates
-            Livewire.on('calendar-updated', () => {
-                calendar.refetchEvents();
-            });
-        }
-    })()" wire:ignore>
-        <div x-ref="calendar"></div>
+            .nested-order:hover {
+                background: rgba(255, 255, 255, 0.2) !important;
+            }
+        </style>
     </div>
 
-    {{-- Add a new modal for creating orders --}}
-    <x-filament::modal id="create-order" width="2xl">
-        <x-slot name="header">
-            Create New Order
-        </x-slot>
+    {{-- Calendar section --}}
+    <div wire:ignore>
+        <div x-data="{ calendar: null }" x-init="(() => {
+            if (!calendar) {
+                calendar = new FullCalendar.Calendar($refs.calendar, {
+                    initialView: 'multiMonth',
+                    initialDate: '{{ now()->format('Y-m-d') }}',
+                    duration: { months: 6 },
+                    {{-- validRange: {
+                        start: '2024-10-01', // Can't scroll earlier than 2 months ago
+                        end: '2025-03-31' // Can't scroll later than 4 months from now
+                    }, --}}
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'multiMonthYear,dayGridMonth'
+                    },
+                    displayEventTime: false,
+                    weekends: false,
+                    multiMonthMaxColumns: 1,
+                    showNonCurrentDates: true,
+                    fixedWeekCount: false,
+                    dayMaxEvents: false,
+                    dayMaxEventRows: 10,
+                    editable: true,
+                    dateClick: function(info) {
+                        // Call Livewire method to create new order
+                        @this.createOrder(info.dateStr);
+                    },
+                    eventDrop: function(info) {
+                        // Prevent locked events from being moved
+                        if (info.event.extendedProps.isLocked) {
+                            info.revert();
+                            return;
+                        }
 
-        @if ($creating)
-            <form wire:submit="saveNewOrder">
-                {{ $this->form }}
+                        const orderId = info.event.id;
+                        const newDate = info.event.start.toISOString().split('T')[0];
 
-                <div class="mt-4 flex justify-end gap-x-4">
-                    <x-filament::button color="gray" x-on:click="$dispatch('close-modal', { id: 'create-order' })">
-                        Cancel
-                    </x-filament::button>
+                        @this.updateOrderDate(orderId, newDate)
+                            .then(() => {
+                                // Success notification could go here
+                            })
+                            .catch(() => {
+                                info.revert();
+                                // Error notification could go here
+                            });
+                    },
+                    events: {{ Js::from($events) }},
+                    eventDidMount: function(info) {
+                        const event = info.event;
+                        const el = info.el;
+                        const eventMainEl = el.querySelector('.fc-event-main');
 
-                    <x-filament::button type="submit">
-                        Create
-                    </x-filament::button>
-                </div>
-            </form>
-        @endif
-    </x-filament::modal>
+                        // Clear the content first
+                        eventMainEl.innerHTML = '';
 
-    {{-- Add the Filament modal for editing orders --}}
-    <x-filament::modal id="edit-order" width="2xl">
-        <x-slot name="header">
-            Edit Order {{ $editing?->order_number }}
-        </x-slot>
+                        // Create wrapper with custom class
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'custom-event-content';
+                        wrapper.style.padding = '6px';
+                        wrapper.style.overflow = 'hidden';
 
-        @if ($editing)
-            <form wire:submit="saveOrder">
-                {{ $this->form }}
+                        // Create title element
+                        const titleEl = document.createElement('div');
+                        titleEl.style.fontSize = '14px';
+                        titleEl.style.fontWeight = '500';
+                        titleEl.style.marginBottom = '8px';
+                        titleEl.innerHTML = event.title;
+                        wrapper.appendChild(titleEl);
 
-                <div class="mt-4 flex justify-end gap-x-4">
-                    <x-filament::button color="gray" x-on:click="$dispatch('close-modal', { id: 'edit-order' })">
-                        Cancel
-                    </x-filament::button>
+                        // Create info container
+                        const infoContainer = document.createElement('div');
+                        infoContainer.style.fontSize = '12px';
+                        infoContainer.style.color = 'rgba(255, 255, 255, 0.8)';
 
-                    <x-filament::button type="submit">
-                        Save
-                    </x-filament::button>
-                </div>
-            </form>
-        @endif
-    </x-filament::modal>
-</div>
+                        if (event.extendedProps.type === 'trip') {
+                            const tripOrdersDiv = document.createElement('div');
+                            tripOrdersDiv.className = 'trip-orders';
+
+                            if (event.extendedProps.orders) {
+                                event.extendedProps.orders.forEach(order => {
+                                    const orderDiv = document.createElement('div');
+                                    orderDiv.className = 'nested-order';
+                                    orderDiv.style.padding = '8px';
+                                    orderDiv.style.background = 'rgba(255,255,255,0.1)';
+                                    orderDiv.style.marginTop = '8px';
+                                    orderDiv.style.borderRadius = '4px';
+
+                                    const orderTitle = document.createElement('div');
+                                    orderTitle.style.fontWeight = '500';
+                                    orderTitle.textContent = order.title;
+                                    orderDiv.appendChild(orderTitle);
+
+                                    const orderStatus = document.createElement('div');
+                                    orderStatus.textContent = 'Status: ' + order.status;
+                                    orderDiv.appendChild(orderStatus);
+
+                                    if (order.products && order.products.length > 0) {
+                                        order.products.forEach(product => {
+                                            const productDiv = document.createElement('div');
+                                            productDiv.style.fontSize = '11px';
+                                            const quantity = product.fill_load ? '*' : product.quantity;
+                                            const fillLoadText = product.fill_load ? ' (fill load)' : '';
+                                            productDiv.textContent = `${quantity} × ${product.sku}${fillLoadText}`;
+                                            orderDiv.appendChild(productDiv);
+                                        });
+                                    }
+
+                                    tripOrdersDiv.appendChild(orderDiv);
+                                });
+                            }
+                            infoContainer.appendChild(tripOrdersDiv);
+                        } else {
+                            const requestedDate = document.createElement('div');
+                            requestedDate.textContent = 'Requested: ' + event.extendedProps.requestedDate;
+                            infoContainer.appendChild(requestedDate);
+
+                            const status = document.createElement('div');
+                            status.textContent = 'Status: ' + event.extendedProps.status;
+                            infoContainer.appendChild(status);
+
+                            if (event.extendedProps.products && event.extendedProps.products.length > 0) {
+                                const hr = document.createElement('hr');
+                                hr.style.margin = '8px 0';
+                                hr.style.borderColor = 'rgba(255,255,255,0.2)';
+                                infoContainer.appendChild(hr);
+
+                                event.extendedProps.products.forEach(product => {
+                                    const productDiv = document.createElement('div');
+                                    const quantity = product.fill_load ? '*' : product.quantity;
+                                    const fillLoadText = product.fill_load ? ' (fill load)' : '';
+                                    productDiv.textContent = `${quantity} × ${product.sku}${fillLoadText}`;
+                                    infoContainer.appendChild(productDiv);
+                                });
+                            }
+                        }
+
+                        wrapper.appendChild(infoContainer);
+                        eventMainEl.appendChild(wrapper);
+                    },
+                    eventClick: function(info) {
+                        const orderId = info.event.id;
+                        @this.editOrder(orderId);
+                    }
+                });
+                calendar.render();
+
+                // Re-render calendar when Livewire updates
+                Livewire.on('calendar-updated', () => {
+                    calendar.refetchEvents();
+                });
+            }
+        })()" wire:ignore>
+            <div x-ref="calendar"></div>
+        </div>
+
+        {{-- Modals section --}}
+        {{-- Create Order Modal --}}
+        <x-filament::modal id="create-order" width="2xl">
+            <x-slot name="header">
+                Create New Order
+            </x-slot>
+
+            @if ($creating)
+                <form wire:submit="saveNewOrder">
+                    {{ $this->form }}
+
+                    <div class="mt-4 flex justify-end gap-x-4">
+                        <x-filament::button color="gray" x-on:click="$dispatch('close-modal', { id: 'create-order' })">
+                            Cancel
+                        </x-filament::button>
+
+                        <x-filament::button type="submit">
+                            Create
+                        </x-filament::button>
+                    </div>
+                </form>
+            @endif
+        </x-filament::modal>
+
+        {{-- Edit Order Modal --}}
+        <x-filament::modal id="edit-order" width="2xl">
+            <x-slot name="header">
+                Edit Order {{ $editing?->order_number }}
+            </x-slot>
+
+            @if ($editing)
+                <form wire:submit="saveOrder">
+                    {{ $this->form }}
+
+                    <div class="mt-4 flex justify-end gap-x-4">
+                        <x-filament::button color="gray" x-on:click="$dispatch('close-modal', { id: 'edit-order' })">
+                            Cancel
+                        </x-filament::button>
+
+                        <x-filament::button type="submit">
+                            Save
+                        </x-filament::button>
+                    </div>
+                </form>
+            @endif
+        </x-filament::modal>
+    </div>

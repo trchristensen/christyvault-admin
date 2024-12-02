@@ -24,6 +24,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TimePicker;
+use App\Models\Trip;
 
 class TestCalendarComponent extends Component implements HasForms
 {
@@ -130,14 +131,50 @@ class TestCalendarComponent extends Component implements HasForms
 
     public function render()
     {
-        // Get orders for the calendar
-        $events = Order::query()
+        // Get trips with their orders
+        $tripEvents = Trip::with(['orders.customer', 'orders.orderProducts.product', 'driver'])
+            ->get()
+            ->map(function (Trip $trip) {
+                return [
+                    'id' => 'trip_' . $trip->id,
+                    'title' => "<div style='line-height: 1.2'>" .
+                        "{$trip->trip_number}" .
+                        "<div style='font-size: 0.9em; opacity: 0.9'>{$trip->driver?->name}</div>" .
+                        "</div>",
+                    'start' => $trip->scheduled_date->format('Y-m-d'),
+                    'allDay' => true,
+                    'backgroundColor' => '#2563EB', // Blue background for trips
+                    'borderColor' => '#1E40AF',
+                    'textColor' => '#ffffff',
+                    'classNames' => ['trip-event'],
+                    'extendedProps' => [
+                        'type' => 'trip',
+                        'orders' => $trip->orders->map(function ($order) {
+                            return [
+                                'id' => $order->id,
+                                'title' => $order->customer?->name ?? $order->order_number,
+                                'status' => Str::headline($order->status),
+                                'products' => $order->orderProducts->map(function ($orderProduct) {
+                                    return [
+                                        'quantity' => $orderProduct->quantity,
+                                        'sku' => $orderProduct->product->sku,
+                                        'fill_load' => $orderProduct->fill_load
+                                    ];
+                                })->toArray(),
+                            ];
+                        })->toArray()
+                    ],
+                ];
+            });
+
+        // Get standalone orders (not assigned to trips)
+        $orderEvents = Order::whereNull('trip_id')
             ->with(['customer', 'orderProducts.product'])
             ->get()
             ->map(function (Order $order) {
                 $isLocked = in_array($order->status, ['in_progress', 'completed', 'delivered']);
                 return [
-                    'id' => $order->id,
+                    'id' => 'order_' . $order->id,
                     'title' => $order->customer?->name ?? $order->order_number,
                     'start' => $order->assigned_delivery_date?->format('Y-m-d') ?? $order->requested_delivery_date->format('Y-m-d'),
                     'allDay' => true,
@@ -158,8 +195,9 @@ class TestCalendarComponent extends Component implements HasForms
                         })->toArray(),
                     ],
                 ];
-            })
-            ->toArray();
+            });
+
+        $events = $tripEvents->concat($orderEvents);
 
         return view('livewire.test-calendar-component', [
             'events' => $events,
