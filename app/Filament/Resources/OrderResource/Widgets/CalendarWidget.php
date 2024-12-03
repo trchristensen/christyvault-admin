@@ -247,9 +247,17 @@ class CalendarWidget extends FullCalendarWidget
                                         ->whereNotIn('status', ['completed', 'cancelled', 'out_for_delivery'])
                                         ->get()
                                         ->mapWithKeys(fn(Order $order) => [
-                                            $order->id => "{$order->order_number} - {$order->customer?->name}"
+                                            $order->id => view('filament.components.order-option', [
+                                                'orderNumber' => $order->order_number,
+                                                'customerName' => $order->customer?->name,
+                                                'status' => $order->status,
+                                                'requestedDeliveryDate' => $order->requested_delivery_date?->format('M j, Y'),
+                                                'assignedDeliveryDate' => $order->assigned_delivery_date?->format('M j, Y'),
+                                                'location' => $order->location?->full_address,
+                                            ])->render()
                                         ])
                                 )
+                                ->allowHtml()
                                 ->preload()
                                 ->searchable()
                         ])
@@ -329,7 +337,7 @@ class CalendarWidget extends FullCalendarWidget
             ->map(function (Trip $trip) {
                 return [
                     'id' => 'trip_' . $trip->id,
-                    'title' => "{$trip->trip_number}\n{$trip->driver?->name}",
+                    'title' => "{$trip->trip_number}<br>{$trip->driver?->name}",
                     'start' => $trip->scheduled_date->format('Y-m-d'),
                     'allDay' => true,
                     'backgroundColor' => '#2563EB',
