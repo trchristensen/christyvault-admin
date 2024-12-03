@@ -95,7 +95,6 @@ class EmployeeResource extends Resource
                             ->required(),
                         Forms\Components\Toggle::make('is_active')
                             ->default(true)
-                            ->required(),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Driver Details')
