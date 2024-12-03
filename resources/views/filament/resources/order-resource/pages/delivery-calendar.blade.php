@@ -1,5 +1,16 @@
 <x-filament-panels::page>
     <style>
+        /* Hide the default title that's causing the flicker */
+        .fc-event-title-container {
+            display: none !important;
+        }
+
+        /* Show our custom content */
+        .fc-event-main>div {
+            display: block !important;
+        }
+
+        /* Your existing styles... */
         .fc-event-line {
             font-size: 0.9em;
             white-space: nowrap;
