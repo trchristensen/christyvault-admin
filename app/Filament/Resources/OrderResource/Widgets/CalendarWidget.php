@@ -101,13 +101,15 @@ class CalendarWidget extends FullCalendarWidget
         // Extract the numeric ID from the prefixed string
         $id = $event['id'];
         $uuid = $event['extendedProps']['uuid'];
-        if (str_starts_with($id, 'order_')) {
-            $orderId = substr($id, 6); // Remove 'order_' prefix
-            $order = Order::where('uuid', $uuid)->first();
 
+        if (str_starts_with($id, 'order_')) {
+
+            $order = Order::where('uuid', $uuid)->first();
             if (!$order) {
+
                 return false;
             }
+
 
             try {
                 $newDate = Carbon::parse($event['start'])->toDateString();
@@ -120,7 +122,7 @@ class CalendarWidget extends FullCalendarWidget
                 return false;
             }
         } else if (str_starts_with($id, 'trip_')) {
-            $tripId = substr($id, 5); // Remove 'trip_' prefix
+
             $trip = Trip::where('uuid', $uuid)->first();
 
 
@@ -134,12 +136,13 @@ class CalendarWidget extends FullCalendarWidget
                     'scheduled_date' => $newDate,
                 ]);
                 $this->refreshRecords();
+
                 return true;
             } catch (\Exception $e) {
                 return false;
             }
         }
-
+        dd($event, $oldEvent, $relatedEvents, $delta, $oldResource, $newResource);
         return false;
     }
 
@@ -351,7 +354,7 @@ class CalendarWidget extends FullCalendarWidget
             ->map(function (Order $order) {
                 $isLocked = in_array($order->status, ['in_progress', 'completed', 'delivered']);
                 return [
-                    'id' => $order->id,
+                    'id' => 'order_' . $order->id,
                     'title' => $order->customer?->name ?? $order->order_number,
                     'start' => $order->assigned_delivery_date?->format('Y-m-d') ?? $order->requested_delivery_date->format('Y-m-d'),
                     'allDay' => true,
