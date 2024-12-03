@@ -94,9 +94,9 @@ class EmployeeResource extends Resource
                             ->label('Birthdate')
                             ->required(),
                         Forms\Components\Checkbox::make('is_active')
-                            // make sure this is a boolean
-                            ->default(true)
-                            ->label('Active'),
+                            ->default('TRUE')
+                            ->label('Active')
+                            ->dehydrateStateUsing(fn($state) => $state ? 'TRUE' : 'FALSE'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Driver Details')
