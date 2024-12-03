@@ -65,10 +65,18 @@ class CalendarWidget extends FullCalendarWidget
 
     public function getFormSchema(): array
     {
+        // Initialize $record if it's not set
+        if (!isset($this->record)) {
+            $this->record = null;
+        }
+
+
         if ($this->record instanceof Trip) {
             return static::getTripFormSchema();
+        } else if ($this->record instanceof Order) {
+            return static::getOrderFormSchema();
         }
-        return static::getOrderFormSchema();
+        return [];
     }
 
 
