@@ -11,6 +11,7 @@
         .fc-daygrid-event {
             white-space: normal !important;
             padding: 4px;
+            background-color: #1e293b;
         }
 
         .fc-event-title {

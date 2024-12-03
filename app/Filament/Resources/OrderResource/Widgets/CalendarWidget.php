@@ -147,7 +147,7 @@ class CalendarWidget extends FullCalendarWidget
         return <<<'JS'
     function({ event, el }) {
         const eventMainEl = el.querySelector('.fc-event-main');
-        eventMainEl.style.padding = '8px'; // Reduced padding
+        eventMainEl.style.padding = '2px'; // Reduced padding
 
         if (event.extendedProps.type === 'trip') {
             // Trip styling
@@ -156,13 +156,15 @@ class CalendarWidget extends FullCalendarWidget
             // Trip content
             const content = document.createElement('div');
             content.innerHTML = `
-                <div style="font-weight: 500; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${event.title}</div>
+                <div style="font-weight: 500; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${event.title}</div>
                 ${event.extendedProps.orders.map(order => `
-                    <div style="background: rgba(255,255,255,0.1); padding: 6px; margin-top: 6px; border-radius: 4px;">
-                        <div style="font-weight: 500; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${order.title}</div>
-                        <div style="font-size: 0.9em;">Status: ${order.status}</div>
+                    <div style="background: #1e293b; padding: 6px; margin-top: 6px; border-radius: 4px;">
+                        <div style="font-weight: 500; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            ${order.title}
+                        </div>
+                        <div style="font-size: 0.9em; margin-bottom: 4px;">Status: ${order.status}</div>
                         ${order.products.map(p => `
-                            <div style="font-size: 0.8em;">
+                            <div style="font-size: 0.8em; background: rgba(255,255,255,0.1); padding: 4px; margin-top: 4px; border-radius: 4px;">
                                 ${p.fill_load ? '*' : p.quantity} × ${p.sku} ${p.fill_load ? '(fill load)' : ''}
                             </div>
                         `).join('')}
@@ -189,59 +191,6 @@ class CalendarWidget extends FullCalendarWidget
     }
     JS;
     }
-
-
-    // protected function modalActions(): array
-    // {
-    //     return [
-    //         Actions\CreateAction::make()
-    //             ->label('Create New')
-    //             ->modalHeading('Create New')
-    //             ->modalWidth('2xl')
-    //             ->form([
-    //                 Select::make('type')
-    //                     ->label('What would you like to create?')
-    //                     ->options([
-    //                         'order' => 'Order',
-    //                         'trip' => 'Trip',
-    //                     ])
-    //                     ->required()
-    //             ])
-    //             ->action(function (array $data) {
-    //                 // Instead of creating, we'll mount a new action based on the type
-    //                 if ($data['type'] === 'trip') {
-    //                     $this->mountAction('createTrip');
-    //                 } else {
-    //                     $this->mountAction('createOrder');
-    //                 }
-    //             }),
-
-    //         Actions\CreateAction::make('createTrip')
-    //             ->label('Create Trip')
-    //             ->modalWidth('2xl')
-    //             ->form(fn() => static::getTripFormSchema())
-    //             ->action(function (array $data) {
-    //                 Trip::create([
-    //                     ...$data,
-    //                     'scheduled_date' => $this->selectedDate,
-    //                 ]);
-    //                 $this->refreshRecords();
-    //             }),
-
-    //         Actions\CreateAction::make('createOrder')
-    //             ->label('Create Order')
-    //             ->modalWidth('2xl')
-    //             ->form(fn() => static::getOrderFormSchema())
-    //             ->action(function (array $data) {
-    //                 Order::create([
-    //                     ...$data,
-    //                     'requested_delivery_date' => $this->selectedDate,
-    //                     'status' => OrderStatus::PENDING->value,
-    //                 ]);
-    //                 $this->refreshRecords();
-    //             }),
-    //     ];
-    // }
 
     protected function modalActions(): array
     {
