@@ -44,6 +44,7 @@ class CalendarWidget extends FullCalendarWidget
     protected bool $editable = true;
 
     public ?string $selectedDate = null;
+    public ?string $selectedType = null;
 
     public function getViewData(): array
     {
@@ -70,12 +71,6 @@ class CalendarWidget extends FullCalendarWidget
         return static::getOrderFormSchema();
     }
 
-    protected function getViewAction(): ViewAction
-    {
-        return ViewAction::make()
-            ->modalWidth('2xl')
-            ->form(fn() => $this->getFormSchema());
-    }
 
     public function onEventClick(array $event): void
     {
@@ -183,24 +178,46 @@ class CalendarWidget extends FullCalendarWidget
                 ->label('Create New')
                 ->modalHeading('Create New')
                 ->modalWidth('2xl')
+                ->form([
+                    Select::make('type')
+                        ->label('What would you like to create?')
+                        ->options([
+                            'order' => 'Order',
+                            'trip' => 'Trip',
+                        ])
+                        ->required()
+                ])
                 ->action(function (array $data) {
-                    if ($data['type'] === 'order') {
-                        Order::create([
-                            ...collect($data)->except('type')->toArray(),
-                            'order_date' => now(),
-                            'status' => OrderStatus::PENDING->value,
-                        ]);
+                    // Instead of creating, we'll mount a new action based on the type
+                    if ($data['type'] === 'trip') {
+                        $this->mountAction('createTrip');
                     } else {
-                        // Generate trip number (assuming format TRIP-XXXXX)
-                        $lastTrip = Trip::orderBy('id', 'desc')->first();
-                        $nextNumber = $lastTrip ? ((int)substr($lastTrip->trip_number, 5) + 1) : 1;
-                        $tripNumber = 'TRIP-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
-
-                        Trip::create([
-                            ...collect($data)->except('type')->toArray(),
-                            'trip_number' => $tripNumber,
-                        ]);
+                        $this->mountAction('createOrder');
                     }
+                }),
+
+            Actions\CreateAction::make('createTrip')
+                ->label('Create Trip')
+                ->modalWidth('2xl')
+                ->form(fn() => static::getTripFormSchema())
+                ->action(function (array $data) {
+                    Trip::create([
+                        ...$data,
+                        'scheduled_date' => $this->selectedDate,
+                    ]);
+                    $this->refreshRecords();
+                }),
+
+            Actions\CreateAction::make('createOrder')
+                ->label('Create Order')
+                ->modalWidth('2xl')
+                ->form(fn() => static::getOrderFormSchema())
+                ->action(function (array $data) {
+                    Order::create([
+                        ...$data,
+                        'requested_delivery_date' => $this->selectedDate,
+                        'status' => OrderStatus::PENDING->value,
+                    ]);
                     $this->refreshRecords();
                 }),
         ];
@@ -327,5 +344,12 @@ class CalendarWidget extends FullCalendarWidget
                     $this->refreshRecords();
                 }),
         ];
+    }
+
+    public function onSelectDate(array $info): void
+    {
+        $this->selectedDate = $info['date'];
+        $this->record = null; // Ensure record is null for new creation
+        $this->mountAction('create');
     }
 }
