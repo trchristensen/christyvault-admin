@@ -24,6 +24,7 @@ use Carbon\CarbonPeriod;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Components\Tab;
 use App\Filament\Resources\Traits\HasOrderForm;
+use Filament\Support\Enums\MaxWidth;
 
 class OrderResource extends Resource
 {

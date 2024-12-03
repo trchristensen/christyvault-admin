@@ -27,6 +27,7 @@ use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 use App\Filament\Resources\OrderResource\Widgets\CalendarWidget;
 use App\Filament\Widgets\CalendarWidget as WidgetsCalendarWidget;
+use Filament\Support\Enums\MaxWidth;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -44,6 +45,7 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => '#1c3366',
             ])
+            ->maxContentWidth(MaxWidth::Full)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
