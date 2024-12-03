@@ -175,21 +175,24 @@ class CalendarWidget extends FullCalendarWidget
         const eventMainEl = el.querySelector('.fc-event-main');
 
         if (event.extendedProps.type === 'trip') {
-            console.log('Mounting trip event:', event);
-            // Trip content
             const content = document.createElement('div');
             content.innerHTML = `
                 <div class="trip-title">${event.title}</div>
                 ${event.extendedProps.orders.map(order => `
-                    <div class="order-container" data-order-id="${order.id}" onclick="event.stopPropagation();">
+                    <div class="order-container status-${order.status.toLowerCase()}" data-order-id="${order.id}" onclick="event.stopPropagation();">
                         <div class="order-title">${order.title}</div>
-                        <div class="order-address">${order.location || ''}</div>
+                        <div class="order-address">
+                            <div>${order.extendedProps.location_line1}</div>
+                            <div>${order.extendedProps.location_line2}</div>
+                        </div>
                         <div class="order-status">Status: ${order.status}</div>
-                        ${order.products.map(p => `
-                            <div class="product-item">
-                                ${p.fill_load ? '*' : p.quantity} × ${p.sku} ${p.fill_load ? '(fill load)' : ''}
-                            </div>
-                        `).join('')}
+                        <div class="products-list">
+                            ${order.products.map(p => `
+                                <span class="product-item ${p.fill_load ? 'fill-load' : ''}">
+                                    ${p.fill_load ? '*' : p.quantity} × ${p.sku} ${p.fill_load ? '(fill load)' : ''}
+                                </span>
+                            `).join('')}
+                        </div>
                     </div>
                 `).join('')}
             `;
@@ -207,13 +210,18 @@ class CalendarWidget extends FullCalendarWidget
             const content = document.createElement('div');
             content.innerHTML = `
                 <div class="order-title">${event.title}</div>
-                <div class="order-address">${event.extendedProps.location || ''}</div>
+                <div class="order-address">
+                    <div>${event.extendedProps.location_line1}</div>
+                    <div>${event.extendedProps.location_line2}</div>
+                </div>
                 <div class="order-status">Status: ${event.extendedProps.status}</div>
-                ${event.extendedProps.products.map(p => `
-                    <div class="product-item">
-                        ${p.fill_load ? '*' : p.quantity} × ${p.sku} ${p.fill_load ? '(fill load)' : ''}
-                    </div>
-                `).join('')}
+                <div class="products-list">
+                    ${event.extendedProps.products.map(p => `
+                        <span class="product-item ${p.fill_load ? 'fill-load' : ''}">
+                            ${p.fill_load ? '*' : p.quantity} × ${p.sku} ${p.fill_load ? '(fill load)' : ''}
+                        </span>
+                    `).join('')}
+                </div>
             `;
             eventMainEl.replaceChildren(content);
         }
@@ -294,7 +302,10 @@ class CalendarWidget extends FullCalendarWidget
                                                         'status' => $order->status,
                                                         'requestedDeliveryDate' => $order->requested_delivery_date?->format('M j, Y'),
                                                         'assignedDeliveryDate' => $order->assigned_delivery_date?->format('M j, Y'),
-                                                        'location' => $order->location?->name,
+                                                        'location_line1' => $order->location?->address_line1,
+                                                        'location_line2' => $order->location ?
+                                                            "{$order->location->city}, {$order->location->state}"
+                                                            : '',
                                                     ])->render()
                                                 ]);
                                         })
@@ -400,8 +411,8 @@ class CalendarWidget extends FullCalendarWidget
                     'title' => "{$trip->trip_number}<br>{$trip->driver?->name}",
                     'start' => $trip->scheduled_date->format('Y-m-d'),
                     'allDay' => true,
-                    'backgroundColor' => '#2563EB',
-                    'borderColor' => '#1E40AF',
+                    // 'backgroundColor' => '#2563EB',
+                    // 'borderColor' => '#1E40AF',
                     'classNames' => ['trip-event'],
                     'extendedProps' => [
                         'type' => 'trip',
@@ -409,7 +420,12 @@ class CalendarWidget extends FullCalendarWidget
                         'orders' => $trip->orders->map(fn($order) => [
                             'id' => $order->id,
                             'title' => $order->customer?->name ?? $order->order_number,
-                            'location' => $order->location?->full_address,
+                            'extendedProps' => [
+                                'location_line1' => $order->location?->address_line1 ?? 'undefined',
+                                'location_line2' => $order->location ?
+                                    "{$order->location->city}, {$order->location->state}"
+                                    : 'undefined',
+                            ],
                             'status' => Str::headline($order->status),
                             'products' => $order->orderProducts->map(fn($op) => [
                                 'quantity' => $op->quantity,
@@ -433,12 +449,19 @@ class CalendarWidget extends FullCalendarWidget
                     'title' => $order->customer?->name ?? $order->order_number,
                     'start' => $order->assigned_delivery_date?->format('Y-m-d') ?? $order->requested_delivery_date->format('Y-m-d'),
                     'allDay' => true,
-                    'backgroundColor' => $order->assigned_delivery_date ? $this->getEventColor($order) : 'grey',
+                    'backgroundColor' => 'transparent',
                     'borderColor' => 'transparent',
+                    'classNames' => [
+                        'standalone-order',
+                        'status-' . $order->status  // This will apply the status-specific colors
+                    ],
                     'extendedProps' => [
                         'type' => 'order',
                         'uuid' => $order->uuid,
-                        'location' => $order->location?->name,
+                        'location_line1' => $order->location?->address_line1 ?? '',
+                        'location_line2' => $order->location ?
+                            $order->location->city . ', ' . $order->location->state
+                            : '',
                         'status' => Str::headline($order->status),
                         'products' => $order->orderProducts->map(fn($op) => [
                             'quantity' => $op->quantity,

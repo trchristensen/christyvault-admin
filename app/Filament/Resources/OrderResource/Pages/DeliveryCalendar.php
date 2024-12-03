@@ -36,16 +36,4 @@ class DeliveryCalendar extends Page
             // Add any actions you want in the header
         ];
     }
-
-    // protected function getCalendarOptions(): array
-    // {
-    //     return [
-    //         'initialView' => 'dayGridMonth',
-    //         'headerToolbar' => [
-    //             'left' => 'prev,next today',
-    //             'center' => 'title',
-    //             'right' => 'dayGridMonth,timeGridWeek,timeGridDay',
-    //         ],
-    //     ];
-    // }
 }

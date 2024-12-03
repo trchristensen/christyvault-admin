@@ -4,8 +4,11 @@
         <span class="text-gray-500">{{ $customerName }}</span>
     </div>
     <div class="flex flex-col items-start text-sm text-gray-500">
-        @if ($location)
-            <div>{{ $location }}</div>
+        @if ($location_line1)
+            <div>{{ $location_line1 }}</div>
+        @endif
+        @if ($location_line2)
+            <div>{{ $location_line2 }}</div>
         @endif
         <div>Status: {{ $status }}</div>
         @if ($requestedDeliveryDate)
@@ -14,6 +17,5 @@
         @if ($assignedDeliveryDate)
             <div>Assigned: {{ $assignedDeliveryDate }}</div>
         @endif
-
     </div>
 </div>

@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use Filament\Support\Assets\Css;
+use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Opcodes\LogViewer\Facades\LogViewer;
@@ -29,5 +31,9 @@ class AppServiceProvider extends ServiceProvider
                     'tchristensen@christyvault.com'
                 ]);
         });
+
+        FilamentAsset::register([
+            Css::make('calendar-styles', resource_path('css/calendar.css')),
+        ]);
     }
 }
