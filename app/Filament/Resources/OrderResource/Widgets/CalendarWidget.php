@@ -29,6 +29,7 @@ use App\Models\Trip;
 use Saade\FilamentFullCalendar\Actions\CreateAction;
 use Saade\FilamentFullCalendar\Actions\EditAction;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\Hidden;
 
 class CalendarWidget extends FullCalendarWidget
 {
@@ -142,7 +143,7 @@ class CalendarWidget extends FullCalendarWidget
                 return false;
             }
         }
-        dd($event, $oldEvent, $relatedEvents, $delta, $oldResource, $newResource);
+
         return false;
     }
 
@@ -222,6 +223,7 @@ class CalendarWidget extends FullCalendarWidget
                         ->schema([
                             DatePicker::make('scheduled_date')
                                 ->required()
+                                ->default(fn() => $this->selectedDate)
                                 ->native(false),
                             Select::make('driver_id')
                                 ->relationship('driver', 'name')
@@ -250,6 +252,8 @@ class CalendarWidget extends FullCalendarWidget
                                 ->searchable()
                         ])
                         ->visible(fn(Get $get) => $get('type') === 'trip'),
+                    Hidden::make('scheduled_date')
+                        ->default(fn() => $this->selectedDate),
                 ])
                 ->action(function (array $data) {
                     if ($data['type'] === 'trip') {
@@ -262,7 +266,7 @@ class CalendarWidget extends FullCalendarWidget
                             'status' => 'pending',
                         ]);
 
-                        // Update the selected orders with the new trip_id
+                        // Update the selected orders with the new trip_id and the same date
                         if (!empty($data['orders'])) {
                             Order::whereIn('id', $data['orders'])->update([
                                 'trip_id' => $trip->id,
@@ -285,6 +289,12 @@ class CalendarWidget extends FullCalendarWidget
     protected function viewAction(): \Filament\Actions\Action
     {
         return Actions\EditAction::make();
+    }
+
+    public function onDateSelect(string $start, string|null $end, bool $allDay, array|null $view, array|null $resource): void
+    {
+        $this->selectedDate = $start;
+        $this->mountAction('create'); // Open the create modal
     }
 
     protected function getEventColor(Order $order): string
@@ -406,6 +416,7 @@ class CalendarWidget extends FullCalendarWidget
         ];
     }
 
+
     protected function getActions(): array
     {
         return [
@@ -422,12 +433,6 @@ class CalendarWidget extends FullCalendarWidget
         ];
     }
 
-    public function onSelectDate(array $info): void
-    {
-        $this->selectedDate = $info['date'];
-        $this->record = null; // Ensure record is null for new creation
-        $this->mountAction('create');
-    }
 
     protected function generateTripNumber(): string
     {
