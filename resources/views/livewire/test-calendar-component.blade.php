@@ -177,51 +177,8 @@
         })()" wire:ignore>
             <div x-ref="calendar"></div>
         </div>
-
-        {{-- Modals section --}}
-        {{-- Create Order Modal --}}
-        <x-filament::modal id="create-order" width="2xl">
-            <x-slot name="header">
-                Create New Order
-            </x-slot>
-
-            @if ($creating)
-                <form wire:submit="saveNewOrder">
-                    {{ $this->form }}
-
-                    <div class="mt-4 flex justify-end gap-x-4">
-                        <x-filament::button color="gray" x-on:click="$dispatch('close-modal', { id: 'create-order' })">
-                            Cancel
-                        </x-filament::button>
-
-                        <x-filament::button type="submit">
-                            Create
-                        </x-filament::button>
-                    </div>
-                </form>
-            @endif
-        </x-filament::modal>
-
-        {{-- Edit Order Modal --}}
-        <x-filament::modal id="edit-order" width="2xl">
-            <x-slot name="header">
-                Edit Order {{ $editing?->order_number }}
-            </x-slot>
-
-            @if ($editing)
-                <form wire:submit="saveOrder">
-                    {{ $this->form }}
-
-                    <div class="mt-4 flex justify-end gap-x-4">
-                        <x-filament::button color="gray" x-on:click="$dispatch('close-modal', { id: 'edit-order' })">
-                            Cancel
-                        </x-filament::button>
-
-                        <x-filament::button type="submit">
-                            Save
-                        </x-filament::button>
-                    </div>
-                </form>
-            @endif
-        </x-filament::modal>
     </div>
+
+    {{-- This is required for Filament actions to work --}}
+    <x-filament-actions::modals />
+</div>
