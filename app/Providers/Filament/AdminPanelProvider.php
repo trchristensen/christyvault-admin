@@ -26,6 +26,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 use App\Filament\Resources\OrderResource\Widgets\CalendarWidget;
+use App\Filament\Widgets\CalendarWidget as WidgetsCalendarWidget;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -86,6 +87,7 @@ class AdminPanelProvider extends PanelProvider
                 // CalendarWidget::class,
                 // Widgets\AccountWidget::class,
                 // Widgets\FilamentInfoWidget::class,
+                WidgetsCalendarWidget::class,
                 RecentOrdersWidget::class,
                 OrderStatisticsWidget::class
             ])
