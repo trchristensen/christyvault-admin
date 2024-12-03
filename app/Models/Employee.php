@@ -26,6 +26,10 @@ class Employee extends Model
         'license_expiration',
     ];
 
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
 
     // ... other properties and methods ...
 
