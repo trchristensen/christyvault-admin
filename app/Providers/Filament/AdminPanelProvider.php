@@ -81,9 +81,9 @@ class AdminPanelProvider extends PanelProvider
                     ->selectable()
                     ->editable()
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            // ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                CalendarWidget::class,
+                // CalendarWidget::class,
                 // Widgets\AccountWidget::class,
                 // Widgets\FilamentInfoWidget::class,
                 RecentOrdersWidget::class,
