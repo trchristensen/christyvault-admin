@@ -177,10 +177,11 @@ class CalendarWidget extends FullCalendarWidget
         if (event.extendedProps.type === 'trip') {
             const content = document.createElement('div');
             content.innerHTML = `
-                 <div class="trip-title">
-            ${event.title}
-                    <div class="trip-status">Status: ${event.extendedProps.status}</div>
+                <div class="trip-title">
+
+                <div class="flex items-center justify-between"><span class="driver-name">${event.extendedProps.driver_name}</span><span class="trip-number">${event.title}</span></div>
                 </div>
+                <div class="trip-status">${event.extendedProps.status}</div>
                 ${event.extendedProps.orders.map(order => `
                     <div class="order-container status-${order.status.toLowerCase()}" data-order-id="${order.id}" onclick="event.stopPropagation();">
                         <div class="order-title">${order.title}
@@ -219,7 +220,7 @@ class CalendarWidget extends FullCalendarWidget
                         <div>${event.extendedProps.location_line1}</div>
                         <div>${event.extendedProps.location_line2}</div>
                     </div>
-                    <div class="order-status">Status: ${event.extendedProps.status}</div>
+                    <div class="order-status">${event.extendedProps.status}</div>
                     <div class="products-list">
                         ${event.extendedProps.products.map(p => `
                             <span class="product-item ${p.fill_load ? 'fill-load' : ''}">
@@ -414,7 +415,7 @@ class CalendarWidget extends FullCalendarWidget
             ->map(function (Trip $trip) {
                 return [
                     'id' => 'trip_' . $trip->id,
-                    'title' => "{$trip->trip_number}<br>{$trip->driver?->name}",
+                    'title' => "{$trip->trip_number}",
                     'start' => $trip->scheduled_date->format('Y-m-d'),
                     'allDay' => true,
                     'backgroundColor' => '#efefef',
@@ -424,6 +425,7 @@ class CalendarWidget extends FullCalendarWidget
                         'type' => 'trip',
                         'uuid' => $trip->uuid,
                         'status' => Str::headline($trip->status),
+                        'driver_name' => $trip->driver?->name,
                         'orders' => $trip->orders->map(fn($order) => [
                             'id' => $order->id,
                             'title' => $order->customer?->name ?? $order->order_number,
