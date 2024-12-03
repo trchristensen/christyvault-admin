@@ -147,24 +147,18 @@ class CalendarWidget extends FullCalendarWidget
         return <<<'JS'
     function({ event, el }) {
         const eventMainEl = el.querySelector('.fc-event-main');
-        eventMainEl.style.padding = '2px'; // Reduced padding
 
         if (event.extendedProps.type === 'trip') {
-            // Trip styling
-            el.style.borderLeft = '4px solid #1E40AF';
-
             // Trip content
             const content = document.createElement('div');
             content.innerHTML = `
-                <div style="font-weight: 500; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${event.title}</div>
+                <div class="trip-title">${event.title}</div>
                 ${event.extendedProps.orders.map(order => `
-                    <div style="background: #1e293b; padding: 6px; margin-top: 6px; border-radius: 4px;">
-                        <div style="font-weight: 500; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                            ${order.title}
-                        </div>
-                        <div style="font-size: 0.9em; margin-bottom: 4px;">Status: ${order.status}</div>
+                    <div class="order-container">
+                        <div class="order-title">${order.title}</div>
+                        <div class="order-status">Status: ${order.status}</div>
                         ${order.products.map(p => `
-                            <div style="font-size: 0.8em; background: rgba(255,255,255,0.1); padding: 4px; margin-top: 4px; border-radius: 4px;">
+                            <div class="product-item">
                                 ${p.fill_load ? '*' : p.quantity} × ${p.sku} ${p.fill_load ? '(fill load)' : ''}
                             </div>
                         `).join('')}
@@ -173,15 +167,13 @@ class CalendarWidget extends FullCalendarWidget
             `;
             eventMainEl.replaceChildren(content);
         } else {
-            // Order styling
+            // Order content
             const content = document.createElement('div');
             content.innerHTML = `
-                <div style="font-weight: 500; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                    ${event.title}
-                </div>
-                <div style="font-size: 0.9em; margin-bottom: 4px;">Status: ${event.extendedProps.status}</div>
+                <div class="order-title">${event.title}</div>
+                <div class="order-status">Status: ${event.extendedProps.status}</div>
                 ${event.extendedProps.products.map(p => `
-                    <div style="font-size: 0.8em; background: rgba(255,255,255,0.1); padding: 4px; margin-top: 4px; border-radius: 4px;">
+                    <div class="product-item">
                         ${p.fill_load ? '*' : p.quantity} × ${p.sku} ${p.fill_load ? '(fill load)' : ''}
                     </div>
                 `).join('')}
