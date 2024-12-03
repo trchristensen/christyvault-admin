@@ -243,10 +243,16 @@ class CalendarWidget extends FullCalendarWidget
                                 ->schema([
                                     Select::make('order_id')
                                         ->label('Order')
-                                        ->reactive()
-                                        ->options(
-                                            Order::query()
+                                        ->columnSpanFull()
+                                        ->options(function (Get $get) {
+                                            // Get all currently selected order IDs
+                                            $selectedOrderIds = collect($get('../*.order_id'))
+                                                ->filter()
+                                                ->toArray();
+
+                                            return Order::query()
                                                 ->whereNull('trip_id')
+                                                ->whereNotIn('id', $selectedOrderIds)  // Exclude already selected orders
                                                 ->whereNotIn('status', ['delivered', 'cancelled'])
                                                 ->with(['customer', 'location'])
                                                 ->get()
@@ -258,13 +264,10 @@ class CalendarWidget extends FullCalendarWidget
                                                         'requestedDeliveryDate' => $order->requested_delivery_date?->format('M j, Y'),
                                                         'assignedDeliveryDate' => $order->assigned_delivery_date?->format('M j, Y'),
                                                         'location' => $order->location?->name,
-                                                        'fillLoad' => $order->fill_load,
-                                                        'stopNumber' => $order->stop_number,
                                                     ])->render()
-                                                ])
-                                        )
+                                                ]);
+                                        })
                                         ->allowHtml()
-                                        ->columnSpanFull()
                                         ->searchable()
                                         ->required(),
                                     TextInput::make('stop_number')
