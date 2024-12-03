@@ -239,27 +239,51 @@ class CalendarWidget extends FullCalendarWidget
                     // Add Orders Section
                     Section::make('Orders')
                         ->schema([
-                            Select::make('orders')
-                                ->multiple()
-                                ->options(
-                                    Order::query()
-                                        ->whereNull('trip_id')
-                                        ->whereNotIn('status', ['completed', 'cancelled', 'out_for_delivery'])
-                                        ->get()
-                                        ->mapWithKeys(fn(Order $order) => [
-                                            $order->id => view('filament.components.order-option', [
-                                                'orderNumber' => $order->order_number,
-                                                'customerName' => $order->customer?->name,
-                                                'status' => $order->status,
-                                                'requestedDeliveryDate' => $order->requested_delivery_date?->format('M j, Y'),
-                                                'assignedDeliveryDate' => $order->assigned_delivery_date?->format('M j, Y'),
-                                                'location' => $order->location?->full_address,
-                                            ])->render()
-                                        ])
-                                )
-                                ->allowHtml()
-                                ->preload()
-                                ->searchable()
+                            Repeater::make('trip_orders')
+                                ->schema([
+                                    Select::make('order_id')
+                                        ->label('Order')
+                                        ->reactive()
+                                        ->options(
+                                            Order::query()
+                                                ->whereNull('trip_id')
+                                                ->whereNotIn('status', ['delivered', 'cancelled'])
+                                                ->with(['customer', 'location'])
+                                                ->get()
+                                                ->mapWithKeys(fn(Order $order) => [
+                                                    $order->id => view('filament.components.order-option', [
+                                                        'orderNumber' => $order->order_number,
+                                                        'customerName' => $order->customer?->name,
+                                                        'status' => $order->status,
+                                                        'requestedDeliveryDate' => $order->requested_delivery_date?->format('M j, Y'),
+                                                        'assignedDeliveryDate' => $order->assigned_delivery_date?->format('M j, Y'),
+                                                        'location' => $order->location?->name,
+                                                        'fillLoad' => $order->fill_load,
+                                                        'stopNumber' => $order->stop_number,
+                                                    ])->render()
+                                                ])
+                                        )
+                                        ->allowHtml()
+                                        ->columnSpanFull()
+                                        ->searchable()
+                                        ->required(),
+                                    TextInput::make('stop_number')
+                                        ->numeric()
+                                        ->default(
+                                            function (Get $get) {
+                                                $existingStops = array_filter($get('../*.stop_number'));
+                                                return empty($existingStops) ? 1 : count($existingStops) + 1;
+                                            }
+                                        )
+                                        ->required(),
+                                    TextInput::make('delivery_notes')
+                                        ->nullable(),
+                                ])
+                                ->columns(2)
+                                ->reorderable()
+                                ->reorderableWithButtons()
+                                ->defaultItems(0)
+                                ->addActionLabel('Add Order to Trip')
                         ])
                         ->visible(fn(Get $get) => $get('type') === 'trip'),
                 ])
@@ -274,10 +298,12 @@ class CalendarWidget extends FullCalendarWidget
                             'status' => 'pending',
                         ]);
 
-                        // Update the selected orders with the new trip_id
-                        if (!empty($data['orders'])) {
-                            Order::whereIn('id', $data['orders'])->update([
+                        // Process each order in the repeater
+                        foreach ($data['trip_orders'] as $tripOrder) {
+                            Order::find($tripOrder['order_id'])->update([
                                 'trip_id' => $trip->id,
+                                'stop_number' => $tripOrder['stop_number'],
+                                'delivery_notes' => $tripOrder['delivery_notes'] ?? null,
                                 'assigned_delivery_date' => $data['scheduled_date']
                             ]);
                         }
