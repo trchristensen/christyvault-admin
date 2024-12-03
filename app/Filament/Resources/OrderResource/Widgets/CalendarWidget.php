@@ -30,6 +30,7 @@ use Saade\FilamentFullCalendar\Actions\CreateAction;
 use Saade\FilamentFullCalendar\Actions\EditAction;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\Hidden;
+use Filament\Support\Colors\Color;
 
 class CalendarWidget extends FullCalendarWidget
 {
@@ -244,6 +245,7 @@ class CalendarWidget extends FullCalendarWidget
     protected function modalActions(): array
     {
         return [
+
             Actions\CreateAction::make()
                 ->label('Create New')
                 ->modalHeading('Create New')
@@ -369,13 +371,33 @@ class CalendarWidget extends FullCalendarWidget
                     }
                     $this->refreshRecords();
                 }),
+            Actions\EditAction::make(),
+            Actions\DeleteAction::make()
+                ->action(function () {
+                    if ($this->record instanceof Trip) {
+                        $this->record->delete();
+                    } else if ($this->record instanceof Order) {
+                        $this->record->delete();
+                    }
+
+                    $this->refreshCalendar();
+                    $this->dispatch('close-modal');
+                })
+                ->color(Color::Red)
+                ->icon('heroicon-m-trash')
+                ->requiresConfirmation(),
         ];
     }
 
 
+    // protected function viewAction(): \Filament\Actions\Action
+    // {
+    //     return Actions\EditAction::make();
+    // }
+
     protected function viewAction(): \Filament\Actions\Action
     {
-        return Actions\EditAction::make();
+        return Actions\ViewAction::make('view');
     }
 
     public function onDateSelect(string $start, string|null $end, bool $allDay, array|null $view, array|null $resource): void
@@ -533,6 +555,7 @@ class CalendarWidget extends FullCalendarWidget
                     $this->event->update($data);
                     $this->refreshRecords();
                 }),
+            Actions\DeleteAction::make(),
         ];
     }
 
