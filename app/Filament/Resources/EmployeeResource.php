@@ -196,17 +196,9 @@ class EmployeeResource extends Resource
             ]);
     }
 
-    protected function handleRecordCreation(array $data): Model
+    protected static function handleRecordCreation(array $data): Model
     {
-        // Create user first
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make('temporary-password'), // You might want to generate this randomly
-        ]);
-
-        // Add employee data
-        $data['user_id'] = $user->id;
+        // Remove user creation since we're selecting an existing user
         $employee = static::getModel()::create($data);
 
         // If position is driver, create driver record
