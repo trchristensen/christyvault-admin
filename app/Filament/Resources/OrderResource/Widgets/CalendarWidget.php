@@ -411,8 +411,8 @@ class CalendarWidget extends FullCalendarWidget
                     'title' => "{$trip->trip_number}<br>{$trip->driver?->name}",
                     'start' => $trip->scheduled_date->format('Y-m-d'),
                     'allDay' => true,
-                    // 'backgroundColor' => '#2563EB',
-                    // 'borderColor' => '#1E40AF',
+                    'backgroundColor' => '#efefef',
+                    // 'textColor' => '#1f2937',
                     'classNames' => ['trip-event'],
                     'extendedProps' => [
                         'type' => 'trip',

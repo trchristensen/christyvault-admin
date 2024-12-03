@@ -3,67 +3,74 @@
     @apply bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800;
 }
 
-/* Remove default FC borders and bg */
+/* Event spacing */
 .fc-event {
-    @apply border-0 !important;
+    @apply border-0 mb-2 !important;
 }
 
 .fc-event-main {
     @apply h-full;
 }
 
-/* Common container styles - simplified, no nested cards */
+/* Common container styles */
 .order-container,
 .fc-event-main > div {
-    @apply p-2 rounded-lg bg-primary-50 dark:bg-primary-900/50
-           border-l-4 border-primary-600 dark:border-primary-500;
+    @apply p-2 rounded-lg;
 }
 
-/* Status-based colors */
-.status-pending {
-    @apply bg-yellow-50 dark:bg-yellow-900/50 border-l-4 border-yellow-600;
-}
-
-.status-confirmed {
-    @apply bg-blue-50 dark:bg-blue-900/50 border-l-4 border-blue-600;
-}
-
+/* Status-based colors using the exact palette */
 .status-delivered {
-    @apply bg-green-50 dark:bg-green-900/50 border-l-4 border-green-600;
+    @apply bg-[#D9EDBF] text-gray-800; /* Soft green #D9EDBF */
 }
 
 .status-cancelled {
-    @apply bg-red-50 dark:bg-red-900/50 border-l-4 border-red-600;
+    @apply bg-[#FFB996] text-gray-800; /* Soft coral #FFB996 */
 }
 
-/* Content styling */
+.status-pending {
+    @apply bg-[#FFCF81] text-gray-800; /* Soft orange #FFCF81 */
+}
+
+.status-confirmed {
+    @apply bg-[#FDFFAB] text-gray-800; /* Soft yellow #FDFFAB */
+}
+
+/* Content styling - all text in gray-800 */
 .trip-title {
-    @apply text-sm font-medium text-gray-900 dark:text-white mb-1;
+    @apply text-sm font-medium mb-2 text-gray-800;
 }
 
 .order-title {
-    @apply text-sm font-medium text-gray-900 dark:text-white line-clamp-1;
+    @apply text-sm font-medium line-clamp-1 text-gray-800;
 }
 
 .order-address {
-    @apply text-xs text-gray-600 dark:text-gray-400;
+    @apply text-xs text-gray-800;
 }
 
 .order-address > div {
     @apply line-clamp-1;
 }
 
-/* Products container */
-.products-list {
-    @apply flex flex-col text-xs text-gray-600 dark:text-gray-400 mt-1;
+.order-status {
+    @apply text-xs font-medium text-gray-800;
 }
 
-/* Individual product items */
+/* Products list */
+.products-list {
+    @apply flex flex-col text-xs text-gray-800 mt-1 gap-0.5;
+}
+
 .product-item {
     @apply flex items-center;
 }
 
 /* Fill load indicator */
-/* .product-item.fill-load {
-    @apply text-blue-700 dark:text-blue-300;
-} */
+.product-item.fill-load {
+    @apply font-medium;
+}
+
+/* Order container spacing */
+.order-container {
+    @apply mb-2 last:mb-0;
+}
