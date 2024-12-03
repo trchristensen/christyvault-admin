@@ -49,7 +49,7 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Pages\Dashboard::class,
                 DeliveryCalendar::class,
-                TestCalendar::class,
+                // TestCalendar::class,
             ])
             ->navigationGroups([
                 NavigationGroup::make()
