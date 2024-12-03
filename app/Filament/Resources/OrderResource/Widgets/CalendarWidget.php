@@ -48,7 +48,10 @@ class CalendarWidget extends FullCalendarWidget
     public ?string $selectedDate = null;
     public ?string $selectedType = null;
 
-    protected $listeners = ['date-selected' => 'handleDateSelected'];
+    protected $listeners = [
+        'date-selected' => 'handleDateSelected',
+        'calendar-order-clicked' => 'handleOrderClick'
+    ];
 
     public function getViewData(): array
     {
@@ -85,6 +88,23 @@ class CalendarWidget extends FullCalendarWidget
 
     public function onEventClick(array $event): void
     {
+        Log::info('Event Click Data:', [
+            'event' => $event,
+            'jsEvent' => $event['jsEvent'] ?? null,
+            'target' => $event['jsEvent']['target'] ?? null,
+        ]);
+
+        // Check if we clicked on an order within a trip
+        if (isset($event['jsEvent']['target']['dataset']['orderId'])) {
+            $orderId = $event['jsEvent']['target']['dataset']['orderId'];
+            Log::info('Clicked on order:', ['orderId' => $orderId]);
+
+            $this->record = Order::with(['customer', 'orderProducts.product'])->find($orderId);
+            $this->mountAction('view');
+            return;
+        }
+
+        // Default trip/standalone order handling
         $uuid = $event['extendedProps']['uuid'];
         $type = $event['extendedProps']['type'];
 
@@ -155,12 +175,13 @@ class CalendarWidget extends FullCalendarWidget
         const eventMainEl = el.querySelector('.fc-event-main');
 
         if (event.extendedProps.type === 'trip') {
+            console.log('Mounting trip event:', event);
             // Trip content
             const content = document.createElement('div');
             content.innerHTML = `
                 <div class="trip-title">${event.title}</div>
                 ${event.extendedProps.orders.map(order => `
-                    <div class="order-container">
+                    <div class="order-container" data-order-id="${order.id}" onclick="event.stopPropagation();">
                         <div class="order-title">${order.title}</div>
                         <div class="order-status">Status: ${order.status}</div>
                         ${order.products.map(p => `
@@ -172,19 +193,17 @@ class CalendarWidget extends FullCalendarWidget
                 `).join('')}
             `;
             eventMainEl.replaceChildren(content);
-        } else {
-            // Order content
-            const content = document.createElement('div');
-            content.innerHTML = `
-                <div class="order-title">${event.title}</div>
-                <div class="order-status">Status: ${event.extendedProps.status}</div>
-                ${event.extendedProps.products.map(p => `
-                    <div class="product-item">
-                        ${p.fill_load ? '*' : p.quantity} × ${p.sku} ${p.fill_load ? '(fill load)' : ''}
-                    </div>
-                `).join('')}
-            `;
-            eventMainEl.replaceChildren(content);
+
+            // Add click handlers after content is mounted
+            el.querySelectorAll('.order-container').forEach(orderEl => {
+                console.log('Adding click handler to order:', orderEl.dataset.orderId);
+                orderEl.addEventListener('click', (e) => {
+                    console.log('Order clicked:', orderEl.dataset.orderId);
+                    e.stopPropagation();
+                    console.log('Dispatching Livewire event with orderId:', orderEl.dataset.orderId);
+                    Livewire.dispatch('calendar-order-clicked', { orderId: orderEl.dataset.orderId });
+                });
+            });
         }
     }
     JS;
@@ -484,5 +503,13 @@ class CalendarWidget extends FullCalendarWidget
         $newNumber = $lastNumber + 1;
 
         return 'TRIP-' . str_pad($newNumber, 5, '0', STR_PAD_LEFT);
+    }
+
+    public function handleOrderClick($orderId)
+    {
+        Log::info('Clicked on order:', ['orderId' => $orderId]);
+
+        $this->record = Order::with(['customer', 'orderProducts.product'])->find($orderId);
+        $this->mountAction('view');
     }
 }
