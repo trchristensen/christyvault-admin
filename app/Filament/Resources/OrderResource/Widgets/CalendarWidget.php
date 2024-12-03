@@ -147,7 +147,7 @@ class CalendarWidget extends FullCalendarWidget
         return <<<'JS'
     function({ event, el }) {
         const eventMainEl = el.querySelector('.fc-event-main');
-        eventMainEl.style.padding = '12px';
+        eventMainEl.style.padding = '8px'; // Reduced padding
 
         if (event.extendedProps.type === 'trip') {
             // Trip styling
@@ -156,10 +156,10 @@ class CalendarWidget extends FullCalendarWidget
             // Trip content
             const content = document.createElement('div');
             content.innerHTML = `
-                <div style="font-weight: 500; margin-bottom: 8px;">${event.title}</div>
+                <div style="font-weight: 500; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${event.title}</div>
                 ${event.extendedProps.orders.map(order => `
-                    <div style="background: rgba(255,255,255,0.1); padding: 8px; margin-top: 8px; border-radius: 4px;">
-                        <div style="font-weight: 500;">${order.title}</div>
+                    <div style="background: rgba(255,255,255,0.1); padding: 6px; margin-top: 6px; border-radius: 4px;">
+                        <div style="font-weight: 500; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${order.title}</div>
                         <div style="font-size: 0.9em;">Status: ${order.status}</div>
                         ${order.products.map(p => `
                             <div style="font-size: 0.8em;">
@@ -171,8 +171,20 @@ class CalendarWidget extends FullCalendarWidget
             `;
             eventMainEl.replaceChildren(content);
         } else {
-            // Original Order styling and content
-            // ... your existing order event styling code ...
+            // Order styling
+            const content = document.createElement('div');
+            content.innerHTML = `
+                <div style="font-weight: 500; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                    ${event.title}
+                </div>
+                <div style="font-size: 0.9em; margin-bottom: 4px;">Status: ${event.extendedProps.status}</div>
+                ${event.extendedProps.products.map(p => `
+                    <div style="font-size: 0.8em; background: rgba(255,255,255,0.1); padding: 4px; margin-top: 4px; border-radius: 4px;">
+                        ${p.fill_load ? '*' : p.quantity} × ${p.sku} ${p.fill_load ? '(fill load)' : ''}
+                    </div>
+                `).join('')}
+            `;
+            eventMainEl.replaceChildren(content);
         }
     }
     JS;

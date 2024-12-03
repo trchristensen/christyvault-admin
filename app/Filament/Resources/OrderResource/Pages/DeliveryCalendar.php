@@ -5,6 +5,7 @@ namespace App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource;
 use App\Models\Order;
 use Filament\Resources\Pages\Page;
+use Filament\Support\Enums\MaxWidth;
 use Saade\FilamentFullCalendar\Components\FullCalendarComponent;
 
 class DeliveryCalendar extends Page
@@ -22,6 +23,11 @@ class DeliveryCalendar extends Page
     public function getTitle(): string
     {
         return 'Delivery Calendar';
+    }
+
+    public function getMaxContentWidth(): MaxWidth
+    {
+        return MaxWidth::Full;
     }
 
     protected function getHeaderActions(): array
