@@ -177,10 +177,14 @@ class CalendarWidget extends FullCalendarWidget
         if (event.extendedProps.type === 'trip') {
             const content = document.createElement('div');
             content.innerHTML = `
-                <div class="trip-title">${event.title}</div>
+                 <div class="trip-title">
+            ${event.title}
+                    <div class="trip-status">Status: ${event.extendedProps.status}</div>
+                </div>
                 ${event.extendedProps.orders.map(order => `
                     <div class="order-container status-${order.status.toLowerCase()}" data-order-id="${order.id}" onclick="event.stopPropagation();">
-                        <div class="order-title">${order.title}</div>
+                        <div class="order-title">${order.title}
+                        </div>
                         <div class="order-address">
                             <div>${order.extendedProps.location_line1}</div>
                             <div>${order.extendedProps.location_line2}</div>
@@ -209,18 +213,20 @@ class CalendarWidget extends FullCalendarWidget
             // Standalone order content
             const content = document.createElement('div');
             content.innerHTML = `
-                <div class="order-title">${event.title}</div>
-                <div class="order-address">
-                    <div>${event.extendedProps.location_line1}</div>
-                    <div>${event.extendedProps.location_line2}</div>
-                </div>
-                <div class="order-status">Status: ${event.extendedProps.status}</div>
-                <div class="products-list">
-                    ${event.extendedProps.products.map(p => `
-                        <span class="product-item ${p.fill_load ? 'fill-load' : ''}">
-                            ${p.fill_load ? '*' : p.quantity} × ${p.sku} ${p.fill_load ? '(fill load)' : ''}
-                        </span>
-                    `).join('')}
+                <div class="order-container status-${event.extendedProps.status.toLowerCase()}">
+                    <div class="order-title">${event.title}</div>
+                    <div class="order-address">
+                        <div>${event.extendedProps.location_line1}</div>
+                        <div>${event.extendedProps.location_line2}</div>
+                    </div>
+                    <div class="order-status">Status: ${event.extendedProps.status}</div>
+                    <div class="products-list">
+                        ${event.extendedProps.products.map(p => `
+                            <span class="product-item ${p.fill_load ? 'fill-load' : ''}">
+                                ${p.fill_load ? '*' : p.quantity} × ${p.sku} ${p.fill_load ? '(fill load)' : ''}
+                            </span>
+                        `).join('')}
+                    </div>
                 </div>
             `;
             eventMainEl.replaceChildren(content);
@@ -417,6 +423,7 @@ class CalendarWidget extends FullCalendarWidget
                     'extendedProps' => [
                         'type' => 'trip',
                         'uuid' => $trip->uuid,
+                        'status' => Str::headline($trip->status),
                         'orders' => $trip->orders->map(fn($order) => [
                             'id' => $order->id,
                             'title' => $order->customer?->name ?? $order->order_number,
@@ -453,7 +460,7 @@ class CalendarWidget extends FullCalendarWidget
                     'borderColor' => 'transparent',
                     'classNames' => [
                         'standalone-order',
-                        'status-' . $order->status  // This will apply the status-specific colors
+                        'status-' . strtolower($order->status)
                     ],
                     'extendedProps' => [
                         'type' => 'order',
