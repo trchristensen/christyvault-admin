@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+
 class Trip extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'trip_number',
@@ -20,6 +22,7 @@ class Trip extends Model
         'start_time',
         'end_time',
         'notes',
+        'uuid',
     ];
 
     protected $casts = [
@@ -31,6 +34,10 @@ class Trip extends Model
     protected static function boot()
     {
         parent::boot();
+
+        static::creating(function ($model) {
+            $model->uuid = (string) str()->uuid();
+        });
 
         // When trip is updated
         static::updated(function ($trip) {

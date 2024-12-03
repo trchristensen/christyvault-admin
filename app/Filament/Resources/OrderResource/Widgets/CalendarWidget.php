@@ -237,53 +237,44 @@ class CalendarWidget extends FullCalendarWidget
                         ->schema([
                             Select::make('orders')
                                 ->multiple()
-                                ->relationship(
-                                    'orders',
-                                    'order_number',
-                                    fn(Builder $query) => $query
+                                ->options(
+                                    Order::query()
                                         ->whereNull('trip_id')
                                         ->whereNotIn('status', ['completed', 'cancelled'])
+                                        ->get()
+                                        ->mapWithKeys(fn(Order $order) => [
+                                            $order->id => "{$order->order_number} - {$order->customer?->name}"
+                                        ])
                                 )
                                 ->preload()
                                 ->searchable()
-                                ->createOptionForm([
-                                    // Your order creation form fields here
-                                    ...static::getOrderFormSchema()
-                                ])
                         ])
                         ->visible(fn(Get $get) => $get('type') === 'trip'),
                 ])
                 ->action(function (array $data) {
-                    if ($data['type'] === 'order') {
-                        Order::create([
-                            ...collect($data)->except('type')->toArray(),
-                            'order_date' => now(),
-                            'status' => OrderStatus::PENDING->value,
-                        ]);
-                    } else {
-                        // Get the next trip number
-                        $lastTrip = Trip::orderBy('id', 'desc')->first();
-                        $nextNumber = $lastTrip ? ((int)substr($lastTrip->trip_number, 5) + 1) : 1;
-                        $tripNumber = 'TRIP-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
-
-                        // Create the trip
+                    if ($data['type'] === 'trip') {
+                        // Create the trip first
                         $trip = Trip::create([
-                            'trip_number' => $tripNumber,
+                            'trip_number' => $data['trip_number'] ?? $this->generateTripNumber(),
                             'scheduled_date' => $data['scheduled_date'],
                             'driver_id' => $data['driver_id'],
                             'notes' => $data['notes'] ?? null,
                             'status' => 'pending',
                         ]);
 
-                        // Attach orders if any were selected
+                        // Update the selected orders with the new trip_id
                         if (!empty($data['orders'])) {
-                            $trip->orders()->attach($data['orders']);
-
-                            // Update the delivery dates of attached orders
                             Order::whereIn('id', $data['orders'])->update([
+                                'trip_id' => $trip->id,
                                 'assigned_delivery_date' => $data['scheduled_date']
                             ]);
                         }
+                    } else {
+                        Order::create([
+                            ...collect($data)->except('type')->toArray(),
+                            'order_date' => now(),
+                            'status' => OrderStatus::PENDING->value,
+                        ]);
                     }
                     $this->refreshRecords();
                 }),
@@ -436,5 +427,14 @@ class CalendarWidget extends FullCalendarWidget
         $this->selectedDate = $info['date'];
         $this->record = null; // Ensure record is null for new creation
         $this->mountAction('create');
+    }
+
+    protected function generateTripNumber(): string
+    {
+        $lastTrip = Trip::orderBy('id', 'desc')->first();
+        $lastNumber = $lastTrip ? (int) str_replace('TRIP-', '', $lastTrip->trip_number) : 0;
+        $newNumber = $lastNumber + 1;
+
+        return 'TRIP-' . str_pad($newNumber, 5, '0', STR_PAD_LEFT);
     }
 }
