@@ -64,6 +64,59 @@
         .trip-event {
             /* border-left: 4px solid #1E40AF !important; */
         }
+
+        /* Reset and force visibility */
+        .fc-multiMonthYear-view .fc-daygrid-day-events {
+            position: static !important;
+            min-height: auto !important;
+            margin: 0 !important;
+            padding: 2px !important;
+        }
+
+        .fc-multiMonthYear-view .fc-daygrid-event-harness {
+            position: static !important;
+            visibility: visible !important;
+            height: auto !important;
+            margin: 2px 0 !important;
+        }
+
+        .fc-multiMonthYear-view .fc-daygrid-day-frame {
+            min-height: 150px !important;
+            height: auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
+        /* Force absolute positioning elements to be visible */
+        .fc-daygrid-event-harness-abs {
+            position: static !important;
+            visibility: visible !important;
+            left: auto !important;
+            right: auto !important;
+            top: auto !important;
+        }
+
+        /* Ensure events stack properly */
+        .fc-daygrid-day-events>* {
+            position: static !important;
+            transform: none !important;
+        }
+
+        /* Remove any hidden overflow */
+        .fc-daygrid-day,
+        .fc-daygrid-day-frame,
+        .fc-daygrid-day-events {
+            overflow: visible !important;
+        }
+
+        /* Reset any problematic margins/padding */
+        .fc-multimonth-daygrid {
+            margin: 0 !important;
+        }
+
+        .fc-multimonth-header {
+            margin: 0 !important;
+        }
     </style>
 
     @livewire(\App\Filament\Resources\OrderResource\Widgets\CalendarWidget::class)

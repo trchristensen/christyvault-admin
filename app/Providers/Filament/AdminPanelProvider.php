@@ -66,6 +66,18 @@ class AdminPanelProvider extends PanelProvider
                     ->myProfile(),
                 // FilamentSpatieRolesPermissionsPlugin::make(),
                 FilamentFullCalendarPlugin::make()
+                    ->plugins([
+                        'dayGrid',
+                        'timeGrid',
+                        'multiMonth'
+                    ])
+                    ->config([
+                        'eventDisplay' => 'block', // Force block display
+                        // 'dayMaxEventRows' => 0, // Add this to prevent event rows from collapsing
+                        'maxDayEvents' => false,
+                        'eventMaxStack' => 0, // Prevent stacking/collapsing
+                        // 'height' => 'auto', // Allow calendar to expand to fit all events
+                    ])
                     ->selectable()
                     ->editable()
             ])

@@ -28,6 +28,7 @@ use App\Filament\Resources\Traits\HasTripForm;
 use App\Models\Trip;
 use Saade\FilamentFullCalendar\Actions\CreateAction;
 use Saade\FilamentFullCalendar\Actions\EditAction;
+use Illuminate\Database\Eloquent\Builder;
 
 class CalendarWidget extends FullCalendarWidget
 {
@@ -184,6 +185,11 @@ class CalendarWidget extends FullCalendarWidget
     JS;
     }
 
+    public function refreshCalendar(): void
+    {
+        $this->dispatch('filament-fullcalendar--refresh');
+    }
+
     protected function modalActions(): array
     {
         return [
@@ -209,16 +215,39 @@ class CalendarWidget extends FullCalendarWidget
                     ),
 
                     // Trip Form (shown when type = trip)
-                    DatePicker::make('scheduled_date')
-                        ->required()
-                        ->native(false)
-                        ->visible(fn(Get $get) => $get('type') === 'trip'),
-                    Select::make('driver_id')
-                        ->relationship('driver', 'name')
-                        ->required()
-                        ->visible(fn(Get $get) => $get('type') === 'trip'),
-                    TextInput::make('notes')
-                        ->maxLength(255)
+                    Section::make('Trip Details')
+                        ->schema([
+                            DatePicker::make('scheduled_date')
+                                ->required()
+                                ->native(false),
+                            Select::make('driver_id')
+                                ->relationship('driver', 'name')
+                                ->required(),
+                            TextInput::make('notes')
+                                ->maxLength(255),
+                        ])
+                        ->visible(fn(Get $get) => $get('type') === 'trip')
+                        ->columns(2),
+
+                    // Add Orders Section
+                    Section::make('Orders')
+                        ->schema([
+                            Select::make('orders')
+                                ->multiple()
+                                ->relationship(
+                                    'orders',
+                                    'order_number',
+                                    fn(Builder $query) => $query
+                                        ->whereNull('trip_id')
+                                        ->whereNotIn('status', ['completed', 'cancelled'])
+                                )
+                                ->preload()
+                                ->searchable()
+                                ->createOptionForm([
+                                    // Your order creation form fields here
+                                    ...static::getOrderFormSchema()
+                                ])
+                        ])
                         ->visible(fn(Get $get) => $get('type') === 'trip'),
                 ])
                 ->action(function (array $data) {
@@ -234,14 +263,24 @@ class CalendarWidget extends FullCalendarWidget
                         $nextNumber = $lastTrip ? ((int)substr($lastTrip->trip_number, 5) + 1) : 1;
                         $tripNumber = 'TRIP-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
 
-                        // Create the trip with all required fields
-                        Trip::create([
+                        // Create the trip
+                        $trip = Trip::create([
                             'trip_number' => $tripNumber,
                             'scheduled_date' => $data['scheduled_date'],
                             'driver_id' => $data['driver_id'],
                             'notes' => $data['notes'] ?? null,
-                            'status' => 'pending', // Add default status
+                            'status' => 'pending',
                         ]);
+
+                        // Attach orders if any were selected
+                        if (!empty($data['orders'])) {
+                            $trip->orders()->attach($data['orders']);
+
+                            // Update the delivery dates of attached orders
+                            Order::whereIn('id', $data['orders'])->update([
+                                'assigned_delivery_date' => $data['scheduled_date']
+                            ]);
+                        }
                     }
                     $this->refreshRecords();
                 }),
@@ -343,15 +382,33 @@ class CalendarWidget extends FullCalendarWidget
     // config
     public function config(): array
     {
+        $today = now();
+        $startDate = $today->startOfMonth();
+        $endDate = $today->copy()->addMonths(2)->endOfMonth();
+
         return [
+            // 'initialView' => 'dayGridMonth',
+            'weekends' => false,
             'initialView' => 'dayGridMonth',
+            'multiMonth' => [
+                'months' => 3, // Show only 3 months at a time
+                'startMonth' => $today->month,
+                'startYear' => $today->year,
+            ],
+            'validRange' => [
+                'start' => $startDate->format('Y-m-d'),
+                'end' => $endDate->format('Y-m-d'),
+            ],
+            'dayMaxEvents' => false, // This will force all events to be shown
+            'multiMonthMaxColumns' => 1,
             'selectable' => true,
             'editable' => true,
             'headerToolbar' => [
                 'left' => 'prev,next today',
                 'center' => 'title',
-                'right' => 'dayGridMonth,timeGridWeek,timeGridDay',
+                'right' => 'dayGridMonth,timeGridWeek,timeGridDay, multiMonthYear',
             ],
+
         ];
     }
 
