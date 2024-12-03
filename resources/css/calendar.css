@@ -116,6 +116,16 @@
 .order-status {
     @apply text-xs font-medium text-gray-800 mb-2;
 }
+
+.order-requested-delivery-date,
+.order-date {
+    @apply text-xs font-medium text-gray-800;
+}
+
+.order-date {
+    @apply mb-2;
+}
+
 .trip-status {
     @apply text-xs font-medium text-gray-800 mb-2;
 }

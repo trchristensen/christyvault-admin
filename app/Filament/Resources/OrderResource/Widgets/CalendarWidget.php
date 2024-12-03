@@ -179,26 +179,33 @@ class CalendarWidget extends FullCalendarWidget
             const content = document.createElement('div');
             content.innerHTML = `
                 <div class="trip-title">
-
-                <div class="flex items-center justify-between"><span class="driver-name">${event.extendedProps.driver_name}</span><span class="trip-number">${event.title}</span></div>
+                    <div class="flex items-center justify-between">
+                        ${event.extendedProps.driver_name ? `<span class="driver-name">${event.extendedProps.driver_name}</span>` : ''}
+                        ${event.title ? `<span class="trip-number">${event.title}</span>` : ''}
+                    </div>
                 </div>
-                <div class="trip-status">${event.extendedProps.status}</div>
-                ${event.extendedProps.orders.map(order => `
-                    <div class="order-container status-${order.status.toLowerCase()}" data-order-id="${order.id}" onclick="event.stopPropagation();">
-                        <div class="order-title">${order.title}
-                        </div>
-                        <div class="order-address">
-                            <div>${order.extendedProps.location_line1}</div>
-                            <div>${order.extendedProps.location_line2}</div>
-                        </div>
-                        <div class="order-status">Status: ${order.status}</div>
-                        <div class="products-list">
-                            ${order.products.map(p => `
-                                <span class="product-item ${p.fill_load ? 'fill-load' : ''}">
-                                    ${p.fill_load ? '*' : p.quantity} × ${p.sku} ${p.fill_load ? '(fill load)' : ''}
-                                </span>
-                            `).join('')}
-                        </div>
+                ${event.extendedProps.status ? `<div class="trip-status">${event.extendedProps.status}</div>` : ''}
+                ${(event.extendedProps.orders || []).map(order => `
+                    <div class="order-container status-${(order.status || '').toLowerCase()}" data-order-id="${order.id || ''}" onclick="event.stopPropagation();">
+                        ${order.title ? `<div class="order-title">${order.title}</div>` : ''}
+                        ${(order.extendedProps?.location_line1 || order.extendedProps?.location_line2) ? `
+                            <div class="order-address">
+                                ${order.extendedProps?.location_line1 ? `<div>${order.extendedProps.location_line1}</div>` : ''}
+                                ${order.extendedProps?.location_line2 ? `<div>${order.extendedProps.location_line2}</div>` : ''}
+                            </div>
+                        ` : ''}
+                        ${order.status ? `<div class="order-status">Status: ${order.status}</div>` : ''}
+                        ${order.requested_delivery_date ? `<div class="order-requested-delivery-date">Requested: ${order.requested_delivery_date}</div>` : ''}
+                        ${order.order_date ? `<div class="order-date">Order Date: ${order.order_date}</div>` : ''}
+                        ${order.products?.length ? `
+                            <div class="products-list">
+                                ${order.products.map(p => `
+                                    <span class="product-item ${p.fill_load ? 'fill-load' : ''}">
+                                        ${p.fill_load ? '*' : p.quantity || ''} × ${p.sku || ''} ${p.fill_load ? '(fill load)' : ''}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        ` : ''}
                     </div>
                 `).join('')}
             `;
@@ -215,20 +222,27 @@ class CalendarWidget extends FullCalendarWidget
             // Standalone order content
             const content = document.createElement('div');
             content.innerHTML = `
-                <div class="order-container status-${event.extendedProps.status.toLowerCase()}">
-                    <div class="order-title">${event.title}</div>
-                    <div class="order-address">
-                        <div>${event.extendedProps.location_line1}</div>
-                        <div>${event.extendedProps.location_line2}</div>
-                    </div>
-                    <div class="order-status">${event.extendedProps.status}</div>
-                    <div class="products-list">
-                        ${event.extendedProps.products.map(p => `
-                            <span class="product-item ${p.fill_load ? 'fill-load' : ''}">
-                                ${p.fill_load ? '*' : p.quantity} × ${p.sku} ${p.fill_load ? '(fill load)' : ''}
-                            </span>
-                        `).join('')}
-                    </div>
+                <div class="order-container status-${(event.extendedProps?.status || '').toLowerCase()}">
+                    ${event.title ? `<div class="order-title">${event.title}</div>` : ''}
+                    ${(event.extendedProps?.location_line1 || event.extendedProps?.location_line2) ? `
+                        <div class="order-address">
+                            ${event.extendedProps?.location_line1 ? `<div>${event.extendedProps.location_line1}</div>` : ''}
+                            ${event.extendedProps?.location_line2 ? `<div>${event.extendedProps.location_line2}</div>` : ''}
+                        </div>
+                    ` : ''}
+                    ${event.extendedProps?.status ? `<div class="order-status">${event.extendedProps.status}</div>` : ''}
+                    ${event.extendedProps?.requested_delivery_date ? `<div class="order-requested-delivery-date">Requested: ${event.extendedProps.requested_delivery_date}</div>` : ''}
+                    ${event.extendedProps?.order_date ? `<div class="order-date">Order Date: ${event.extendedProps.order_date}</div>` : ''}
+                    ${event.extendedProps?.delivery_notes ? `<div class="order-delivery-notes">${event.extendedProps.delivery_notes}</div>` : ''}
+                    ${event.extendedProps?.products?.length ? `
+                        <div class="products-list">
+                            ${event.extendedProps.products.map(p => `
+                                <span class="product-item ${p.fill_load ? 'fill-load' : ''}">
+                                    ${p.fill_load ? '*' : p.quantity || ''} × ${p.sku || ''} ${p.fill_load ? '(fill load)' : ''}
+                                </span>
+                            `).join('')}
+                        </div>
+                    ` : ''}
                 </div>
             `;
             eventMainEl.replaceChildren(content);
@@ -451,13 +465,14 @@ class CalendarWidget extends FullCalendarWidget
                         'orders' => $trip->orders->map(fn($order) => [
                             'id' => $order->id,
                             'title' => $order->customer?->name ?? $order->order_number,
-                            'extendedProps' => [
-                                'location_line1' => $order->location?->address_line1 ?? 'undefined',
-                                'location_line2' => $order->location ?
-                                    "{$order->location->city}, {$order->location->state}"
-                                    : 'undefined',
-                            ],
                             'status' => Str::headline($order->status),
+                            'requested_delivery_date' => $order->requested_delivery_date?->format('M j, Y'),
+                            'order_date' => $order->order_date?->format('M j, Y'),
+                            'extendedProps' => [
+                                'location_line1' => $order->location?->address_line1,
+                                'location_line2' => $order->location ?
+                                    "{$order->location->city}, {$order->location->state}" : null,
+                            ],
                             'products' => $order->orderProducts->map(fn($op) => [
                                 'quantity' => $op->quantity,
                                 'sku' => $op->product->sku,
@@ -489,11 +504,13 @@ class CalendarWidget extends FullCalendarWidget
                     'extendedProps' => [
                         'type' => 'order',
                         'uuid' => $order->uuid,
-                        'location_line1' => $order->location?->address_line1 ?? '',
-                        'location_line2' => $order->location ?
-                            $order->location->city . ', ' . $order->location->state
-                            : '',
                         'status' => Str::headline($order->status),
+                        'requested_delivery_date' => $order->requested_delivery_date?->format('M j, Y'),
+                        'order_date' => $order->order_date?->format('M j, Y'),
+                        'delivery_notes' => $order->delivery_notes,
+                        'location_line1' => $order->location?->address_line1,
+                        'location_line2' => $order->location ?
+                            "{$order->location->city}, {$order->location->state}" : null,
                         'products' => $order->orderProducts->map(fn($op) => [
                             'quantity' => $op->quantity,
                             'sku' => $op->product->sku,
