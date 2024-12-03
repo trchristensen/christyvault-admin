@@ -204,6 +204,19 @@ class CalendarWidget extends FullCalendarWidget
                     Livewire.dispatch('calendar-order-clicked', { orderId: orderEl.dataset.orderId });
                 });
             });
+        } else {
+            // Order content
+            const content = document.createElement('div');
+            content.innerHTML = `
+                <div class="order-title">${event.title}</div>
+                <div class="order-status">Status: ${event.extendedProps.status}</div>
+                ${event.extendedProps.products.map(p => `
+                    <div class="product-item">
+                        ${p.fill_load ? '*' : p.quantity} × ${p.sku} ${p.fill_load ? '(fill load)' : ''}
+                    </div>
+                `).join('')}
+            `;
+            eventMainEl.replaceChildren(content);
         }
     }
     JS;
