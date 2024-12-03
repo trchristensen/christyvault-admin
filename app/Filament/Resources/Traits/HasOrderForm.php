@@ -10,7 +10,7 @@ use Carbon\Carbon;
 
 trait HasOrderForm
 {
-    public static function getOrderFormSchema(): array
+    public static function getOrderFormSchema(?string $defaultDate = null): array
     {
         return [
             Forms\Components\Section::make('Order Details')
@@ -119,7 +119,8 @@ trait HasOrderForm
                     Forms\Components\DatePicker::make('requested_delivery_date')
                         ->required()
                         ->native(false)
-                        ->default(now()),
+                        // ->default(now()),
+                        ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
                     Forms\Components\DatePicker::make('assigned_delivery_date')
                         ->native(false)
                         ->minDate(today()),

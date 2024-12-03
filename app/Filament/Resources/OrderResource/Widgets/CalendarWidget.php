@@ -48,6 +48,8 @@ class CalendarWidget extends FullCalendarWidget
     public ?string $selectedDate = null;
     public ?string $selectedType = null;
 
+    protected $listeners = ['date-selected' => 'handleDateSelected'];
+
     public function getViewData(): array
     {
         return [
@@ -76,11 +78,10 @@ class CalendarWidget extends FullCalendarWidget
         if ($this->record instanceof Trip) {
             return static::getTripFormSchema();
         } else if ($this->record instanceof Order) {
-            return static::getOrderFormSchema();
+            return static::getOrderFormSchema($this->selectedDate);
         }
         return [];
     }
-
 
     public function onEventClick(array $event): void
     {
@@ -213,10 +214,11 @@ class CalendarWidget extends FullCalendarWidget
                         ->live(),
 
                     // Order Form (shown when type = order)
-                    ...collect(static::getOrderFormSchema())->map(
-                        fn($field) =>
-                        $field->visible(fn(Get $get) => $get('type') === 'order')
-                    ),
+                    ...collect(static::getOrderFormSchema($this->selectedDate))
+                        ->map(
+                            fn($field) =>
+                            $field->visible(fn(Get $get) => $get('type') === 'order')
+                        ),
 
                     // Trip Form (shown when type = trip)
                     Section::make('Trip Details')
@@ -242,7 +244,7 @@ class CalendarWidget extends FullCalendarWidget
                                 ->options(
                                     Order::query()
                                         ->whereNull('trip_id')
-                                        ->whereNotIn('status', ['completed', 'cancelled'])
+                                        ->whereNotIn('status', ['completed', 'cancelled', 'out_for_delivery'])
                                         ->get()
                                         ->mapWithKeys(fn(Order $order) => [
                                             $order->id => "{$order->order_number} - {$order->customer?->name}"
@@ -252,8 +254,6 @@ class CalendarWidget extends FullCalendarWidget
                                 ->searchable()
                         ])
                         ->visible(fn(Get $get) => $get('type') === 'trip'),
-                    Hidden::make('scheduled_date')
-                        ->default(fn() => $this->selectedDate),
                 ])
                 ->action(function (array $data) {
                     if ($data['type'] === 'trip') {
@@ -266,7 +266,7 @@ class CalendarWidget extends FullCalendarWidget
                             'status' => 'pending',
                         ]);
 
-                        // Update the selected orders with the new trip_id and the same date
+                        // Update the selected orders with the new trip_id
                         if (!empty($data['orders'])) {
                             Order::whereIn('id', $data['orders'])->update([
                                 'trip_id' => $trip->id,
@@ -277,6 +277,7 @@ class CalendarWidget extends FullCalendarWidget
                         Order::create([
                             ...collect($data)->except('type')->toArray(),
                             'order_date' => now(),
+                            'requested_delivery_date' => $this->selectedDate,
                             'status' => OrderStatus::PENDING->value,
                         ]);
                     }
@@ -294,7 +295,12 @@ class CalendarWidget extends FullCalendarWidget
     public function onDateSelect(string $start, string|null $end, bool $allDay, array|null $view, array|null $resource): void
     {
         $this->selectedDate = $start;
-        $this->mountAction('create'); // Open the create modal
+        $this->dispatch('date-selected');
+    }
+
+    public function handleDateSelected(): void
+    {
+        $this->mountAction('create');
     }
 
     protected function getEventColor(Order $order): string
