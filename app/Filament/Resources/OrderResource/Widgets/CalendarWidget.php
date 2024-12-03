@@ -183,6 +183,7 @@ class CalendarWidget extends FullCalendarWidget
                 ${event.extendedProps.orders.map(order => `
                     <div class="order-container" data-order-id="${order.id}" onclick="event.stopPropagation();">
                         <div class="order-title">${order.title}</div>
+                        <div class="order-address">${order.location || ''}</div>
                         <div class="order-status">Status: ${order.status}</div>
                         ${order.products.map(p => `
                             <div class="product-item">
@@ -196,19 +197,17 @@ class CalendarWidget extends FullCalendarWidget
 
             // Add click handlers after content is mounted
             el.querySelectorAll('.order-container').forEach(orderEl => {
-                console.log('Adding click handler to order:', orderEl.dataset.orderId);
                 orderEl.addEventListener('click', (e) => {
-                    console.log('Order clicked:', orderEl.dataset.orderId);
                     e.stopPropagation();
-                    console.log('Dispatching Livewire event with orderId:', orderEl.dataset.orderId);
                     Livewire.dispatch('calendar-order-clicked', { orderId: orderEl.dataset.orderId });
                 });
             });
         } else {
-            // Order content
+            // Standalone order content
             const content = document.createElement('div');
             content.innerHTML = `
                 <div class="order-title">${event.title}</div>
+                <div class="order-address">${event.extendedProps.location || ''}</div>
                 <div class="order-status">Status: ${event.extendedProps.status}</div>
                 ${event.extendedProps.products.map(p => `
                     <div class="product-item">
@@ -391,7 +390,7 @@ class CalendarWidget extends FullCalendarWidget
     public function fetchEvents(array $fetchInfo): array
     {
         // Fetch Trips
-        $tripEvents = Trip::with(['orders.customer', 'orders.orderProducts.product', 'driver'])
+        $tripEvents = Trip::with(['orders.customer', 'orders.orderProducts.product', 'orders.location', 'driver'])
             ->whereDate('scheduled_date', '>=', $fetchInfo['start'])
             ->whereDate('scheduled_date', '<=', $fetchInfo['end'])
             ->get()
@@ -410,6 +409,7 @@ class CalendarWidget extends FullCalendarWidget
                         'orders' => $trip->orders->map(fn($order) => [
                             'id' => $order->id,
                             'title' => $order->customer?->name ?? $order->order_number,
+                            'location' => $order->location?->full_address,
                             'status' => Str::headline($order->status),
                             'products' => $order->orderProducts->map(fn($op) => [
                                 'quantity' => $op->quantity,
@@ -423,12 +423,11 @@ class CalendarWidget extends FullCalendarWidget
 
         // Fetch standalone Orders
         $orderEvents = Order::whereNull('trip_id')
-            ->with(['customer', 'orderProducts.product'])
+            ->with(['customer', 'orderProducts.product', 'location'])
             ->whereDate('requested_delivery_date', '>=', $fetchInfo['start'])
             ->whereDate('requested_delivery_date', '<=', $fetchInfo['end'])
             ->get()
             ->map(function (Order $order) {
-                $isLocked = in_array($order->status, ['in_progress', 'completed', 'delivered']);
                 return [
                     'id' => 'order_' . $order->id,
                     'title' => $order->customer?->name ?? $order->order_number,
@@ -436,14 +435,11 @@ class CalendarWidget extends FullCalendarWidget
                     'allDay' => true,
                     'backgroundColor' => $order->assigned_delivery_date ? $this->getEventColor($order) : 'grey',
                     'borderColor' => 'transparent',
-                    'editable' => !$isLocked,
                     'extendedProps' => [
                         'type' => 'order',
                         'uuid' => $order->uuid,
-                        'customerName' => $order->customer?->name,
-                        'requestedDate' => $order->requested_delivery_date->format('m/d'),
+                        'location' => $order->location?->name,
                         'status' => Str::headline($order->status),
-                        'isLocked' => $isLocked,
                         'products' => $order->orderProducts->map(fn($op) => [
                             'quantity' => $op->quantity,
                             'sku' => $op->product->sku,
