@@ -171,6 +171,58 @@ class CalendarWidget extends FullCalendarWidget
     }
 
 
+    // protected function modalActions(): array
+    // {
+    //     return [
+    //         Actions\CreateAction::make()
+    //             ->label('Create New')
+    //             ->modalHeading('Create New')
+    //             ->modalWidth('2xl')
+    //             ->form([
+    //                 Select::make('type')
+    //                     ->label('What would you like to create?')
+    //                     ->options([
+    //                         'order' => 'Order',
+    //                         'trip' => 'Trip',
+    //                     ])
+    //                     ->required()
+    //             ])
+    //             ->action(function (array $data) {
+    //                 // Instead of creating, we'll mount a new action based on the type
+    //                 if ($data['type'] === 'trip') {
+    //                     $this->mountAction('createTrip');
+    //                 } else {
+    //                     $this->mountAction('createOrder');
+    //                 }
+    //             }),
+
+    //         Actions\CreateAction::make('createTrip')
+    //             ->label('Create Trip')
+    //             ->modalWidth('2xl')
+    //             ->form(fn() => static::getTripFormSchema())
+    //             ->action(function (array $data) {
+    //                 Trip::create([
+    //                     ...$data,
+    //                     'scheduled_date' => $this->selectedDate,
+    //                 ]);
+    //                 $this->refreshRecords();
+    //             }),
+
+    //         Actions\CreateAction::make('createOrder')
+    //             ->label('Create Order')
+    //             ->modalWidth('2xl')
+    //             ->form(fn() => static::getOrderFormSchema())
+    //             ->action(function (array $data) {
+    //                 Order::create([
+    //                     ...$data,
+    //                     'requested_delivery_date' => $this->selectedDate,
+    //                     'status' => OrderStatus::PENDING->value,
+    //                 ]);
+    //                 $this->refreshRecords();
+    //             }),
+    //     ];
+    // }
+
     protected function modalActions(): array
     {
         return [
@@ -178,46 +230,58 @@ class CalendarWidget extends FullCalendarWidget
                 ->label('Create New')
                 ->modalHeading('Create New')
                 ->modalWidth('2xl')
+                ->record(fn() => $this->record = null)
                 ->form([
                     Select::make('type')
                         ->label('What would you like to create?')
                         ->options([
-                            'order' => 'Order',
-                            'trip' => 'Trip',
+                            'order' => 'New Order',
+                            'trip' => 'New Trip',
                         ])
                         ->required()
+                        ->live(),
+
+                    // Order Form (shown when type = order)
+                    ...collect(static::getOrderFormSchema())->map(
+                        fn($field) =>
+                        $field->visible(fn(Get $get) => $get('type') === 'order')
+                    ),
+
+                    // Trip Form (shown when type = trip)
+                    DatePicker::make('scheduled_date')
+                        ->required()
+                        ->native(false)
+                        ->visible(fn(Get $get) => $get('type') === 'trip'),
+                    Select::make('driver_id')
+                        ->relationship('driver', 'name')
+                        ->required()
+                        ->visible(fn(Get $get) => $get('type') === 'trip'),
+                    TextInput::make('notes')
+                        ->maxLength(255)
+                        ->visible(fn(Get $get) => $get('type') === 'trip'),
                 ])
                 ->action(function (array $data) {
-                    // Instead of creating, we'll mount a new action based on the type
-                    if ($data['type'] === 'trip') {
-                        $this->mountAction('createTrip');
+                    if ($data['type'] === 'order') {
+                        Order::create([
+                            ...collect($data)->except('type')->toArray(),
+                            'order_date' => now(),
+                            'status' => OrderStatus::PENDING->value,
+                        ]);
                     } else {
-                        $this->mountAction('createOrder');
+                        // Get the next trip number
+                        $lastTrip = Trip::orderBy('id', 'desc')->first();
+                        $nextNumber = $lastTrip ? ((int)substr($lastTrip->trip_number, 5) + 1) : 1;
+                        $tripNumber = 'TRIP-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+                        // Create the trip with all required fields
+                        Trip::create([
+                            'trip_number' => $tripNumber,
+                            'scheduled_date' => $data['scheduled_date'],
+                            'driver_id' => $data['driver_id'],
+                            'notes' => $data['notes'] ?? null,
+                            'status' => 'pending', // Add default status
+                        ]);
                     }
-                }),
-
-            Actions\CreateAction::make('createTrip')
-                ->label('Create Trip')
-                ->modalWidth('2xl')
-                ->form(fn() => static::getTripFormSchema())
-                ->action(function (array $data) {
-                    Trip::create([
-                        ...$data,
-                        'scheduled_date' => $this->selectedDate,
-                    ]);
-                    $this->refreshRecords();
-                }),
-
-            Actions\CreateAction::make('createOrder')
-                ->label('Create Order')
-                ->modalWidth('2xl')
-                ->form(fn() => static::getOrderFormSchema())
-                ->action(function (array $data) {
-                    Order::create([
-                        ...$data,
-                        'requested_delivery_date' => $this->selectedDate,
-                        'status' => OrderStatus::PENDING->value,
-                    ]);
                     $this->refreshRecords();
                 }),
         ];
