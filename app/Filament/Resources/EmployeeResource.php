@@ -93,8 +93,10 @@ class EmployeeResource extends Resource
                         Forms\Components\DatePicker::make('birth_date')
                             ->label('Birthdate')
                             ->required(),
-                        Forms\Components\Toggle::make('is_active')
+                        Forms\Components\Checkbox::make('is_active')
+                            // make sure this is a boolean
                             ->default(true)
+                            ->label('Active'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Driver Details')
@@ -196,7 +198,7 @@ class EmployeeResource extends Resource
             ]);
     }
 
-    protected static function handleRecordCreation(array $data): Model
+    protected function handleRecordCreation(array $data): Model
     {
         // Remove user creation since we're selecting an existing user
         $employee = static::getModel()::create($data);
