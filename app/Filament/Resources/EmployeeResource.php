@@ -73,15 +73,25 @@ class EmployeeResource extends Resource
                             ->readOnly(fn(Get $get): bool => (bool) $get('user_id')),
                         PhoneInput::make('phone')->defaultCountry('US'),
                         Forms\Components\TextInput::make('address'),
-                        Forms\Components\Select::make('position')
-                            ->options([
-                                'driver' => 'Driver',
-                                'production' => 'Production',
-                                'foreman' => 'Foreman',
-                                'manager' => 'Manager',
-                            ])
+                        Forms\Components\Select::make('positions')
+                            ->relationship(
+                                name: 'positions',
+                                titleAttribute: 'display_name',
+                            )
+                            ->multiple()
+                            ->preload()
+                            ->searchable()
+                            ->required()
                             ->live()
-                            ->required(),
+                            ->dehydrated(true)
+                            ->afterStateHydrated(function ($component, $state) {
+                                \Log::info('Position Hydrated:', ['state' => $state]);
+                            })
+                            ->afterStateUpdated(function ($state, Set $set) {
+                                \Log::info('Position State Updated:', [
+                                    'new_state' => $state
+                                ]);
+                            }),
                         Forms\Components\Select::make('christy_location')
                             ->options([
                                 'colma' => 'Colma',
@@ -108,7 +118,12 @@ class EmployeeResource extends Resource
                         Forms\Components\Textarea::make('driver.notes')
                             ->label('Notes'),
                     ])
-                    ->visible(fn(Get $get) => $get('position') === 'driver')
+                    ->visible(function (Get $get): bool {
+                        return collect($get('positions'))->contains(fn ($position) => 
+                            $position === 'driver' || 
+                            (is_array($position) && ($position['name'] ?? null) === 'driver')
+                        );
+                    })
                     ->columns(2),
             ]);
     }
@@ -123,9 +138,10 @@ class EmployeeResource extends Resource
                     ->searchable(),
                 PhoneColumn::make('phone')
                     ->displayFormat(PhoneInputNumberType::INTERNATIONAL),
-                Tables\Columns\TextColumn::make('position')
-                    ->searchable()
-                    ->badge(),
+                Tables\Columns\TextColumn::make('positions.display_name')
+                    ->badge()
+                    ->separator(',')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('christy_location')
                     ->label('Location')
                     ->formatStateUsing(fn(string $state): string => ucfirst($state))
@@ -150,9 +166,9 @@ class EmployeeResource extends Resource
                     ->label('Location')
                     ->getTitleFromRecordUsing(fn(Employee $record): string => ucfirst($record->christy_location))
                     ->collapsible(),
-                Tables\Grouping\Group::make('position')
+                Tables\Grouping\Group::make('positions.name')
                     ->label('Position')
-                    ->getTitleFromRecordUsing(fn(Employee $record): string => ucfirst($record->position))
+                    ->getTitleFromRecordUsing(fn(Employee $record): string => $record->positions->pluck('display_name')->join(', '))
                     ->collapsible(),
             ])
             ->defaultGroup('christy_location')
@@ -200,11 +216,10 @@ class EmployeeResource extends Resource
 
     protected function handleRecordCreation(array $data): Model
     {
-        // Remove user creation since we're selecting an existing user
         $employee = static::getModel()::create($data);
 
-        // If position is driver, create driver record
-        if ($data['position'] === 'driver') {
+        // If positions include driver, create driver record
+        if (isset($data['positions']) && in_array('driver', $data['positions'])) {
             $driverData = [
                 'employee_id' => $employee->id,
                 'license_number' => $data['driver']['license_number'] ?? null,

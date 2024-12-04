@@ -15,15 +15,10 @@ class Employee extends Model
         'email',
         'address',
         'phone',
-        'position',
         'is_active',
         'christy_location',
         'hire_date',
         'birth_date',
-        // driver fields
-        'notes',
-        'license_number',
-        'license_expiration',
     ];
 
     protected $casts = [
@@ -48,9 +43,19 @@ class Employee extends Model
         return $this->hasOne(Driver::class);
     }
 
+    public function positions()
+    {
+        return $this->belongsToMany(Position::class)->withTimestamps();
+    }
+
     public function isDriver()
     {
-        return $this->position === 'driver' && $this->driver()->exists();
+        return $this->positions()->where('name', 'driver')->exists() && $this->driver()->exists();
+    }
+
+    public function hasPosition(string $position): bool
+    {
+        return $this->positions()->where('name', $position)->exists();
     }
 
     public function christyVaultLocation()

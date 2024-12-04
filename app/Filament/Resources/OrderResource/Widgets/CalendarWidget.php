@@ -290,10 +290,14 @@ class CalendarWidget extends FullCalendarWidget
                                 ->required()
                                 ->default(fn() => $this->selectedDate)
                                 ->native(false),
-                           Select::make('driver_id')
-                        ->relationship('driver', 'name')
-                        ->options(Employee::where('position', 'driver')->pluck('name', 'id'))
-                        ->required(),
+                          Select::make('driver_id')
+    ->relationship('driver', 'name')
+    ->options(function () {
+        return Employee::whereHas('positions', function ($query) {
+            $query->where('name', 'driver');
+        })->pluck('name', 'id');
+    })
+    ->required(),
                             TextInput::make('notes')
                                 ->maxLength(255),
                         ])
@@ -361,7 +365,6 @@ class CalendarWidget extends FullCalendarWidget
                     if ($data['type'] === 'trip') {
                         // Create the trip first
                         $trip = Trip::create([
-                            'trip_number' => $data['trip_number'] ?? $this->generateTripNumber(),
                             'scheduled_date' => $data['scheduled_date'],
                             'driver_id' => $data['driver_id'],
                             'notes' => $data['notes'] ?? null,
@@ -380,12 +383,10 @@ class CalendarWidget extends FullCalendarWidget
                     } else {
                         Order::create([
                             ...collect($data)->except('type')->toArray(),
-                            'order_date' => now(),
-                            'requested_delivery_date' => $this->selectedDate,
-                            'status' => OrderStatus::PENDING->value,
                         ]);
                     }
-                    $this->refreshRecords();
+
+                    $this->refreshCalendar();
                 }),
             Actions\EditAction::make(),
             Actions\DeleteAction::make()
@@ -578,15 +579,6 @@ class CalendarWidget extends FullCalendarWidget
         ];
     }
 
-
-    protected function generateTripNumber(): string
-    {
-        $lastTrip = Trip::orderBy('id', 'desc')->first();
-        $lastNumber = $lastTrip ? (int) str_replace('TRIP-', '', $lastTrip->trip_number) : 0;
-        $newNumber = $lastNumber + 1;
-
-        return 'TRIP-' . str_pad($newNumber, 5, '0', STR_PAD_LEFT);
-    }
 
     public function handleOrderClick($orderId)
     {

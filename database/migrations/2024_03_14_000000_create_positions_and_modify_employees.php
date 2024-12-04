@@ -26,18 +26,16 @@ return new class extends Migration
 
         // Migrate existing position data
         DB::transaction(function () {
-            // Create positions
-            $positions = [
-                ['name' => 'driver', 'display_name' => 'Driver'],
-                ['name' => 'production', 'display_name' => 'Production'],
-                ['name' => 'foreman', 'display_name' => 'Foreman'],
-                ['name' => 'manager', 'display_name' => 'Manager'],
-            ];
+            // Create a position record for each unique existing position
+            $uniquePositions = DB::table('employees')
+                ->select('position')
+                ->distinct()
+                ->pluck('position');
 
-            foreach ($positions as $position) {
+            foreach ($uniquePositions as $position) {
                 DB::table('positions')->insert([
-                    'name' => $position['name'],
-                    'display_name' => $position['display_name'],
+                    'name' => strtolower($position),
+                    'display_name' => $position,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

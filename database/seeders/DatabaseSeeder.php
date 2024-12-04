@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             LocationSeeder::class,
             CustomerSeeder::class,
             ProductSeeder::class,
+            PositionSeeder::class,
         ]);
 
         User::factory()->create([

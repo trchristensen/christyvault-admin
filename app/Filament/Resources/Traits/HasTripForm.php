@@ -19,10 +19,14 @@ trait HasTripForm
                     TextInput::make('trip_number')
                         ->disabled()
                         ->dehydrated(false),
-                    Select::make('driver_id')
-                        ->relationship('driver', 'name')
-                        ->options(Employee::where('position', 'driver')->pluck('name', 'id'))
-                        ->required(),
+                     Select::make('driver_id')
+    ->relationship('driver', 'name')
+    ->options(function () {
+        return Employee::whereHas('positions', function ($query) {
+            $query->where('name', 'driver');
+        })->pluck('name', 'id');
+    })
+    ->required(),
                     Select::make('status')
                         ->options([
                             'pending' => 'Pending',

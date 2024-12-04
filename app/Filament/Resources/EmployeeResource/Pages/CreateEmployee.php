@@ -17,8 +17,14 @@ class CreateEmployee extends CreateRecord
     {
         return DB::transaction(function () use ($data) {
             $employee = static::getModel()::create($data);
+            
+            // Sync positions
+            if (isset($data['positions'])) {
+                $employee->positions()->sync($data['positions']);
+            }
 
-            if ($employee->position === 'driver' && isset($data['driver'])) {
+            // Create driver record if needed
+            if (isset($data['positions']) && in_array('driver', $data['positions']) && isset($data['driver'])) {
                 $this->createDriverRecord($employee, $data['driver']);
             }
 

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 
 class Trip extends Model
@@ -35,8 +36,12 @@ class Trip extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
-            $model->uuid = (string) str()->uuid();
+        static::creating(function ($trip) {
+            $trip->uuid = $trip->uuid ?? Str::uuid();
+            $trip->trip_number = $trip->trip_number ?? static::generateTripNumber();
+        });
+        static::updating(function ($trip) {
+            $trip->uuid = (string) str()->uuid();
         });
 
         // When trip is updated
@@ -88,5 +93,18 @@ class Trip extends Model
     public function driver()
     {
         return $this->belongsTo(Employee::class, 'driver_id', 'id');
+    }
+
+    public static function generateTripNumber()
+    {
+        return \DB::transaction(function () {
+            $lastTrip = static::withTrashed()
+                ->lockForUpdate()
+                ->orderBy('trip_number', 'desc')
+                ->first();
+            
+            $newNumber = $lastTrip ? intval(substr($lastTrip->trip_number, 5)) + 1 : 1;
+            return 'TRIP-' . str_pad($newNumber, 5, '0', STR_PAD_LEFT);
+        });
     }
 }
