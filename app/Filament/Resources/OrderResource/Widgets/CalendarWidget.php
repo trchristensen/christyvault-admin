@@ -447,19 +447,19 @@ class CalendarWidget extends FullCalendarWidget
     }
 
 
-    // protected function viewAction(): \Filament\Actions\Action
-    // {
-    //     return Actions\EditAction::make();
-    // }
-
     protected function viewAction(): \Filament\Actions\Action
     {
-        return Actions\ViewAction::make('view')
-            ->modalContent(fn($record) => view(
-                'filament.resources.order-resource.custom-view',
-                ['record' => $record]
-            ))
-            ->form([]); // Empty form array to prevent default form display
+        // need to return a different view based on the record type
+        if ($this->record instanceof Trip) {
+            return Actions\ViewAction::make('view');
+        } else {
+            return Actions\ViewAction::make('view')
+                ->modalContent(fn($record) => view(
+                    'filament.resources.order-resource.custom-view',
+                    ['record' => $record]
+                ))
+                ->form([]); // Empty form array to prevent default form display
+        }
     }
 
     public function onDateSelect(string $start, string|null $end, bool $allDay, array|null $view, array|null $resource): void
