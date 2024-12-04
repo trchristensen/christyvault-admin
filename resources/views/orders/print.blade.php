@@ -187,7 +187,7 @@
 
         .instructions {
             position: absolute;
-            bottom: 10px;
+            top: 844px;
             left: 30px;
             width: calc(100% - 80px);
             min-width: 760px;
@@ -204,7 +204,7 @@
 </head>
 
 <body>
-    {{-- <img class="template" src="{{ public_path('images/form.jpeg') }}" style="width: 100%; object-fit: contain; object-position: top left;"> --}}
+    <img class="template" src="{{ public_path('images/form.jpeg') }}" style="width: 100%; object-fit: contain; object-position: top left;">
     <!-- <div class="page-container"> -->
     <article>
         {{-- Customer Info Section --}}
