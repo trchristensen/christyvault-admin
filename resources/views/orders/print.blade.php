@@ -259,7 +259,7 @@
         {{-- Delivery Info --}}
         <div class="delivery-info" style="min-height: 30px;">
             <div class="delivery-date">
-                {{ $order->assigned_delivery_date ?? $order->assigned_delivery_date->format('D m/d/Y') }}
+                {{  $order->assigned_delivery_date->format('D m/d/Y') ?? null }}
             </div>
             @if ($order->delivery_time)
                 <div class="delivery-time">
