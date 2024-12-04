@@ -107,7 +107,7 @@ class TripResource extends Resource
                             $productsHtml = '';
                             foreach ($order->orderProducts as $orderProduct) {
                                 $quantity = $orderProduct->fill_load ? 'Fill Load' : $orderProduct->quantity;
-                                $productsHtml .= "• {$quantity} x {$orderProduct->product->name}<br>";
+                                $productsHtml .= "• {$quantity} x {$orderProduct->product->sku}<br>";
                             }
 
                             $stopLabel = $totalStops > 1 ? "Stop {$order->stop_number} - " : '';
