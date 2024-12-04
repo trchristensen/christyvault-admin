@@ -204,7 +204,7 @@
 </head>
 
 <body>
-    <img class="template" src="{{ public_path('images/form.jpeg') }}" style="width: 100%; object-fit: contain; object-position: top left;">
+    <!-- <img class="template" src="{{ public_path('images/form.jpeg') }}" style="width: 100%; object-fit: contain; object-position: top left;"> -->
     <!-- <div class="page-container"> -->
     <article>
         {{-- Customer Info Section --}}
