@@ -194,7 +194,7 @@ class CalendarWidget extends FullCalendarWidget
                                 ${order.extendedProps?.location_line2 ? `<div>${order.extendedProps.location_line2}</div>` : ''}
                             </div>
                         ` : ''}
-                        ${order.status ? `<div class="order-status">Status: ${order.status}</div>` : ''}
+                        ${order.status ? `<div class="order-status">${order.status}</div>` : ''}
                         ${order.requested_delivery_date ? `<div class="order-requested-delivery-date">Requested: ${order.requested_delivery_date}</div>` : ''}
                         ${order.order_date ? `<div class="order-date">Order Date: ${order.order_date}</div>` : ''}
                         ${order.products?.length ? `
@@ -466,8 +466,8 @@ class CalendarWidget extends FullCalendarWidget
                             'id' => $order->id,
                             'title' => $order->customer?->name ?? $order->order_number,
                             'status' => Str::headline($order->status),
-                            'requested_delivery_date' => $order->requested_delivery_date?->format('M j, Y'),
-                            'order_date' => $order->order_date?->format('M j, Y'),
+                            'requested_delivery_date' => $order->requested_delivery_date?->format('M j'),
+                            'order_date' => $order->order_date?->format('M j'),
                             'extendedProps' => [
                                 'location_line1' => $order->location?->address_line1,
                                 'location_line2' => $order->location ?
@@ -505,7 +505,7 @@ class CalendarWidget extends FullCalendarWidget
                         'type' => 'order',
                         'uuid' => $order->uuid,
                         'status' => Str::headline($order->status),
-                        'requested_delivery_date' => $order->requested_delivery_date?->format('M j, Y'),
+                        'requested_delivery_date' => $order->requested_delivery_date?->format('M j'),
                         'order_date' => $order->order_date?->format('M j, Y'),
                         'delivery_notes' => $order->delivery_notes,
                         'location_line1' => $order->location?->address_line1,
