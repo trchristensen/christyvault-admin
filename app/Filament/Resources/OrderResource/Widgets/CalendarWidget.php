@@ -272,6 +272,7 @@ class CalendarWidget extends FullCalendarWidget
                             'order' => 'New Order',
                             'trip' => 'New Trip',
                         ])
+                        ->default('order')
                         ->required()
                         ->live(),
 
@@ -289,9 +290,10 @@ class CalendarWidget extends FullCalendarWidget
                                 ->required()
                                 ->default(fn() => $this->selectedDate)
                                 ->native(false),
-                            Select::make('driver_id')
-                                ->relationship('driver', 'name')
-                                ->required(),
+                           Select::make('driver_id')
+                        ->relationship('driver', 'name')
+                        ->options(Employee::where('position', 'driver')->pluck('name', 'id'))
+                        ->required(),
                             TextInput::make('notes')
                                 ->maxLength(255),
                         ])

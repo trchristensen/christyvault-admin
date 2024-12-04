@@ -17,9 +17,12 @@ use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use App\Filament\Resources\Traits\HasTripForm;
 
 class TripResource extends Resource
 {
+    use HasTripForm;
+
     protected static ?string $model = Trip::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-truck';
@@ -28,62 +31,7 @@ class TripResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-            ->schema([
-                Forms\Components\Section::make('Trip Information')
-                    ->schema([
-                        Forms\Components\TextInput::make('trip_number')
-                            ->required()
-                            ->default(function () {
-                                $latestTrip = Trip::withTrashed()
-                                    ->orderBy('id', 'desc')
-                                    ->first();
-
-                                $lastNumber = 0;
-                                if ($latestTrip && $latestTrip->trip_number) {
-                                    preg_match('/TRIP-(\d+)/', $latestTrip->trip_number, $matches);
-                                    $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
-                                }
-
-                                $nextNumber = $lastNumber + 1;
-                                return sprintf('TRIP-%05d', $nextNumber);
-                            })
-                            ->readOnly(),
-
-                        Forms\Components\Select::make('driver_id')
-                            ->relationship('driver', 'name')
-                            ->placeholder('Select Driver')
-                            ->required()
-                            ->options(Employee::where('position', 'driver')->pluck('name', 'id'))
-                            ->preload(),
-                        Forms\Components\Select::make('status')
-                            ->options([
-                                'pending' => 'Pending',
-                                'confirmed' => 'Confirmed',
-                                'in_progress' => 'In Progress',
-                                'completed' => 'Completed',
-                                'cancelled' => 'Cancelled',
-                            ])
-                            ->default('pending')
-                            ->required(),
-                        Forms\Components\DatePicker::make('scheduled_date')
-                            ->required()
-                            ->native(false)
-                            ->suffixIcon('heroicon-o-calendar')
-                            ->afterStateUpdated(function ($state, $record) {
-                                if ($record && $record->scheduled_date) {
-                                    Notification::make()
-                                        ->warning()
-                                        ->title('Note')
-                                        ->body('Changing the trip date will automatically update all associated order delivery dates.')
-                                        ->send();
-                                }
-                            }),
-                        // Forms\Components\DateTime::make('start_time'),
-                        // Forms\Components\DateTime::make('end_time'),
-                        Forms\Components\Textarea::make('notes')
-                            ->columnSpanFull(),
-                    ])->columns(2),
-            ]);
+            ->schema(static::getTripFormSchema());
     }
 
     public static function table(Table $table): Table

@@ -22,6 +22,7 @@ trait HasOrderForm
                         ->required()
                         ->searchable()
                         ->reactive()
+                        ->columnSpanFull()
                         ->createOptionForm([
                             Forms\Components\TextInput::make('name')
                                 ->required()
@@ -58,6 +59,7 @@ trait HasOrderForm
                         }),
                     Forms\Components\Select::make('location_id')
                         ->label('Delivery Location')
+                        ->columnSpanFull()
                         ->options(function (callable $get) {
                             $customerId = $get('customer_id');
                             if (!$customerId) return [];
@@ -123,7 +125,9 @@ trait HasOrderForm
                         ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
                     Forms\Components\DatePicker::make('assigned_delivery_date')
                         ->native(false)
-                        ->minDate(today()),
+                        ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
+
+                        // ->minDate(today()),
                     Forms\Components\Select::make('status')
                         ->options(collect(OrderStatus::cases())->mapWithKeys(function ($status) {
                             return [$status->value => str($status->value)

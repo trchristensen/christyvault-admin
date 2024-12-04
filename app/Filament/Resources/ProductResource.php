@@ -46,9 +46,10 @@ class ProductResource extends Resource
                     ->image()
                     ->imageEditor()
                     ->columnSpanFull(),
-                Forms\Components\Toggle::make('is_active')
-                    ->required()
-                    ->default(true),
+                Forms\Components\Checkbox::make('is_active')
+                            ->default('TRUE')
+                            ->label('Active')
+                            ->dehydrateStateUsing(fn($state) => $state ? 'TRUE' : 'FALSE'),
                 // Forms\Components\KeyValue::make('specifications')
                 //     ->columnSpanFull(),
             ]);
