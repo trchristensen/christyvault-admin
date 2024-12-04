@@ -41,7 +41,7 @@
                             @else
                                 <span class="font-medium">{{ $orderProduct->quantity }}x</span>
                             @endif
-                            <span class="text-gray-500">{{ $orderProduct->product->sku }}</span>
+                            <span>{{ $orderProduct->product->sku }}</span>
                             <span>{{ $orderProduct->product->name }}</span>
                         </div>
                         @if ($orderProduct->notes)
