@@ -16,6 +16,7 @@
             margin: 0;
         }
 
+
         body {
             min-height: 965px;
             position: relative;
@@ -192,7 +193,7 @@
             width: calc(100% - 80px);
             min-width: 760px;
             text-indent: 100px;
-            height: 122px;
+            height: 118px;
             line-height: 30px;
         }
 
