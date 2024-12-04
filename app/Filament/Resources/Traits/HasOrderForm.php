@@ -29,11 +29,11 @@ trait HasOrderForm
                                 ->maxLength(255),
                             Forms\Components\TextInput::make('email')
                                 ->email()
-                      
+
                                 ->maxLength(255),
                             Forms\Components\TextInput::make('phone')
                                 ->tel()
-                               
+
                                 ->maxLength(255),
                         ])
                         ->createOptionUsing(function (array $data) {
@@ -127,7 +127,7 @@ trait HasOrderForm
                         ->native(false)
                         ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
 
-                        // ->minDate(today()),
+                    // ->minDate(today()),
                     Forms\Components\Select::make('status')
                         ->options(collect(OrderStatus::cases())->mapWithKeys(function ($status) {
                             return [$status->value => str($status->value)

@@ -259,12 +259,10 @@ class CalendarWidget extends FullCalendarWidget
     protected function modalActions(): array
     {
         return [
-
             Actions\CreateAction::make()
                 ->label('Create New')
                 ->modalHeading('Create New')
                 ->modalWidth('2xl')
-                ->record(fn() => $this->record = null)
                 ->form([
                     Select::make('type')
                         ->label('What would you like to create?')
@@ -274,119 +272,91 @@ class CalendarWidget extends FullCalendarWidget
                         ])
                         ->default('order')
                         ->required()
-                        ->live(),
+                        ->reactive(),
 
                     // Order Form (shown when type = order)
                     ...collect(static::getOrderFormSchema($this->selectedDate))
-                        ->map(
-                            fn($field) =>
-                            $field->visible(fn(Get $get) => $get('type') === 'order')
-                        ),
+                        ->map(fn($field) => $field->visible(fn(Get $get) => $get('type') === 'order'))
+                        ->toArray(),
 
                     // Trip Form (shown when type = trip)
-                    Section::make('Trip Details')
-                        ->schema([
-                            DatePicker::make('scheduled_date')
-                                ->required()
-                                ->default(fn() => $this->selectedDate)
-                                ->native(false),
-                          Select::make('driver_id')
-    ->relationship('driver', 'name')
-    ->options(function () {
-        return Employee::whereHas('positions', function ($query) {
-            $query->where('name', 'driver');
-        })->pluck('name', 'id');
-    })
-    ->required(),
-                            TextInput::make('notes')
-                                ->maxLength(255),
-                        ])
-                        ->visible(fn(Get $get) => $get('type') === 'trip')
-                        ->columns(2),
-
-                    // Add Orders Section
-                    Section::make('Orders')
-                        ->schema([
-                            Repeater::make('trip_orders')
-                                ->schema([
-                                    Select::make('order_id')
-                                        ->label('Order')
-                                        ->columnSpanFull()
-                                        ->options(function (Get $get) {
-                                            // Get all currently selected order IDs
-                                            $selectedOrderIds = collect($get('../*.order_id'))
-                                                ->filter()
-                                                ->toArray();
-
-                                            return Order::query()
-                                                ->whereNull('trip_id')
-                                                ->whereNotIn('id', $selectedOrderIds)  // Exclude already selected orders
-                                                ->whereNotIn('status', ['delivered', 'cancelled'])
-                                                ->with(['customer', 'location'])
-                                                ->get()
-                                                ->mapWithKeys(fn(Order $order) => [
-                                                    $order->id => view('filament.components.order-option', [
-                                                        'orderNumber' => $order->order_number,
-                                                        'customerName' => $order->customer?->name,
-                                                        'status' => $order->status,
-                                                        'requestedDeliveryDate' => $order->requested_delivery_date?->format('M j, Y'),
-                                                        'assignedDeliveryDate' => $order->assigned_delivery_date?->format('M j, Y'),
-                                                        'location_line1' => $order->location?->address_line1,
-                                                        'location_line2' => $order->location ?
-                                                            "{$order->location->city}, {$order->location->state}"
-                                                            : '',
-                                                    ])->render()
-                                                ]);
-                                        })
-                                        ->allowHtml()
-                                        ->searchable()
-                                        ->required(),
-                                    TextInput::make('stop_number')
-                                        ->numeric()
-                                        ->default(
-                                            function (Get $get) {
-                                                $existingStops = array_filter($get('../*.stop_number'));
-                                                return empty($existingStops) ? 1 : count($existingStops) + 1;
-                                            }
-                                        )
-                                        ->required(),
-                                    TextInput::make('delivery_notes')
-                                        ->nullable(),
-                                ])
-                                ->columns(2)
-                                ->reorderable()
-                                ->reorderableWithButtons()
-                                ->defaultItems(0)
-                                ->addActionLabel('Add Order to Trip')
-                        ])
-                        ->visible(fn(Get $get) => $get('type') === 'trip'),
+                    ...collect(static::getTripFormSchema())
+                        ->map(fn($field) => $field->visible(fn(Get $get) => $get('type') === 'trip'))
+                        ->toArray(),
                 ])
                 ->action(function (array $data) {
+                    Log::info('Create Action Data:', [
+                        'raw_data' => $data,
+                        'request_data' => request()->all(),
+                        'components' => request()->input('components'),
+                        'mountedActionsData' => json_decode(request()->input('components.0.snapshot'), true)['data']['mountedActionsData'] ?? null
+                    ]);
                     if ($data['type'] === 'trip') {
-                        // Create the trip first
+                        // Get the mounted action data
+                        $mountedData = json_decode(request()->input('components.0.snapshot'), true);
+                        $formData = $mountedData['data']['mountedActionsData'][0][0][0] ?? [];
+
+                        // Create the trip - using the selected date from the calendar
                         $trip = Trip::create([
-                            'scheduled_date' => $data['scheduled_date'],
-                            'driver_id' => $data['driver_id'],
-                            'notes' => $data['notes'] ?? null,
+                            'scheduled_date' => $this->selectedDate, // Use the selected date from the calendar
+                            'driver_id' => $formData['driver_id'],
+                            'notes' => $formData['notes'] ?? null,
                             'status' => 'pending',
                         ]);
 
-                        // Process each order in the repeater
-                        foreach ($data['trip_orders'] as $tripOrder) {
-                            Order::find($tripOrder['order_id'])->update([
-                                'trip_id' => $trip->id,
-                                'stop_number' => $tripOrder['stop_number'],
-                                'delivery_notes' => $tripOrder['delivery_notes'] ?? null,
-                                'assigned_delivery_date' => $data['scheduled_date']
-                            ]);
-                        }
-                    } else {
-                        Order::create([
-                            ...collect($data)->except('type')->toArray(),
-                        ]);
-                    }
+                        // Process trip orders - using the same nested data structure approach
+                        if (isset($formData['trip_orders'][0])) {
+                            $tripOrders = $formData['trip_orders'][0];
 
-                    $this->refreshCalendar();
+                            foreach ($tripOrders as $uuid => $orderData) {
+                                if ($uuid === 's') continue;
+
+                                // Get the order data from the first element
+                                $orderDetails = $orderData[0];
+
+                                Order::find($orderDetails['order_id'])->update([
+                                    'trip_id' => $trip->id,
+                                    'stop_number' => $orderDetails['stop_number'],
+                                    'delivery_notes' => $orderDetails['delivery_notes'] ?? null,
+                                    'assigned_delivery_date' => $this->selectedDate
+                                ]);
+                            }
+                        }
+
+                        $this->refreshCalendar();
+                        return $trip;
+                    } else {
+                        // Get the mounted action data
+                        $mountedData = json_decode(request()->input('components.0.snapshot'), true);
+                        $formData = $mountedData['data']['mountedActionsData'][0][0][0] ?? [];
+
+                        // Create the order
+                        $order = Order::create(collect($data)->except(['type', 'orderProducts'])->toArray());
+
+                        // Handle order products
+                        if (isset($formData['orderProducts'][0])) {
+                            $products = $formData['orderProducts'][0];
+
+                            foreach ($products as $uuid => $product) {
+                                if ($uuid === 's') continue;
+
+                                // Get the product data from the first element of the product array
+                                $productData = $product[0];
+
+                                $order->orderProducts()->create([
+                                    'product_id' => $productData['product_id'],
+                                    'fill_load' => $productData['fill_load'] ?? false,
+                                    'quantity' => $productData['quantity'] ?? null,
+                                    'price' => $productData['price'] ?? 0,
+                                    'location' => $productData['location'] ?? null,
+                                    'notes' => $productData['notes'] ?? null,
+                                ]);
+                            }
+                        }
+
+                        $this->refreshCalendar();
+                        return $order;
+                    }
                 }),
             Actions\EditAction::make(),
             Actions\DeleteAction::make()
