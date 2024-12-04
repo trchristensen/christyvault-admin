@@ -260,11 +260,11 @@
         {{-- Delivery Info --}}
         <div class="delivery-info" style="min-height: 30px;">
             <div class="delivery-date">
-                {{  $order->assigned_delivery_date->format('D m/d/Y') ?? null }}
+                {{ optional($order->assigned_delivery_date)->format('D m/d/Y') }}
             </div>
             @if ($order->delivery_time)
                 <div class="delivery-time">
-                    {{ $order->delivery_time->format('g:i A') ?? null }}
+                    {{ $order->delivery_time->format('g:i A') }}
                 </div>
             @endif
 
