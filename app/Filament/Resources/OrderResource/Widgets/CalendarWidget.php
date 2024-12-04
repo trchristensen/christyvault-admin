@@ -276,6 +276,11 @@ class CalendarWidget extends FullCalendarWidget
                         ->required()
                         ->live(),
 
+                    // Order Form (shown when type = order)
+                    ...collect(static::getOrderFormSchema($this->selectedDate))
+                        ->map(fn($field) => $field->visible(fn(Get $get) => $get('type') === 'order'))
+                        ->toArray(),
+
                     // Trip Form (shown when type = trip)
                     Section::make('Trip Details')
                         ->schema([
@@ -370,7 +375,6 @@ class CalendarWidget extends FullCalendarWidget
                                 $order = Order::find($tripOrder['order_id']);
 
                                 if (!$order) {
-                                    // Log the error or handle missing order
                                     continue;
                                 }
 
@@ -390,12 +394,37 @@ class CalendarWidget extends FullCalendarWidget
                             ->success()
                             ->send();
                     } else {
-                        Order::create([
-                            ...collect($data)->except('type')->toArray(),
-                        ]);
-                    }
+                        // Get the mounted action data
+                        $mountedData = json_decode(request()->input('components.0.snapshot'), true);
+                        $formData = $mountedData['data']['mountedActionsData'][0][0][0] ?? [];
 
-                    $this->refreshCalendar();
+                        // Create the order
+                        $order = Order::create(collect($data)->except(['type', 'orderProducts'])->toArray());
+
+                        // Handle order products
+                        if (isset($formData['orderProducts'][0])) {
+                            $products = $formData['orderProducts'][0];
+
+                            foreach ($products as $uuid => $product) {
+                                if ($uuid === 's') continue;
+
+                                // Get the product data from the first element of the product array
+                                $productData = $product[0];
+
+                                $order->orderProducts()->create([
+                                    'product_id' => $productData['product_id'],
+                                    'fill_load' => $productData['fill_load'] ?? false,
+                                    'quantity' => $productData['quantity'] ?? null,
+                                    'price' => $productData['price'] ?? 0,
+                                    'location' => $productData['location'] ?? null,
+                                    'notes' => $productData['notes'] ?? null,
+                                ]);
+                            }
+                        }
+
+                        $this->refreshCalendar();
+                        return $order;
+                    }
                 }),
             Actions\EditAction::make(),
             Actions\DeleteAction::make()
