@@ -77,13 +77,13 @@
         /* Updated items section */
         .items {
             position: absolute;
-            top: 375px;
+            top: 380px;
             left: 30px;
             width: calc(100% - 60px);
         }
 
         .item {
-            margin-bottom: 26px;
+            margin-bottom: 23px;
             /* Increased for better spacing */
             position: relative;
             width: 1050px;
