@@ -36,7 +36,7 @@
         /* Keep your existing positioning styles */
         .customer-info {
             position: absolute;
-            top: 210px;
+            top: 216px;
             left: 80px;
             width: 1000px;
         }
@@ -174,7 +174,7 @@
             font-weight: bold;
             position: absolute;
             left: 60px;
-            top: 0;
+            top: 7px;
             bottom: 0;
         }
 
@@ -187,7 +187,7 @@
 
         .instructions {
             position: absolute;
-            top: 844px;
+            top: 850px;
             left: 30px;
             width: calc(100% - 80px);
             min-width: 760px;
