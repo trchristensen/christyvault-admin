@@ -32,6 +32,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\Hidden;
 use Filament\Support\Colors\Color;
 use Filament\Notifications\Notification;
+use Filament\Facades\Filament;
+use Filament\Facades\Filament\MaxWidth;
 
 class CalendarWidget extends FullCalendarWidget
 {
@@ -452,7 +454,12 @@ class CalendarWidget extends FullCalendarWidget
 
     protected function viewAction(): \Filament\Actions\Action
     {
-        return Actions\ViewAction::make('view');
+        return Actions\ViewAction::make('view')
+            ->modalContent(fn($record) => view(
+                'filament.resources.order-resource.custom-view',
+                ['record' => $record]
+            ))
+            ->form([]); // Empty form array to prevent default form display
     }
 
     public function onDateSelect(string $start, string|null $end, bool $allDay, array|null $view, array|null $resource): void
