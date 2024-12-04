@@ -118,7 +118,9 @@
         .item-location {
             position: absolute;
             left: 460px;
-            top: 4px;
+            top: 2px;
+            font-size: 16px;
+
         }
 
         .item-sku {
@@ -127,8 +129,8 @@
         }
 
         .item-name {
-            font-size: 20px;
-            margin-left: 8px;
+            font-size: 16px;
+            margin-left: 0px;
             /* font-weight: lighter; */
         }
 
@@ -142,7 +144,7 @@
         /* Keep existing delivery info styles */
         .delivery-info {
             position: absolute;
-            top: 815px;
+            top: 820px;
             left: 30px;
             min-width: 1025px;
         }

@@ -20,13 +20,13 @@ trait HasTripForm
                         ->disabled()
                         ->dehydrated(false),
                      Select::make('driver_id')
-    ->relationship('driver', 'name')
-    ->options(function () {
-        return Employee::whereHas('positions', function ($query) {
-            $query->where('name', 'driver');
-        })->pluck('name', 'id');
-    })
-    ->required(),
+                        ->relationship('driver', 'name')
+                        ->options(function () {
+                            return Employee::whereHas('positions', function ($query) {
+                                $query->where('name', 'driver');
+                            })->pluck('name', 'id');
+                        })
+                        ->required(),
                     Select::make('status')
                         ->options([
                             'pending' => 'Pending',
