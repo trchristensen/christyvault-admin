@@ -27,7 +27,6 @@ use App\Filament\Resources\Traits\HasOrderForm;
 use App\Filament\Resources\Traits\HasTripForm;
 use App\Models\Trip;
 use Filament\Actions\Action;
-use Filament\Actions\ActionGroup;
 use Saade\FilamentFullCalendar\Actions\CreateAction;
 use Saade\FilamentFullCalendar\Actions\EditAction;
 use Illuminate\Database\Eloquent\Builder;
@@ -36,8 +35,6 @@ use Filament\Support\Colors\Color;
 use Filament\Notifications\Notification;
 use Filament\Facades\Filament;
 use Filament\Facades\Filament\MaxWidth;
-use Filament\Support\Enums\Alignment;
-use Filament\Support\Enums\VerticalAlignment;
 
 class CalendarWidget extends FullCalendarWidget
 {
@@ -456,22 +453,17 @@ class CalendarWidget extends FullCalendarWidget
 
     protected function viewAction(): \Filament\Actions\Action
     {
+
+        // need to return a different view based on the record type
         if ($this->record instanceof Trip) {
             return Actions\ViewAction::make('view')
                 ->modalFooterActions([
-                    // Left-aligned actions
-                    ActionGroup::make([
-                        Actions\EditAction::make(),
-                        Action::make('close')
-                            ->label('Close')
-                            ->color('gray')
-                            ->action(fn() => $this->dispatch('close-modal')),
-                    ])->alignment(\Filament\Support\Enums\Alignment::Left),
-
-                    // Right-aligned actions
-                    ActionGroup::make([
-                        Actions\DeleteAction::make(),
-                    ])->alignment(\Filament\Support\Enums\Alignment::Right),
+                    Actions\EditAction::make(),
+                    Actions\DeleteAction::make(),
+                    Action::make('close')
+                        ->label('Close')
+                        ->color('gray')
+                        ->action(fn() => $this->dispatch('close-modal')),
                 ]);
         } else {
             return Actions\ViewAction::make('view')
@@ -481,26 +473,24 @@ class CalendarWidget extends FullCalendarWidget
                 ))
                 ->form([])
                 ->modalFooterActions([
-                    // Left-aligned actions
-                    ActionGroup::make([
-                        Actions\EditAction::make(),
-                        Action::make('close')
-                            ->label('Close')
-                            ->color('gray')
-                            ->action(fn() => $this->dispatch('close-modal')),
-                        Action::make('print')
-                            ->label('Print')
-                            ->color('gray')
-                            ->icon('heroicon-o-printer')
-                            ->url(fn(Order $record) => route('orders.print', ['order' => $record]))
-                            ->openUrlInNewTab(),
-                    ]),
-
-                    // Right-aligned actions
-                    ActionGroup::make([
-                        Actions\DeleteAction::make(),
-                    ])->alignment(\Filament\Support\Enums\Alignment::Right),
-                ]);
+                    Actions\EditAction::make(),
+                    Actions\DeleteAction::make(),
+                    Action::make('close')
+                        ->label('Close')
+                        ->color('gray')
+                        ->action(fn() => $this->dispatch('close-modal')),
+                    Action::make('print')
+                        ->label('Print')
+                        ->color('gray')
+                        ->icon('heroicon-o-printer')
+                        ->url(fn(Order $record) => route('orders.print', ['order' => $record]))
+                        ->openUrlInNewTab(),
+                ])
+                ->action(function ($data) {
+                    if ($data['print'] ?? false) {
+                        return redirect()->route('orders.print', ['order' => $this->record]);
+                    }
+                });
         }
     }
 
