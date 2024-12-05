@@ -26,6 +26,8 @@ use Filament\Forms\Get;
 use App\Filament\Resources\Traits\HasOrderForm;
 use App\Filament\Resources\Traits\HasTripForm;
 use App\Models\Trip;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Saade\FilamentFullCalendar\Actions\CreateAction;
 use Saade\FilamentFullCalendar\Actions\EditAction;
 use Illuminate\Database\Eloquent\Builder;
@@ -34,6 +36,8 @@ use Filament\Support\Colors\Color;
 use Filament\Notifications\Notification;
 use Filament\Facades\Filament;
 use Filament\Facades\Filament\MaxWidth;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\VerticalAlignment;
 
 class CalendarWidget extends FullCalendarWidget
 {
@@ -68,6 +72,7 @@ class CalendarWidget extends FullCalendarWidget
 
     protected function getFormModel(): Model|string|null
     {
+
         if ($this->event instanceof Trip) {
             return $this->record ?? Trip::class;
         }
@@ -261,10 +266,12 @@ class CalendarWidget extends FullCalendarWidget
 
     protected function modalActions(): array
     {
+
         return [
             Actions\CreateAction::make()
-                ->label('Create New')
-                ->modalHeading('Create New')
+                ->createAnother(false)
+                ->label('Create New Event')
+                ->modalHeading(null)
                 ->modalWidth('2xl')
                 ->record(fn() => $this->record = null)
                 ->form([
@@ -449,16 +456,51 @@ class CalendarWidget extends FullCalendarWidget
 
     protected function viewAction(): \Filament\Actions\Action
     {
-        // need to return a different view based on the record type
         if ($this->record instanceof Trip) {
-            return Actions\ViewAction::make('view');
+            return Actions\ViewAction::make('view')
+                ->modalFooterActions([
+                    // Left-aligned actions
+                    ActionGroup::make([
+                        Actions\EditAction::make(),
+                        Action::make('close')
+                            ->label('Close')
+                            ->color('gray')
+                            ->action(fn() => $this->dispatch('close-modal')),
+                    ])->alignment(\Filament\Support\Enums\Alignment::Left),
+
+                    // Right-aligned actions
+                    ActionGroup::make([
+                        Actions\DeleteAction::make(),
+                    ])->alignment(\Filament\Support\Enums\Alignment::Right),
+                ]);
         } else {
             return Actions\ViewAction::make('view')
                 ->modalContent(fn($record) => view(
                     'filament.resources.order-resource.custom-view',
                     ['record' => $record]
                 ))
-                ->form([]); // Empty form array to prevent default form display
+                ->form([])
+                ->modalFooterActions([
+                    // Left-aligned actions
+                    ActionGroup::make([
+                        Actions\EditAction::make(),
+                        Action::make('close')
+                            ->label('Close')
+                            ->color('gray')
+                            ->action(fn() => $this->dispatch('close-modal')),
+                        Action::make('print')
+                            ->label('Print')
+                            ->color('gray')
+                            ->icon('heroicon-o-printer')
+                            ->url(fn(Order $record) => route('orders.print', ['order' => $record]))
+                            ->openUrlInNewTab(),
+                    ]),
+
+                    // Right-aligned actions
+                    ActionGroup::make([
+                        Actions\DeleteAction::make(),
+                    ])->alignment(\Filament\Support\Enums\Alignment::Right),
+                ]);
         }
     }
 
@@ -627,7 +669,6 @@ class CalendarWidget extends FullCalendarWidget
 
     public function handleOrderClick($orderId)
     {
-        Log::info('Clicked on order:', ['orderId' => $orderId]);
 
         $this->record = Order::with(['customer', 'orderProducts.product'])->find($orderId);
         $this->mountAction('view');

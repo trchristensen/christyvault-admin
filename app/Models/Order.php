@@ -123,14 +123,11 @@ class Order extends Model
     public function getStatusColorAttribute(): string
     {
         return match ($this->status) {
-            'cancelled' => '#EF4444',   // red
-            'pending' => '#F59E0B',     // yellow
-            'confirmed' => '#3B82F6',   // blue
-            'in_production' => '#8B5CF6', // purple
-            'ready_for_delivery' => '#10B981', // green
-            'out_for_delivery' => '#F59E0B', // yellow
-            'delivered' => '#10B981',   // green
-            default => '#6B7280',       // gray
+            'delivered' => '#D9EDBF',   // Soft green from status-delivered
+            'cancelled' => '#FFB996',   // Soft coral from status-cancelled
+            'pending' => '#FFCF81',     // Soft orange from status-pending
+            'confirmed' => '#FDFFAB',   // Soft yellow from status-confirmed
+            default => '#6B7280',       // Default gray
         };
     }
 }

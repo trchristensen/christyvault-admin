@@ -1,10 +1,11 @@
 <div class="p-4 order-container">
     <div class="flex items-start justify-between mb-4">
         <div>
-            <h2 class="text-xl font-bold">{{ $record->order_number }}</h2>
-            <p class="text-gray-600">{{ $record->customer->name }}</p>
+            <h2 class="font-bold text-gray-400 dark:text-gray-600">{{ $record->order_number }}</h2>
+            <p class="text-xl">{{ $record->customer->name }}</p>
         </div>
-        <div class="px-2 py-1 text-sm rounded-full" style="background-color: {{ $record->status_color }}">
+        <div class="px-2 py-1 text-sm font-medium text-gray-800 border rounded-full border-gray-800/10"
+            style="background-color: {{ $record->status_color }}">
             {{ ucfirst($record->status) }}
         </div>
     </div>
