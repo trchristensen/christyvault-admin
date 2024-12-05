@@ -94,12 +94,6 @@ class CalendarWidget extends FullCalendarWidget
 
     public function onEventClick(array $event): void
     {
-        Log::info('Event Click Data:', [
-            'event' => $event,
-            'jsEvent' => $event['jsEvent'] ?? null,
-            'target' => $event['jsEvent']['target'] ?? null,
-        ]);
-
         // Check if we clicked on an order within a trip
         if (isset($event['jsEvent']['target']['dataset']['orderId'])) {
             $orderId = $event['jsEvent']['target']['dataset']['orderId'];
@@ -184,9 +178,9 @@ class CalendarWidget extends FullCalendarWidget
             const content = document.createElement('div');
             content.innerHTML = `
                 <div class="trip-title">
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between flex-wrap">
                         ${event.extendedProps.driver_name ? `<span class="driver-name">${event.extendedProps.driver_name}</span>` : ''}
-                        ${event.title ? `<span class="trip-number">${event.title}</span>` : ''}
+                        ${event.title ? `<span class="trip-number !text-sm text-gray-600 dark:text-gray-400 !font-medium">${event.title}</span>` : ''}
                     </div>
                 </div>
                 ${event.extendedProps.status ? `<div class="trip-status">${event.extendedProps.status}</div>` : ''}
@@ -609,22 +603,22 @@ class CalendarWidget extends FullCalendarWidget
     public function config(): array
     {
         $today = now();
-        $startDate = $today->startOfMonth();
-        $endDate = $today->copy()->addMonths(2)->endOfMonth();
+        // $startDate = $today->startOfMonth();
+        // $endDate = $today->copy()->addMonths(2)->endOfMonth();
 
         return [
             // 'initialView' => 'dayGridMonth',
             'weekends' => false,
             'initialView' => 'dayGridMonth',
-            'multiMonth' => [
-                'months' => 3, // Show only 3 months at a time
-                'startMonth' => $today->month,
-                'startYear' => $today->year,
-            ],
-            'validRange' => [
-                'start' => $startDate->format('Y-m-d'),
-                'end' => $endDate->format('Y-m-d'),
-            ],
+            // 'multiMonth' => [
+            //     'months' => 3, // Show only 3 months at a time
+            //     'startMonth' => $today->month,
+            //     'startYear' => $today->year,
+            // ],
+            // 'validRange' => [
+            //     'start' => $startDate->format('Y-m-d'),
+            //     'end' => $endDate->format('Y-m-d'),
+            // ],
             'dayMaxEvents' => false, // This will force all events to be shown
             'multiMonthMaxColumns' => 1,
             'selectable' => true,

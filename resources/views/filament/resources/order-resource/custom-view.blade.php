@@ -10,13 +10,24 @@
         </div>
     </div>
 
-    <div class="p-4 mb-4 rounded-lg bg-gray-50">
-        <h3 class="mb-2 font-bold text-gray-400 dark:text-gray-600">SOLD TO</h3>
-        <div class="grid grid-cols-2 gap-4">
-            <div class="grid grid-cols-1 gap-2">
-
-                <p class="font-medium">{{ $record->customer->name }}</p>
-                <p class="font-medium">{{ $record->location->full_address }}</p>
+    <div class="p-4 mb-4 rounded-lg bg-gray-50 relative flex">
+         <div class="flex flex-col justify-center items-center mr-4">
+            <div class="text-gray-400 dark:text-gray-600 flex flex-col items-center gap-0 font-lighter w-8 justify-start border-r border-gray-200 dark:border-gray-800">
+                <span>S</span>
+                <span>O</span>
+                <span>L</span>
+                <span>D</span>
+                <span class="mb-2"></span>
+                <span>T</span>
+                <span>O</span>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 justify-between w-full">
+            
+            <div>
+               
+                <p class="font-bold">{{ $record->customer->name }}</p>
+                <p>{{ $record->location->full_address }}</p>
                 
                 @if ($record->customer->phone)
                     <div class="flex items-center gap-2">
@@ -25,14 +36,21 @@
                     </div>
                 @endif
             </div>
-            <div>
-                <p class="text-sm text-gray-600">Requested Date</p>
-                <p class="font-medium">{{ $record->requested_delivery_date?->format('M j, Y') }}</p>
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <p class="text-sm text-gray-600">Requested Date</p>
+                    <p class="font-medium">{{ $record->requested_delivery_date?->format('M j, Y') }}</p>
+                </div>
+                <div>
+                    <!-- date of order -->
+                    <p class="text-sm text-gray-600">Date of Order</p>
+                    <p class="font-medium">{{ $record->order_date?->format('M j, Y') }}</p>
+                </div>
             </div>
-            <div>
+            <!-- <div>
                 <p class="text-sm text-gray-600">Assigned Date</p>
                 <p class="font-medium">{{ $record->assigned_delivery_date?->format('M j, Y') }}</p>
-            </div>
+            </div> -->
             <!-- <div class="col-span-2">
                 <p class="text-sm text-gray-600">Delivery Address</p>
                 <p class="font-medium">{{ $record->location->full_address }}</p>
@@ -45,20 +63,21 @@
             @if ($record->orderProducts->isEmpty())
                 <p class="text-gray-500">No products found for this order</p>
             @else
-                <h3 class="mb-2 font-medium">Products</h3>
                 <div class="space-y-2 bg-gray-50 p-2 rounded-lg">
                     @foreach ($record->orderProducts as $orderProduct)
-                        <div class="flex items-center justify-between p-2 border-b nth-child(last) border-gray-200 dark:border-gray-800">
+                        <div class="flex items-center justify-between p-2 border-b last:border-b-0 border-gray-200 dark:border-gray-800">
                             <div class="flex items-center gap-2">
-                                <div class="qty min-w-6 border-r border-gray-200 dark:border-gray-800 flex items-center justify-center text-center">
+                                <div class="qty w-8 border-r border-gray-200 dark:border-gray-800 flex items-center justify-center text-center">
                                     @if ($orderProduct->fill_load)
-                                        <span class="font-medium">Fill Load</span>
+                                        <p class="font-medium">Fill Load</p>
                                     @else
-                                        <span class="font-medium">{{ $orderProduct->quantity }}</span>
+                                        <p class="font-medium">{{ $orderProduct->quantity }}</p>
                                     @endif
                                 </div>
-                                <span>{{ $orderProduct->product->sku }}</span>
-                                <span>{{ $orderProduct->product->name }}</span>
+                                <div class="product-description flex flex-col items-start">
+                                    <p class="font-medium">{{ $orderProduct->product->sku }}</span>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ $orderProduct->product->name }}</span>
+                                </div>
                         </div>
                         @if ($orderProduct->notes)
                             <span class="text-sm text-gray-500">{{ $orderProduct->notes }}</span>
@@ -67,6 +86,25 @@
                     @endforeach
                 </div>
             @endif
+        </div>
+    </div>
+    <div class="grid grid-cols-4 gap-4">
+        <!-- Delivery Info  -->
+        <div class="delivery-date flex flex-col items-start">
+            <p class="text-sm text-gray-600">Assigned Date</p>
+            <p>{{ optional($record->assigned_delivery_date)->format('D m/d/Y') }}</p>
+        </div>
+        <div class="delivery-time">
+            <p class="text-sm text-gray-600">Delivery Time</p>
+            <p>{{ optional($record->delivery_time)->format('g:i A') }}</p>
+        </div>
+        <div class="service-date">
+            <p class="text-sm text-gray-600">Service Date</p>
+            <p>{{ optional($record->service_date)->format('D m/d/Y') }}</p>
+        </div>
+        <div class="service-time">
+            <p class="text-sm text-gray-600">Service Time</p>
+            <p>{{ optional($record->service_time)->format('g:i A') }}</p>
         </div>
     </div>
 

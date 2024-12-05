@@ -16,6 +16,8 @@ class CalendarFeedController extends Controller
 
         Order::query()
             ->with(['customer', 'orderProducts.product'])
+            ->withoutTrashed()
+            ->whereNotIn('status', [OrderStatus::CANCELLED])
             ->get()
             ->each(function (Order $order) use ($calendar) {
                 $calendar->event(

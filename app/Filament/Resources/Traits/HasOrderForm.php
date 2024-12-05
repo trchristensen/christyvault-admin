@@ -124,8 +124,8 @@ trait HasOrderForm
                         // ->default(now()),
                         ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
                     Forms\Components\DatePicker::make('assigned_delivery_date')
-                        ->native(false)
-                        ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
+                        ->native(false),
+                        // ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
 
                     // ->minDate(today()),
                     Forms\Components\Select::make('status')

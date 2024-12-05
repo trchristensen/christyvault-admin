@@ -103,6 +103,7 @@
 
 .order-title {
     @apply text-sm font-medium line-clamp-1 text-gray-800;
+
 }
 
 .order-address {
