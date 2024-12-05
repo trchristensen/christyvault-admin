@@ -58,6 +58,10 @@
         </div>
     </div>
 
+     <!-- <div class="mb-4">
+        @livewire('filament.resources.order-resource.relation-managers.order-products-relation-manager', ['record' => $record])
+    </div> -->
+
     <div class="mb-4">
         <div>
             @if ($record->orderProducts->isEmpty())
@@ -75,13 +79,14 @@
                                     @endif
                                 </div>
                                 <div class="product-description flex flex-col items-start">
-                                    <p class="font-medium">{{ $orderProduct->product->sku }}</span>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ $orderProduct->product->name }}</span>
+                                    <p class="font-medium">{{ $orderProduct->product->sku }}</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ $orderProduct->product->name }}</p>
+                                    @if ($orderProduct->notes)
+                                        <p class="text-sm text-gray-500">{{ $orderProduct->notes }}</p>
+                                    @endif
                                 </div>
                         </div>
-                        @if ($orderProduct->notes)
-                            <span class="text-sm text-gray-500">{{ $orderProduct->notes }}</span>
-                        @endif
+                        
                     </div>
                     @endforeach
                 </div>
