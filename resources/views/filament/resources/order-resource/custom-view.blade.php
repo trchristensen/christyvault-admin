@@ -121,7 +121,7 @@
                                 </div>
                                 <!-- unit price -->
                                 <div class="product-price col-span-1 text-center justify-center flex w-full">
-                                    @if ($orderProduct->price)
+                                    @if ($orderProduct->price > 0)
                                         ${{ number_format($orderProduct->price, 2) }}
                                     @endif
                                 </div>
