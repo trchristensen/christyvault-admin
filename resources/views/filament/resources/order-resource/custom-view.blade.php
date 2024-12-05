@@ -58,33 +58,82 @@
         </div>
     </div>
 
-     <!-- <div class="mb-4">
-        @livewire('filament.resources.order-resource.relation-managers.order-products-relation-manager', ['record' => $record])
-    </div> -->
+
 
     <div class="mb-4">
         <div>
             @if ($record->orderProducts->isEmpty())
                 <p class="text-gray-500">No products found for this order</p>
             @else
-                <div class="space-y-2 bg-gray-50 p-2 rounded-lg">
+                <div class="bg-gray-50 p-2 rounded-lg">
+                    <!-- header -->
+
+                     <div class="product-item m-0 mt-0 flex items-center justify-between p-2 border-b last:border-b-0 border-gray-200 dark:border-gray-800 w-full">
+                            <div class="w-full grid grid-cols-12">
+                                <div class="qty col-span-1 w-8 text-sm text-gray-600 flex items-center justify-center text-center">
+                                   #
+                                </div>
+                                <div class="product-description col-span-5 flex flex-col items-start">
+                                    <p class="text-sm text-gray-600">Description</p>
+                                </div>
+                                <!-- location -->
+                                <div class="text-sm text-gray-600 items-start col-span-3 flex items-start">Location</div>
+                                <div class="product-shipped col-span-1 text-sm text-gray-600">
+                                   Shipped
+                                </div>
+                              
+                                <!-- unit price -->
+                                <div class="product-price col-span-1 text-center justify-center flex w-full text-sm text-gray-600">
+                                    Unit Price
+                                </div>
+                                <!-- total price -->
+                                <div class="product-total-price col-span-1 text-center justify-center flex w-full text-sm text-gray-600">
+                                    Amount
+                                </div>
+
+                        </div>
+                        
+                    </div>
+
+                    <!-- end header -->
                     @foreach ($record->orderProducts as $orderProduct)
-                        <div class="flex items-center justify-between p-2 border-b last:border-b-0 border-gray-200 dark:border-gray-800">
-                            <div class="flex items-center gap-2">
-                                <div class="qty w-8 border-r border-gray-200 dark:border-gray-800 flex items-center justify-center text-center">
+                        <div class="product-item m-0 mt-0 flex items-center justify-between p-2 border-b last:border-b-0 border-gray-200 dark:border-gray-800 w-full">
+                            <div class="w-full grid grid-cols-12">
+                                <div class="qty col-span-1 w-8 border-r border-gray-200 dark:border-gray-800 flex items-center justify-center text-center">
                                     @if ($orderProduct->fill_load)
-                                        <p class="font-medium">Fill Load</p>
+                                        <p class="font-medium">FL</p>
                                     @else
                                         <p class="font-medium">{{ $orderProduct->quantity }}</p>
                                     @endif
                                 </div>
-                                <div class="product-description flex flex-col items-start">
+                                <div class="product-description col-span-5 flex flex-col items-start">
                                     <p class="font-medium">{{ $orderProduct->product->sku }}</p>
                                     <p class="text-sm text-gray-600 dark:text-gray-400">{{ $orderProduct->product->name }}</p>
+
                                     @if ($orderProduct->notes)
                                         <p class="text-sm text-gray-500">{{ $orderProduct->notes }}</p>
                                     @endif
                                 </div>
+                                <div class="text-sm text-gray-600 items-start col-span-3 flex">{{ $orderProduct->location }}</div>
+                                <!-- quantity delivered -->
+                                <div class="product-shipped col-span-1 text-center">
+                                    {{ $orderProduct->quantity_delivered }}
+                                </div>
+                                <!-- unit price -->
+                                <div class="product-price col-span-1 text-center justify-center flex w-full">
+                                    @if ($orderProduct->price)
+                                        ${{ number_format($orderProduct->price, 2) }}
+                                    @endif
+                                </div>
+                                <!-- total price -->
+                                <div class="product-total-price col-span-1 text-center justify-center flex w-full">
+                                    @if ($orderProduct->quantity_delivered )
+                                        ${{ number_format($orderProduct->price * $orderProduct->quantity_delivered, 2) }}
+                                    @elseif($orderProduct->quantity)
+                                       ${{ number_format($orderProduct->price * $orderProduct->quantity, 2) }}
+                                    @endif
+                                </div>
+
                         </div>
                         
                     </div>

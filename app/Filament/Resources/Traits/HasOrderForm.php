@@ -136,6 +136,7 @@ trait HasOrderForm
                                 ->toString()];
                         }))
                         ->default(OrderStatus::PENDING->value)
+                        ->reactive()
                         ->required(),
                     Forms\Components\TimePicker::make('delivery_time')
                         ->label("Deliver By")
@@ -155,7 +156,7 @@ trait HasOrderForm
                         ->relationship()
                         ->schema([
                             Forms\Components\Select::make('product_id')
-                                ->columnSpanFull()
+                                ->columnSpan(6)
                                 ->label('Product')
                                 ->options(
                                     Product::query()
@@ -191,13 +192,27 @@ trait HasOrderForm
                                 ->required(fn(Forms\Get $get): bool => !$get('fill_load'))
                                 ->disabled(fn(Forms\Get $get): bool => $get('fill_load'))
                                 ->dehydrated(fn(Forms\Get $get): bool => !$get('fill_load')),
+                            Forms\Components\TextInput::make('quantity_delivered')
+                                ->label('Delivered')
+                                ->numeric()
+                                // disabled if status is not delivered. the line below is not working
+                                ->disabled(function (\Filament\Forms\Get $get): bool {
+                                    $status = $get('../../status');
+                                    logger()->info('status', ['status' => $status]);
+                                    return !in_array($status, [
+                                        OrderStatus::DELIVERED->value,
+                                        OrderStatus::INVOICED->value,
+                                        OrderStatus::COMPLETED->value,
+                                    ]);
+                                }),
                             Forms\Components\Hidden::make('price')
                                 ->default(0),
                             Forms\Components\TextInput::make('location')
-                                ->nullable(),
+                                ->nullable()
+                                ->columnSpan(6),
                             Forms\Components\TextInput::make('notes')
                                 ->nullable()
-                                ->columnSpanFull()
+                                ->columnSpan(6)
                         ])
                         ->columns(3)
                 ]),
