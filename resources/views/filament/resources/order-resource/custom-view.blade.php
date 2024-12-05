@@ -127,9 +127,9 @@
                                 </div>
                                 <!-- total price -->
                                 <div class="product-total-price col-span-1 text-center justify-center flex w-full">
-                                    @if ($orderProduct->quantity_delivered )
+                                    @if ($orderProduct->quantity_delivered  && $orderProduct->price > 0)
                                         ${{ number_format($orderProduct->price * $orderProduct->quantity_delivered, 2) }}
-                                    @elseif($orderProduct->quantity)
+                                    @elseif($orderProduct->quantity && $orderProduct->price > 0)
                                        ${{ number_format($orderProduct->price * $orderProduct->quantity, 2) }}
                                     @endif
                                 </div>
