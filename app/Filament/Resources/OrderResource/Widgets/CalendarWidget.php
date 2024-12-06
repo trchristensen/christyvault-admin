@@ -178,7 +178,7 @@ class CalendarWidget extends FullCalendarWidget
             const content = document.createElement('div');
             content.innerHTML = `
                 <div class="trip-title">
-                    <div class="flex items-center justify-between flex-wrap">
+                    <div class="flex flex-wrap items-center justify-between">
                         ${event.extendedProps.driver_name ? `<span class="driver-name">${event.extendedProps.driver_name}</span>` : ''}
                         ${event.title ? `<span class="trip-number !text-sm text-gray-600 dark:text-gray-400 !font-medium">${event.title}</span>` : ''}
                     </div>
@@ -445,7 +445,7 @@ class CalendarWidget extends FullCalendarWidget
     }
 
 
-    protected function viewAction(): \Filament\Actions\Action
+    protected function viewAction(): Action
     {
 
         // need to return a different view based on the record type
@@ -465,14 +465,11 @@ class CalendarWidget extends FullCalendarWidget
                     'filament.resources.order-resource.custom-view',
                     ['record' => $record]
                 ))
+                ->modalHeading(fn($record) => $record->order_number)
                 ->form([])
                 ->modalFooterActions([
                     Actions\EditAction::make(),
                     Actions\DeleteAction::make(),
-                    Action::make('close')
-                        ->label('Close')
-                        ->color('gray')
-                        ->action(fn() => $this->dispatch('close-modal')),
                     Action::make('print')
                         ->label('Print')
                         ->color('gray')
