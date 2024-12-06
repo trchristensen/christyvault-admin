@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use App\Enums\OrderStatus;
+use Filament\Support\Colors\Color;
+
 
 class Order extends Model
 {
@@ -120,14 +123,82 @@ class Order extends Model
         return $this->belongsTo(Trip::class);
     }
 
-    public function getStatusColorAttribute(): string
+    public function getStatusColorAttribute(): array
     {
+        $colors = [
+            'Yellow' => [
+                50 => 'rgb(254 249 195)',  // yellow-50
+                500 => 'rgb(234 179 8)',   // yellow-500
+                900 => 'rgb(113 63 18)',   // yellow-900
+            ],
+            'Blue' => [
+                50 => 'rgb(239 246 255)',  // blue-50
+                500 => 'rgb(59 130 246)',  // blue-500
+                900 => 'rgb(30 58 138)',   // blue-900
+            ],
+            'Purple' => [
+                50 => 'rgb(250 245 255)',  // purple-50
+                500 => 'rgb(168 85 247)',  // purple-500
+                900 => 'rgb(88 28 135)',   // purple-900
+            ],
+            // ... add other colors as needed
+        ];
+
+        $getColor = function(string $color, int $shade) use ($colors) {
+            return $colors[$color][$shade] ?? '#000000';
+        };
+
         return match ($this->status) {
-            'delivered' => '#D9EDBF',   // Soft green from status-delivered
-            'cancelled' => '#FFB996',   // Soft coral from status-cancelled
-            'pending' => '#FFCF81',     // Soft orange from status-pending
-            'confirmed' => '#FDFFAB',   // Soft yellow from status-confirmed
-            default => '#6B7280',       // Default gray
+            OrderStatus::PENDING->value => [
+                'background' => $getColor('Yellow', 50),
+                'text' => $getColor('Yellow', 900),
+                'border' => $getColor('Yellow', 500),
+            ],
+            OrderStatus::CONFIRMED->value => [
+                'background' => $getColor('Blue', 50),
+                'text' => $getColor('Blue', 900),
+                'border' => $getColor('Blue', 500),
+            ],
+            OrderStatus::IN_PRODUCTION->value => [
+                'background' => $getColor('Purple', 50),
+                'text' => $getColor('Purple', 900),
+                'border' => $getColor('Purple', 500),
+            ],
+            OrderStatus::READY_FOR_DELIVERY->value => [
+                'background' => $getColor('Teal', 50),
+                'text' => $getColor('Teal', 900),
+                'border' => $getColor('Teal', 500),
+            ],
+            OrderStatus::OUT_FOR_DELIVERY->value => [
+                'background' => $getColor('Orange', 50),
+                'text' => $getColor('Orange', 900),
+                'border' => $getColor('Orange', 500),
+            ],
+            OrderStatus::DELIVERED->value => [
+                'background' => $getColor('Green', 100),
+                'text' => $getColor('Green', 900),
+                'border' => $getColor('Green', 600),
+            ],
+            OrderStatus::CANCELLED->value => [
+                'background' => $getColor('Red', 50),
+                'text' => $getColor('Red', 900),
+                'border' => $getColor('Red', 500),
+            ],
+            OrderStatus::INVOICED->value => [
+                'background' => $getColor('Indigo', 50),
+                'text' => $getColor('Indigo', 900),
+                'border' => $getColor('Indigo', 500),
+            ],
+            OrderStatus::COMPLETED->value => [
+                'background' => $getColor('Green', 200),
+                'text' => $getColor('Green', 900),
+                'border' => $getColor('Green', 700),
+            ],
+            default => [
+                'background' => $getColor('Gray', 50),
+                'text' => $getColor('Gray', 900),
+                'border' => $getColor('Gray', 500),
+            ],
         };
     }
 }

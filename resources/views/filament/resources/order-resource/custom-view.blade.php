@@ -5,7 +5,7 @@
             
         </div>
         <div class="px-2 py-1 text-sm font-medium text-gray-800 border rounded-full border-gray-800/10"
-            style="background-color: {{ $record->status_color }}">
+            style="background-color: {{ $record->status_color['background'] }}">
             {{ ucfirst($record->status) }}
         </div>
     </div>
@@ -163,8 +163,8 @@
     </div>
 
     @if ($record->special_instructions)
-        <div class="p-4 rounded-lg bg-yellow-50">
-            <h3 class="mb-2 font-medium">Special Instructions</h3>
+        <div class="p-4 rounded-lg bg-yellow-50 mt-4">
+            <h3 class="mb-2 font-medium">Instructions</h3>
             <p class="text-sm">{{ $record->special_instructions }}</p>
         </div>
     @endif
