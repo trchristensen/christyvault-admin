@@ -198,8 +198,8 @@ class CalendarWidget extends FullCalendarWidget
                             </div>
                         ` : ''}
                         ${order.status ? `<div class="order-status">${order.status}</div>` : ''}
-                        ${order.requested_delivery_date ? `<div class="order-requested-delivery-date">Requested: ${order.requested_delivery_date}</div>` : ''}
-                        ${order.order_date ? `<div class="order-date">Order Date: ${order.order_date}</div>` : ''}
+                        ${order.requested_delivery_date ? `<div class="order-requested-delivery-date"><span>Requested: </span> ${order.requested_delivery_date}</div>` : ''}
+                        ${order.order_date ? `<div class="order-date"><span>Ordered: </span>${order.order_date}</div>` : ''}
                         ${order.products?.length ? `
                             <div class="products-wrapper">
                                 <button class="flex items-center gap-1 text-xs text-gray-500 products-toggle hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
@@ -252,12 +252,12 @@ class CalendarWidget extends FullCalendarWidget
                             ${event.extendedProps?.location_line2 ? `<div>${event.extendedProps.location_line2}</div>` : ''}
                         </div>
                     ` : ''}
-                    ${event.extendedProps?.status ? `<div class="order-status">${event.extendedProps.status}</div>` : ''}
-                    ${event.extendedProps?.requested_delivery_date ? `<div class="order-requested-delivery-date">Requested: ${event.extendedProps.requested_delivery_date}</div>` : ''}
-                    ${event.extendedProps?.order_date ? `<div class="order-date">Order Date: ${event.extendedProps.order_date}</div>` : ''}
+                    ${event.extendedProps?.status ? `<div class="order-status overflow-hidden">${event.extendedProps.status}</div>` : ''}
+                    ${event.extendedProps?.requested_delivery_date ? `<div class="order-requested-delivery-date"><span>Requested: </span>${event.extendedProps.requested_delivery_date}</div>` : ''}
+                    ${event.extendedProps?.order_date ? `<div class="order-date"><span>Ordered: </span>${event.extendedProps.order_date}</div>` : ''}
                     ${event.extendedProps?.delivery_notes ? `<div class="order-delivery-notes">${event.extendedProps.delivery_notes}</div>` : ''}
                     ${event.extendedProps?.products?.length ? `
-                        <div class="products-wrapper">
+                        <div class="products-wrapper hidden lg:block">
                             <button class="flex items-center gap-1 text-xs text-gray-500 products-toggle hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
                                 ${chevronSvg}
                                 <span>Products (${event.extendedProps.products.length})</span>
@@ -370,8 +370,8 @@ class CalendarWidget extends FullCalendarWidget
                                                         'orderNumber' => $order->order_number,
                                                         'customerName' => $order->customer?->name,
                                                         'status' => $order->status,
-                                                        'requestedDeliveryDate' => $order->requested_delivery_date?->format('M j, Y'),
-                                                        'assignedDeliveryDate' => $order->assigned_delivery_date?->format('M j, Y'),
+                                                        'requestedDeliveryDate' => $order->requested_delivery_date?->format('M j'),
+                                                        'assignedDeliveryDate' => $order->assigned_delivery_date?->format('M j'),
                                                         'location_line1' => $order->location?->address_line1,
                                                         'location_line2' => $order->location ?
                                                             "{$order->location->city}, {$order->location->state}"
@@ -621,7 +621,7 @@ class CalendarWidget extends FullCalendarWidget
                         'uuid' => $order->uuid,
                         'status' => Str::headline($order->status),
                         'requested_delivery_date' => $order->requested_delivery_date?->format('M j'),
-                        'order_date' => $order->order_date?->format('M j, Y'),
+                        'order_date' => $order->order_date?->format('M j'),
                         'delivery_notes' => $order->delivery_notes,
                         'location_line1' => $order->location?->address_line1,
                         'location_line2' => $order->location ?
