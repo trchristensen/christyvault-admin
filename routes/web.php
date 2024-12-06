@@ -3,6 +3,8 @@
 use App\Http\Controllers\CalendarFeedController;
 use App\Http\Controllers\DeliveryTagController;
 use App\Http\Controllers\LeaveCalendarFeedController;
+use App\Http\Controllers\KanbanCardController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -26,3 +28,16 @@ Route::get('calendar', fn() => view('calendar', [
 Route::get('calendar/leave-feed/{token}', [LeaveCalendarFeedController::class, 'download'])
     ->name('calendar.leave-feed')
     ->middleware('signed');
+
+Route::get('/kanban-cards/{kanbanCard}/qr-code', [KanbanCardController::class, 'downloadQrCode'])
+    ->name('kanban-cards.qr-code');
+
+Route::get('/kanban-cards/scan/{id}', [KanbanCardController::class, 'scan'])
+    ->name('kanban-cards.scan');
+
+// Route::middleware(['auth'])->group(function () {
+//     Route::get('/notifications', [NotificationController::class, 'index'])
+//         ->name('notifications.index');
+//     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])
+//         ->name('notifications.mark-as-read');
+// });

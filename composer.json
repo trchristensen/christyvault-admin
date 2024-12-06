@@ -8,6 +8,7 @@
         "php": "^8.2",
         "althinect/filament-spatie-roles-permissions": "^2.2",
         "barryvdh/laravel-snappy": "^1.0",
+        "endroid/qr-code": "^6.0",
         "filament/filament": "^3.2",
         "h4cc/wkhtmltopdf-amd64": "0.12.x",
         "jeffgreco13/filament-breezy": "^2.4",

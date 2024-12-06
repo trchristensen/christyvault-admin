@@ -11,6 +11,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 
 class KanbanCardResource extends Resource
 {
@@ -79,6 +80,9 @@ class KanbanCardResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('scannedBy.name')
                     ->label('Last Scanned By'),
+                // Tables\Columns\ViewColumn::make('qr_code')
+                //     ->label('QR Code')
+                //     ->view('filament.tables.columns.qr-code'),
             ])
             ->defaultGroup('status')
             ->groups([
@@ -107,6 +111,26 @@ class KanbanCardResource extends Resource
                     ->action(fn (KanbanCard $record) => $record->markAsScanned())
                     ->requiresConfirmation()
                     ->visible(fn (KanbanCard $record) => $record->canBeScanned()),
+                Tables\Actions\Action::make('viewQrCode')
+                    ->label('View QR')
+                    ->icon('heroicon-o-qr-code')
+                    ->tooltip('View full-size QR code')
+                    ->modalContent(fn (KanbanCard $record): HtmlString => new HtmlString('
+                        <div class="flex flex-col items-center gap-4">
+                            <div>'.$record->generateQrCode().'</div>
+                            <div class="text-sm text-gray-500">
+                                Scan this code to mark the item for reorder
+                            </div>
+                        </div>
+                    '))
+                    ->modalSubmitAction(false)
+                    ->modalCancelAction(false),
+                Tables\Actions\Action::make('downloadQrCode')
+                    ->label('Download QR')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->tooltip('Download QR code as SVG')
+                    ->url(fn (KanbanCard $record) => $record->qr_code_url)
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

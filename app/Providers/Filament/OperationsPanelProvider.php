@@ -17,6 +17,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\Navigation\NavigationItem;
+use App\Filament\Operations\Pages\Notifications;
 
 class OperationsPanelProvider extends PanelProvider
 {
@@ -28,10 +30,23 @@ class OperationsPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
+            ->brandLogo('https://christyvault.com/_next/static/media/logo.22a652dc.svg')
+            ->brandLogoHeight('60px')
+            ->navigationItems([
+                NavigationItem::make('Notifications')
+                    ->icon('heroicon-o-bell')
+                    ->badge(fn () => auth()->user()->unreadNotifications->count() ?: null)
+                    ->url(fn () => '/operations/notifications')
+            ])
+            ->renderHook(
+                'panels::user-menu.before',  // Changed from 'panels::topbar.end'
+                fn () => view('notifications.dropdown')
+            )
             ->discoverResources(in: app_path('Filament/Operations/Resources'), for: 'App\\Filament\\Operations\\Resources')
             ->discoverPages(in: app_path('Filament/Operations/Pages'), for: 'App\\Filament\\Operations\\Pages')
             ->pages([
                 Pages\Dashboard::class,
+                Notifications::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Operations/Widgets'), for: 'App\\Filament\\Operations\\Widgets')
             ->widgets([
