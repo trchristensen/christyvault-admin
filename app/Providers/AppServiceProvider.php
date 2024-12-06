@@ -7,6 +7,8 @@ use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Opcodes\LogViewer\Facades\LogViewer;
+use Livewire\Livewire;
+use App\Livewire\NotificationsDropdown;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -35,5 +37,7 @@ class AppServiceProvider extends ServiceProvider
         FilamentAsset::register([
             Css::make('calendar-styles', resource_path('css/calendar.css')),
         ]);
+
+        Livewire::component('notifications-dropdown', NotificationsDropdown::class);
     }
 }
