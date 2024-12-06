@@ -569,7 +569,7 @@ class CalendarWidget extends FullCalendarWidget
                     'title' => "{$trip->trip_number}",
                     'start' => $trip->scheduled_date->format('Y-m-d'),
                     'allDay' => true,
-                    'backgroundColor' => '#efefef',
+                    'backgroundColor' => '#C6E7FF',
                     // 'textColor' => '#1f2937',
                     'classNames' => ['trip-event'],
                     'extendedProps' => [

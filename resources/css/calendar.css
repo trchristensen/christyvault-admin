@@ -79,6 +79,11 @@
     @apply p-2 rounded-lg;
 }
 
+.fc-event-main > div {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
 /* Status-based colors using the exact palette */
 .status-delivered {
     @apply bg-[#D9EDBF] text-gray-800; /* Soft green #D9EDBF */
@@ -146,7 +151,7 @@
 
 /* Order container spacing */
 .order-container {
-    @apply mb-2 last:mb-0;
+    @apply last:mb-0;
     background-color: #f9fafb;
     position: relative;
 }
