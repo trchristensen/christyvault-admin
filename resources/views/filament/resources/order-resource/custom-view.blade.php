@@ -4,8 +4,8 @@
             <h2 class="font-bold text-gray-400 dark:text-gray-600">{{ $record->order_number }}</h2>
             
         </div>
-        <div class="px-2 py-1 text-sm font-medium text-gray-800 border rounded-full border-gray-800/10"
-            style="background-color: {{ $record->status_color['background'] }}">
+        <div class="px-2 py-1 text-sm font-medium text-gray-800 border rounded-full"
+            style="background-color: {{ $record->status_color['background'] }}; color: {{ $record->status_color['text'] }}; border-color: {{ $record->status_color['border'] }}">
             {{ ucfirst($record->status) }}
         </div>
     </div>

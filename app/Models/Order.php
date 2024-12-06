@@ -126,23 +126,57 @@ class Order extends Model
     public function getStatusColorAttribute(): array
     {
         $colors = [
-            'Yellow' => [
-                50 => 'rgb(254 249 195)',  // yellow-50
-                500 => 'rgb(234 179 8)',   // yellow-500
-                900 => 'rgb(113 63 18)',   // yellow-900
-            ],
-            'Blue' => [
-                50 => 'rgb(239 246 255)',  // blue-50
-                500 => 'rgb(59 130 246)',  // blue-500
-                900 => 'rgb(30 58 138)',   // blue-900
-            ],
-            'Purple' => [
-                50 => 'rgb(250 245 255)',  // purple-50
-                500 => 'rgb(168 85 247)',  // purple-500
-                900 => 'rgb(88 28 135)',   // purple-900
-            ],
-            // ... add other colors as needed
-        ];
+        'Yellow' => [
+            50 => 'rgb(254 249 195)',   // yellow-50
+            500 => 'rgb(234 179 8)',    // yellow-500
+            900 => 'rgb(113 63 18)',    // yellow-900
+        ],
+        'Blue' => [
+            50 => 'rgb(239 246 255)',   // blue-50
+            500 => 'rgb(59 130 246)',   // blue-500
+            900 => 'rgb(30 58 138)',    // blue-900
+        ],
+        'Purple' => [
+            50 => 'rgb(250 245 255)',   // purple-50
+            500 => 'rgb(168 85 247)',   // purple-500
+            900 => 'rgb(88 28 135)',    // purple-900
+        ],
+        'Teal' => [
+            50 => 'rgb(240 253 250)',   // teal-50
+            500 => 'rgb(20 184 166)',   // teal-500
+            900 => 'rgb(19 78 74)',     // teal-900
+        ],
+        'Orange' => [
+            50 => 'rgb(255 247 237)',   // orange-50
+            500 => 'rgb(249 115 22)',   // orange-500
+            900 => 'rgb(124 45 18)',    // orange-900
+        ],
+        'Green' => [
+            50 => 'rgb(240 253 244)',   // green-50
+            100 => 'rgb(220 252 231)',  // green-100
+            200 => 'rgb(187 247 208)',  // green-200
+            500 => 'rgb(34 197 94)',    // green-500
+            600 => 'rgb(22 163 74)',    // green-600
+            700 => 'rgb(21 128 61)',    // green-700
+            900 => 'rgb(20 83 45)',     // green-900
+        ],
+        'Red' => [
+            50 => 'rgb(254 242 242)',   // red-50
+            500 => 'rgb(239 68 68)',    // red-500
+            900 => 'rgb(127 29 29)',    // red-900
+        ],
+        'Indigo' => [
+            50 => 'rgb(238 242 255)',   // indigo-50
+            500 => 'rgb(99 102 241)',   // indigo-500
+            900 => 'rgb(49 46 129)',    // indigo-900
+        ],
+        'Gray' => [
+            50 => 'rgb(249 250 251)',   // gray-50
+            500 => 'rgb(107 114 128)',  // gray-500
+            900 => 'rgb(17 24 39)',     // gray-900
+        ],
+    ];
+
 
         $getColor = function(string $color, int $shade) use ($colors) {
             return $colors[$color][$shade] ?? '#000000';
