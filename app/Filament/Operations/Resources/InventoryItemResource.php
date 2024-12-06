@@ -1,0 +1,120 @@
+<?php
+
+namespace App\Filament\Operations\Resources;
+
+use App\Filament\Operations\Resources\InventoryItemResource\Pages;
+use App\Filament\Operations\Resources\InventoryItemResource\RelationManagers;
+use App\Models\InventoryItem;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+
+class InventoryItemResource extends Resource
+{
+    protected static ?string $model = InventoryItem::class;
+    protected static ?string $navigationIcon = 'heroicon-o-cube';
+    protected static ?string $navigationGroup = 'Inventory Management';
+    protected static ?int $navigationSort = 2;
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Section::make()
+                    ->schema([
+                        Forms\Components\TextInput::make('sku')
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\Textarea::make('description')
+                            ->rows(3),
+                        Forms\Components\Select::make('category')
+                            ->required()
+                            ->searchable()
+                            ->preload(),
+                        Forms\Components\TextInput::make('unit_of_measure')
+                            ->required(),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Stock Information')
+                    ->schema([
+                        Forms\Components\TextInput::make('minimum_stock')
+                            ->required()
+                            ->numeric()
+                            ->default(0),
+                        Forms\Components\TextInput::make('current_stock')
+                            ->numeric()
+                            ->default(0),
+                        Forms\Components\TextInput::make('reorder_lead_time')
+                            ->numeric()
+                            ->suffix('days'),
+                        Forms\Components\TextInput::make('storage_location')
+                            ->maxLength(255),
+                    ])->columns(2),
+
+                Forms\Components\Toggle::make('active')
+                    ->default(true),
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('sku')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('name')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('category')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('current_stock')
+                    ->sortable()
+                    ->color(fn (InventoryItem $record): string => 
+                        $record->current_stock <= $record->minimum_stock
+                            ? 'danger'
+                            : 'success'
+                    ),
+                Tables\Columns\TextColumn::make('minimum_stock'),
+                Tables\Columns\IconColumn::make('active')
+                    ->boolean(),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                Tables\Filters\TernaryFilter::make('active'),
+                Tables\Filters\SelectFilter::make('category'),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\SuppliersRelationManager::class,
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListInventoryItems::route('/'),
+            'create' => Pages\CreateInventoryItem::route('/create'),
+            'edit' => Pages\EditInventoryItem::route('/{record}/edit'),
+        ];
+    }
+}
