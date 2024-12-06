@@ -174,6 +174,10 @@ class CalendarWidget extends FullCalendarWidget
     function({ event, el }) {
         const eventMainEl = el.querySelector('.fc-event-main');
 
+        const chevronSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="transition-transform duration-200 transform size-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+        </svg>`;
+
         if (event.extendedProps.type === 'trip') {
             const content = document.createElement('div');
             content.innerHTML = `
@@ -197,12 +201,18 @@ class CalendarWidget extends FullCalendarWidget
                         ${order.requested_delivery_date ? `<div class="order-requested-delivery-date">Requested: ${order.requested_delivery_date}</div>` : ''}
                         ${order.order_date ? `<div class="order-date">Order Date: ${order.order_date}</div>` : ''}
                         ${order.products?.length ? `
-                            <div class="products-list">
-                                ${order.products.map(p => `
-                                    <span class="product-item ${p.fill_load ? 'fill-load' : ''}">
-                                        ${p.fill_load ? '*' : p.quantity || ''} × ${p.sku || ''} ${p.fill_load ? '(fill load)' : ''}
-                                    </span>
-                                `).join('')}
+                            <div class="products-wrapper">
+                                <button class="flex items-center gap-1 text-xs text-gray-500 products-toggle hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                    ${chevronSvg}
+                                    <span>Products (${order.products.length})</span>
+                                </button>
+                                <div class="hidden pl-6 products-list">
+                                    ${order.products.map(p => `
+                                        <span class="product-item ${p.fill_load ? 'fill-load' : ''}">
+                                            ${p.fill_load ? '*' : p.quantity || ''} × ${p.sku || ''} ${p.fill_load ? '(fill load)' : ''}
+                                        </span>
+                                    `).join('')}
+                                </div>
                             </div>
                         ` : ''}
                     </div>
@@ -215,6 +225,19 @@ class CalendarWidget extends FullCalendarWidget
                 orderEl.addEventListener('click', (e) => {
                     e.stopPropagation();
                     Livewire.dispatch('calendar-order-clicked', { orderId: orderEl.dataset.orderId });
+                });
+            });
+
+            // Add product toggle handlers
+            el.querySelectorAll('.products-toggle').forEach(toggle => {
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const productsList = toggle.nextElementSibling;
+                    const chevron = toggle.querySelector('svg');
+                    const isHidden = productsList.classList.contains('hidden');
+
+                    productsList.classList.toggle('hidden');
+                    chevron.style.transform = isHidden ? 'rotate(90deg)' : '';
                 });
             });
         } else {
@@ -234,17 +257,36 @@ class CalendarWidget extends FullCalendarWidget
                     ${event.extendedProps?.order_date ? `<div class="order-date">Order Date: ${event.extendedProps.order_date}</div>` : ''}
                     ${event.extendedProps?.delivery_notes ? `<div class="order-delivery-notes">${event.extendedProps.delivery_notes}</div>` : ''}
                     ${event.extendedProps?.products?.length ? `
-                        <div class="products-list">
-                            ${event.extendedProps.products.map(p => `
-                                <span class="product-item ${p.fill_load ? 'fill-load' : ''}">
-                                    ${p.fill_load ? '*' : p.quantity || ''} × ${p.sku || ''} ${p.fill_load ? '(fill load)' : ''}
-                                </span>
-                            `).join('')}
+                        <div class="products-wrapper">
+                            <button class="flex items-center gap-1 text-xs text-gray-500 products-toggle hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                ${chevronSvg}
+                                <span>Products (${event.extendedProps.products.length})</span>
+                            </button>
+                            <div class="hidden pl-6 products-list">
+                                ${event.extendedProps.products.map(p => `
+                                    <span class="product-item ${p.fill_load ? 'fill-load' : ''}">
+                                        ${p.fill_load ? '*' : p.quantity || ''} × ${p.sku || ''} ${p.fill_load ? '(fill load)' : ''}
+                                    </span>
+                                `).join('')}
+                            </div>
                         </div>
                     ` : ''}
                 </div>
             `;
             eventMainEl.replaceChildren(content);
+
+            // Add product toggle handlers for standalone orders
+            el.querySelectorAll('.products-toggle').forEach(toggle => {
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const productsList = toggle.nextElementSibling;
+                    const chevron = toggle.querySelector('svg');
+                    const isHidden = productsList.classList.contains('hidden');
+
+                    productsList.classList.toggle('hidden');
+                    chevron.style.transform = isHidden ? 'rotate(90deg)' : '';
+                });
+            });
         }
     }
     JS;
