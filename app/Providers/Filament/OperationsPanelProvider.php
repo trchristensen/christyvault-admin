@@ -29,6 +29,9 @@ class OperationsPanelProvider extends PanelProvider
         return $panel
             ->id('operations')
             ->path('operations')
+            ->login()
+            ->passwordReset()
+            ->profile()
             ->colors([
                 'primary' => Color::Amber,
             ])
