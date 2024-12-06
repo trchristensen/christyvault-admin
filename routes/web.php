@@ -35,9 +35,7 @@ Route::get('/kanban-cards/{kanbanCard}/qr-code', [KanbanCardController::class, '
 Route::get('/kanban-cards/scan/{id}', [KanbanCardController::class, 'scan'])
     ->name('kanban-cards.scan');
 
-// Route::middleware(['auth'])->group(function () {
-//     Route::get('/notifications', [NotificationController::class, 'index'])
-//         ->name('notifications.index');
-//     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])
-//         ->name('notifications.mark-as-read');
-// });
+Route::middleware(['auth'])->group(function () {
+    Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])
+        ->name('notifications.mark-as-read');
+});

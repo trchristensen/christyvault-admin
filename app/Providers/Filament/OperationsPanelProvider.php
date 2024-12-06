@@ -19,6 +19,8 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Navigation\NavigationItem;
 use App\Filament\Operations\Pages\Notifications;
+use App\Livewire\NotificationsDropdown;
+use Illuminate\Support\Facades\Blade;
 
 class OperationsPanelProvider extends PanelProvider
 {
@@ -40,7 +42,7 @@ class OperationsPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 'panels::user-menu.before',  // Changed from 'panels::topbar.end'
-                fn () => view('notifications.dropdown')
+            fn (): string => Blade::render('@livewire(\'notifications-dropdown\')')
             )
             ->discoverResources(in: app_path('Filament/Operations/Resources'), for: 'App\\Filament\\Operations\\Resources')
             ->discoverPages(in: app_path('Filament/Operations/Pages'), for: 'App\\Filament\\Operations\\Pages')
