@@ -8,7 +8,7 @@
                 >
                     <x-heroicon-o-bell class="fi-icon-btn-icon h-5 w-5 text-gray-500" />
                     @if($this->unreadCount)
-                        <span class="fi-badge absolute -end-1 -top-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-danger-600 text-xs font-medium text-white">
+                        <span class="fi-badge absolute -end-1 -top-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-medium text-white">
                             {{ $this->unreadCount }}
                         </span>
                     @endif
@@ -36,7 +36,7 @@
                                         wire:click="markAsRead('{{ $notification->id }}')"
                                         class="fi-icon-btn opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                                     >
-                                        <x-heroicon-m-x-mark class="h-5 w-5 text-gray-400 hover:text-danger-500" />
+                                        <x-heroicon-m-x-mark class="h-5 w-5 text-gray-400 hover:text-red-500" />
                                     </button>
                                 </div>
                                 <div class="mt-1">

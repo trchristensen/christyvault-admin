@@ -20,7 +20,6 @@ class NotificationsDropdown extends Component
 
     public function render()
     {
-        \Log::info('NotificationsDropdown render called');
         return view('livewire.notifications-dropdown', [
             'notifications' => auth()->user()->unreadNotifications()->latest()->take(5)->get()
         ]);

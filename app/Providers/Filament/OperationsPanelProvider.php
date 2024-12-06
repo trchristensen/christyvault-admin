@@ -21,7 +21,6 @@ use Filament\Navigation\NavigationItem;
 use App\Filament\Operations\Pages\Notifications;
 use App\Livewire\NotificationsDropdown;
 use Illuminate\Support\Facades\Blade;
-use Livewire\Livewire;
 
 class OperationsPanelProvider extends PanelProvider
 {
@@ -44,10 +43,9 @@ class OperationsPanelProvider extends PanelProvider
                     ->badge(fn () => auth()->user()->unreadNotifications->count() ?: null)
                     ->url(fn () => '/operations/notifications')
             ])
-            ->renderHook(
-                'panels::user-menu.before',
-                fn () => Livewire::mount('notifications-dropdown')
-            )
+            // ->livewireComponents([
+            //     'notifications-dropdown' => NotificationsDropdown::class,
+            // ])
             ->discoverResources(in: app_path('Filament/Operations/Resources'), for: 'App\\Filament\\Operations\\Resources')
             ->discoverPages(in: app_path('Filament/Operations/Pages'), for: 'App\\Filament\\Operations\\Pages')
             ->pages([
