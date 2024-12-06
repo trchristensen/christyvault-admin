@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
 
 class SupplierResource extends Resource
 {
@@ -42,7 +43,8 @@ class SupplierResource extends Resource
                         Forms\Components\Textarea::make('notes')
                             ->rows(3),
                         Forms\Components\Toggle::make('active')
-                            ->default(true),
+                            ->default(true)
+                            ->dehydrateStateUsing(fn ($state) => DB::raw($state ? 'true' : 'false')),
                     ])
             ]);
     }
