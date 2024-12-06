@@ -260,6 +260,7 @@ class CalendarWidget extends FullCalendarWidget
 
         return [
             Actions\CreateAction::make()
+                ->stickyModalFooter()
                 ->createAnother(false)
                 ->label('Create New Event')
                 ->modalHeading(null)
@@ -426,7 +427,8 @@ class CalendarWidget extends FullCalendarWidget
                         return $order;
                     }
                 }),
-            Actions\EditAction::make(),
+            Actions\EditAction::make()
+                ->stickyModalFooter(),
             Actions\DeleteAction::make()
                 ->action(function () {
                     if ($this->record instanceof Trip) {
@@ -638,6 +640,7 @@ class CalendarWidget extends FullCalendarWidget
                 ->form(fn() => $this->getFormSchema()),
             EditAction::make()
                 ->modalWidth('2xl')
+                ->stickyModalFooter()
                 ->form(fn() => $this->getFormSchema())
                 ->action(function (array $data) {
                     $this->event->update($data);

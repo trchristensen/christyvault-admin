@@ -151,12 +151,15 @@ trait HasOrderForm
                 ])
                 ->columns(2),
             Forms\Components\Section::make('Products')
+                ->compact()
                 ->schema([
                     Forms\Components\Repeater::make('orderProducts')
+                        ->label(false)
+                        ->addActionLabel('Add Product')
                         ->relationship()
                         ->schema([
                             Forms\Components\Select::make('product_id')
-                                ->columnSpan(6)
+                                ->columnSpan(12)
                                 ->label('Product')
                                 ->options(
                                     Product::query()
@@ -179,6 +182,7 @@ trait HasOrderForm
                                 ),
                             Forms\Components\Toggle::make('fill_load')
                                 ->label('Fill out load')
+                                ->columnSpan(2)
                                 ->inline(false)
                                 ->reactive()
                                 ->afterStateUpdated(function ($state, callable $set) {
@@ -188,12 +192,14 @@ trait HasOrderForm
                                 }),
                             Forms\Components\TextInput::make('quantity')
                                 ->numeric()
+                                ->columnSpan(5)
                                 ->default(1)
                                 ->required(fn(Forms\Get $get): bool => !$get('fill_load'))
                                 ->disabled(fn(Forms\Get $get): bool => $get('fill_load'))
                                 ->dehydrated(fn(Forms\Get $get): bool => !$get('fill_load')),
                             Forms\Components\TextInput::make('quantity_delivered')
                                 ->label('Delivered')
+                                ->columnSpan(5)
                                 ->numeric()
                                 // disabled if status is not delivered. the line below is not working
                                 ->disabled(function (\Filament\Forms\Get $get): bool {
@@ -214,7 +220,7 @@ trait HasOrderForm
                                 ->nullable()
                                 ->columnSpan(6)
                         ])
-                        ->columns(3)
+                        ->columns(12)
                 ]),
         ];
     }

@@ -73,7 +73,7 @@
                                 <div class="qty col-span-1 w-8 text-sm text-gray-600 flex items-center justify-center text-center">
                                    #
                                 </div>
-                                <div class="product-description col-span-5 flex flex-col items-start">
+                                <div class="product-description col-span-5 flex flex-col items-start -ml-6">
                                     <p class="text-sm text-gray-600">Description</p>
                                 </div>
                                 <!-- location -->
@@ -106,7 +106,7 @@
                                         <p class="font-medium">{{ $orderProduct->quantity }}</p>
                                     @endif
                                 </div>
-                                <div class="product-description col-span-5 flex flex-col items-start">
+                                <div class="product-description col-span-5 flex flex-col items-start -ml-6">
                                     <p class="font-medium">{{ $orderProduct->product->sku }}</p>
                                     <p class="text-sm text-gray-600 dark:text-gray-400">{{ $orderProduct->product->name }}</p>
 
