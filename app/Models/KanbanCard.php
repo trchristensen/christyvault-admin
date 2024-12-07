@@ -85,31 +85,49 @@ class KanbanCard extends Model
     /**
      * Generate a QR code for this kanban card
      */
-    public function generateQrCode(): string
-{
-    // Instead of JSON data, create a URL
-    $scanUrl = route('kanban-cards.scan', [
-        'id' => $this->id,
-        'inventory_item_id' => $this->inventory_item_id,
-    ]);
+    public function generateMainQrCode(int $size = 300): string
+    {
+        return $this->generateQrCode('scan', $size);
+    }
 
-    $builder = new Builder(
-        writer: new SvgWriter(),
-        writerOptions: [
-            SvgWriter::WRITER_OPTION_EXCLUDE_XML_DECLARATION => true
-        ],
-        validateResult: false,
-        data: $scanUrl,  // URL instead of JSON
-        encoding: new Encoding('UTF-8'),
-        errorCorrectionLevel: ErrorCorrectionLevel::High,
-        size: 300,
-        margin: 10,
-        roundBlockSizeMode: RoundBlockSizeMode::Margin
-    );
+    public function generateBinQrCode(int $size = 150): string
+    {
+        return $this->generateQrCode('bin', $size);
+    }
 
-    $result = $builder->build();
-    return $result->getString();
-}
+    public function generateLocationQrCode(int $size = 150): string
+    {
+        return $this->generateQrCode('location', $size);
+    }
+
+    private function generateQrCode(string $type, int $size): string
+    {
+        $data = match ($type) {
+            'scan' => route('kanban-cards.scan', [
+                'id' => $this->id,
+                'inventory_item_id' => $this->inventory_item_id,
+            ]),
+            'bin' => $this->bin_number,
+            'location' => $this->bin_location,
+            default => '',
+        };
+
+        $builder = new Builder(
+            writer: new SvgWriter(),
+            writerOptions: [
+                SvgWriter::WRITER_OPTION_EXCLUDE_XML_DECLARATION => true
+            ],
+            validateResult: false,
+            data: $data,
+            encoding: new Encoding('UTF-8'),
+            errorCorrectionLevel: ErrorCorrectionLevel::High,
+            size: $size,
+            margin: 10,
+            roundBlockSizeMode: RoundBlockSizeMode::Margin
+        );
+
+        return $builder->build()->getString();
+    }
 
     /**
      * Get the URL for downloading the QR code

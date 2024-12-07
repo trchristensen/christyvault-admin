@@ -6,6 +6,7 @@ use App\Http\Controllers\LeaveCalendarFeedController;
 use App\Http\Controllers\KanbanCardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\InventoryItemController;
+use App\Models\KanbanCard;
 use Illuminate\Support\Facades\Route;
 
 
@@ -39,6 +40,13 @@ Route::get('/kanban-cards/scan/{id}', [KanbanCardController::class, 'scan'])
 
 Route::get('/kanban-cards/{kanbanCard}/print', [KanbanCardController::class, 'print'])
     ->name('kanban-cards.print');
+
+Route::get('/kanban-cards/{kanbanCard}/component', function (KanbanCard $kanbanCard) {
+    return view('components.printable-kanban-card', [
+        'kanbanCard' => $kanbanCard,
+        'size' => request('size', 'standard')
+    ]);
+});
 
 Route::middleware(['auth'])->group(function () {
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])
