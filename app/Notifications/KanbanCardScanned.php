@@ -13,7 +13,7 @@ class KanbanCardScanned extends Notification
 
     protected KanbanCard $kanbanCard;
 
-    public function __construct(KanbanCard $kanbanCard) 
+    public function __construct(KanbanCard $kanbanCard)
     {
         $this->kanbanCard = $kanbanCard;
     }
@@ -31,7 +31,7 @@ class KanbanCardScanned extends Notification
             ->line('Item: ' . $this->kanbanCard->inventoryItem->name)
             ->line('Location: ' . $this->kanbanCard->bin_location)
             ->line('Bin Number: ' . $this->kanbanCard->bin_number)
-            ->line('Scanned by: ' . $this->kanbanCard->scannedBy->name)
+            // ->line('Scanned by: ' . $this->kanbanCard->scannedBy->name)
             ->action('View Details', url('/operations/kanban-cards/' . $this->kanbanCard->id));
     }
 
