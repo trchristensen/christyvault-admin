@@ -10,11 +10,11 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Models\User;
 use Filament\Forms\Get;
 use Illuminate\Support\Facades\Auth;
+use App\Models\InventoryItem;
+use App\Models\Supplier;
+use Filament\Forms\Components\Select;
 
 class PurchaseOrderResource extends Resource
 {
@@ -51,7 +51,7 @@ class PurchaseOrderResource extends Resource
 
                 Forms\Components\DateTimePicker::make('received_date')
                     ->after('order_date')
-                    ->visible(fn (Get $get): bool => $get('status') === 'received'),
+                    ->visible(fn(Get $get): bool => $get('status') === 'received'),
 
                 Forms\Components\TextInput::make('total_amount')
                     ->required()
@@ -64,8 +64,8 @@ class PurchaseOrderResource extends Resource
                     ->columnSpanFull(),
 
                 Forms\Components\Hidden::make('created_by_user_id')
-                    ->default(fn () => Auth::id())
-                    ->dehydrated(fn ($state) => filled($state)),
+                    ->default(fn() => Auth::id())
+                    ->dehydrated(fn($state) => filled($state)),
             ]);
     }
 
@@ -130,7 +130,7 @@ class PurchaseOrderResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\InventoryItemsRelationManager::class,
         ];
     }
 
@@ -140,6 +140,45 @@ class PurchaseOrderResource extends Resource
             'index' => Pages\ListPurchaseOrders::route('/'),
             'create' => Pages\CreatePurchaseOrder::route('/create'),
             'edit' => Pages\EditPurchaseOrder::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getCreatePurchaseOrderModalForm(InventoryItem $inventoryItem): array
+    {
+        return [
+            Select::make('supplier_id')
+                ->label('Supplier')
+                ->options(
+                    Supplier::query()
+                        ->active()
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                )
+                ->default(function () use ($inventoryItem) {
+                    $preferredSupplier = $inventoryItem->preferredSupplier();
+                    return $preferredSupplier?->id;
+                })
+                ->required()
+                ->searchable(),
+
+            Forms\Components\Select::make('status')
+                ->options([
+                    'draft' => 'Draft',
+                    'submitted' => 'Submitted',
+                ])
+                ->default('draft')
+                ->required(),
+
+            Forms\Components\DateTimePicker::make('order_date')
+                ->default(now())
+                ->required(),
+
+            Forms\Components\DateTimePicker::make('expected_delivery_date')
+                ->after('order_date'),
+
+            Forms\Components\Textarea::make('notes')
+                ->columnSpanFull(),
+
         ];
     }
 }

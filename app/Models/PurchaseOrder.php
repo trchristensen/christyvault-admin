@@ -49,7 +49,9 @@ class PurchaseOrder extends Model
 
     public function items()
     {
-        return $this->hasMany(PurchaseOrderItem::class);
+        return $this->belongsToMany(InventoryItem::class, 'purchase_order_items')
+            ->withPivot(['quantity', 'unit_price', 'total_price', 'supplier_sku', 'received_quantity'])
+            ->withTimestamps();
     }
 
     public function createdBy()

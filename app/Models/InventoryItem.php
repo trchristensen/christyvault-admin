@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class InventoryItem extends Model
 
 {
     use HasFactory;
-    
+
     protected $fillable = [
         'sku',
         'name',
@@ -56,11 +57,18 @@ class InventoryItem extends Model
         return $this->hasMany(InventoryTransaction::class);
     }
 
+    public function purchaseOrders()
+    {
+        return $this->belongsToMany(PurchaseOrder::class, 'purchase_order_items')
+            ->withPivot(['quantity', 'unit_price', 'total_price', 'supplier_sku', 'received_quantity'])
+            ->withTimestamps();
+    }
+
     // Helper Methods
     public function preferredSupplier()
     {
         return $this->suppliers()
-            ->wherePivot('is_preferred', true)
+            ->wherePivot('is_preferred', '=', DB::raw('true'))
             ->first();
     }
 
@@ -89,6 +97,6 @@ class InventoryItem extends Model
     {
         if ($this->current_stock <= 0) return 'Out of Stock';
         if ($this->current_stock <= $this->minimum_stock) return 'Low Stock';
-            return 'In Stock';
-    }   
+        return 'In Stock';
+    }
 }

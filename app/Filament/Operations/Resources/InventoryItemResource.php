@@ -10,6 +10,11 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Actions\Action;
+use App\Filament\Operations\Resources\PurchaseOrderResource;
+use Filament\Notifications\Notification;
+use App\Models\PurchaseOrder;
+use Illuminate\Support\Facades\Auth;
 
 class InventoryItemResource extends Resource
 {
@@ -75,7 +80,8 @@ class InventoryItemResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('current_stock')
                     ->sortable()
-                    ->color(fn (InventoryItem $record): string => 
+                    ->color(
+                        fn(InventoryItem $record): string =>
                         $record->current_stock <= $record->minimum_stock
                             ? 'danger'
                             : 'success'
@@ -94,6 +100,41 @@ class InventoryItemResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Action::make('create_purchase_order')
+                    ->label('Create PO')
+                    ->icon('heroicon-o-shopping-cart')
+                    ->modalHeading(fn($record) => "Create Purchase Order for {$record->name}")
+                    ->form(fn($record) => PurchaseOrderResource::getCreatePurchaseOrderModalForm($record))
+                    ->action(function (array $data, InventoryItem $record): void {
+                        // Create the purchase order
+                        $purchaseOrder = PurchaseOrder::create([
+                            'supplier_id' => $data['supplier_id'],
+                            'status' => $data['status'],
+                            'order_date' => $data['order_date'],
+                            'expected_delivery_date' => $data['expected_delivery_date'],
+                            'notes' => $data['notes'],
+                            'created_by_user_id' => Auth::id(),
+                        ]);
+
+                        // Create the purchase order item
+                        $purchaseOrder->items()->create([
+                            'inventory_item_id' => $record->id,
+                            'quantity' => $data['items'][0]['quantity'],
+                            'unit_price' => $data['items'][0]['unit_price'],
+                            'notes' => $data['items'][0]['notes'] ?? null,
+                        ]);
+
+                        // Update total amount
+                        $purchaseOrder->update([
+                            'total_amount' => $data['items'][0]['quantity'] * $data['items'][0]['unit_price'],
+                        ]);
+
+                        Notification::make()
+                            ->title('Purchase order created successfully')
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn($record) => $record->needsReorder()),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

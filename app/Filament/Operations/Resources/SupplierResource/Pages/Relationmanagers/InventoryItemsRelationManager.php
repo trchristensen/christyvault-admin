@@ -37,7 +37,7 @@ class InventoryItemsRelationManager extends RelationManager
                     ->required(),
                 Forms\Components\Toggle::make('is_preferred')
                     ->label('Preferred Supplier')
-                    ->dehydrateStateUsing(fn ($state) => DB::raw($state ? 'true' : 'false')),
+                    ->dehydrateStateUsing(fn($state) => DB::raw($state ? 'true' : 'false')),
                 Forms\Components\Textarea::make('notes')
                     ->rows(3),
             ]);
@@ -77,7 +77,7 @@ class InventoryItemsRelationManager extends RelationManager
             ->headerActions([
                 Tables\Actions\AttachAction::make()
                     ->preloadRecordSelect()
-                    ->form(fn (Tables\Actions\AttachAction $action): array => [
+                    ->form(fn(Tables\Actions\AttachAction $action): array => [
                         $action->getRecordSelect()
                             ->searchable()
                             ->preload(),
@@ -99,7 +99,7 @@ class InventoryItemsRelationManager extends RelationManager
                         Forms\Components\Toggle::make('is_preferred')
                             ->label('Preferred Supplier')
                             ->default(false)
-                            ->dehydrateStateUsing(fn ($state) => DB::raw($state ? 'true' : 'false')),
+                            ->dehydrateStateUsing(fn($state) => DB::raw($state ? 'true' : 'false')),
                     ])
                     ->mutateFormDataUsing(function (array $data): array {
                         // Ensure cost_per_unit is properly formatted
@@ -117,4 +117,4 @@ class InventoryItemsRelationManager extends RelationManager
                 ]),
             ]);
     }
-} 
+}
