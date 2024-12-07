@@ -18,10 +18,11 @@ class PrintableKanbanCard extends Component
 
     public function getSizeClasses(): string
     {
+        // Convert inches to points (1 inch = 96px)
         return match ($this->size) {
-            'large' => 'w-[215.9mm] h-[279.4mm] p-8 text-2xl',     // Letter size - large text
-            'small' => 'w-[76.2mm] h-[127mm] p-2 text-xs',         // 3" x 5" - small text
-            default => 'w-[127mm] h-[177.8mm] p-4 text-base',      // 5" x 7" - medium text
+            'large' => 'w-[8.5in] h-[11in] p-8 text-2xl',      // Letter size - 8.5" x 11"
+            'small' => 'w-[3in] h-[5in] p-2 text-xs',          // 3" x 5"
+            default => 'w-[5in] h-[7in] p-4 text-base',        // 5" x 7"
         };
     }
 

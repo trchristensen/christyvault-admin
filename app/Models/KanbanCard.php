@@ -11,6 +11,7 @@ use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\SvgWriter;
+use Illuminate\Support\Facades\Log;
 
 class KanbanCard extends Model
 {
@@ -86,32 +87,21 @@ class KanbanCard extends Model
 
     /**
      * Generate a QR code for this kanban card
+     * @param string $size 'large', 'standard', or 'small'
      */
-    public function generateMainQrCode(int $size = 300): string
+    public function generateQrCode(string $size = 'standard'): string
     {
-        return $this->generateQrCode('scan', $size);
-    }
+        // Force a full URL with https://
+        $scanUrl = config('app.url') . "/kanban-cards/{$this->id}/scan?inventory_item_id={$this->inventory_item_id}";
 
-    public function generateBinQrCode(int $size = 150): string
-    {
-        return $this->generateQrCode('bin', $size);
-    }
+        // Log the URL for debugging
+        Log::info('Generated QR URL:', ['url' => $scanUrl]);
 
-    public function generateLocationQrCode(int $size = 150): string
-    {
-        return $this->generateQrCode('location', $size);
-    }
-
-    private function generateQrCode(string $type, int $size): string
-    {
-        $data = match ($type) {
-            'scan' => route('kanban-cards.scan', [
-                'id' => $this->id,
-                'inventory_item_id' => $this->inventory_item_id,
-            ]),
-            'bin' => $this->bin_number,
-            'location' => $this->bin_location,
-            default => '',
+        // Set QR code size based on card size
+        $qrSize = match ($size) {
+            'large' => 1500,    // 8.5" x 11" card
+            'small' => 800,     // 3" x 5" card
+            default => 1200,    // 5" x 7" card
         };
 
         $builder = new Builder(
@@ -120,22 +110,14 @@ class KanbanCard extends Model
                 SvgWriter::WRITER_OPTION_EXCLUDE_XML_DECLARATION => true
             ],
             validateResult: false,
-            data: $data,
+            data: $scanUrl,
             encoding: new Encoding('UTF-8'),
             errorCorrectionLevel: ErrorCorrectionLevel::High,
-            size: $size,
+            size: $qrSize,
             margin: 10,
             roundBlockSizeMode: RoundBlockSizeMode::Margin
         );
 
         return $builder->build()->getString();
-    }
-
-    /**
-     * Get the URL for downloading the QR code
-     */
-    public function getQrCodeUrlAttribute(): string
-    {
-        return route('kanban-cards.qr-code', $this);
     }
 }

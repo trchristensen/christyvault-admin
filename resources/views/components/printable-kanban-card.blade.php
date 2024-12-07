@@ -1,17 +1,45 @@
 <div class="mx-auto bg-white kanban-card {{ $getSizeClasses() }}" id="printable-card">
-    <div class="flex flex-col h-full">
+    <div class="flex flex-col h-full p-4">
         {{-- Header with QR Code --}}
-        <div class="flex justify-center mb-4">
-            {!! $kanbanCard->generateMainQrCode() !!}
+        <div class="flex justify-center mb-2">
+            <div
+                class="{{ match ($size) {
+                    'large' => 'w-[4.5in] h-[4.5in]', // Reduced from 6in
+                    'small' => 'w-[2in] h-[2in]', // Reduced from 2.5in
+                    default => 'w-[3in] h-[3in]', // Reduced from 4in
+                } }}">
+                <div class="w-full h-full">
+                    <svg viewBox="0 0 {{ match ($size) {
+                        'large' => '1500 1500',
+                        'small' => '800 800',
+                        default => '1200 1200',
+                    } }}"
+                        class="w-full h-full">
+                        {!! $kanbanCard->generateQrCode($size) !!}
+                    </svg>
+                </div>
+            </div>
         </div>
 
         {{-- Item Name & SKU --}}
-        <div class="mb-4 text-center">
+        <div class="mb-2 text-center">
             @if ($kanbanCard->inventoryItem->name)
-                <h2 class="font-bold leading-tight text-[1.5em]">{{ $kanbanCard->inventoryItem->name }}</h2>
+                <h2
+                    class="{{ match ($size) {
+                        'large' => 'text-4xl',
+                        'small' => 'text-xl',
+                        default => 'text-2xl',
+                    } }} font-bold leading-tight">
+                    {{ $kanbanCard->inventoryItem->name }}</h2>
             @endif
             @if ($kanbanCard->inventoryItem->sku)
-                <p class="text-gray-600 text-[0.8em]">Item #: {{ $kanbanCard->inventoryItem->sku }}</p>
+                <p
+                    class="{{ match ($size) {
+                        'large' => 'text-xl',
+                        'small' => 'text-sm',
+                        default => 'text-base',
+                    } }} text-gray-600">
+                    Item #: {{ $kanbanCard->inventoryItem->sku }}</p>
             @endif
         </div>
 
@@ -51,27 +79,28 @@
             </div>
         @endif
     </div>
+</div>
 
-    <style>
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-
-            #printable-card,
-            #printable-card * {
-                visibility: visible;
-            }
-
-            #printable-card {
-                position: absolute;
-                left: 0;
-                top: 0;
-            }
-
-            .no-print {
-                display: none;
-            }
+<style>
+    @media print {
+        body * {
+            visibility: hidden;
         }
-    </style>
+
+        #printable-card,
+        #printable-card * {
+            visibility: visible;
+        }
+
+        #printable-card {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        .no-print {
+            display: none;
+        }
+    }
+</style>
 </div>
