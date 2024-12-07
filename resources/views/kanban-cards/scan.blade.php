@@ -45,6 +45,7 @@
 
                 <div>
                     <label class="font-medium">Status</label>
+                    {{-- get the capitalized status, not the enum value --}}
                     <p>{{ ucfirst($kanbanCard->status) }}</p>
                 </div>
 

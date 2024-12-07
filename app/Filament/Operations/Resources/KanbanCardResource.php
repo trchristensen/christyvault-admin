@@ -8,11 +8,13 @@ use App\Models\KanbanCard;
 use App\Models\InventoryItem;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 use Filament\Tables\Actions\Action;
+use Illuminate\Support\Collection;
 
 class KanbanCardResource extends Resource
 {
@@ -27,6 +29,10 @@ class KanbanCardResource extends Resource
             ->schema([
                 Forms\Components\Select::make('inventory_item_id')
                     ->relationship('inventoryItem', 'name')
+                    // show the inventory item sku in the dropdown
+                    ->options(fn(Get $get): Collection => InventoryItem::query()
+                        ->where('name', 'like', '%' . $get('name') . '%')
+                        ->pluck('sku', 'id'))
                     ->searchable()
                     ->preload()
                     ->required()
@@ -34,7 +40,7 @@ class KanbanCardResource extends Resource
                     ->afterStateUpdated(function ($state, Forms\Set $set) {
                         if (!$state) return;
 
-                        $inventoryItem = \App\Models\InventoryItem::find($state);
+                        $inventoryItem = InventoryItem::find($state);
                         if (!$inventoryItem) return;
 
                         // Auto-populate fields from inventory item
@@ -102,6 +108,10 @@ class KanbanCardResource extends Resource
                 Tables\Columns\TextColumn::make('inventoryItem.name')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('inventoryItem.sku')
+                    ->searchable()
+                    ->label('Item #')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('department')
                     ->searchable()
                     ->sortable(),
@@ -114,6 +124,8 @@ class KanbanCardResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('reorder_point')
                     ->numeric(),
+                Tables\Columns\TextColumn::make('inventoryItem.unit_of_measure')
+                    ->label('Unit of Measure'),
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([
                         'success' => KanbanCard::STATUS_ACTIVE,
@@ -126,11 +138,12 @@ class KanbanCardResource extends Resource
                         KanbanCard::STATUS_ORDERED => 'Ordered',
                         default => $state,
                     }),
+
                 Tables\Columns\TextColumn::make('last_scanned_at')
                     ->dateTime()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('scannedBy.name')
-                    ->label('Last Scanned By'),
+                // Tables\Columns\TextColumn::make('scannedBy.name')
+                //     ->label('Last Scanned By'),
                 // Tables\Columns\ViewColumn::make('qr_code')
                 //     ->label('QR Code')
                 //     ->view('filament.tables.columns.qr-code'),

@@ -20,7 +20,9 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Navigation\NavigationItem;
 use App\Filament\Operations\Pages\Notifications;
 use App\Livewire\NotificationsDropdown;
+use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\Facades\Blade;
+use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Livewire\Livewire;
 
 class OperationsPanelProvider extends PanelProvider
@@ -38,15 +40,23 @@ class OperationsPanelProvider extends PanelProvider
             ])
             ->brandLogo('https://christyvault.com/_next/static/media/logo.22a652dc.svg')
             ->brandLogoHeight('60px')
+            ->maxContentWidth(MaxWidth::Full)
+            ->sidebarCollapsibleOnDesktop()
+            ->sidebarWidth('13rem')
+            // ->collapsedSidebarWidth('5rem')
+            ->plugins([
+                BreezyCore::make()
+                    ->myProfile(),
+            ])
             ->navigationItems([
                 NavigationItem::make('Notifications')
                     ->icon('heroicon-o-bell')
-                    ->badge(fn () => auth()->user()->unreadNotifications->count() ?: null)
-                    ->url(fn () => '/operations/notifications')
+                    ->badge(fn() => auth()->user()->unreadNotifications->count() ?: null)
+                    ->url(fn() => '/operations/notifications')
             ])
             ->renderHook(
                 'panels::user-menu.before',
-                fn () => Livewire::mount('notifications-dropdown')
+                fn() => Livewire::mount('notifications-dropdown')
             )
             ->discoverResources(in: app_path('Filament/Operations/Resources'), for: 'App\\Filament\\Operations\\Resources')
             ->discoverPages(in: app_path('Filament/Operations/Pages'), for: 'App\\Filament\\Operations\\Pages')
