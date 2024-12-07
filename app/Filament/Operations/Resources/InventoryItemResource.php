@@ -136,6 +136,36 @@ class InventoryItemResource extends Resource
                             ->send();
                     })
                     ->visible(fn($record) => $record->needsReorder()),
+                Action::make('syncWithSage')
+                    ->label('Sync with Sage 100')
+                    ->icon('heroicon-o-arrow-path')
+                    ->action(function (InventoryItem $record) {
+
+                        try {
+                            $result = $record->syncWithSage();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Error syncing with Sage 100')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+
+                        if ($result['status'] === 'error') {
+                            return Notification::make()
+                                ->title('Error syncing with Sage 100')
+                                ->body($result['message'])
+                                ->danger()
+                                ->send();
+                        }
+
+                        Notification::make()
+                            ->title('Synced with Sage 100')
+                            ->body($result['message'])
+                            ->success()
+                            ->send();
+                    })
+                // ->visible(fn(InventoryItem $record) => $record->sage_item_code !== null),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

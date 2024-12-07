@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use App\Services\Sage100Service;
 
 class InventoryItem extends Model
 
@@ -98,5 +99,33 @@ class InventoryItem extends Model
         if ($this->current_stock <= 0) return 'Out of Stock';
         if ($this->current_stock <= $this->minimum_stock) return 'Low Stock';
         return 'In Stock';
+    }
+
+    public function syncWithSage(): array
+    {
+        if (!$this->sage_item_code) return [
+            'status' => 'error',
+            'message' => 'Sage item code is not set for this inventory item',
+        ];
+
+        try {
+            $sageService = app(Sage100Service::class);
+            $currentLevel = $sageService->getInventoryLevel($this->sage_item_code);
+
+            $this->current_stock = $currentLevel;
+            $this->save();
+
+            return [
+                'current_stock' => $currentLevel,
+                'synced_at' => now(),
+                'status' => 'success',
+                'message' => 'Inventory item synced with Sage',
+            ];
+        } catch (\Exception $e) {
+            return [
+                'status' => 'error',
+                'message' => 'Error syncing inventory item with Sage: ' . $e->getMessage(),
+            ];
+        }
     }
 }
