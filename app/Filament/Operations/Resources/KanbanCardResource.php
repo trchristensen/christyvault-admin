@@ -112,26 +112,13 @@ class KanbanCardResource extends Resource
                     ->action(fn(KanbanCard $record) => $record->markAsScanned())
                     ->requiresConfirmation()
                     ->visible(fn(KanbanCard $record) => $record->canBeScanned()),
-                Tables\Actions\Action::make('viewQrCode')
-                    ->label('View QR')
-                    ->icon('heroicon-o-qr-code')
-                    ->tooltip('View full-size QR code')
-                    ->modalContent(fn(KanbanCard $record): HtmlString => new HtmlString('
-                        <div class="flex flex-col items-center gap-4">
-                            <div>' . $record->generateQrCode() . '</div>
-                            <div class="text-sm text-gray-500">
-                                Scan this code to mark the item for reorder
-                            </div>
-                        </div>
-                    '))
-                    ->modalSubmitAction(false)
-                    ->modalCancelAction(false),
-                Tables\Actions\Action::make('downloadQrCode')
-                    ->label('Download QR')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->tooltip('Download QR code as SVG')
-                    ->url(fn(KanbanCard $record) => $record->qr_code_url)
-                    ->openUrlInNewTab(),
+
+                // Tables\Actions\Action::make('downloadQrCode')
+                //     ->label('Download QR')
+                //     ->icon('heroicon-o-arrow-down-tray')
+                //     ->tooltip('Download QR code as SVG')
+                //     ->url(fn(KanbanCard $record) => $record->qr_code_url)
+                //     ->openUrlInNewTab(),
                 Tables\Actions\Action::make('printKanban')
                     ->label('Print Kanban')
                     ->icon('heroicon-o-printer')
