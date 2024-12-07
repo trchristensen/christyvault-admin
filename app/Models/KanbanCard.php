@@ -91,8 +91,11 @@ class KanbanCard extends Model
      */
     public function generateQrCode(string $size = 'standard'): string
     {
-        // Force a full URL with https://
-        $scanUrl = config('app.url') . "/kanban-cards/{$this->id}/scan?inventory_item_id={$this->inventory_item_id}";
+        // Use the named route 'kanban-cards.scan'
+        $scanUrl = route('kanban-cards.scan', [
+            'id' => $this->id,
+            'inventory_item_id' => $this->inventory_item_id,
+        ]);
 
         // Log the URL for debugging
         Log::info('Generated QR URL:', ['url' => $scanUrl]);
