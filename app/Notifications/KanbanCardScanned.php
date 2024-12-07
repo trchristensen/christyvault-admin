@@ -31,6 +31,7 @@ class KanbanCardScanned extends Notification
             ->line('Item: ' . $this->kanbanCard->inventoryItem->name)
             ->line('Location: ' . $this->kanbanCard->bin_location)
             ->line('Bin Number: ' . $this->kanbanCard->bin_number)
+            ->line('Department: ' . $this->kanbanCard->department)
             // ->line('Scanned by: ' . $this->kanbanCard->scannedBy->name)
             ->action('View Details', url('/operations/kanban-cards/' . $this->kanbanCard->id));
     }
@@ -41,6 +42,7 @@ class KanbanCardScanned extends Notification
             'kanban_card_id' => $this->kanbanCard->id,
             'inventory_item_id' => $this->kanbanCard->inventory_item_id,
             'inventory_item_name' => $this->kanbanCard->inventoryItem->name,
+            'department' => $this->kanbanCard->department,
             'bin_location' => $this->kanbanCard->bin_location,
             'bin_number' => $this->kanbanCard->bin_number,
             // 'scanned_by' => $this->kanbanCard->scannedBy->name,
