@@ -5,6 +5,7 @@ use App\Http\Controllers\DeliveryTagController;
 use App\Http\Controllers\LeaveCalendarFeedController;
 use App\Http\Controllers\KanbanCardController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\InventoryItemController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -34,6 +35,10 @@ Route::get('/kanban-cards/{kanbanCard}/qr-code', [KanbanCardController::class, '
 
 Route::get('/kanban-cards/scan/{id}', [KanbanCardController::class, 'scan'])
     ->name('kanban-cards.scan');
+
+
+Route::get('/kanban-cards/{kanbanCard}/print', [KanbanCardController::class, 'print'])
+    ->name('kanban-cards.print');
 
 Route::middleware(['auth'])->group(function () {
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])

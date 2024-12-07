@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\InventoryItem;
 use App\Models\KanbanCard;
 use Illuminate\Http\Response;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class KanbanCardController extends Controller
     public function scan(Request $request, $id)
     {
         $kanbanCard = KanbanCard::findOrFail($id);
-        
+
         // Verify the inventory_item_id matches (security check)
         if ($request->inventory_item_id != $kanbanCard->inventory_item_id) {
             abort(400, 'Invalid QR code');
@@ -41,4 +42,11 @@ class KanbanCardController extends Controller
             'success' => 'Card successfully scanned!'
         ]);
     }
-} 
+
+    public function print(KanbanCard $kanbanCard)
+    {
+        return view('kanban-cards.print', [
+            'kanbanCard' => $kanbanCard
+        ]);
+    }
+}

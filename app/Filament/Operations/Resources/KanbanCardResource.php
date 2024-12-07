@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+use Filament\Tables\Actions\Action;
 
 class KanbanCardResource extends Resource
 {
@@ -69,7 +70,7 @@ class KanbanCardResource extends Resource
                         'warning' => KanbanCard::STATUS_PENDING_ORDER,
                         'info' => KanbanCard::STATUS_ORDERED,
                     ])
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
                         KanbanCard::STATUS_ACTIVE => 'Active',
                         KanbanCard::STATUS_PENDING_ORDER => 'Pending Order',
                         KanbanCard::STATUS_ORDERED => 'Ordered',
@@ -88,7 +89,7 @@ class KanbanCardResource extends Resource
             ->groups([
                 Tables\Grouping\Group::make('status')
                     ->label('Status')
-                    ->getTitleFromRecordUsing(fn (KanbanCard $record): string => match ($record->status) {
+                    ->getTitleFromRecordUsing(fn(KanbanCard $record): string => match ($record->status) {
                         KanbanCard::STATUS_ACTIVE => 'Active Cards',
                         KanbanCard::STATUS_PENDING_ORDER => 'Pending Order Cards',
                         KanbanCard::STATUS_ORDERED => 'Ordered Cards',
@@ -108,16 +109,16 @@ class KanbanCardResource extends Resource
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('scan')
                     ->icon('heroicon-o-qr-code')
-                    ->action(fn (KanbanCard $record) => $record->markAsScanned())
+                    ->action(fn(KanbanCard $record) => $record->markAsScanned())
                     ->requiresConfirmation()
-                    ->visible(fn (KanbanCard $record) => $record->canBeScanned()),
+                    ->visible(fn(KanbanCard $record) => $record->canBeScanned()),
                 Tables\Actions\Action::make('viewQrCode')
                     ->label('View QR')
                     ->icon('heroicon-o-qr-code')
                     ->tooltip('View full-size QR code')
-                    ->modalContent(fn (KanbanCard $record): HtmlString => new HtmlString('
+                    ->modalContent(fn(KanbanCard $record): HtmlString => new HtmlString('
                         <div class="flex flex-col items-center gap-4">
-                            <div>'.$record->generateQrCode().'</div>
+                            <div>' . $record->generateQrCode() . '</div>
                             <div class="text-sm text-gray-500">
                                 Scan this code to mark the item for reorder
                             </div>
@@ -129,7 +130,13 @@ class KanbanCardResource extends Resource
                     ->label('Download QR')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->tooltip('Download QR code as SVG')
-                    ->url(fn (KanbanCard $record) => $record->qr_code_url)
+                    ->url(fn(KanbanCard $record) => $record->qr_code_url)
+                    ->openUrlInNewTab(),
+                Tables\Actions\Action::make('printKanban')
+                    ->label('Print Kanban')
+                    ->icon('heroicon-o-printer')
+                    ->url(fn(KanbanCard $record): string =>
+                    route('kanban-cards.print', $record))
                     ->openUrlInNewTab(),
             ])
             ->bulkActions([

@@ -15,6 +15,7 @@ use App\Filament\Operations\Resources\PurchaseOrderResource;
 use Filament\Notifications\Notification;
 use App\Models\PurchaseOrder;
 use Illuminate\Support\Facades\Auth;
+use Filament\Actions\ViewAction;
 
 class InventoryItemResource extends Resource
 {
