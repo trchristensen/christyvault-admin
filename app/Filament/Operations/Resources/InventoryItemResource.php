@@ -14,6 +14,7 @@ use Filament\Tables\Actions\Action;
 use App\Filament\Operations\Resources\PurchaseOrderResource;
 use Filament\Notifications\Notification;
 use App\Models\PurchaseOrder;
+use App\Services\Sage100Service;
 use Illuminate\Support\Facades\Auth;
 use Filament\Actions\ViewAction;
 
@@ -61,6 +62,9 @@ class InventoryItemResource extends Resource
                             ->suffix('days'),
                         Forms\Components\TextInput::make('storage_location')
                             ->maxLength(255),
+                        Forms\Components\TextInput::make('sage_item_code')
+                            ->maxLength(255)
+                            ->helperText('The item code used in Sage 100'),
                     ])->columns(2),
 
                 Forms\Components\Toggle::make('active')
@@ -88,6 +92,9 @@ class InventoryItemResource extends Resource
                             : 'success'
                     ),
                 Tables\Columns\TextColumn::make('minimum_stock'),
+                Tables\Columns\TextColumn::make('sage_item_code')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\IconColumn::make('active')
                     ->boolean(),
                 Tables\Columns\TextColumn::make('updated_at')
@@ -99,65 +106,40 @@ class InventoryItemResource extends Resource
                 Tables\Filters\TernaryFilter::make('active'),
                 Tables\Filters\SelectFilter::make('category'),
             ])
+            ->headerActions([
+                Tables\Actions\Action::make('syncAllWithSage')
+                    ->label('Sync All with Sage 100')
+                    ->icon('heroicon-m-arrow-path')
+                    ->color('success')
+                    ->action(function () {
+                        $command = new \App\Console\Commands\SyncSageInventory();
+                        $result = $command->handle(app(Sage100Service::class));
+
+                        $notification = Notification::make()
+                            ->title('Sage 100 Sync')
+                            ->body($result['message']);
+
+                        if ($result['status'] === 'success') {
+                            $notification->success();
+                        } else {
+                            $notification->warning()
+                                ->body(implode("\n", array_merge([$result['message']], $result['details'])));
+                        }
+
+                        $notification->send();
+                    })
+                    ->requiresConfirmation()
+                    ->modalHeading('Sync with Sage 100')
+                    ->modalDescription('This will update the inventory levels from Sage 100. This operation is read-only and will not modify Sage 100 data.')
+                    ->modalSubmitActionLabel('Yes, sync now'),
+            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Action::make('create_purchase_order')
-                    ->label('Create PO')
-                    ->icon('heroicon-o-shopping-cart')
-                    ->modalHeading(fn($record) => "Create Purchase Order for {$record->name}")
-                    ->form(fn($record) => PurchaseOrderResource::getCreatePurchaseOrderModalForm($record))
-                    ->action(function (array $data, InventoryItem $record): void {
-                        // Create the purchase order
-                        $purchaseOrder = PurchaseOrder::create([
-                            'supplier_id' => $data['supplier_id'],
-                            'status' => $data['status'],
-                            'order_date' => $data['order_date'],
-                            'expected_delivery_date' => $data['expected_delivery_date'],
-                            'notes' => $data['notes'],
-                            'created_by_user_id' => Auth::id(),
-                        ]);
-
-                        // Create the purchase order item
-                        $purchaseOrder->items()->create([
-                            'inventory_item_id' => $record->id,
-                            'quantity' => $data['items'][0]['quantity'],
-                            'unit_price' => $data['items'][0]['unit_price'],
-                            'notes' => $data['items'][0]['notes'] ?? null,
-                        ]);
-
-                        // Update total amount
-                        $purchaseOrder->update([
-                            'total_amount' => $data['items'][0]['quantity'] * $data['items'][0]['unit_price'],
-                        ]);
-
-                        Notification::make()
-                            ->title('Purchase order created successfully')
-                            ->success()
-                            ->send();
-                    })
-                    ->visible(fn($record) => $record->needsReorder()),
-                Action::make('syncWithSage')
+                Tables\Actions\Action::make('syncWithSage')
                     ->label('Sync with Sage 100')
                     ->icon('heroicon-o-arrow-path')
                     ->action(function (InventoryItem $record) {
-
-                        try {
-                            $result = $record->syncWithSage();
-                        } catch (\Exception $e) {
-                            Notification::make()
-                                ->title('Error syncing with Sage 100')
-                                ->body($e->getMessage())
-                                ->danger()
-                                ->send();
-                        }
-
-                        if ($result['status'] === 'error') {
-                            return Notification::make()
-                                ->title('Error syncing with Sage 100')
-                                ->body($result['message'])
-                                ->danger()
-                                ->send();
-                        }
+                        $result = $record->syncWithSage();
 
                         Notification::make()
                             ->title('Synced with Sage 100')
@@ -165,7 +147,7 @@ class InventoryItemResource extends Resource
                             ->success()
                             ->send();
                     })
-                // ->visible(fn(InventoryItem $record) => $record->sage_item_code !== null),
+                    ->visible(fn(InventoryItem $record) => $record->sage_item_code !== null),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

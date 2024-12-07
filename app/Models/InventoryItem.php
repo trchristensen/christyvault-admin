@@ -23,7 +23,8 @@ class InventoryItem extends Model
         'reorder_lead_time',
         'storage_location',
         'qr_code',
-        'active'
+        'active',
+        'sage_item_code'
     ];
 
     protected $casts = [
@@ -103,28 +104,43 @@ class InventoryItem extends Model
 
     public function syncWithSage(): array
     {
-        if (!$this->sage_item_code) return [
-            'status' => 'error',
-            'message' => 'Sage item code is not set for this inventory item',
-        ];
+        if (!$this->sage_item_code) {
+            return [
+                'status' => 'error',
+                'message' => 'No Sage item code set for this inventory item',
+            ];
+        }
 
         try {
             $sageService = app(Sage100Service::class);
-            $currentLevel = $sageService->getInventoryLevel($this->sage_item_code);
 
-            $this->current_stock = $currentLevel;
-            $this->save();
+            if (!$sageService->isConfigured() && !$sageService->isTestMode()) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Sage 100 is not properly configured',
+                ];
+            }
+
+            $result = $sageService->getInventoryLevel($this->sage_item_code);
+
+            if ($result['status'] === 'success') {
+                $this->current_stock = $result['quantity'];
+                $this->save();
+
+                return [
+                    'status' => 'success',
+                    'message' => "Updated stock level to {$result['quantity']}",
+                ];
+            }
 
             return [
-                'current_stock' => $currentLevel,
-                'synced_at' => now(),
-                'status' => 'success',
-                'message' => 'Inventory item synced with Sage',
+                'status' => 'error',
+                'message' => $result['message'] ?? 'Unknown error occurred',
             ];
         } catch (\Exception $e) {
             return [
                 'status' => 'error',
-                'message' => 'Error syncing inventory item with Sage: ' . $e->getMessage(),
+                'message' => 'Error syncing with Sage: ' . $e->getMessage(),
             ];
         }
     }

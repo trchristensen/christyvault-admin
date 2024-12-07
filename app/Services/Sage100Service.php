@@ -2,41 +2,52 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
 class Sage100Service
 {
     protected $apiKey;
     protected $baseUrl;
+    protected $isTestMode = true;
 
-    public function __construct(string $apiKey, string $baseUrl)
+    public function __construct()
     {
-        $this->apiKey = $apiKey;
-        $this->baseUrl = $baseUrl;
+        $this->apiKey = config('sage100.api_key');
+        $this->baseUrl = config('sage100.base_url');
+    }
+
+    public function isTestMode(): bool
+    {
+        return $this->isTestMode;
     }
 
     public function getInventoryLevel(string $itemCode): array
     {
-        // TODO: Implement actual Sage 100 API call
-        // This is where you'd make the HTTP request to Sage 100
+        if ($this->isTestMode) {
+            Log::info("Test Mode: Getting inventory level for {$itemCode}");
+            return [
+                'status' => 'success',
+                'quantity' => rand(10, 100), // Random number for testing
+                'message' => 'Test mode: Generated mock data'
+            ];
+        }
 
-        // Example:
-        // return Http::withHeaders([
-        //     'Authorization' => 'Bearer ' . $this->apiKey,
-        // ])->get("{$this->baseUrl}/inventory/{$itemCode}")
-        //     ->json('quantity');
-
-        return [];
+        try {
+            // TODO: Implement real Sage 100 API call
+            throw new \Exception('Sage 100 integration not implemented yet');
+        } catch (\Exception $e) {
+            Log::error("Sage100 API Error: " . $e->getMessage());
+            return [
+                'status' => 'error',
+                'quantity' => null,
+                'message' => 'Could not connect to Sage 100: ' . $e->getMessage()
+            ];
+        }
     }
 
-    public function updateInventoryLevel(string $itemCode, float $quantity)
+    public function isConfigured(): bool
     {
-        // TODO: Implement actual Sage 100 API call
-        // This is where you'd make the HTTP request to Sage 100
-
-        // Example:
-        // return Http::withHeaders([
-        //     'Authorization' => 'Bearer ' . $this->apiKey,
-        // ])->put("{$this->baseUrl}/inventory/{$itemCode}", [
-        //     'quantity' => $quantity
-        // ]);
+        return !empty($this->apiKey) && !empty($this->baseUrl);
     }
 }
