@@ -114,10 +114,10 @@ class InventoryItem extends Model
         try {
             $sageService = app(Sage100Service::class);
 
-            if (!$sageService->isConfigured() && !$sageService->isTestMode()) {
+            if (!$sageService->isConfigured()) {
                 return [
                     'status' => 'error',
-                    'message' => 'Sage 100 is not properly configured',
+                    'message' => 'Sage100 service is not configured'
                 ];
             }
 
