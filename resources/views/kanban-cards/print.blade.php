@@ -9,19 +9,19 @@
 </head>
 
 <body class="bg-gray-100">
-    <div class="container py-6 mx-auto">
+    <div class="container mx-auto">
         <div class="mb-4 no-print">
-            <div class="mb-4">
+            <div class="max-w-xl mb-4 ">
                 <label class="block text-sm font-medium text-gray-700">Select Card Size:</label>
-                <select id="cardSize" class="block w-full mt-1 border-gray-300 rounded-md">
-                    <option value="">Choose a size...</option>
-                    <option value="large" {{ request('size') === 'large' ? 'selected' : '' }}>
+                <select id="cardSize" class="block w-full h-8 mt-1 border-gray-300 rounded-md">
+                    <option class="p-4" value="">Choose a size...</option>
+                    <option class="p-4" value="large" {{ request('size') === 'large' ? 'selected' : '' }}>
                         Large (Letter Size - 8.5" x 11")
                     </option>
-                    <option value="standard" {{ request('size') === 'standard' ? 'selected' : '' }}>
+                    <option class="p-4" value="standard" {{ request('size') === 'standard' ? 'selected' : '' }}>
                         Standard (5" x 7")
                     </option>
-                    <option value="small" {{ request('size') === 'small' ? 'selected' : '' }}>
+                    <option class="p-4" value="small" {{ request('size') === 'small' ? 'selected' : '' }}>
                         Small (3" x 5")
                     </option>
                 </select>

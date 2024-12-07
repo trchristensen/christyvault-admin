@@ -1,4 +1,4 @@
-<div class="mt-4">
+<div class="max-w-md mt-4">
     <h3>Print Options:</h3>
     <div class="space-x-4">
         <a href="{{ route('kanban-cards.print', ['id' => $kanbanCard->id, 'size' => 'large']) }}"
