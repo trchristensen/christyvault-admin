@@ -29,21 +29,61 @@ class KanbanCardResource extends Resource
                     ->relationship('inventoryItem', 'name')
                     ->searchable()
                     ->preload()
-                    ->required(),
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                        if (!$state) return;
+
+                        $inventoryItem = \App\Models\InventoryItem::find($state);
+                        if (!$inventoryItem) return;
+
+                        // Auto-populate fields from inventory item
+                        $set('bin_location', $inventoryItem->storage_location);
+                        $set('reorder_point', $inventoryItem->minimum_stock);
+                        $set('unit_of_measure', $inventoryItem->unit_of_measure);
+                    }),
+
                 Forms\Components\TextInput::make('bin_number')
                     ->maxLength(255),
+
                 Forms\Components\TextInput::make('bin_location')
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->afterStateHydrated(function ($component, $state, Forms\Set $set) {
+                        if ($state) return; // If there's already a value, don't override it
+
+                        $record = $component->getRecord();
+                        if (!$record?->inventoryItem) return;
+
+                        $set('bin_location', $record->inventoryItem->storage_location);
+                    }),
+
                 Forms\Components\TextInput::make('department')
                     ->required()
                     ->maxLength(255),
+
                 Forms\Components\Textarea::make('description')
                     ->maxLength(255)
                     ->columnSpanFull(),
+
                 Forms\Components\TextInput::make('reorder_point')
                     ->numeric()
                     ->required()
-                    ->default(0),
+                    ->default(function (Forms\Get $get) {
+                        $inventoryItem = InventoryItem::find($get('inventory_item_id'));
+                        return $inventoryItem?->minimum_stock ?? 0;
+                    }),
+
+                Forms\Components\TextInput::make('unit_of_measure')
+                    ->required()
+                    ->afterStateHydrated(function ($component, $state, Forms\Set $set) {
+                        if ($state) return; // If there's already a value, don't override it
+
+                        $record = $component->getRecord();
+                        if (!$record?->inventoryItem) return;
+
+                        $set('unit_of_measure', $record->inventoryItem->unit_of_measure);
+                    }),
+
                 Forms\Components\Select::make('status')
                     ->options([
                         KanbanCard::STATUS_ACTIVE => 'Active',

@@ -70,9 +70,10 @@
                 <div class="pt-4 border-t border-gray-200">
                     <p class="text-gray-600 text-[0.8em] uppercase">Reorder Point</p>
                     <p class="font-bold text-[1.8em]">
-                        {{ $kanbanCard->reorder_point }}
-                        @if ($kanbanCard->inventoryItem->unit_of_measure)
-                            {{ $kanbanCard->inventoryItem->unit_of_measure }}
+                        {{-- if the reorder point has .00 as the decimal, don't show it --}}
+                        {{ number_format($kanbanCard->reorder_point, strpos($kanbanCard->reorder_point, '.00') !== false ? 0 : 2) }}
+                        @if ($kanbanCard->unit_of_measure)
+                            {{ $kanbanCard->unit_of_measure }}{{ $kanbanCard->reorder_point > 1 ? 'S' : null }}
                         @endif
                     </p>
                 </div>

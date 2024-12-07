@@ -26,7 +26,8 @@ class KanbanCard extends Model
         'last_scanned_at',
         'scanned_by_user_id',
         'department',
-        'description'
+        'description',
+        'unit_of_measure',
     ];
 
     protected $casts = [
