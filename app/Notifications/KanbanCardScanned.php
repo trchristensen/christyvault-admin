@@ -43,7 +43,7 @@ class KanbanCardScanned extends Notification
             'inventory_item_name' => $this->kanbanCard->inventoryItem->name,
             'bin_location' => $this->kanbanCard->bin_location,
             'bin_number' => $this->kanbanCard->bin_number,
-            'scanned_by' => $this->kanbanCard->scannedBy->name,
+            // 'scanned_by' => $this->kanbanCard->scannedBy->name,
             'scanned_at' => $this->kanbanCard->last_scanned_at->toDateTimeString(),
         ];
     }
