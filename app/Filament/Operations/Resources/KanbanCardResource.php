@@ -31,11 +31,15 @@ class KanbanCardResource extends Resource
                     ->preload()
                     ->required(),
                 Forms\Components\TextInput::make('bin_number')
-                    ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('bin_location')
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('department')
                     ->required()
                     ->maxLength(255),
+                Forms\Components\Textarea::make('description')
+                    ->maxLength(255)
+                    ->columnSpanFull(),
                 Forms\Components\TextInput::make('reorder_point')
                     ->numeric()
                     ->required()
@@ -58,9 +62,15 @@ class KanbanCardResource extends Resource
                 Tables\Columns\TextColumn::make('inventoryItem.name')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('department')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('bin_number')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('bin_location')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->limit(30)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('reorder_point')
                     ->numeric(),

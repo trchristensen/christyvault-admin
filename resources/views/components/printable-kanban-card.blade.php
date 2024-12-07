@@ -11,25 +11,28 @@
                 <h2 class="font-bold leading-tight text-[1.5em]">{{ $kanbanCard->inventoryItem->name }}</h2>
             @endif
             @if ($kanbanCard->inventoryItem->sku)
-                <p class="text-gray-600 text-[0.8em]">SKU: {{ $kanbanCard->inventoryItem->sku }}</p>
+                <p class="text-gray-600 text-[0.8em]">Item #: {{ $kanbanCard->inventoryItem->sku }}</p>
             @endif
         </div>
 
         {{-- Location Info --}}
-        @if ($kanbanCard->bin_number || $kanbanCard->bin_location)
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                @if ($kanbanCard->bin_number)
-                    <div class="text-center">
-                        <p class="text-gray-600 text-[0.7em] uppercase">Bin Number</p>
-                        <p class="font-bold text-[1.2em]">{{ $kanbanCard->bin_number }}</p>
-                    </div>
-                @endif
-                @if ($kanbanCard->bin_location)
-                    <div class="text-center">
-                        <p class="text-gray-600 text-[0.7em] uppercase">Location</p>
-                        <p class="font-bold text-[1.2em]">{{ $kanbanCard->bin_location }}</p>
-                    </div>
-                @endif
+        <div class="grid {{ $kanbanCard->bin_number ? 'grid-cols-2' : 'grid-cols-1' }} gap-4 mb-4">
+            <div class="text-center">
+                <p class="text-gray-600 text-[0.7em] uppercase">Department</p>
+                <p class="font-bold text-[1.2em]">{{ $kanbanCard->department }}</p>
+            </div>
+            @if ($kanbanCard->bin_number)
+                <div class="text-center">
+                    <p class="text-gray-600 text-[0.7em] uppercase">Bin Number</p>
+                    <p class="font-bold text-[1.2em]">{{ $kanbanCard->bin_number }}</p>
+                </div>
+            @endif
+        </div>
+
+        @if ($kanbanCard->description)
+            <div class="mb-4 text-center">
+                <p class="text-gray-600 text-[0.7em] uppercase">Description</p>
+                <p class="text-[0.9em]">{{ $kanbanCard->description }}</p>
             </div>
         @endif
 

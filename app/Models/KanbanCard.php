@@ -23,7 +23,9 @@ class KanbanCard extends Model
         'reorder_point',
         'status',
         'last_scanned_at',
-        'scanned_by_user_id'
+        'scanned_by_user_id',
+        'department',
+        'description'
     ];
 
     protected $casts = [
