@@ -667,7 +667,7 @@ class CalendarWidget extends FullCalendarWidget
             'headerToolbar' => [
                 'left' => 'prev,next today',
                 'center' => 'title',
-                'right' => 'dayGridMonth,timeGridWeek,timeGridDay, multiMonthYear',
+                'right' => 'dayGridMonth,timeGridWeek,timeGridDay,multiMonthYear',
             ],
 
         ];

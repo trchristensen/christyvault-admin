@@ -139,7 +139,7 @@
 }
 
 .trip-event .order-container {
-    @apply rounded-t-none;
+    /* @apply rounded-t-none; */
 }
 
 /* Products list */
