@@ -28,6 +28,28 @@ class KanbanCardController extends Controller
             abort(400, 'Invalid QR code');
         }
 
+        // Handle POST request (form submission)
+        if ($request->isMethod('post')) {
+            if (!$kanbanCard->canBeScanned()) {
+                return view('kanban-cards.scan', [
+                    'kanbanCard' => $kanbanCard,
+                    'error' => 'This card cannot be scanned at this time.'
+                ]);
+            }
+
+            $request->validate([
+                'remaining_quantity' => 'nullable|numeric|min:0'
+            ]);
+
+            $kanbanCard->markAsScanned($request->remaining_quantity);
+
+            return view('kanban-cards.scan', [
+                'kanbanCard' => $kanbanCard,
+                'success' => 'Card successfully scanned!'
+            ]);
+        }
+
+        // Handle GET request (initial scan)
         if (!$kanbanCard->canBeScanned()) {
             return view('kanban-cards.scan', [
                 'kanbanCard' => $kanbanCard,
@@ -35,11 +57,10 @@ class KanbanCardController extends Controller
             ]);
         }
 
-        $kanbanCard->markAsScanned();
-
+        // Show the form for entering quantity
         return view('kanban-cards.scan', [
             'kanbanCard' => $kanbanCard,
-            'success' => 'Card successfully scanned!'
+            'showQuantityForm' => true
         ]);
     }
 
