@@ -107,41 +107,18 @@ class InventoryItem extends Model
         if (!$this->sage_item_code) {
             return [
                 'status' => 'error',
-                'message' => 'No Sage item code set for this inventory item',
+                'message' => 'No Sage item code set for this inventory item'
             ];
         }
 
-        try {
-            $sageService = app(Sage100Service::class);
+        $sageService = app(Sage100Service::class);
+        $result = $sageService->getInventoryLevel($this->sage_item_code);
 
-            if (!$sageService->isConfigured()) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Sage100 service is not configured'
-                ];
-            }
-
-            $result = $sageService->getInventoryLevel($this->sage_item_code);
-
-            if ($result['status'] === 'success') {
-                $this->current_stock = $result['quantity'];
-                $this->save();
-
-                return [
-                    'status' => 'success',
-                    'message' => "Updated stock level to {$result['quantity']}",
-                ];
-            }
-
-            return [
-                'status' => 'error',
-                'message' => $result['message'] ?? 'Unknown error occurred',
-            ];
-        } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error syncing with Sage: ' . $e->getMessage(),
-            ];
+        if ($result['status'] === 'success') {
+            $this->current_stock = $result['quantity'];
+            $this->save();
         }
+
+        return $result;
     }
 }

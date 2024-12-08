@@ -43,17 +43,37 @@
                     </div>
                 @endif
 
-                <div>
-                    <label class="font-medium">Status</label>
-                    {{-- get the capitalized status, not the enum value --}}
-                    <p>{{ ucfirst($kanbanCard->status) }}</p>
-                </div>
-
-                @if ($kanbanCard->last_scanned_at)
+                @if (isset($showQuantityForm))
+                    <form method="POST" class="space-y-4">
+                        @csrf
+                        <div>
+                            <label class="block font-medium text-gray-700">
+                                Remaining Quantity (Optional)
+                            </label>
+                            <input type="number" name="remaining_quantity" step="0.01"
+                                class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Enter remaining quantity">
+                            <p class="mt-1 text-sm text-gray-500">
+                                Leave blank if you don't want to report the quantity
+                            </p>
+                        </div>
+                        <button type="submit"
+                            class="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Submit Scan
+                        </button>
+                    </form>
+                @else
                     <div>
-                        <label class="font-medium">Last Scanned</label>
-                        <p>{{ $kanbanCard->last_scanned_at->diffForHumans() }}</p>
+                        <label class="font-medium">Status</label>
+                        <p>{{ ucfirst($kanbanCard->status) }}</p>
                     </div>
+
+                    @if ($kanbanCard->last_scanned_at)
+                        <div>
+                            <label class="font-medium">Last Scanned</label>
+                            <p>{{ $kanbanCard->last_scanned_at->diffForHumans() }}</p>
+                        </div>
+                    @endif
                 @endif
             </div>
         </div>

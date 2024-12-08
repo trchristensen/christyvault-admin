@@ -1,6 +1,6 @@
 <?php
 
 return [
-    'baseUrl' => env('PROXY_BASE_URL'),
-    'apiKey' => env('PROXY_API_KEY')
+    'base_url' => env('PROXY_BASE_URL'),
+    'api_key' => env('PROXY_API_KEY')
 ];

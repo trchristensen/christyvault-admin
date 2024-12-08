@@ -11,6 +11,7 @@ use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\SvgWriter;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class KanbanCard extends Model
@@ -67,18 +68,17 @@ class KanbanCard extends Model
     }
 
     // Methods
-    public function markAsScanned()
+    public function markAsScanned(?float $remainingQuantity = null)
     {
         $this->update([
             'status' => self::STATUS_PENDING_ORDER,
             'last_scanned_at' => now(),
-            'scanned_by_user_id' => auth()->id()
+            'scanned_by_user_id' => Auth::id()
         ]);
 
         // Send notification to admins
-        // $admins = User::where('is_admin', true)->get();
         $admins = User::where('email', 'tchristensen@christyvault.com')->get();
-        Notification::send($admins, new KanbanCardScanned($this));
+        Notification::send($admins, new KanbanCardScanned($this, $remainingQuantity));
     }
 
     public function canBeScanned(): bool

@@ -17,13 +17,6 @@ class Sage100Service
 
     public function getInventoryLevel(string $itemCode): array
     {
-        if (!$this->isConfigured()) {
-            return [
-                'status' => 'error',
-                'message' => 'Sage100 service is not configured'
-            ];
-        }
-
         if ($this->isTestMode) {
             return [
                 'status' => 'success',
@@ -32,9 +25,18 @@ class Sage100Service
             ];
         }
 
-        return $this->proxyService->post('inventory/level', [
-            'item_code' => $itemCode
-        ]);
+        try {
+            return $this->proxyService->post('inventory/level', [
+                'item_code' => $itemCode
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Sage100Service error: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'quantity' => null,
+                'message' => 'Could not connect to Sage system: ' . $e->getMessage()
+            ];
+        }
     }
 
     public function isConfigured(): bool
@@ -43,7 +45,11 @@ class Sage100Service
             return true;
         }
 
-        // Check if proxy is healthy (which implicitly checks if it's configured)
-        return $this->proxyService->isHealthy();
+        try {
+            return $this->proxyService->isHealthy();
+        } catch (\Exception $e) {
+            Log::error('Sage100Service configuration check failed: ' . $e->getMessage());
+            return false;
+        }
     }
 }

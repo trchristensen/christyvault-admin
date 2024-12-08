@@ -11,11 +11,13 @@ class KanbanCardScanned extends Notification
 {
     use Queueable;
 
-    protected KanbanCard $kanbanCard;
+    protected $kanbanCard;
+    protected $remainingQuantity;
 
-    public function __construct(KanbanCard $kanbanCard)
+    public function __construct(KanbanCard $kanbanCard, ?float $remainingQuantity = null)
     {
         $this->kanbanCard = $kanbanCard;
+        $this->remainingQuantity = $remainingQuantity;
     }
 
     public function via($notifiable): array
@@ -25,15 +27,18 @@ class KanbanCardScanned extends Notification
 
     public function toMail($notifiable): MailMessage
     {
+        $message = "Kanban card scanned for {$this->kanbanCard->inventoryItem->name} in {$this->kanbanCard->department}";
+
+        if ($this->remainingQuantity !== null) {
+            $message .= "\nRemaining Quantity: {$this->remainingQuantity} {$this->kanbanCard->unit_of_measure}";
+        }
+
         return (new MailMessage)
-            ->subject('Kanban Card Scanned - Reorder Required')
-            ->line('A kanban card has been scanned and requires attention.')
-            ->line('Item: ' . $this->kanbanCard->inventoryItem->name)
-            ->line('Location: ' . $this->kanbanCard->bin_location)
-            ->line('Bin Number: ' . $this->kanbanCard->bin_number)
-            ->line('Department: ' . $this->kanbanCard->department)
-            // ->line('Scanned by: ' . $this->kanbanCard->scannedBy->name)
-            ->action('View Details', url('/operations/kanban-cards/' . $this->kanbanCard->id));
+            ->subject('Kanban Card Scanned')
+            ->line($message)
+            ->line("Location: {$this->kanbanCard->bin_location}")
+            ->line("Bin: {$this->kanbanCard->bin_number}")
+            ->action('View Details', url('/admin/kanban-cards/' . $this->kanbanCard->id));
     }
 
     public function toArray($notifiable): array
