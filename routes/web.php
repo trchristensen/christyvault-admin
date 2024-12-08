@@ -34,8 +34,8 @@ Route::get('calendar/leave-feed/{token}', [LeaveCalendarFeedController::class, '
 Route::get('/kanban-cards/{kanbanCard}/qr-code', [KanbanCardController::class, 'downloadQrCode'])
     ->name('kanban-cards.qr-code');
 
-Route::get('/kanban-cards/scan/{id}', [KanbanCardController::class, 'scan'])
-    ->name('kanban-cards.scan');
+Route::get('kanban-cards/{id}/scan', [KanbanCardController::class, 'scan'])->name('kanban-cards.scan');
+Route::post('kanban-cards/{id}/scan', [KanbanCardController::class, 'scan']);
 
 
 Route::get('/kanban-cards/{kanbanCard}/print', [KanbanCardController::class, 'print'])

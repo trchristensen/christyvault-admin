@@ -68,7 +68,7 @@ class KanbanCard extends Model
     }
 
     // Methods
-    public function markAsScanned(?float $remainingQuantity = null)
+    public function markAsScanned()
     {
         $this->update([
             'status' => self::STATUS_PENDING_ORDER,
@@ -76,9 +76,16 @@ class KanbanCard extends Model
             'scanned_by_user_id' => Auth::id()
         ]);
 
-        // Send notification to admins
+        // Send initial notification
         $admins = User::where('email', 'tchristensen@christyvault.com')->get();
-        Notification::send($admins, new KanbanCardScanned($this, $remainingQuantity));
+        Notification::send($admins, new KanbanCardScanned($this));
+    }
+
+    public function updateQuantity(float $quantity)
+    {
+        // Send updated notification with quantity
+        $admins = User::where('email', 'tchristensen@christyvault.com')->get();
+        Notification::send($admins, new KanbanCardScanned($this, $quantity));
     }
 
     public function canBeScanned(): bool
