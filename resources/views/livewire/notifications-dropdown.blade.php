@@ -80,7 +80,8 @@
 
             @if ($this->unreadCount > 5)
                 <div class="px-4 py-3 text-center fi-dropdown-footer bg-gray-50">
-                    <a href="{{ route('operations.notifications') }}"
+                    {{-- <a href="{{ route('operations.notifications') }}" --}}
+                    <a href="#"
                         class="inline-flex items-center space-x-1 text-sm font-medium fi-link text-primary-600 hover:text-primary-500">
                         <span>View all {{ $this->unreadCount }} notifications</span>
                         <x-heroicon-m-arrow-right class="w-4 h-4" />
