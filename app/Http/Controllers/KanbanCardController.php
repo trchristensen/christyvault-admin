@@ -30,13 +30,6 @@ class KanbanCardController extends Controller
 
         // Handle POST request (quantity update)
         if ($request->isMethod('post')) {
-            if (!$kanbanCard->canBeScanned()) {
-                return view('kanban-cards.scan', [
-                    'kanbanCard' => $kanbanCard,
-                    'error' => 'This card cannot be scanned at this time.'
-                ]);
-            }
-
             $request->validate([
                 'remaining_quantity' => 'nullable|numeric|min:0'
             ]);
