@@ -8,7 +8,6 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Notifications\Notification as FilamentNotification;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
@@ -21,8 +20,11 @@ class Notifications extends Page implements HasTable
     protected static ?string $navigationLabel = 'Notifications';
     protected static ?string $title = 'Notifications';
     protected static ?string $slug = 'notifications';
-    
+
     protected static string $view = 'filament.operations.pages.notifications';
+
+
+
 
     public function table(Table $table): Table
     {
@@ -48,21 +50,21 @@ class Notifications extends Page implements HasTable
                     ->label('Time')
                     ->dateTime()
                     ->sortable()
-                    ->description(fn ($record) => $record->created_at->diffForHumans()),
+                    ->description(fn($record) => $record->created_at->diffForHumans()),
                 TextColumn::make('read_at')
                     ->label('Status')
                     ->badge()
-                    ->color(fn ($record) => $record->read_at ? 'success' : 'warning')
-                    ->formatStateUsing(fn ($record) => $record->read_at ? 'Read' : 'Unread'),
+                    ->color(fn($record) => $record->read_at ? 'success' : 'warning')
+                    ->formatStateUsing(fn($record) => $record->read_at ? 'Read' : 'Unread'),
             ])
             ->actions([
                 Action::make('view')
                     ->icon('heroicon-m-eye')
-                    ->url(fn ($record) => $record->data['link'] ?? '#')
+                    ->url(fn($record) => $record->data['link'] ?? '#')
                     ->openUrlInNewTab(),
                 Action::make('mark_as_read')
                     ->icon('heroicon-m-check')
-                    ->hidden(fn ($record) => $record->read_at !== null)
+                    ->hidden(fn($record) => $record->read_at !== null)
                     ->action(function ($record) {
                         $record->markAsRead();
                         FilamentNotification::make()
@@ -108,4 +110,4 @@ class Notifications extends Page implements HasTable
             ])
             ->defaultSort('created_at', 'desc');
     }
-} 
+}

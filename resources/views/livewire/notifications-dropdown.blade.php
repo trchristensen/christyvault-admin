@@ -57,9 +57,7 @@
                                         <p class="text-sm text-gray-600">
                                             Bin: <span
                                                 class="font-medium">{{ $notification->data['bin_number'] }}</span>
-                                            (<span
-                                                class="text-gray-500">{{ $notification->data['bin_location'] }}</span>)
-                                        </p>
+                                            (<span {{-- class="text-gray-500">{{ $notification->data['bin_location'] }}</span>) --}} </p>
                                     @endif
                                     <div class="flex items-center mt-1 space-x-2 text-xs text-gray-500">
                                         <span>{{ $notification->created_at->diffForHumans() }}</span>
@@ -82,14 +80,13 @@
                     <div class="p-8 text-sm text-center text-gray-500 min-h-30 fi-dropdown-list-item">
                         <x-heroicon-o-bell-slash class="w-8 h-8 mx-auto mb-2 text-gray-400" />
                         <p>No unread notifications</p>
-                    </div>
+                    </div>)
                 @endforelse
             </div>
 
             @if ($this->unreadCount > 5)
                 <div class="px-4 py-3 text-center fi-dropdown-footer bg-gray-50">
-                    {{-- <a href="{{ route('operations.notifications') }}" --}}
-                    <a href="#"
+                    <a href="{{ route('filament.operations.pages.notifications') }}"
                         class="inline-flex items-center space-x-1 text-sm font-medium fi-link text-primary-600 hover:text-primary-500">
                         <span>View all {{ $this->unreadCount }} notifications</span>
                         <x-heroicon-m-arrow-right class="w-4 h-4" />
