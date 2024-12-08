@@ -66,6 +66,14 @@
                                         {{-- <span>&bull;</span> --}}
                                         {{-- <span>by {{ $notification->data['scanned_by'] }}</span> --}}
                                     </div>
+                                    <p class="text-sm text-gray-600">
+                                        @if (isset($notification->data['remaining_quantity']))
+                                            <span class="font-medium">
+                                                Remaining: {{ $notification->data['remaining_quantity'] }}
+                                                {{ $notification->data['unit_of_measure'] }}
+                                            </span>
+                                        @endif
+                                    </p>
                                 </div>
                             </div>
                         </div>
