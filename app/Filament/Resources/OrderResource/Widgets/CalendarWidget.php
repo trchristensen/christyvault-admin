@@ -181,6 +181,7 @@ class CalendarWidget extends FullCalendarWidget
         if (event.extendedProps.type === 'trip') {
             const content = document.createElement('div');
             content.innerHTML = `
+            <div class="p-2 pb-0 rounded-t-lg bg-gray-50">
                 <div class="trip-title">
                     <div class="flex flex-wrap items-center justify-between">
                         ${event.extendedProps.driver_name ? `<span class="driver-name">${event.extendedProps.driver_name}</span>` : ''}
@@ -188,6 +189,7 @@ class CalendarWidget extends FullCalendarWidget
                     </div>
                 </div>
                 ${event.extendedProps.status ? `<div class="trip-status">${event.extendedProps.status}</div>` : ''}
+                </div>
                 ${(event.extendedProps.orders || []).map(order => `
                     <div class="order-container status-${(order.status || '').toLowerCase()}" data-order-id="${order.id || ''}" onclick="event.stopPropagation();">
                         ${order.title ? `<div class="order-title">${order.title}</div>` : ''}
@@ -245,7 +247,21 @@ class CalendarWidget extends FullCalendarWidget
                     ${event.extendedProps?.order_date ? `<div class="order-date"><span>Ordered: </span>${event.extendedProps.order_date}</div>` : ''}
                     ${event.extendedProps?.delivery_notes ? `<div class="order-delivery-notes">${event.extendedProps.delivery_notes}</div>` : ''}
                     <div class="pt-2 border-t order-status-wrapper border-gray-300/50">
-                        ${event.extendedProps?.status ? `<div class="overflow-hidden order-status">${event.extendedProps.delivered_at ? 'Delivered ' . event.extendedProps.delivered_at : event.extendedProps.status}</div>` : ''}
+                        ${event.extendedProps?.status ? `<div class="overflow-hidden order-status">
+                            ${(() => {
+                                const status = event.extendedProps.status;
+                                if (status === 'Delivered' && event.extendedProps.delivered_at) {
+                                    return `${status} ${event.extendedProps.delivered_at}`;
+                                }
+                                if (status === 'Out For Delivery' && event.extendedProps.start_time) {
+                                    return `${status} at ${event.extendedProps.start_time}`;
+                                }
+                                if (status === 'Arrived' && event.extendedProps.arrived_at) {
+                                    return `${status} at ${event.extendedProps.arrived_at}`;
+                                }
+                                return status;
+                            })()}
+                        </div>` : ''}
                     </div>
                 </div>
             `;
@@ -559,12 +575,15 @@ class CalendarWidget extends FullCalendarWidget
                             'title' => $order->customer?->name ?? $order->order_number,
                             'status' => Str::headline($order->status),
                             'requested_delivery_date' => $order->requested_delivery_date?->format('M j'),
-                            'delivered_at' => $order->delivered_at?->format('M j'),
+                            'delivered_at' => $order->delivered_at?->format('M j, g:i A'),
                             'order_date' => $order->order_date?->format('M j'),
                             'extendedProps' => [
                                 'location_line1' => $order->location?->address_line1,
                                 'location_line2' => $order->location ?
                                     "{$order->location->city}, {$order->location->state}" : null,
+                                'delivered_at' => $order->delivered_at?->format('M j, g:i A'),
+                                'start_time' => $order->trip?->start_time?->format('g:i A'),
+                                'arrived_at' => $order->arrived_at?->format('M j, g:i A'),
                             ],
                             'products' => $order->orderProducts->map(fn($op) => [
                                 'quantity' => $op->quantity,
@@ -600,7 +619,9 @@ class CalendarWidget extends FullCalendarWidget
                         'status' => Str::headline($order->status),
                         'requested_delivery_date' => $order->requested_delivery_date?->format('M j'),
                         'order_date' => $order->order_date?->format('M j'),
-                        'delivered_at' => $order->delivered_at?->format('M j'),
+                        'arrived_at' => $order->arrived_at?->format('M j, g:i A'),
+                        'start_time' => $order->trip?->start_time?->format('g:i A'),
+                        'delivered_at' => $order->delivered_at?->format('M j, g:i A'),
                         'delivery_notes' => $order->delivery_notes,
                         'location_line1' => $order->location?->address_line1,
                         'location_line2' => $order->location ?

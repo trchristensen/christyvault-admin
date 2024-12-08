@@ -22,7 +22,10 @@ trait HasOrderForm
                         ->required()
                         ->searchable()
                         ->reactive()
-                        ->columnSpanFull()
+                        ->columnSpan([
+                            'sm' => 12,
+                            'md' => 6,
+                        ])
                         ->createOptionForm([
                             Forms\Components\TextInput::make('name')
                                 ->required()
@@ -59,7 +62,10 @@ trait HasOrderForm
                         }),
                     Forms\Components\Select::make('location_id')
                         ->label('Delivery Location')
-                        ->columnSpanFull()
+                        ->columnSpan([
+                            'sm' => 12,
+                            'md' => 6,
+                        ])
                         ->options(function (callable $get) {
                             $customerId = $get('customer_id');
                             if (!$customerId) return [];
@@ -116,16 +122,28 @@ trait HasOrderForm
                         ->disabled(fn(callable $get) => empty($get('customer_id'))),
                     Forms\Components\DatePicker::make('order_date')
                         ->required()
+                        ->columnSpan([
+                            'sm' => 6,
+                            'md' => 4,
+                        ])
                         ->native(false)
                         ->default(now()->toDateString()),
                     Forms\Components\DatePicker::make('requested_delivery_date')
                         ->required()
                         ->native(false)
+                        ->columnSpan([
+                            'sm' => 6,
+                            'md' => 4,
+                        ])
                         // ->default(now()),
                         ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
                     Forms\Components\DatePicker::make('assigned_delivery_date')
-                        ->native(false),
-                        // ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
+                        ->native(false)
+                        ->columnSpan([
+                            'sm' => 6,
+                            'md' => 4,
+                        ]),
+                    // ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
 
                     // ->minDate(today()),
                     Forms\Components\Select::make('status')
@@ -135,31 +153,46 @@ trait HasOrderForm
                                 ->title()
                                 ->toString()];
                         }))
+                        ->columnSpan([
+                            'sm' => 6,
+                            'md' => 4,
+                        ])
                         ->default(OrderStatus::PENDING->value)
                         ->reactive()
                         ->required(),
                     Forms\Components\TimePicker::make('delivery_time')
                         ->label("Deliver By")
                         ->nullable()
+                        ->columnSpan([
+                            'sm' => 6,
+                            'md' => 4,
+                        ])
                         ->seconds(false),
                     Forms\Components\DateTimePicker::make('service_date')
                         ->nullable()
                         ->native(false)
-                        ->seconds(false),
+                        ->seconds(false)
+                        ->columnSpan([
+                            'sm' => 6,
+                            'md' => 4,
+                        ]),
                     Forms\Components\Textarea::make('special_instructions')
                         ->columnSpanFull(),
                 ])
-                ->columns(2),
+                ->columns(12),
             Forms\Components\Section::make('Products')
                 ->compact()
                 ->schema([
                     Forms\Components\Repeater::make('orderProducts')
                         ->label(false)
-                        ->addActionLabel('Add Product')
+                        ->addActionLabel('Add a Product')
                         ->relationship()
                         ->schema([
                             Forms\Components\Select::make('product_id')
-                                ->columnSpan(12)
+                                ->columnSpan([
+                                    'sm' => 12,
+                                    'md' => 5,
+                                ])
                                 ->label('Product')
                                 ->options(
                                     Product::query()
@@ -182,7 +215,10 @@ trait HasOrderForm
                                 ),
                             Forms\Components\Toggle::make('fill_load')
                                 ->label('Fill out load')
-                                ->columnSpan(2)
+                                ->columnSpan([
+                                    'sm' => 1,
+                                    'md' => 1,
+                                ])
                                 ->inline(false)
                                 ->reactive()
                                 ->afterStateUpdated(function ($state, callable $set) {
@@ -192,14 +228,20 @@ trait HasOrderForm
                                 }),
                             Forms\Components\TextInput::make('quantity')
                                 ->numeric()
-                                ->columnSpan(5)
+                                ->columnSpan([
+                                    'sm' => 2,
+                                    'md' => 1,
+                                ])
                                 ->default(1)
                                 ->required(fn(Forms\Get $get): bool => !$get('fill_load'))
                                 ->disabled(fn(Forms\Get $get): bool => $get('fill_load'))
                                 ->dehydrated(fn(Forms\Get $get): bool => !$get('fill_load')),
                             Forms\Components\TextInput::make('quantity_delivered')
                                 ->label('Delivered')
-                                ->columnSpan(5)
+                                ->columnSpan([
+                                    'sm' => 2,
+                                    'md' => 1,
+                                ])
                                 ->numeric()
                                 // disabled if status is not delivered. the line below is not working
                                 ->disabled(function (\Filament\Forms\Get $get): bool {
@@ -215,10 +257,13 @@ trait HasOrderForm
                                 ->default(0),
                             Forms\Components\TextInput::make('location')
                                 ->nullable()
-                                ->columnSpan(6),
+                                ->columnSpan([
+                                    'sm' => 6,
+                                    'md' => 4,
+                                ]),
                             Forms\Components\TextInput::make('notes')
                                 ->nullable()
-                                ->columnSpan(6)
+                                ->columnSpan(12)
                         ])
                         ->columns(12)
                 ]),
