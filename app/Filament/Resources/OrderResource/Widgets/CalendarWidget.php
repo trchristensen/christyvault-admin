@@ -195,7 +195,6 @@ class CalendarWidget extends FullCalendarWidget
                         ${order.title ? `<div class="order-title">${order.title}</div>` : ''}
                         ${(order.extendedProps?.location_line1 || order.extendedProps?.location_line2) ? `
                             <div class="order-address">
-                                ${order.extendedProps?.location_line1 ? `<div>${order.extendedProps.location_line1}</div>` : ''}
                                 ${order.extendedProps?.location_line2 ? `<div>${order.extendedProps.location_line2}</div>` : ''}
                             </div>
                         ` : ''}
@@ -239,7 +238,6 @@ class CalendarWidget extends FullCalendarWidget
                     ${event.title ? `<div class="order-title">${event.title}</div>` : ''}
                     ${(event.extendedProps?.location_line1 || event.extendedProps?.location_line2) ? `
                         <div class="order-address">
-                            ${event.extendedProps?.location_line1 ? `<div>${event.extendedProps.location_line1}</div>` : ''}
                             ${event.extendedProps?.location_line2 ? `<div>${event.extendedProps.location_line2}</div>` : ''}
                         </div>
                     ` : ''}
