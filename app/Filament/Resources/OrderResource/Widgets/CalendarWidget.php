@@ -505,7 +505,7 @@ class CalendarWidget extends FullCalendarWidget
                     Actions\EditAction::make(),
                     Actions\DeleteAction::make(),
                     Action::make('print')
-                        ->label('Print')
+                        ->label('Print Delivery Tag')
                         ->color('gray')
                         ->icon('heroicon-o-printer')
                         ->url(fn(Order $record) => route('orders.print', ['order' => $record]))
