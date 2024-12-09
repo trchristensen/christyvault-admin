@@ -241,25 +241,27 @@ class CalendarWidget extends FullCalendarWidget
                             ${event.extendedProps?.location_line2 ? `<div>${event.extendedProps.location_line2}</div>` : ''}
                         </div>
                     ` : ''}
-                    ${event.extendedProps?.requested_delivery_date ? `<div class="order-requested-delivery-date"><span>Requested: </span>${event.extendedProps.requested_delivery_date}</div>` : ''}
-                    ${event.extendedProps?.order_date ? `<div class="order-date"><span>Ordered: </span>${event.extendedProps.order_date}</div>` : ''}
-                    ${event.extendedProps?.delivery_notes ? `<div class="order-delivery-notes">${event.extendedProps.delivery_notes}</div>` : ''}
                     <div class="pt-2 border-t order-status-wrapper border-gray-300/50">
-                        ${event.extendedProps?.status ? `<div class="overflow-hidden order-status">
-                            ${(() => {
-                                const status = event.extendedProps.status;
-                                if (status === 'Delivered' && event.extendedProps.delivered_at) {
-                                    return `${status} ${event.extendedProps.delivered_at}`;
-                                }
-                                if (status === 'Out For Delivery' && event.extendedProps.start_time) {
-                                    return `${status} at ${event.extendedProps.start_time}`;
-                                }
-                                if (status === 'Arrived' && event.extendedProps.arrived_at) {
-                                    return `${status} at ${event.extendedProps.arrived_at}`;
-                                }
-                                return status;
-                            })()}
-                        </div>` : ''}
+                        ${(() => {
+                            const status = event.extendedProps.status;
+                            let statusText = status;
+
+                            // Show different date info based on status
+                            if (status === 'Delivered' && event.extendedProps.delivered_at) {
+                                statusText = `${status} ${event.extendedProps.delivered_at}`;
+                            }
+                            else if (status === 'Out For Delivery' && event.extendedProps.start_time) {
+                                statusText = `${status} at ${event.extendedProps.start_time}`;
+                            }
+                            else if (status === 'Pending') {
+                                statusText = `${status} - Req: ${event.extendedProps.requested_delivery_date}`;
+                            }
+                            else if (status === 'Confirmed') {
+                                statusText = `${status} - Ord: ${event.extendedProps.order_date}`;
+                            }
+
+                            return `<div class="overflow-hidden order-status">${statusText}</div>`;
+                        })()}
                     </div>
                 </div>
             `;
