@@ -98,14 +98,6 @@ class CustomerResource extends Resource
                                     $component->state($record->locations()->first()->postal_code);
                                 }
                             }),
-                        Forms\Components\TextInput::make('location.country')
-                            ->default('USA')
-                            ->required()
-                            ->afterStateHydrated(function ($component, $state, $record) {
-                                if ($record && $record->locations()->first()) {
-                                    $component->state($record->locations()->first()->country);
-                                }
-                            }),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('location.latitude')
