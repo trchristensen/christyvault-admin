@@ -55,7 +55,7 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('customer.name')
                     ->searchable()
                     ->sortable()
-                    ->description(fn(Order $record): string => $record->location->full_address),
+                    ->description(fn(Order $record): string => $record->location->full_address ?? ''),
 
 
                 Tables\Columns\TextColumn::make('requested_delivery_date')

@@ -25,10 +25,14 @@
         </div>
         <div class="grid justify-between w-full grid-cols-2 gap-4">
 
-            <div>
+            <div class="flex flex-col items-start gap-1">
 
                 <p class="font-bold">{{ $record->customer->name }}</p>
-                <p>{{ $record->location->full_address }}</p>
+                @if($record->customer?->locations->first())
+                    <p>{{ $record->customer->locations->first()->full_address }}</p>
+                @else
+                    <p></p>
+                @endif
 
                 @if ($record->customer->phone)
                     <div class="flex items-center gap-2">
@@ -48,14 +52,7 @@
                     <p class="font-medium">{{ $record->order_date?->format('M j, Y') }}</p>
                 </div>
             </div>
-            <!-- <div>
-                <p class="text-sm text-gray-600">Assigned Date</p>
-                <p class="font-medium">{{ $record->assigned_delivery_date?->format('M j, Y') }}</p>
-            </div> -->
-            <!-- <div class="col-span-2">
-                <p class="text-sm text-gray-600">Delivery Address</p>
-                <p class="font-medium">{{ $record->location->full_address }}</p>
-            </div> -->
+
         </div>
     </div>
 
