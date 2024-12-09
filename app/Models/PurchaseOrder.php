@@ -30,6 +30,7 @@ class PurchaseOrder extends Model
     const STATUS_SUBMITTED = 'submitted';
     const STATUS_RECEIVED = 'received';
     const STATUS_CANCELLED = 'cancelled';
+    const STATUS_AWAITING_INVOICE = 'awaiting_invoice';
 
     public static function getStatuses()
     {
@@ -38,6 +39,7 @@ class PurchaseOrder extends Model
             self::STATUS_SUBMITTED,
             self::STATUS_RECEIVED,
             self::STATUS_CANCELLED,
+            self::STATUS_AWAITING_INVOICE,
         ];
     }
 
@@ -90,6 +92,11 @@ class PurchaseOrder extends Model
     public function cancel()
     {
         $this->update(['status' => self::STATUS_CANCELLED]);
+    }
+
+    public function markAsAwaitingInvoice()
+    {
+        $this->update(['status' => self::STATUS_AWAITING_INVOICE]);
     }
 
     public function getTotalItemsAttribute()
