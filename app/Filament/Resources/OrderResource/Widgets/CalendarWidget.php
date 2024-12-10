@@ -97,7 +97,6 @@ class CalendarWidget extends FullCalendarWidget
         // Check if we clicked on an order within a trip
         if (isset($event['jsEvent']['target']['dataset']['orderId'])) {
             $orderId = $event['jsEvent']['target']['dataset']['orderId'];
-            Log::info('Clicked on order:', ['orderId' => $orderId]);
 
             $this->record = Order::with(['customer', 'orderProducts.product'])->find($orderId);
             $this->mountAction('view');
@@ -431,7 +430,25 @@ class CalendarWidget extends FullCalendarWidget
                     } else {
                         // Get the mounted action data
                         $mountedData = json_decode(request()->input('components.0.snapshot'), true);
+
+                        // Custom function to remove depth limitation
+                        $deepDecode = function ($data) use (&$deepDecode) {
+                            if (is_string($data) && str_contains($data, 'Over 9 levels deep')) {
+                                // This is a truncated value, get the original from the request
+                                return json_decode($data, true);
+                            }
+
+                            if (is_array($data)) {
+                                return array_map($deepDecode, $data);
+                            }
+
+                            return $data;
+                        };
+
+
+
                         $formData = $mountedData['data']['mountedActionsData'][0][0][0] ?? [];
+
 
                         // Create the order
                         $order = Order::create(collect($data)->except(['type', 'orderProducts'])->toArray());
@@ -441,19 +458,33 @@ class CalendarWidget extends FullCalendarWidget
                             $products = $formData['orderProducts'][0];
 
                             foreach ($products as $uuid => $product) {
-                                if ($uuid === 's') continue;
+                                // Skip the state array
+                                if ($uuid === 's') {
+                                    continue;
+                                }
 
-                                // Get the product data from the first element of the product array
+                                // Get the first element which contains the actual product data
                                 $productData = $product[0];
 
-                                $order->orderProducts()->create([
-                                    'product_id' => $productData['product_id'],
-                                    'fill_load' => $productData['fill_load'] ?? false,
-                                    'quantity' => $productData['quantity'] ?? null,
-                                    'price' => $productData['price'] ?? 0,
-                                    'location' => $productData['location'] ?? null,
-                                    'notes' => $productData['notes'] ?? null,
-                                ]);
+
+                                try {
+                                    $orderProduct = new \App\Models\OrderProduct([
+                                        'product_id' => $productData['product_id'],
+                                        'fill_load' => $productData['fill_load'] === true,
+                                        'quantity' => (int)$productData['quantity'],
+                                        'price' => (float)$productData['price'],
+                                        'location' => $productData['location'],
+                                        'notes' => $productData['notes'],
+                                    ]);
+
+                                    $order->orderProducts()->save($orderProduct);
+                                } catch (\Exception $e) {
+                                    Log::error('Failed to create order product:', [
+                                        'error' => $e->getMessage(),
+                                        'trace' => $e->getTraceAsString(),
+                                        'productData' => $productData
+                                    ]);
+                                }
                             }
                         }
 
@@ -505,7 +536,7 @@ class CalendarWidget extends FullCalendarWidget
                     'filament.resources.order-resource.custom-view',
                     ['record' => $record]
                 ))
-                ->modalHeading(fn($record) => $record->order_number)
+                // ->modalHeading(fn($record) => $record->order_number)
                 ->form([])
                 ->modalFooterActions([
                     Actions\EditAction::make()

@@ -252,7 +252,6 @@ trait HasOrderForm
                                 // disabled if status is not delivered. the line below is not working
                                 ->disabled(function (\Filament\Forms\Get $get): bool {
                                     $status = $get('../../status');
-                                    logger()->info('status', ['status' => $status]);
                                     return !in_array($status, [
                                         OrderStatus::DELIVERED->value,
                                         OrderStatus::INVOICED->value,
@@ -262,6 +261,7 @@ trait HasOrderForm
                             Forms\Components\Hidden::make('price')
                                 ->default(0),
                             Forms\Components\TextInput::make('location')
+                                ->live()
                                 ->nullable()
                                 ->columnSpan([
                                     'default' => 12,
@@ -270,6 +270,7 @@ trait HasOrderForm
                                     'lg' => 4,
                                 ]),
                             Forms\Components\TextInput::make('notes')
+                                ->live()
                                 ->nullable()
                                 ->columnSpan(12)
                         ])
