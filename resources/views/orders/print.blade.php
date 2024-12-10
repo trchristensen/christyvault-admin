@@ -264,7 +264,7 @@
             </div>
             @if ($order->delivery_time)
                 <div class="delivery-time">
-                    {{ $order->delivery_time->format('g:i A') }}
+                    {{ date('g:i A', strtotime($order->delivery_time)) }}
                 </div>
             @endif
 

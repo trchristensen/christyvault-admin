@@ -37,6 +37,7 @@ class PurchaseOrderResource extends Resource
                         'draft' => 'Draft',
                         'submitted' => 'Submitted',
                         'received' => 'Received',
+                        'awaiting_invoice' => 'Awaiting Invoice',
                         'cancelled' => 'Cancelled',
                     ])
                     ->default('draft')
@@ -78,11 +79,20 @@ class PurchaseOrderResource extends Resource
                     ->searchable(),
 
                 Tables\Columns\BadgeColumn::make('status')
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'draft' => 'Draft',
+                        'submitted' => 'Submitted',
+                        'received' => 'Received',
+                        'awaiting_invoice' => 'Awaiting Invoice',
+                        'cancelled' => 'Cancelled',
+                        default => $state,
+                    })
                     ->colors([
                         'warning' => 'draft',
                         'primary' => 'submitted',
                         'success' => 'received',
                         'danger' => 'cancelled',
+                        'info' => 'awaiting_invoice',
                     ]),
 
                 Tables\Columns\TextColumn::make('order_date')

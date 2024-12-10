@@ -298,7 +298,7 @@ class CalendarWidget extends FullCalendarWidget
                 ->createAnother(false)
                 ->label('Create New Event')
                 ->modalHeading(null)
-                ->modalWidth('2xl')
+                ->modalWidth('5xl')
                 ->record(fn() => $this->record = null)
                 ->form([
                     Select::make('type')
@@ -485,12 +485,13 @@ class CalendarWidget extends FullCalendarWidget
 
     protected function viewAction(): Action
     {
-
-        // need to return a different view based on the record type
         if ($this->record instanceof Trip) {
             return Actions\ViewAction::make('view')
+                ->stickyModalFooter()
                 ->modalFooterActions([
-                    Actions\EditAction::make(),
+                    Actions\EditAction::make()
+                        ->modalWidth('7xl')
+                        ->stickyModalFooter(),
                     Actions\DeleteAction::make(),
                     Action::make('close')
                         ->label('Close')
@@ -499,6 +500,7 @@ class CalendarWidget extends FullCalendarWidget
                 ]);
         } else {
             return Actions\ViewAction::make('view')
+                ->stickyModalFooter()
                 ->modalContent(fn($record) => view(
                     'filament.resources.order-resource.custom-view',
                     ['record' => $record]
@@ -506,7 +508,9 @@ class CalendarWidget extends FullCalendarWidget
                 ->modalHeading(fn($record) => $record->order_number)
                 ->form([])
                 ->modalFooterActions([
-                    Actions\EditAction::make(),
+                    Actions\EditAction::make()
+                        ->modalWidth('7xl')
+                        ->stickyModalFooter(),
                     Actions\DeleteAction::make(),
                     Action::make('print')
                         ->label('Print Delivery Tag')
@@ -514,12 +518,7 @@ class CalendarWidget extends FullCalendarWidget
                         ->icon('heroicon-o-printer')
                         ->url(fn(Order $record) => route('orders.print', ['order' => $record]))
                         ->openUrlInNewTab(),
-                ])
-                ->action(function ($data) {
-                    if ($data['print'] ?? false) {
-                        return redirect()->route('orders.print', ['order' => $this->record]);
-                    }
-                });
+                ]);
         }
     }
 
@@ -683,7 +682,7 @@ class CalendarWidget extends FullCalendarWidget
                 ->modalWidth('2xl')
                 ->form(fn() => $this->getFormSchema()),
             EditAction::make()
-                ->modalWidth('2xl')
+                ->modalWidth('5xl')
                 ->stickyModalFooter()
                 ->form(fn() => $this->getFormSchema())
                 ->action(function (array $data) {

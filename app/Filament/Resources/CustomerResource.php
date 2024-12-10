@@ -38,7 +38,82 @@ class CustomerResource extends Resource
                             ->tel()
                             ->maxLength(255),
                     ]),
-            ]);
+
+                Forms\Components\Section::make('Location')
+                    ->schema([
+                        Forms\Components\Select::make('location.location_type')
+                            ->options([
+                                'business' => 'Business',
+                                'residential' => 'Residential',
+                                'funeral_home' => 'Funeral Home',
+                                'cemetery' => 'Cemetery',
+                                'other' => 'Other',
+                            ])
+                            ->default('cemetery')
+                            ->required()
+                            ->native(false)
+                            ->afterStateHydrated(function ($component, $state, $record) {
+                                if ($record && $record->locations()->first()) {
+                                    $component->state($record->locations()->first()->location_type);
+                                }
+                            }),
+                        Forms\Components\TextInput::make('location.address_line1')
+                            ->label('Address Line 1')
+                            ->required()
+                            ->maxLength(255)
+                            ->afterStateHydrated(function ($component, $state, $record) {
+                                if ($record && $record->locations()->first()) {
+                                    $component->state($record->locations()->first()->address_line1);
+                                }
+                            }),
+                        Forms\Components\TextInput::make('location.address_line2')
+                            ->label('Address Line 2')
+                            ->maxLength(255)
+                            ->afterStateHydrated(function ($component, $state, $record) {
+                                if ($record && $record->locations()->first()) {
+                                    $component->state($record->locations()->first()->address_line2);
+                                }
+                            }),
+                        Forms\Components\TextInput::make('location.city')
+                            ->required()
+                            ->maxLength(255)
+                            ->afterStateHydrated(function ($component, $state, $record) {
+                                if ($record && $record->locations()->first()) {
+                                    $component->state($record->locations()->first()->city);
+                                }
+                            }),
+                        Forms\Components\TextInput::make('location.state')
+                            ->required()
+                            ->maxLength(255)
+                            ->afterStateHydrated(function ($component, $state, $record) {
+                                if ($record && $record->locations()->first()) {
+                                    $component->state($record->locations()->first()->state);
+                                }
+                            }),
+                        Forms\Components\TextInput::make('location.postal_code')
+                            ->required()
+                            ->maxLength(20)
+                            ->afterStateHydrated(function ($component, $state, $record) {
+                                if ($record && $record->locations()->first()) {
+                                    $component->state($record->locations()->first()->postal_code);
+                                }
+                            }),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('location.latitude')
+                                    ->numeric()
+                                    ->rules(['nullable', 'numeric', 'between:-90,90'])
+                                    ->step(0.000001)
+                                    ->placeholder('e.g. 41.878113'),
+                                Forms\Components\TextInput::make('location.longitude')
+                                    ->numeric()
+                                    ->rules(['nullable', 'numeric', 'between:-180,180'])
+                                    ->step(0.000001)
+                                    ->placeholder('e.g. -87.629799'),
+                            ]),
+                    ])->columns(2),
+            ])
+            ->statePath('data');
     }
 
     public static function table(Table $table): Table
@@ -84,8 +159,7 @@ class CustomerResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\LocationsRelationManager::class,
-
+            // Remove the LocationsRelationManager
         ];
     }
 

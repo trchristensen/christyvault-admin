@@ -121,7 +121,8 @@ class LocationsRelationManager extends RelationManager
                             ->default(0)
                             ->hidden(),
                     ]),
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->visible(fn ($livewire) => !$livewire->getOwnerRecord()->locations()->exists()),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

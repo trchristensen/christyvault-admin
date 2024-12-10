@@ -54,9 +54,14 @@ class Location extends Model
             ->withPivot('type', 'sequence')
             ->withTimestamps();
     }
+    
 
     public function getFullAddressAttribute(): string
     {
+        if (!$this->address_line1) {
+            return '';
+        }
+
         return collect([
             $this->address_line1,
             $this->address_line2,

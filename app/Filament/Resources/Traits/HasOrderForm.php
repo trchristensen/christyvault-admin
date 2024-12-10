@@ -18,108 +18,108 @@ trait HasOrderForm
                 ->schema([
                     Forms\Components\Select::make('customer_id')
                         ->label('Customer')
-                        ->options(Customer::pluck('name', 'id'))
+                        ->options(function() {
+                            return Customer::query()
+                                ->with('locations')
+                                ->get()
+                                ->mapWithKeys(function($customer) {
+                                    return [$customer->id => view('filament.components.customer-option', [
+                                        'name' => $customer->name,
+                                        'location' => $customer->locations()->first()?->full_address,
+                                        'email' => $customer->email,
+                                        'phone' => $customer->phone,
+                                    ])->render()];
+                                });
+                        })
                         ->required()
-                        ->searchable()
-                        ->reactive()
                         ->columnSpan([
                             'sm' => 12,
                             'md' => 6,
                         ])
-                        ->createOptionForm([
-                            Forms\Components\TextInput::make('name')
-                                ->required()
-                                ->maxLength(255),
-                            Forms\Components\TextInput::make('email')
-                                ->email()
-
-                                ->maxLength(255),
-                            Forms\Components\TextInput::make('phone')
-                                ->tel()
-
-                                ->maxLength(255),
-                        ])
-                        ->createOptionUsing(function (array $data) {
-                            return Customer::create([
-                                'name' => $data['name'],
-                                'email' => $data['email'],
-                                'phone' => $data['phone'],
-                            ])->id;
-                        })
+                        ->searchable()
+                        ->allowHtml()
+                        ->reactive()
                         ->afterStateUpdated(function (callable $set, $state) {
                             if (!$state) {
                                 $set('location_id', null);
                                 return;
                             }
 
-                            $locations = Customer::find($state)?->locations()->get();
-
-                            if ($locations && $locations->count() === 1) {
-                                $set('location_id', $locations->first()->id);
-                            } else {
-                                $set('location_id', null);
+                            $location = Customer::find($state)?->locations()->first();
+                            if ($location) {
+                                $set('location_id', $location->id);
                             }
-                        }),
-                    Forms\Components\Select::make('location_id')
-                        ->label('Delivery Location')
-                        ->columnSpan([
-                            'sm' => 12,
-                            'md' => 6,
-                        ])
-                        ->options(function (callable $get) {
-                            $customerId = $get('customer_id');
-                            if (!$customerId) return [];
-
-                            return Customer::find($customerId)
-                                ?->locations()
-                                ->get()
-                                ->mapWithKeys(fn($location) => [
-                                    $location->id => $location->full_address
-                                ]) ?? [];
                         })
-                        ->required()
-                        ->searchable()
                         ->createOptionForm([
                             Forms\Components\TextInput::make('name')
                                 ->required()
+                                ->maxLength(255)
+                                ->reactive()
+                                ->afterStateUpdated(fn ($state, callable $set) => $set('location.name', $state)),
+                            Forms\Components\TextInput::make('email')
+                                ->email()
                                 ->maxLength(255),
-                            Forms\Components\TextInput::make('address_line1')
-                                ->required()
+                            Forms\Components\TextInput::make('phone')
+                                ->tel()
                                 ->maxLength(255),
-                            Forms\Components\TextInput::make('address_line2')
-                                ->maxLength(255),
-                            Forms\Components\TextInput::make('city')
-                                ->required()
-                                ->maxLength(255),
-                            Forms\Components\TextInput::make('state')
-                                ->required()
-                                ->maxLength(255),
-                            Forms\Components\TextInput::make('postal_code')
-                                ->required()
-                                ->maxLength(20),
-                            Forms\Components\Select::make('location_type')
-                                ->options([
-                                    'business' => 'Business',
-                                    'residential' => 'Residential',
-                                    'funeral_home' => 'Funeral Home',
-                                    'cemetery' => 'Cemetery',
-                                    'other' => 'Other',
+                            Forms\Components\Section::make('Location')
+                                ->schema([
+                                    Forms\Components\Hidden::make('location.name'),
+                                    Forms\Components\TextInput::make('location.address_line1')
+                                        ->required()
+                                        ->maxLength(255),
+                                    Forms\Components\TextInput::make('location.address_line2')
+                                        ->maxLength(255),
+                                    Forms\Components\TextInput::make('location.city')
+                                        ->required()
+                                        ->maxLength(255),
+                                    Forms\Components\TextInput::make('location.state')
+                                        ->required()
+                                        ->maxLength(255),
+                                    Forms\Components\TextInput::make('location.postal_code')
+                                        ->required()
+                                        ->maxLength(20),
+                                    Forms\Components\Select::make('location.location_type')
+                                        ->options([
+                                            'business' => 'Business',
+                                            'residential' => 'Residential',
+                                            'funeral_home' => 'Funeral Home',
+                                            'cemetery' => 'Cemetery',
+                                            'other' => 'Other',
+                                        ])
+                                        ->required(),
                                 ])
-                                ->required(),
                         ])
-                        ->createOptionUsing(function (array $data, callable $get) {
-                            $customerId = $get('customer_id');
-                            return Customer::find($customerId)->locations()->create([
+                        ->createOptionUsing(function (array $data, $set) {
+                            $customer = Customer::create([
                                 'name' => $data['name'],
-                                'address_line1' => $data['address_line1'],
-                                'address_line2' => $data['address_line2'],
-                                'city' => $data['city'],
-                                'state' => $data['state'],
-                                'postal_code' => $data['postal_code'],
-                                'location_type' => $data['location_type'],
-                            ])->id;
-                        })
-                        ->disabled(fn(callable $get) => empty($get('customer_id'))),
+                                'email' => $data['email'],
+                                'phone' => $data['phone'],
+                            ]);
+
+                            $location = $customer->locations()->create([
+                                'name' => $data['location']['name'],
+                                'address_line1' => $data['location']['address_line1'],
+                                'address_line2' => $data['location']['address_line2'],
+                                'city' => $data['location']['city'],
+                                'state' => $data['location']['state'],
+                                'postal_code' => $data['location']['postal_code'],
+                                'location_type' => $data['location']['location_type'],
+                            ]);
+
+                            $set('location_id', $location->id);
+
+                            return $customer->id;
+                        }),
+                    Forms\Components\Hidden::make('location_id')
+                        ->afterStateUpdated(function ($state, $set, $get) {
+                            if ($customerId = $get('customer_id')) {
+                                $customer = Customer::find($customerId);
+                                if ($customer && $customer->locations()->first()) {
+                                    $set('location_id', $customer->locations()->first()->id);
+                                }
+                            }
+                        }),
                     Forms\Components\DatePicker::make('order_date')
                         ->required()
                         ->columnSpan([

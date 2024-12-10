@@ -57,9 +57,6 @@ class LocationResource extends Resource
                         Forms\Components\TextInput::make('postal_code')
                             ->required()
                             ->maxLength(20),
-                        Forms\Components\TextInput::make('country')
-                            ->default('USA')
-                            ->required(),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Coordinates')

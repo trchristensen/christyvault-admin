@@ -24,6 +24,9 @@ use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\Facades\Blade;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Livewire\Livewire;
+use App\Filament\Operations\Widgets\InventoryStatsWidget;
+use App\Filament\Operations\Widgets\LatestNotificationsWidget;
+use App\Filament\Operations\Widgets\RecentPurchaseOrdersWidget;
 
 class OperationsPanelProvider extends PanelProvider
 {
@@ -35,6 +38,7 @@ class OperationsPanelProvider extends PanelProvider
             ->login()
             ->passwordReset()
             ->profile()
+            ->spa()
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -66,8 +70,9 @@ class OperationsPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Operations/Widgets'), for: 'App\\Filament\\Operations\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                InventoryStatsWidget::class,
+                LatestNotificationsWidget::class,
+                RecentPurchaseOrdersWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
