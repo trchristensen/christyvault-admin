@@ -38,7 +38,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('60px')
             ->default()
             ->id('admin')
-            ->path('admin')
+            ->path('')
             ->login()
             ->passwordReset()
             ->profile()
