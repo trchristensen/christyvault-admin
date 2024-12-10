@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use Filament\Forms;
 use Carbon\Carbon;
+use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 
 trait HasOrderForm
 {
@@ -18,11 +19,11 @@ trait HasOrderForm
                 ->schema([
                     Forms\Components\Select::make('customer_id')
                         ->label('Customer')
-                        ->options(function() {
+                        ->options(function () {
                             return Customer::query()
                                 ->with('locations')
                                 ->get()
-                                ->mapWithKeys(function($customer) {
+                                ->mapWithKeys(function ($customer) {
                                     return [$customer->id => view('filament.components.customer-option', [
                                         'name' => $customer->name,
                                         'location' => $customer->locations()->first()?->full_address,
@@ -34,7 +35,7 @@ trait HasOrderForm
                         ->required()
                         ->columnSpan([
                             'sm' => 12,
-                            'md' => 6,
+                            'md' => 8,
                         ])
                         ->searchable()
                         ->allowHtml()
@@ -55,13 +56,12 @@ trait HasOrderForm
                                 ->required()
                                 ->maxLength(255)
                                 ->reactive()
-                                ->afterStateUpdated(fn ($state, callable $set) => $set('location.name', $state)),
+                                ->afterStateUpdated(fn($state, callable $set) => $set('location.name', $state)),
                             Forms\Components\TextInput::make('email')
                                 ->email()
                                 ->maxLength(255),
-                            Forms\Components\TextInput::make('phone')
-                                ->tel()
-                                ->maxLength(255),
+                            PhoneInput::make('phone')->defaultCountry('US'),
+
                             Forms\Components\Section::make('Location')
                                 ->schema([
                                     Forms\Components\Hidden::make('location.name'),
@@ -120,32 +120,6 @@ trait HasOrderForm
                                 }
                             }
                         }),
-                    Forms\Components\DatePicker::make('order_date')
-                        ->required()
-                        ->columnSpan([
-                            'sm' => 6,
-                            'md' => 4,
-                        ])
-                        ->native(false)
-                        ->default(now()->toDateString()),
-                    Forms\Components\DatePicker::make('requested_delivery_date')
-                        ->required()
-                        ->native(false)
-                        ->columnSpan([
-                            'sm' => 6,
-                            'md' => 4,
-                        ])
-                        // ->default(now()),
-                        ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
-                    Forms\Components\DatePicker::make('assigned_delivery_date')
-                        ->native(false)
-                        ->columnSpan([
-                            'sm' => 6,
-                            'md' => 4,
-                        ]),
-                    // ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
-
-                    // ->minDate(today()),
                     Forms\Components\Select::make('status')
                         ->options(collect(OrderStatus::cases())->mapWithKeys(function ($status) {
                             return [$status->value => str($status->value)
@@ -154,17 +128,44 @@ trait HasOrderForm
                                 ->toString()];
                         }))
                         ->columnSpan([
-                            'sm' => 6,
+                            'sm' => 4,
                             'md' => 4,
                         ])
                         ->default(OrderStatus::PENDING->value)
                         ->reactive()
                         ->required(),
+                    Forms\Components\DatePicker::make('order_date')
+                        ->required()
+                        ->columnSpan([
+                            'sm' => 4,
+                            'md' => 4,
+                        ])
+                        ->native(false)
+                        ->default(now()->toDateString()),
+                    Forms\Components\DatePicker::make('requested_delivery_date')
+                        ->required()
+                        ->native(false)
+                        ->columnSpan([
+                            'sm' => 4,
+                            'md' => 4,
+                        ])
+                        // ->default(now()),
+                        ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
+                    Forms\Components\DatePicker::make('assigned_delivery_date')
+                        ->native(false)
+                        ->columnSpan([
+                            'sm' => 4,
+                            'md' => 4,
+                        ]),
+                    // ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
+
+                    // ->minDate(today()),
+
                     Forms\Components\TimePicker::make('delivery_time')
-                        ->label("Deliver By")
+                        ->label("Deliver By time")
                         ->nullable()
                         ->columnSpan([
-                            'sm' => 6,
+                            'sm' => 4,
                             'md' => 4,
                         ])
                         ->seconds(false),
@@ -173,11 +174,11 @@ trait HasOrderForm
                         ->native(false)
                         ->seconds(false)
                         ->columnSpan([
-                            'sm' => 6,
+                            'sm' => 4,
                             'md' => 4,
                         ]),
                     Forms\Components\Textarea::make('special_instructions')
-                        ->columnSpanFull(),
+                        ->columnSpan(12),
                 ])
                 ->columns(12),
             Forms\Components\Section::make('Products')
@@ -190,8 +191,10 @@ trait HasOrderForm
                         ->schema([
                             Forms\Components\Select::make('product_id')
                                 ->columnSpan([
+                                    'default' => 12,
                                     'sm' => 12,
-                                    'md' => 5,
+                                    'md' => 12,
+                                    'lg' => 5,
                                 ])
                                 ->label('Product')
                                 ->options(
@@ -214,10 +217,12 @@ trait HasOrderForm
                                     $set('price', Product::find($state)?->price ?? 0)
                                 ),
                             Forms\Components\Toggle::make('fill_load')
-                                ->label('Fill out load')
+                                ->label('Fill load')
                                 ->columnSpan([
-                                    'sm' => 1,
-                                    'md' => 1,
+                                    'default' => 12,
+                                    'sm' => 4,
+                                    'md' => 4,
+                                    'lg' => 1,
                                 ])
                                 ->inline(false)
                                 ->reactive()
@@ -229,8 +234,10 @@ trait HasOrderForm
                             Forms\Components\TextInput::make('quantity')
                                 ->numeric()
                                 ->columnSpan([
-                                    'sm' => 2,
-                                    'md' => 1,
+                                    'default' => 12,
+                                    'sm' => 4,
+                                    'md' => 4,
+                                    'lg' => 1,
                                 ])
                                 ->default(1)
                                 ->required(fn(Forms\Get $get): bool => !$get('fill_load'))
@@ -239,8 +246,10 @@ trait HasOrderForm
                             Forms\Components\TextInput::make('quantity_delivered')
                                 ->label('Delivered')
                                 ->columnSpan([
-                                    'sm' => 2,
-                                    'md' => 1,
+                                    'default' => 12,
+                                    'sm' => 4,
+                                    'md' => 4,
+                                    'lg' => 1,
                                 ])
                                 ->numeric()
                                 // disabled if status is not delivered. the line below is not working
@@ -258,8 +267,10 @@ trait HasOrderForm
                             Forms\Components\TextInput::make('location')
                                 ->nullable()
                                 ->columnSpan([
-                                    'sm' => 6,
-                                    'md' => 4,
+                                    'default' => 12,
+                                    'sm' => 12,
+                                    'md' => 12,
+                                    'lg' => 4,
                                 ]),
                             Forms\Components\TextInput::make('notes')
                                 ->nullable()
