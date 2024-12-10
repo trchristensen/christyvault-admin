@@ -90,7 +90,7 @@ class AdminPanelProvider extends PanelProvider
                 // CalendarWidget::class,
                 // Widgets\AccountWidget::class,
                 // Widgets\FilamentInfoWidget::class,
-                WidgetsCalendarWidget::class,
+                // WidgetsCalendarWidget::class,
                 RecentOrdersWidget::class,
                 OrderStatisticsWidget::class
             ])
