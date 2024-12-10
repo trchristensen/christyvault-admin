@@ -18,6 +18,7 @@
         "opcodesio/log-viewer": "^3.12",
         "saade/filament-fullcalendar": "^4.x-dev",
         "spatie/icalendar-generator": "^2.8",
+        "spatie/laravel-backup": "^9.1",
         "ysfkaya/filament-phone-input": "^3.1"
     },
     "require-dev": {
