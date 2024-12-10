@@ -54,9 +54,7 @@ trait HasOrderForm
                         ->createOptionForm([
                             Forms\Components\TextInput::make('name')
                                 ->required()
-                                ->maxLength(255)
-                                ->reactive()
-                                ->afterStateUpdated(fn($state, callable $set) => $set('location.name', $state)),
+                                ->maxLength(255),
                             Forms\Components\TextInput::make('email')
                                 ->email()
                                 ->maxLength(255),
@@ -64,7 +62,6 @@ trait HasOrderForm
 
                             Forms\Components\Section::make('Location')
                                 ->schema([
-                                    Forms\Components\Hidden::make('location.name'),
                                     Forms\Components\TextInput::make('location.address_line1')
                                         ->required()
                                         ->maxLength(255),
@@ -98,7 +95,7 @@ trait HasOrderForm
                             ]);
 
                             $location = $customer->locations()->create([
-                                'name' => $data['location']['name'],
+                                'name' => $data['name'],
                                 'address_line1' => $data['location']['address_line1'],
                                 'address_line2' => $data['location']['address_line2'],
                                 'city' => $data['location']['city'],
