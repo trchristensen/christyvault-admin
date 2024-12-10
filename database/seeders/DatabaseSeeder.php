@@ -24,11 +24,12 @@ class DatabaseSeeder extends Seeder
             PositionSeeder::class,
 
             // Operations
-            SupplierSeeder::class,
-            InventoryItemSeeder::class,
-            KanbanCardSeeder::class,
-            PurchaseOrderSeeder::class,
-            InventoryTransactionSeeder::class,
+
+            // SupplierSeeder::class,
+            // InventoryItemSeeder::class,
+            // KanbanCardSeeder::class,
+            // PurchaseOrderSeeder::class,
+            // InventoryTransactionSeeder::class,
         ]);
 
         User::factory()->create([

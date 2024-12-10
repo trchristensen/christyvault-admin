@@ -460,9 +460,11 @@ class CalendarWidget extends FullCalendarWidget
                         $this->refreshCalendar();
                         return $order;
                     }
-                }),
+                })
+                ->modalWidth('5xl'),
             Actions\EditAction::make()
-                ->stickyModalFooter(),
+                ->stickyModalFooter()
+                ->modalWidth('5xl'),
             Actions\DeleteAction::make()
                 ->action(function () {
                     if ($this->record instanceof Trip) {

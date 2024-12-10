@@ -14,9 +14,17 @@ class CustomerSeeder extends Seeder
         $locations = Location::all();
 
         foreach ($locations as $location) {
+            // Create a unique email by adding a random string
+            $uniqueEmail = strtolower(
+                str_replace(' ', '', $location->name) .
+                    '-' .
+                    substr(md5(uniqid()), 0, 6) .
+                    '@example.com'
+            );
+
             $customer = Customer::create([
                 'name' => $location->name,
-                'email' => strtolower(str_replace(' ', '', $location->name)) . '@example.com',
+                'email' => $uniqueEmail,
                 'phone' => '(555) ' . rand(100, 999) . '-' . rand(1000, 9999),
             ]);
 

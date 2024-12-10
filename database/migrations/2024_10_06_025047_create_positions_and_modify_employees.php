@@ -93,4 +93,4 @@ return new class extends Migration
         Schema::dropIfExists('employee_position');
         Schema::dropIfExists('positions');
     }
-}; 
+};
