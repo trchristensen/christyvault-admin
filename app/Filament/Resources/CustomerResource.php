@@ -13,6 +13,9 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
+use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
+use Ysfkaya\FilamentPhoneInput\Tables\PhoneColumn;
 
 class CustomerResource extends Resource
 {
@@ -34,9 +37,7 @@ class CustomerResource extends Resource
                         Forms\Components\TextInput::make('email')
                             ->email()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('phone')
-                            ->tel()
-                            ->maxLength(255),
+                        PhoneInput::make('phone')->defaultCountry('US'),
                     ]),
 
                 Forms\Components\Section::make('Location')
@@ -124,7 +125,8 @@ class CustomerResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('phone')
+                PhoneColumn::make('phone')
+                    ->displayFormat(PhoneInputNumberType::INTERNATIONAL)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('locations.address_line1')
                     ->label('Primary Address')

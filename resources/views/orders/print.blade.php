@@ -212,7 +212,19 @@
         <div class="customer-info">
             <span class="customer-name">{{ $order->customer->name }}</span>
             <span class="customer-address">{{ $order->location->full_address ?? null }}</span>
-            <span class="customer-phone">{{ $order->customer->phone ?? null }}</span>
+            <span class="customer-phone">
+                @php
+                    use Propaganistas\LaravelPhone\PhoneNumber;
+
+                    try {
+                        $formattedPhone = (new PhoneNumber($order->customer->phone, 'US'))->formatNational();
+                    } catch (\Exception $e) {
+                        $formattedPhone = $order->customer->phone; // Fallback to original number
+                    }
+                @endphp
+
+                {{ $formattedPhone }}
+            </span>
         </div>
 
         {{-- Order Info Section --}}

@@ -83,15 +83,9 @@ class EmployeeResource extends Resource
                             ->searchable()
                             ->required()
                             ->live()
-                            ->dehydrated(true)
-                            ->afterStateHydrated(function ($component, $state) {
-                                \Log::info('Position Hydrated:', ['state' => $state]);
-                            })
-                            ->afterStateUpdated(function ($state, Set $set) {
-                                \Log::info('Position State Updated:', [
-                                    'new_state' => $state
-                                ]);
-                            }),
+                            ->dehydrated(true),
+
+
                         Forms\Components\Select::make('christy_location')
                             ->options([
                                 'colma' => 'Colma',
@@ -119,9 +113,10 @@ class EmployeeResource extends Resource
                             ->label('Notes'),
                     ])
                     ->visible(function (Get $get): bool {
-                        return collect($get('positions'))->contains(fn ($position) => 
-                            $position === 'driver' || 
-                            (is_array($position) && ($position['name'] ?? null) === 'driver')
+                        return collect($get('positions'))->contains(
+                            fn($position) =>
+                            $position === 'driver' ||
+                                (is_array($position) && ($position['name'] ?? null) === 'driver')
                         );
                     })
                     ->columns(2),
