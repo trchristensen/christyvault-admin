@@ -1,3 +1,31 @@
+<!-- add css -->
+<style>
+    .grid-cols-2 {
+        grid-template-columns: 1fr 1fr;
+    }
+    .grid-cols-4 {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+    .grid-cols-12 {
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    }
+    .col-span-1 {
+        grid-column: span 1;
+    }
+    .col-span-5 {
+        grid-column: span 5;
+    }
+    .col-span-3 {
+        grid-column: span 3;
+    }
+    .col-span-12 {
+        grid-column: span 12;
+    }
+    /* last product row border none */
+    .product-item:last-of-type {
+        border-bottom: none;
+    }
+</style>
 <div class="p-4 order-container">
     <div class="flex items-start justify-between mb-4">
         <div>
