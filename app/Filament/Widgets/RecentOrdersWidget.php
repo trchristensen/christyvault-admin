@@ -15,6 +15,11 @@ class RecentOrdersWidget extends BaseWidget
 
     protected int | string | array $columnSpan = 'full';
 
+    // set model
+    public Model | string | null $model = Order::class;
+
+
+
     public function table(Table $table): Table
     {
         return $table
@@ -86,7 +91,32 @@ class RecentOrdersWidget extends BaseWidget
                     })
                     ->html(),
             ])
+
             ->actions([
+                Action::make('view')
+                ->stickyModalFooter()
+                ->modalContent(fn($record) => view(
+                    'filament.resources.order-resource.custom-view',
+                    ['record' => $record]
+                ))
+                // ->modalHeading(fn($record) => $record->order_number)
+                ->form([])
+                ->modalFooterActions([
+                    Action::make('edit')
+                        ->modalWidth('7xl')
+                        ->url(fn (Order $record): string => route('filament.admin.resources.orders.edit', ['record' => $record]))
+                        ->stickyModalFooter(),
+                    Action::make('delete')
+                        ->label('Delete')
+                        ->color('danger')
+                        ->icon('heroicon-o-trash'),
+                    Action::make('print')
+                        ->label('Print Delivery Tag')
+                        ->color('gray')
+                        ->icon('heroicon-o-printer')
+                        ->url(fn(Order $record) => route('orders.print', ['order' => $record]))
+                        ->openUrlInNewTab(),
+                ]),
                 Action::make('print preview')
                     ->label(null)
                     ->iconButton()
@@ -96,4 +126,5 @@ class RecentOrdersWidget extends BaseWidget
                 Tables\Actions\EditAction::make(),
             ]);
     }
+    
 }

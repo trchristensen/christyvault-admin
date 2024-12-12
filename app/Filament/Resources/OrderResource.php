@@ -143,6 +143,26 @@ class OrderResource extends Resource
                     }),
             ])
             ->actions([
+                Action::make('view')
+                ->stickyModalFooter()
+                ->modalContent(fn($record) => view(
+                    'filament.resources.order-resource.custom-view',
+                    ['record' => $record]
+                ))
+                // ->modalHeading(fn($record) => $record->order_number)
+                ->form([])
+                ->modalFooterActions([
+                    Action::make('edit')
+                        ->modalWidth('7xl')
+                        ->stickyModalFooter(),
+                    Action::make('delete'),
+                    Action::make('print')
+                        ->label('Print Delivery Tag')
+                        ->color('gray')
+                        ->icon('heroicon-o-printer')
+                        ->url(fn(Order $record) => route('orders.print', ['order' => $record]))
+                        ->openUrlInNewTab(),
+                ]),
                 Action::make('print preview')
                     ->label(null)
                     ->iconButton()
