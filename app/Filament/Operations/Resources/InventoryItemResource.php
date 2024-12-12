@@ -2,6 +2,7 @@
 
 namespace App\Filament\Operations\Resources;
 
+use App\Enums\ItemCategory;
 use App\Filament\Operations\Resources\InventoryItemResource\Pages;
 use App\Filament\Operations\Resources\InventoryItemResource\RelationManagers;
 use App\Models\InventoryItem;
@@ -42,6 +43,31 @@ class InventoryItemResource extends Resource
                             ->rows(3),
                         Forms\Components\Select::make('category')
                             ->required()
+                            ->options([
+
+                                'Indirect Labor (Taxable)' => [
+                                    ItemCategory::RM_MACHINE_AND_EQUIPMENT->value => ItemCategory::RM_MACHINE_AND_EQUIPMENT->label(),
+                                    ItemCategory::FORKLIFTS->value => ItemCategory::FORKLIFTS->label(),
+                                    ItemCategory::OTHER->value => ItemCategory::OTHER->label(),
+                                    ItemCategory::SUPPLIES->value => ItemCategory::SUPPLIES->label(),
+                                ],
+                                'Shipping (Taxable)' => [
+                                    ItemCategory::SH_RM_FORKLIFTS->value => ItemCategory::SH_RM_FORKLIFTS->label(),
+                                    ItemCategory::SH_VEHICLES->value => ItemCategory::SH_VEHICLES->label(),
+                                    ItemCategory::SH_OTHER->value => ItemCategory::SH_OTHER->label(),
+                                    ItemCategory::SH_SUPPLIES->value => ItemCategory::SH_SUPPLIES->label(),
+                                ],
+                                'Other (Taxable)' => [
+                                    ItemCategory::COST_OF_GOODS_SOLD_WILBERT->value => ItemCategory::COST_OF_GOODS_SOLD_WILBERT->label(),
+                                    ItemCategory::NICHE->value => ItemCategory::NICHE->label(),
+                                ],
+                                'Non-Taxable Purchases' => [
+                                    ItemCategory::RAW_MATERIALS->value => ItemCategory::RAW_MATERIALS->label(),
+                                    ItemCategory::PRODUCTION_SUPPLIES->value => ItemCategory::PRODUCTION_SUPPLIES->label(),
+                                    ItemCategory::OFFICE_SUPPLIES->value => ItemCategory::OFFICE_SUPPLIES->label(),
+                                    ItemCategory::MISC->value => ItemCategory::MISC->label(),
+                                ]
+                            ])
                             ->searchable()
                             ->preload(),
                         Forms\Components\TextInput::make('unit_of_measure')

@@ -150,6 +150,8 @@ class OrderResource extends Resource
                     ->url(fn(Order $record): string => route('orders.print', $record))
                     ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make()
+
                 // Action::make('mark_delivered')
                 //     ->label('Mark Delivered')
                 //     ->icon('heroicon-o-truck')

@@ -39,7 +39,7 @@ class KanbanCardScanned extends Notification
             ->line("Department: {$this->kanbanCard->department}")
             ->line("Bin: {$this->kanbanCard->bin_number}")
             ->line("Location: {$this->kanbanCard->bin_location}")
-            ->action('View Details', url('/admin/kanban-cards/' . $this->kanbanCard->id));
+            ->action('View Details', url('operations/kanban-cards/' . $this->kanbanCard->id));
     }
 
     public function toArray($notifiable): array

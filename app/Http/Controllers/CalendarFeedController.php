@@ -13,7 +13,9 @@ class CalendarFeedController extends Controller
     {
         $calendar = Calendar::create('Christy Vault Deliveries')
             ->refreshInterval(5) // minutes
-            ->timezone('America/Los_Angeles');
+            ->timezone('America/Los_Angeles')
+            ->productIdentifier('-//Christy Vault//Delivery Calendar//EN')
+            ->withoutAutoTimezoneComponents();  // Prevents timezone duplication
 
         Order::query()
             ->with(['customer', 'orderProducts.product'])
@@ -30,12 +32,18 @@ class CalendarFeedController extends Controller
                         ->startsAt($order->assigned_delivery_date ?? $order->requested_delivery_date)
                         ->endsAt(($order->assigned_delivery_date ?? $order->requested_delivery_date)->addHours(1))
                         ->fullDay()
+                        // Add status for cancelled/deleted events
+                        ->status($order->trashed() ? 'CANCELLED' : 'CONFIRMED')
                 );
             });
 
         return response($calendar->get())
             ->header('Content-Type', 'text/calendar; charset=utf-8')
-            ->header('Content-Disposition', 'attachment; filename="deliveries.ics"');
+            ->header('Content-Disposition', 'attachment; filename="deliveries.ics"')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0')
+            ->header('X-PUBLISHED-TTL', 'PT15M');  // Tell clients to refresh every 15 minutes
     }
 
     private function generateDescription(Order $order): string
