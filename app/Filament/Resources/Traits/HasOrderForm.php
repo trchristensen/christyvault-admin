@@ -187,6 +187,38 @@ trait HasOrderForm
                         ->relationship()
                         ->schema([
                             Forms\Components\Select::make('product_id')
+                                ->createOptionForm([
+                                    Forms\Components\TextInput::make('sku')
+                                        ->required()
+                                        ->label("Product Number")
+                                        ->maxLength(255),
+                                    Forms\Components\TextInput::make('name')
+                                        ->label("Product Name")
+                                        ->required()
+                                        ->maxLength(255),
+                                    Forms\Components\TextInput::make('description')
+                                        ->maxLength(255),
+                                    Forms\Components\TextInput::make('price')  // Add price field
+                                        ->required()
+                                        ->numeric()
+                                        ->default(0)
+                                        ->prefix('$')
+                                        ->label('Price'),
+                                    // stock
+                                    Forms\Components\TextInput::make('stock')
+                                        ->required()
+                                        ->numeric()
+                                        ->default(0)
+                                        ->label('Stock'),
+                                ])
+                                ->createOptionUsing(function (array $data): int {
+                                    return Product::create($data)->getKey();
+                                })
+                                ->createOptionAction(function (Forms\Components\Actions\Action $action) {
+                                    return $action
+                                        ->modalHeading('Create new product')
+                                        ->modalWidth('lg');
+                                })
                                 ->columnSpan([
                                     'default' => 12,
                                     'sm' => 12,
