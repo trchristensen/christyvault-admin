@@ -153,9 +153,9 @@
                                                         <div>{{ $order->location->full_address }}</div>
                                                     @endif
                                                     <div>{{ $order->customer->phone }}</div>
-                                                    @if ($order->special_instructions)
+                                                    {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
-                                                    @endif
+                                                    @endif --}}
                                                 </div>
                                             </div>
                                         @endforeach
@@ -179,9 +179,9 @@
                                                         <div>{{ $order->location->full_address }}</div>
                                                     @endif
                                                     <div>{{ $order->customer->phone }}</div>
-                                                    @if ($order->special_instructions)
+                                                    {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
-                                                    @endif
+                                                    @endif --}}
                                                 </div>
                                             </div>
                                         @endforeach
@@ -205,9 +205,9 @@
                                                         <div>{{ $order->location->full_address }}</div>
                                                     @endif
                                                     <div>{{ $order->customer->phone }}</div>
-                                                    @if ($order->special_instructions)
+                                                    {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
-                                                    @endif
+                                                    @endif --}}
                                                 </div>
                                             </div>
                                         @endforeach
@@ -270,9 +270,9 @@
                                                         <div>{{ $order->location->full_address }}</div>
                                                     @endif
                                                     <div>{{ $order->customer->phone }}</div>
-                                                    @if ($order->special_instructions)
+                                                    {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
-                                                    @endif
+                                                    @endif --}}
                                                 </div>
                                             </div>
                                         @endforeach
@@ -296,9 +296,9 @@
                                                         <div>{{ $order->location->full_address }}</div>
                                                     @endif
                                                     <div>{{ $order->customer->phone }}</div>
-                                                    @if ($order->special_instructions)
+                                                    {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
-                                                    @endif
+                                                    @endif --}}
                                                 </div>
                                             </div>
                                         @endforeach
@@ -322,9 +322,9 @@
                                                         <div>{{ $order->location->full_address }}</div>
                                                     @endif
                                                     <div>{{ $order->customer->phone }}</div>
-                                                    @if ($order->special_instructions)
+                                                    {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
-                                                    @endif
+                                                    @endif --}}
                                                 </div>
                                             </div>
                                         @endforeach
