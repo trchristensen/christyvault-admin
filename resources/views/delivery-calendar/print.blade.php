@@ -152,25 +152,8 @@
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>
-                                                            @php
-                                                                $address = $order->location->full_address;
-                                                                // Remove zip code (assumes it's at the end of the address after a space)
-$addressParts = explode(',', $address);
-$lastPart = end($addressParts);
-if (preg_match('/\d{5}(-\d{4})?/', $lastPart)) {
-    $lastPart = trim(
-        preg_replace(
-            '/\s+\d{5}(-\d{4})?$/',
-            '',
-            $lastPart,
-        ),
-    );
-    $addressParts[count($addressParts) - 1] = $lastPart;
-}
-$formattedAddress = implode(',', $addressParts);
-                                                            @endphp
-                                                            {{ $formattedAddress }}
+                                                        <div>{{ $order->location->address_line1 }}</div>
+                                                        <div>{{ $order->location->city }}, {{ $order->location->state }}
                                                         </div>
                                                     @endif
                                                     <div>
@@ -209,26 +192,9 @@ $formattedAddress = implode(',', $addressParts);
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>
-                                                            @php
-                                                                $address = $order->location->full_address;
-                                                                // Remove zip code (assumes it's at the end of the address after a space)
-$addressParts = explode(',', $address);
-$lastPart = end($addressParts);
-if (preg_match('/\d{5}(-\d{4})?/', $lastPart)) {
-    $lastPart = trim(
-        preg_replace(
-            '/\s+\d{5}(-\d{4})?$/',
-            '',
-            $lastPart,
-        ),
-    );
-    $addressParts[count($addressParts) - 1] = $lastPart;
-}
-$formattedAddress = implode(',', $addressParts);
-                                                            @endphp
-                                                            {{ $formattedAddress }}
-                                                        </div>
+                                                        <div>{{ $order->location->address_line1 }}</div>
+                                                        <div>{{ $order->location->city }},
+                                                            {{ $order->location->state }}</div>
                                                     @endif
                                                     <div>
                                                         @php
@@ -266,26 +232,9 @@ $formattedAddress = implode(',', $addressParts);
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>
-                                                            @php
-                                                                $address = $order->location->full_address;
-                                                                // Remove zip code (assumes it's at the end of the address after a space)
-$addressParts = explode(',', $address);
-$lastPart = end($addressParts);
-if (preg_match('/\d{5}(-\d{4})?/', $lastPart)) {
-    $lastPart = trim(
-        preg_replace(
-            '/\s+\d{5}(-\d{4})?$/',
-            '',
-            $lastPart,
-        ),
-    );
-    $addressParts[count($addressParts) - 1] = $lastPart;
-}
-$formattedAddress = implode(',', $addressParts);
-                                                            @endphp
-                                                            {{ $formattedAddress }}
-                                                        </div>
+                                                        <div>{{ $order->location->address_line1 }}</div>
+                                                        <div>{{ $order->location->city }},
+                                                            {{ $order->location->state }}</div>
                                                     @endif
                                                     <div>
                                                         @php
@@ -362,26 +311,9 @@ $formattedAddress = implode(',', $addressParts);
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>
-                                                            @php
-                                                                $address = $order->location->full_address;
-                                                                // Remove zip code (assumes it's at the end of the address after a space)
-$addressParts = explode(',', $address);
-$lastPart = end($addressParts);
-if (preg_match('/\d{5}(-\d{4})?/', $lastPart)) {
-    $lastPart = trim(
-        preg_replace(
-            '/\s+\d{5}(-\d{4})?$/',
-            '',
-            $lastPart,
-        ),
-    );
-    $addressParts[count($addressParts) - 1] = $lastPart;
-}
-$formattedAddress = implode(',', $addressParts);
-                                                            @endphp
-                                                            {{ $formattedAddress }}
-                                                        </div>
+                                                        <div>{{ $order->location->address_line1 }}</div>
+                                                        <div>{{ $order->location->city }},
+                                                            {{ $order->location->state }}</div>
                                                     @endif
                                                     <div>
                                                         @php
@@ -419,26 +351,9 @@ $formattedAddress = implode(',', $addressParts);
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>
-                                                            @php
-                                                                $address = $order->location->full_address;
-                                                                // Remove zip code (assumes it's at the end of the address after a space)
-$addressParts = explode(',', $address);
-$lastPart = end($addressParts);
-if (preg_match('/\d{5}(-\d{4})?/', $lastPart)) {
-    $lastPart = trim(
-        preg_replace(
-            '/\s+\d{5}(-\d{4})?$/',
-            '',
-            $lastPart,
-        ),
-    );
-    $addressParts[count($addressParts) - 1] = $lastPart;
-}
-$formattedAddress = implode(',', $addressParts);
-                                                            @endphp
-                                                            {{ $formattedAddress }}
-                                                        </div>
+                                                        <div>{{ $order->location->address_line1 }}</div>
+                                                        <div>{{ $order->location->city }},
+                                                            {{ $order->location->state }}</div>
                                                     @endif
                                                     <div>
                                                         @php
@@ -476,26 +391,9 @@ $formattedAddress = implode(',', $addressParts);
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>
-                                                            @php
-                                                                $address = $order->location->full_address;
-                                                                // Remove zip code (assumes it's at the end of the address after a space)
-$addressParts = explode(',', $address);
-$lastPart = end($addressParts);
-if (preg_match('/\d{5}(-\d{4})?/', $lastPart)) {
-    $lastPart = trim(
-        preg_replace(
-            '/\s+\d{5}(-\d{4})?$/',
-            '',
-            $lastPart,
-        ),
-    );
-    $addressParts[count($addressParts) - 1] = $lastPart;
-}
-$formattedAddress = implode(',', $addressParts);
-                                                            @endphp
-                                                            {{ $formattedAddress }}
-                                                        </div>
+                                                        <div>{{ $order->location->address_line1 }}</div>
+                                                        <div>{{ $order->location->city }},
+                                                            {{ $order->location->state }}</div>
                                                     @endif
                                                     <div>
                                                         @php
