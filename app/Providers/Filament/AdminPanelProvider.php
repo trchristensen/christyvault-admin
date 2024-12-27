@@ -52,7 +52,7 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Pages\Dashboard::class,
                 DeliveryCalendar::class,
-                // TestCalendar::class,
+                \App\Filament\Pages\SystemAdmin::class,
             ])
             ->navigationGroups([
                 NavigationGroup::make()
@@ -61,7 +61,10 @@ class AdminPanelProvider extends PanelProvider
                     ->label('Delivery Management'),
                 NavigationGroup::make()
                     ->label('Directories'),
+                NavigationGroup::make()
+                    ->label('System'),
             ])
+            // ->databaseNotifications()
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('13rem')
             // ->collapsedSidebarWidth('5rem')

@@ -3,24 +3,31 @@
     .grid-cols-2 {
         grid-template-columns: 1fr 1fr;
     }
+
     .grid-cols-4 {
         grid-template-columns: 1fr 1fr 1fr 1fr;
     }
+
     .grid-cols-12 {
         grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
     }
+
     .col-span-1 {
         grid-column: span 1;
     }
+
     .col-span-5 {
         grid-column: span 5;
     }
+
     .col-span-3 {
         grid-column: span 3;
     }
+
     .col-span-12 {
         grid-column: span 12;
     }
+
     /* last product row border none */
     .product-item:last-of-type {
         border-bottom: none;
@@ -32,9 +39,14 @@
             <h2 class="font-bold text-gray-400 dark:text-gray-600">{{ $record->order_number }}</h2>
 
         </div>
-        <div class="px-2 py-1 text-sm font-medium text-gray-800 border rounded-full"
-            style="background-color: {{ $record->status_color['background'] }}; color: {{ $record->status_color['text'] }}; border-color: {{ $record->status_color['border'] }}">
-            {{ ucfirst($record->status) }}
+        <div class="flex items-center gap-4">
+            {{-- get the fucking label, not the value --}}
+            <p class="text-sm font-bold text-gray-600">
+                {{ App\Enums\PlantLocation::from($record->plant_location)->getLabel() }}</p>
+            <div class="px-2 py-1 text-sm font-medium text-gray-800 border rounded-full"
+                style="background-color: {{ $record->status_color['background'] }}; color: {{ $record->status_color['text'] }}; border-color: {{ $record->status_color['border'] }}">
+                {{ ucfirst($record->status) }}
+            </div>
         </div>
     </div>
 
@@ -56,7 +68,7 @@
             <div class="flex flex-col items-start gap-1">
 
                 <p class="font-bold">{{ $record->customer->name }}</p>
-                @if($record->customer?->locations->first())
+                @if ($record->customer?->locations->first())
                     <p>{{ $record->customer->locations->first()->full_address }}</p>
                 @else
                     <p></p>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CalendarFeedController;
+use App\Http\Controllers\DeliveryCalendarPrintController;
 use App\Http\Controllers\DeliveryTagController;
 use App\Http\Controllers\LeaveCalendarFeedController;
 use App\Http\Controllers\KanbanCardController;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Route;
 //     return view('welcome');
 // });
 
+Route::get('/orders/calendar/print', [DeliveryCalendarPrintController::class, 'view'])->name('delivery-calendar.print');
 Route::get('/orders/{order}/print', [DeliveryTagController::class, 'view'])->name('orders.print');
 
 // routes/web.php

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Filament\Resources\OrderResource;
 use App\Models\Order;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\Page;
 use Filament\Support\Enums\MaxWidth;
 use Saade\FilamentFullCalendar\Components\FullCalendarComponent;
@@ -33,7 +34,11 @@ class DeliveryCalendar extends Page
     protected function getHeaderActions(): array
     {
         return [
-            // Add any actions you want in the header
+            Action::make('Print Calendar')
+                ->url(route('delivery-calendar.print'))
+                ->icon('heroicon-o-printer')
+                ->color('gray')
+                ->openUrlInNewTab(),
         ];
     }
 }

@@ -174,6 +174,18 @@ trait HasOrderForm
                             'sm' => 4,
                             'md' => 4,
                         ]),
+                    Forms\Components\Select::make('plant_location')
+                        ->label('Delivery Type')
+                        ->options(function () {
+                            return collect(\App\Enums\PlantLocation::cases())->mapWithKeys(fn($location) => [
+                                $location->value => $location->getLabel(),
+                            ]);
+                        })
+                        ->default(\App\Enums\PlantLocation::COLMA_MAIN->value)
+                        ->columnSpan([
+                            'sm' => 4,
+                            'md' => 4,
+                        ]),
                     Forms\Components\Textarea::make('special_instructions')
                         ->columnSpan(12),
                 ])

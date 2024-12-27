@@ -136,7 +136,7 @@
         }
 
         .item-notes {
-            margin-left: 40px;
+            margin-left: 5px;
             margin-top: 15px;
             font-size: 18px;
             line-height: 1.4;
