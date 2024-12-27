@@ -48,7 +48,6 @@
             display: flex;
             flex-direction: column;
             height: 100%;
-            position: relative;
         }
 
         .date-header {
@@ -83,26 +82,9 @@
         }
 
         .order-section {
-            position: absolute;
-            left: 10px;
-            right: 10px;
             display: flex;
             flex-direction: column;
-        }
-
-        .order-section.colma {
-            top: 40px;
-            height: 30%;
-        }
-
-        .order-section.tulare {
-            top: 40%;
-            height: 30%;
-        }
-
-        .order-section.locals {
-            top: 70%;
-            height: 30%;
+            margin-bottom: 20px;
         }
 
         .order-section-header {
@@ -112,9 +94,7 @@
             margin-bottom: 10px;
         }
 
-        .order-section-content {
-            overflow-y: auto;
-        }
+        .order-section-content {}
     </style>
 </head>
 
@@ -140,11 +120,29 @@
                                 {{ $date->format('l, M j') }}
                             </div>
 
+                            @php
+                                $hasAnyOrders =
+                                    isset($orders[$date->format('Y-m-d')]) &&
+                                    ($orders[$date->format('Y-m-d')]->where('plant_location', 'colma_main')->count() >
+                                        0 ||
+                                        $orders[$date->format('Y-m-d')]
+                                            ->where('plant_location', 'tulare_plant')
+                                            ->count() > 0 ||
+                                        $orders[$date->format('Y-m-d')]
+                                            ->where('plant_location', 'colma_locals')
+                                            ->count() > 0);
+                            @endphp
+
+                            @if (!$hasAnyOrders)
+                                <div class="no-orders">No deliveries scheduled</div>
+                            @endif
+
                             <!-- Colma Section -->
-                            <div class="order-section colma">
-                                <div class="order-section-header">Colma</div>
-                                <div class="order-section-content">
-                                    @if (isset($orders[$date->format('Y-m-d')]))
+                            @if (isset($orders[$date->format('Y-m-d')]) &&
+                                    $orders[$date->format('Y-m-d')]->where('plant_location', 'colma_main')->count() > 0)
+                                <div class="order-section colma">
+                                    <div class="order-section-header">Colma</div>
+                                    <div class="order-section-content">
                                         @foreach ($orders[$date->format('Y-m-d')]->where('plant_location', 'colma_main') as $order)
                                             <div class="order">
                                                 <div class="order-header">
@@ -161,15 +159,16 @@
                                                 </div>
                                             </div>
                                         @endforeach
-                                    @endif
+                                    </div>
                                 </div>
-                            </div>
+                            @endif
 
                             <!-- Tulare Section -->
-                            <div class="order-section tulare">
-                                <div class="order-section-header">Tulare</div>
-                                <div class="order-section-content">
-                                    @if (isset($orders[$date->format('Y-m-d')]))
+                            @if (isset($orders[$date->format('Y-m-d')]) &&
+                                    $orders[$date->format('Y-m-d')]->where('plant_location', 'tulare_plant')->count() > 0)
+                                <div class="order-section tulare">
+                                    <div class="order-section-header">Tulare</div>
+                                    <div class="order-section-content">
                                         @foreach ($orders[$date->format('Y-m-d')]->where('plant_location', 'tulare_plant') as $order)
                                             <div class="order">
                                                 <div class="order-header">
@@ -186,22 +185,22 @@
                                                 </div>
                                             </div>
                                         @endforeach
-                                    @endif
+                                    </div>
                                 </div>
-                            </div>
+                            @endif
 
                             <!-- Locals Section -->
-                            <div class="order-section locals">
-                                <div class="order-section-header">Locals</div>
-                                <div class="order-section-content">
-                                    @if (isset($orders[$date->format('Y-m-d')]))
+                            @if (isset($orders[$date->format('Y-m-d')]) &&
+                                    $orders[$date->format('Y-m-d')]->where('plant_location', 'colma_locals')->count() > 0)
+                                <div class="order-section locals">
+                                    <div class="order-section-header">Locals</div>
+                                    <div class="order-section-content">
                                         @foreach ($orders[$date->format('Y-m-d')]->where('plant_location', 'colma_locals') as $order)
                                             <div class="order">
                                                 <div class="order-header">
                                                     {{ $order->customer?->name ?? 'No Customer' }}
                                                 </div>
                                                 <div class="order-details">
-
                                                     @if ($order->location)
                                                         <div>{{ $order->location->full_address }}</div>
                                                     @endif
@@ -212,9 +211,9 @@
                                                 </div>
                                             </div>
                                         @endforeach
-                                    @endif
+                                    </div>
                                 </div>
-                            </div>
+                            @endif
                         </td>
                     @endforeach
                 </tr>
@@ -238,25 +237,99 @@
                                 {{ $date->format('l, M j') }}
                             </div>
 
-                            @if (isset($orders[$date->format('Y-m-d')]))
-                                @foreach ($orders[$date->format('Y-m-d')] as $order)
-                                    <div class="order">
-                                        <div class="order-header">
-                                            {{ $order->customer?->name ?? 'No Customer' }}
-                                        </div>
-                                        <div class="order-details">
-                                            <div>Order #: {{ $order->order_number }}</div>
-                                            @if ($order->location)
-                                                <div>{{ $order->location->full_address }}</div>
-                                            @endif
-                                            @if ($order->special_instructions)
-                                                <div>Notes: {{ $order->special_instructions }}</div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endforeach
-                            @else
+                            @php
+                                $hasAnyOrders =
+                                    isset($orders[$date->format('Y-m-d')]) &&
+                                    ($orders[$date->format('Y-m-d')]->where('plant_location', 'colma_main')->count() >
+                                        0 ||
+                                        $orders[$date->format('Y-m-d')]
+                                            ->where('plant_location', 'tulare_plant')
+                                            ->count() > 0 ||
+                                        $orders[$date->format('Y-m-d')]
+                                            ->where('plant_location', 'colma_locals')
+                                            ->count() > 0);
+                            @endphp
+
+                            @if (!$hasAnyOrders)
                                 <div class="no-orders">No deliveries scheduled</div>
+                            @endif
+
+                            <!-- Colma Section -->
+                            @if (isset($orders[$date->format('Y-m-d')]) &&
+                                    $orders[$date->format('Y-m-d')]->where('plant_location', 'colma_main')->count() > 0)
+                                <div class="order-section colma">
+                                    <div class="order-section-header">Colma</div>
+                                    <div class="order-section-content">
+                                        @foreach ($orders[$date->format('Y-m-d')]->where('plant_location', 'colma_main') as $order)
+                                            <div class="order">
+                                                <div class="order-header">
+                                                    {{ $order->customer?->name ?? 'No Customer' }}
+                                                </div>
+                                                <div class="order-details">
+                                                    @if ($order->location)
+                                                        <div>{{ $order->location->full_address }}</div>
+                                                    @endif
+                                                    <div>{{ $order->customer->phone }}</div>
+                                                    @if ($order->special_instructions)
+                                                        <div>Notes: {{ $order->special_instructions }}</div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Tulare Section -->
+                            @if (isset($orders[$date->format('Y-m-d')]) &&
+                                    $orders[$date->format('Y-m-d')]->where('plant_location', 'tulare_plant')->count() > 0)
+                                <div class="order-section tulare">
+                                    <div class="order-section-header">Tulare</div>
+                                    <div class="order-section-content">
+                                        @foreach ($orders[$date->format('Y-m-d')]->where('plant_location', 'tulare_plant') as $order)
+                                            <div class="order">
+                                                <div class="order-header">
+                                                    {{ $order->customer?->name ?? 'No Customer' }}
+                                                </div>
+                                                <div class="order-details">
+                                                    @if ($order->location)
+                                                        <div>{{ $order->location->full_address }}</div>
+                                                    @endif
+                                                    <div>{{ $order->customer->phone }}</div>
+                                                    @if ($order->special_instructions)
+                                                        <div>Notes: {{ $order->special_instructions }}</div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Locals Section -->
+                            @if (isset($orders[$date->format('Y-m-d')]) &&
+                                    $orders[$date->format('Y-m-d')]->where('plant_location', 'colma_locals')->count() > 0)
+                                <div class="order-section locals">
+                                    <div class="order-section-header">Locals</div>
+                                    <div class="order-section-content">
+                                        @foreach ($orders[$date->format('Y-m-d')]->where('plant_location', 'colma_locals') as $order)
+                                            <div class="order">
+                                                <div class="order-header">
+                                                    {{ $order->customer?->name ?? 'No Customer' }}
+                                                </div>
+                                                <div class="order-details">
+                                                    @if ($order->location)
+                                                        <div>{{ $order->location->full_address }}</div>
+                                                    @endif
+                                                    <div>{{ $order->customer->phone }}</div>
+                                                    @if ($order->special_instructions)
+                                                        <div>Notes: {{ $order->special_instructions }}</div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             @endif
                         </td>
                     @endforeach
