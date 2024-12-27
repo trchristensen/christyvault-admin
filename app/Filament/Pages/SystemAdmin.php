@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use App\Models\Backup;
+use Filament\Tables\Actions\Action as TableAction;
+use Illuminate\Support\Facades\Response;
 
 class SystemAdmin extends Page implements HasTable
 {
@@ -70,6 +72,26 @@ class SystemAdmin extends Page implements HasTable
                     ->label('Date')
                     ->dateTime('M j, Y g:i A')
                     ->sortable(),
+            ])
+            ->actions([
+                TableAction::make('download')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->action(function ($record) {
+                        $path = 'Christy Vault/' . $record->filename;
+                        return Response::download(Storage::disk('local')->path($path));
+                    }),
+                TableAction::make('delete')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(function ($record) {
+                        $path = 'Christy Vault/' . $record->filename;
+                        Storage::disk('local')->delete($path);
+                        Notification::make()
+                            ->title('Backup deleted')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->defaultSort('date', 'desc');
     }
