@@ -102,6 +102,8 @@
     @php
         $firstWeek = $weekdays->take(5);
         $secondWeek = $weekdays->skip(5);
+
+        use Propaganistas\LaravelPhone\PhoneNumber;
     @endphp
 
     <!-- First Week -->
@@ -150,9 +152,40 @@
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>{{ $order->location->full_address }}</div>
+                                                        <div>
+                                                            @php
+                                                                $address = $order->location->full_address;
+                                                                // Remove zip code (assumes it's at the end of the address after a space)
+$addressParts = explode(',', $address);
+$lastPart = end($addressParts);
+if (preg_match('/\d{5}(-\d{4})?/', $lastPart)) {
+    $lastPart = trim(
+        preg_replace(
+            '/\s+\d{5}(-\d{4})?$/',
+            '',
+            $lastPart,
+        ),
+    );
+    $addressParts[count($addressParts) - 1] = $lastPart;
+}
+$formattedAddress = implode(',', $addressParts);
+                                                            @endphp
+                                                            {{ $formattedAddress }}
+                                                        </div>
                                                     @endif
-                                                    <div>{{ $order->customer->phone }}</div>
+                                                    <div>
+                                                        @php
+                                                            try {
+                                                                $formattedPhone = (new PhoneNumber(
+                                                                    $order->customer->phone,
+                                                                    'US',
+                                                                ))->formatNational();
+                                                            } catch (\Exception $e) {
+                                                                $formattedPhone = $order->customer->phone;
+                                                            }
+                                                        @endphp
+                                                        {{ $formattedPhone }}
+                                                    </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
                                                     @endif --}}
@@ -176,9 +209,40 @@
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>{{ $order->location->full_address }}</div>
+                                                        <div>
+                                                            @php
+                                                                $address = $order->location->full_address;
+                                                                // Remove zip code (assumes it's at the end of the address after a space)
+$addressParts = explode(',', $address);
+$lastPart = end($addressParts);
+if (preg_match('/\d{5}(-\d{4})?/', $lastPart)) {
+    $lastPart = trim(
+        preg_replace(
+            '/\s+\d{5}(-\d{4})?$/',
+            '',
+            $lastPart,
+        ),
+    );
+    $addressParts[count($addressParts) - 1] = $lastPart;
+}
+$formattedAddress = implode(',', $addressParts);
+                                                            @endphp
+                                                            {{ $formattedAddress }}
+                                                        </div>
                                                     @endif
-                                                    <div>{{ $order->customer->phone }}</div>
+                                                    <div>
+                                                        @php
+                                                            try {
+                                                                $formattedPhone = (new PhoneNumber(
+                                                                    $order->customer->phone,
+                                                                    'US',
+                                                                ))->formatNational();
+                                                            } catch (\Exception $e) {
+                                                                $formattedPhone = $order->customer->phone;
+                                                            }
+                                                        @endphp
+                                                        {{ $formattedPhone }}
+                                                    </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
                                                     @endif --}}
@@ -202,9 +266,40 @@
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>{{ $order->location->full_address }}</div>
+                                                        <div>
+                                                            @php
+                                                                $address = $order->location->full_address;
+                                                                // Remove zip code (assumes it's at the end of the address after a space)
+$addressParts = explode(',', $address);
+$lastPart = end($addressParts);
+if (preg_match('/\d{5}(-\d{4})?/', $lastPart)) {
+    $lastPart = trim(
+        preg_replace(
+            '/\s+\d{5}(-\d{4})?$/',
+            '',
+            $lastPart,
+        ),
+    );
+    $addressParts[count($addressParts) - 1] = $lastPart;
+}
+$formattedAddress = implode(',', $addressParts);
+                                                            @endphp
+                                                            {{ $formattedAddress }}
+                                                        </div>
                                                     @endif
-                                                    <div>{{ $order->customer->phone }}</div>
+                                                    <div>
+                                                        @php
+                                                            try {
+                                                                $formattedPhone = (new PhoneNumber(
+                                                                    $order->customer->phone,
+                                                                    'US',
+                                                                ))->formatNational();
+                                                            } catch (\Exception $e) {
+                                                                $formattedPhone = $order->customer->phone;
+                                                            }
+                                                        @endphp
+                                                        {{ $formattedPhone }}
+                                                    </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
                                                     @endif --}}
@@ -267,9 +362,40 @@
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>{{ $order->location->full_address }}</div>
+                                                        <div>
+                                                            @php
+                                                                $address = $order->location->full_address;
+                                                                // Remove zip code (assumes it's at the end of the address after a space)
+$addressParts = explode(',', $address);
+$lastPart = end($addressParts);
+if (preg_match('/\d{5}(-\d{4})?/', $lastPart)) {
+    $lastPart = trim(
+        preg_replace(
+            '/\s+\d{5}(-\d{4})?$/',
+            '',
+            $lastPart,
+        ),
+    );
+    $addressParts[count($addressParts) - 1] = $lastPart;
+}
+$formattedAddress = implode(',', $addressParts);
+                                                            @endphp
+                                                            {{ $formattedAddress }}
+                                                        </div>
                                                     @endif
-                                                    <div>{{ $order->customer->phone }}</div>
+                                                    <div>
+                                                        @php
+                                                            try {
+                                                                $formattedPhone = (new PhoneNumber(
+                                                                    $order->customer->phone,
+                                                                    'US',
+                                                                ))->formatNational();
+                                                            } catch (\Exception $e) {
+                                                                $formattedPhone = $order->customer->phone;
+                                                            }
+                                                        @endphp
+                                                        {{ $formattedPhone }}
+                                                    </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
                                                     @endif --}}
@@ -293,9 +419,40 @@
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>{{ $order->location->full_address }}</div>
+                                                        <div>
+                                                            @php
+                                                                $address = $order->location->full_address;
+                                                                // Remove zip code (assumes it's at the end of the address after a space)
+$addressParts = explode(',', $address);
+$lastPart = end($addressParts);
+if (preg_match('/\d{5}(-\d{4})?/', $lastPart)) {
+    $lastPart = trim(
+        preg_replace(
+            '/\s+\d{5}(-\d{4})?$/',
+            '',
+            $lastPart,
+        ),
+    );
+    $addressParts[count($addressParts) - 1] = $lastPart;
+}
+$formattedAddress = implode(',', $addressParts);
+                                                            @endphp
+                                                            {{ $formattedAddress }}
+                                                        </div>
                                                     @endif
-                                                    <div>{{ $order->customer->phone }}</div>
+                                                    <div>
+                                                        @php
+                                                            try {
+                                                                $formattedPhone = (new PhoneNumber(
+                                                                    $order->customer->phone,
+                                                                    'US',
+                                                                ))->formatNational();
+                                                            } catch (\Exception $e) {
+                                                                $formattedPhone = $order->customer->phone;
+                                                            }
+                                                        @endphp
+                                                        {{ $formattedPhone }}
+                                                    </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
                                                     @endif --}}
@@ -319,9 +476,40 @@
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>{{ $order->location->full_address }}</div>
+                                                        <div>
+                                                            @php
+                                                                $address = $order->location->full_address;
+                                                                // Remove zip code (assumes it's at the end of the address after a space)
+$addressParts = explode(',', $address);
+$lastPart = end($addressParts);
+if (preg_match('/\d{5}(-\d{4})?/', $lastPart)) {
+    $lastPart = trim(
+        preg_replace(
+            '/\s+\d{5}(-\d{4})?$/',
+            '',
+            $lastPart,
+        ),
+    );
+    $addressParts[count($addressParts) - 1] = $lastPart;
+}
+$formattedAddress = implode(',', $addressParts);
+                                                            @endphp
+                                                            {{ $formattedAddress }}
+                                                        </div>
                                                     @endif
-                                                    <div>{{ $order->customer->phone }}</div>
+                                                    <div>
+                                                        @php
+                                                            try {
+                                                                $formattedPhone = (new PhoneNumber(
+                                                                    $order->customer->phone,
+                                                                    'US',
+                                                                ))->formatNational();
+                                                            } catch (\Exception $e) {
+                                                                $formattedPhone = $order->customer->phone;
+                                                            }
+                                                        @endphp
+                                                        {{ $formattedPhone }}
+                                                    </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
                                                     @endif --}}
