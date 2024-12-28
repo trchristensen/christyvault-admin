@@ -81,6 +81,5 @@ class OperationsPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->databaseNotifications();
-        // ->databaseNotificationsPolling('30s');
     }
 }

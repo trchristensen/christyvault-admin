@@ -44,8 +44,7 @@ class PurchaseOrderResource extends Resource
                     ->required(),
 
                 Forms\Components\DateTimePicker::make('order_date')
-                    ->default(now())
-                    ->required(),
+                    ->default(now()),
 
                 Forms\Components\DateTimePicker::make('expected_delivery_date')
                     ->after('order_date'),
@@ -79,7 +78,7 @@ class PurchaseOrderResource extends Resource
                     ->searchable(),
 
                 Tables\Columns\BadgeColumn::make('status')
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
                         'draft' => 'Draft',
                         'submitted' => 'Submitted',
                         'received' => 'Received',

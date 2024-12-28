@@ -5,14 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Notifications\KanbanCardScanned;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification as LaravelNotification;
+use Filament\Notifications\Notification;
+use Filament\Notifications\Actions\Action;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\SvgWriter;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class KanbanCard extends Model
 {
@@ -70,22 +73,75 @@ class KanbanCard extends Model
     // Methods
     public function markAsScanned()
     {
-        $this->update([
-            'status' => self::STATUS_PENDING_ORDER,
-            'last_scanned_at' => now(),
-            'scanned_by_user_id' => Auth::id()
-        ]);
+        // Only proceed if the card can be scanned
+        if (!$this->canBeScanned()) {
+            return false;
+        }
 
-        // Send initial notification
-        $admins = User::where('email', 'tchristensen@christyvault.com')->get();
-        Notification::send($admins, new KanbanCardScanned($this));
+        DB::transaction(function () {
+            // Update the kanban card
+            $this->update([
+                'status' => self::STATUS_PENDING_ORDER,
+                'last_scanned_at' => now(),
+                'scanned_by_user_id' => Auth::id()
+            ]);
+
+            // Get the preferred supplier
+            $supplier = $this->inventoryItem->preferredSupplier();
+
+            if (!$supplier) {
+                throw new \Exception('Cannot create purchase order: No preferred supplier set for this inventory item.');
+            }
+
+            // Get the cost per unit from the supplier pivot
+            $quantity = $this->reorder_point ?? 1;
+            $costPerUnit = $supplier->pivot->cost_per_unit ?? 0;
+            $totalAmount = $quantity * $costPerUnit;
+
+            // Create a new purchase order
+            $purchaseOrder = PurchaseOrder::create([
+                'status' => 'draft',
+                'supplier_id' => $supplier->id,
+                'created_by_user_id' => Auth::id(),
+                'total_amount' => $totalAmount,
+                'notes' => 'Created from Kanban card scan'
+            ]);
+
+            // Insert the purchase order item
+            DB::table('purchase_order_items')->insert([
+                'purchase_order_id' => $purchaseOrder->id,
+                'inventory_item_id' => $this->inventory_item_id,
+                'supplier_sku' => $supplier->pivot->supplier_sku,
+                'quantity' => $quantity,
+                'unit_price' => $costPerUnit,
+                'total_price' => $totalAmount,
+                'received_quantity' => 0,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            // Send notification
+            $admins = User::where('email', 'tchristensen@christyvault.com')->get();
+            LaravelNotification::send($admins, new KanbanCardScanned($this));
+        });
+
+        return true;
     }
 
     public function updateQuantity(float $quantity)
     {
-        // Send updated notification with quantity
-        $admins = User::where('email', 'tchristensen@christyvault.com')->get();
-        Notification::send($admins, new KanbanCardScanned($this, $quantity));
+        // Use Filament's notification system
+        Notification::make()
+            ->title('Kanban Card Scanned')
+            ->body("Card scanned for {$this->inventoryItem->name} - Remaining: {$quantity} {$this->unit_of_measure}")
+            ->icon('heroicon-o-qr-code')
+            ->actions([
+                Action::make('view')
+                    ->button()
+                    ->url(url("/operations/resources/kanban-cards/{$this->id}")),
+            ])
+            ->database()
+            ->send();
     }
 
     public function canBeScanned(): bool
