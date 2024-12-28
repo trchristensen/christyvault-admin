@@ -52,26 +52,18 @@ class OperationsPanelProvider extends PanelProvider
                 BreezyCore::make()
                     ->myProfile(),
             ])
-            ->navigationItems([
-                NavigationItem::make('Notifications')
-                    ->icon('heroicon-o-bell')
-                    ->badge(fn() => auth()->user()->unreadNotifications->count() ?: null)
-                    ->url(fn() => '/operations/notifications')
-            ])
-            ->renderHook(
-                'panels::user-menu.before',
-                fn() => Livewire::mount('notifications-dropdown')
-            )
+            ->navigationItems([])
+
             ->discoverResources(in: app_path('Filament/Operations/Resources'), for: 'App\\Filament\\Operations\\Resources')
             ->discoverPages(in: app_path('Filament/Operations/Pages'), for: 'App\\Filament\\Operations\\Pages')
             ->pages([
                 Pages\Dashboard::class,
-                Notifications::class,
+                // Notifications::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Operations/Widgets'), for: 'App\\Filament\\Operations\\Widgets')
             ->widgets([
                 InventoryStatsWidget::class,
-                LatestNotificationsWidget::class,
+                // LatestNotificationsWidget::class,
                 RecentPurchaseOrdersWidget::class,
             ])
             ->middleware([
@@ -87,6 +79,8 @@ class OperationsPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->databaseNotifications();
+        // ->databaseNotificationsPolling('30s');
     }
 }

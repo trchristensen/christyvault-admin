@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Opcodes\LogViewer\Facades\LogViewer;
 use Livewire\Livewire;
-use App\Livewire\NotificationsDropdown;
+// use App\Livewire\NotificationsDropdown;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -38,6 +38,6 @@ class AppServiceProvider extends ServiceProvider
             Css::make('calendar-styles', resource_path('css/calendar.css')),
         ]);
 
-        Livewire::component('notifications-dropdown', NotificationsDropdown::class);
+        // Livewire::component('notifications-dropdown', NotificationsDropdown::class);
     }
 }

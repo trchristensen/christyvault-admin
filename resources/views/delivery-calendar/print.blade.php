@@ -17,11 +17,18 @@
             line-height: 1.4;
         }
 
+        @page {
+            margin: 0;
+            size: letter portrait;
+        }
+
         .page {
             page-break-after: always;
             padding: 20px;
             height: 220mm;
             display: block;
+            page-orientation: upright;
+            transform-origin: center;
         }
 
         .page:last-child {
