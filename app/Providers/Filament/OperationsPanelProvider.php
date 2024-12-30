@@ -52,7 +52,11 @@ class OperationsPanelProvider extends PanelProvider
                 BreezyCore::make()
                     ->myProfile(),
             ])
-            ->navigationItems([])
+            ->navigationItems([
+                NavigationItem::make('Admin Panel')
+                    ->url('/')
+                    ->icon('heroicon-o-building-office')
+            ])
 
             ->discoverResources(in: app_path('Filament/Operations/Resources'), for: 'App\\Filament\\Operations\\Resources')
             ->discoverPages(in: app_path('Filament/Operations/Pages'), for: 'App\\Filament\\Operations\\Pages')

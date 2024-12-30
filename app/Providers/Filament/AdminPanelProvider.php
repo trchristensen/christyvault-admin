@@ -28,6 +28,7 @@ use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 use App\Filament\Resources\OrderResource\Widgets\CalendarWidget;
 use App\Filament\Widgets\CalendarWidget as WidgetsCalendarWidget;
 use Filament\Support\Enums\MaxWidth;
+use Filament\Navigation\NavigationItem;
 
 
 class AdminPanelProvider extends PanelProvider
@@ -64,6 +65,12 @@ class AdminPanelProvider extends PanelProvider
                     ->label('Directories'),
                 NavigationGroup::make()
                     ->label('System'),
+            ])
+            ->navigationItems([
+                NavigationItem::make('Operations Panel')
+                    ->url('/operations')
+                    ->icon('heroicon-o-briefcase')
+                    ->visible(fn(): bool => auth()->user()?->email === 'tchristensen@christyvault.com')
             ])
             // ->databaseNotifications()
             ->sidebarCollapsibleOnDesktop()
