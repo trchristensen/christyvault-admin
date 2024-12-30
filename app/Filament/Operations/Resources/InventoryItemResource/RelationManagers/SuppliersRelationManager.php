@@ -36,6 +36,7 @@ class SuppliersRelationManager extends RelationManager
                     ->numeric()
                     ->required(),
                 Forms\Components\Toggle::make('is_preferred')
+                    ->dehydrateStateUsing(fn($state): string => $state ? 'true' : 'false')
                     ->label('Preferred Supplier'),
                 Forms\Components\Textarea::make('notes')
                     ->rows(3),
@@ -76,7 +77,7 @@ class SuppliersRelationManager extends RelationManager
             ->headerActions([
                 Tables\Actions\AttachAction::make()
                     ->preloadRecordSelect()
-                    ->form(fn (Tables\Actions\AttachAction $action): array => [
+                    ->form(fn(Tables\Actions\AttachAction $action): array => [
                         $action->getRecordSelect(),
                         Forms\Components\TextInput::make('supplier_sku')
                             ->label('Supplier SKU'),
@@ -106,4 +107,4 @@ class SuppliersRelationManager extends RelationManager
                 ]),
             ]);
     }
-} 
+}

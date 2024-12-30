@@ -99,11 +99,11 @@ class InventoryItemsRelationManager extends RelationManager
                         Forms\Components\Toggle::make('is_preferred')
                             ->label('Preferred Supplier')
                             ->default(false)
-                            ->dehydrateStateUsing(fn($state) => DB::raw($state ? 'true' : 'false')),
                     ])
+                    ->beforeAttaching(function (array $data) {})
                     ->mutateFormDataUsing(function (array $data): array {
-                        // Ensure cost_per_unit is properly formatted
                         $data['cost_per_unit'] = number_format((float)$data['cost_per_unit'], 2, '.', '');
+                        $data['is_preferred'] = $data['is_preferred'] === true ? 'true' : 'false';
                         return $data;
                     }),
             ])

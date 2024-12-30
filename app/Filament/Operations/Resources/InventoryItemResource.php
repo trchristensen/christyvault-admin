@@ -94,7 +94,8 @@ class InventoryItemResource extends Resource
                     ])->columns(2),
 
                 Forms\Components\Toggle::make('active')
-                    ->default(true),
+                    ->default(true)
+                    ->dehydrateStateUsing(fn($state): string => $state ? 'true' : 'false'),
             ]);
     }
 
