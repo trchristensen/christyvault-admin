@@ -42,7 +42,7 @@ class OperationsPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
-            ->brandLogo('images/logo.svg')
+            ->brandLogo(fn() => view('filament.logo'))
             ->brandLogoHeight('60px')
             ->maxContentWidth(MaxWidth::Full)
             ->sidebarCollapsibleOnDesktop()

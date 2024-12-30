@@ -36,7 +36,7 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->brandLogo('images/logo.svg')
+            ->brandLogo(fn() => view('filament.logo'))
             ->brandLogoHeight('60px')
             ->default()
             ->id('admin')
