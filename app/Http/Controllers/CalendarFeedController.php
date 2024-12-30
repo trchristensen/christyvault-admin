@@ -12,7 +12,7 @@ class CalendarFeedController extends Controller
     public function download()
     {
         $calendar = Calendar::create('Christy Vault Deliveries')
-            ->refreshInterval(5) // minutes
+            ->refreshInterval(1) // Set to 1 minute
             ->timezone('America/Los_Angeles')
             ->productIdentifier('-//Christy Vault//Delivery Calendar//EN')
             ->withoutAutoTimezoneComponents();  // Prevents timezone duplication
@@ -27,23 +27,22 @@ class CalendarFeedController extends Controller
                     Event::create()
                         ->name($order->customer?->name ?? $order->order_number)
                         ->description($this->generateDescription($order))
-                        ->uniqueIdentifier($order->id)
+                        ->uniqueIdentifier($order->id . '-' . time()) // Add timestamp to UID to force refresh
                         ->createdAt($order->created_at)
                         ->startsAt($order->assigned_delivery_date ?? $order->requested_delivery_date)
                         ->endsAt(($order->assigned_delivery_date ?? $order->requested_delivery_date)->addHours(1))
                         ->fullDay()
-                        // Add status for cancelled/deleted events
                         ->status($order->trashed() ? 'CANCELLED' : 'CONFIRMED')
                 );
             });
 
         return response($calendar->get())
             ->header('Content-Type', 'text/calendar; charset=utf-8')
-            ->header('Content-Disposition', 'attachment; filename="deliveries.ics"')
-            ->header('Cache-Control', 'no-store, no-cache, must-revalidate')
+            ->header('Content-Disposition', 'inline; filename="deliveries.ics"') // Changed to inline
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
             ->header('Pragma', 'no-cache')
             ->header('Expires', '0')
-            ->header('X-PUBLISHED-TTL', 'PT15M');  // Tell clients to refresh every 15 minutes
+            ->header('X-PUBLISHED-TTL', 'PT1M');
     }
 
     private function generateDescription(Order $order): string
