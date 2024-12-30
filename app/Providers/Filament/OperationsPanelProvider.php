@@ -42,7 +42,7 @@ class OperationsPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
-            ->brandLogo('https://christyvault.com/_next/static/media/logo.22a652dc.svg')
+            ->brandLogo('images/logo.svg')
             ->brandLogoHeight('60px')
             ->maxContentWidth(MaxWidth::Full)
             ->sidebarCollapsibleOnDesktop()

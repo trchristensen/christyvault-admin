@@ -29,12 +29,13 @@ use App\Filament\Resources\OrderResource\Widgets\CalendarWidget;
 use App\Filament\Widgets\CalendarWidget as WidgetsCalendarWidget;
 use Filament\Support\Enums\MaxWidth;
 
+
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->brandLogo('https://christyvault.com/_next/static/media/logo.22a652dc.svg')
+            ->brandLogo('images/logo.svg')
             ->brandLogoHeight('60px')
             ->default()
             ->id('admin')
