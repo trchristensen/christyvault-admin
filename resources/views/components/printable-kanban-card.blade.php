@@ -47,8 +47,14 @@
         <div class="grid {{ $kanbanCard->bin_number ? 'grid-cols-2' : 'grid-cols-1' }} gap-4 mb-4">
             <div class="text-center">
                 <p class="text-gray-600 text-[0.7em] uppercase">Department</p>
-                <p class="font-bold text-[1.2em]">{{ $kanbanCard->department }}</p>
+                <p class="font-bold text-[1.2em]">{{ $kanbanCard->inventoryItem->department }}</p>
             </div>
+            @if ($kanbanCard->inventoryItem->storage_location)
+                <div class="text-center">
+                    <p class="text-gray-600 text-[0.7em] uppercase">Storage Location</p>
+                    <p class="font-bold text-[1.2em]">{{ $kanbanCard->inventoryItem->storage_location }}</p>
+                </div>
+            @endif
             @if ($kanbanCard->bin_number)
                 <div class="text-center">
                     <p class="text-gray-600 text-[0.7em] uppercase">Bin Number</p>
@@ -73,7 +79,7 @@
                         {{-- if the reorder point has .00 as the decimal, don't show it --}}
                         {{ number_format($kanbanCard->reorder_point, strpos($kanbanCard->reorder_point, '.00') !== false ? 0 : 2) }}
                         @if ($kanbanCard->unit_of_measure)
-                            {{ $kanbanCard->unit_of_measure }}{{ $kanbanCard->reorder_point > 1 ? 'S' : null }}
+                            {{ $kanbanCard->unit_of_measure }}
                         @endif
                     </p>
                 </div>

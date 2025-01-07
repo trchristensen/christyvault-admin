@@ -65,6 +65,9 @@ class KanbanCardController extends Controller
 
     public function print(KanbanCard $kanbanCard)
     {
+        // include inventory item for the kanban card
+        $kanbanCard->load('inventoryItem');
+
         return view('kanban-cards.print', [
             'kanbanCard' => $kanbanCard
         ]);
