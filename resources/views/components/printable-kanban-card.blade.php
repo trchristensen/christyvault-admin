@@ -92,7 +92,7 @@
                         {{-- if the reorder point has .00 as the decimal, don't show it --}}
                         {{ number_format($kanbanCard->reorder_point, strpos($kanbanCard->reorder_point, '.00') !== false ? 0 : 2) }}
                         @if ($kanbanCard->unit_of_measure)
-                            {{ $kanbanCard->unit_of_measure }}
+                            {{ Str::plural($kanbanCard->unit_of_measure) }}
                         @endif
                     </p>
                 </div>
