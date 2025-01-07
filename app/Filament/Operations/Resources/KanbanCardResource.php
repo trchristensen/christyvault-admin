@@ -44,29 +44,9 @@ class KanbanCardResource extends Resource
                         if (!$inventoryItem) return;
 
                         // Auto-populate fields from inventory item
-                        $set('bin_location', $inventoryItem->storage_location);
                         $set('reorder_point', $inventoryItem->minimum_stock);
                         $set('unit_of_measure', $inventoryItem->unit_of_measure);
                     }),
-
-                Forms\Components\TextInput::make('bin_number')
-                    ->maxLength(255),
-
-                Forms\Components\TextInput::make('bin_location')
-                    ->maxLength(255)
-                    ->afterStateHydrated(function ($component, $state, Forms\Set $set) {
-                        if ($state) return; // If there's already a value, don't override it
-
-                        $record = $component->getRecord();
-                        if (!$record?->inventoryItem) return;
-
-                        $set('bin_location', $record->inventoryItem->storage_location);
-                    }),
-
-                Forms\Components\TextInput::make('department')
-                    ->required()
-                    ->maxLength(255),
-
                 Forms\Components\Textarea::make('description')
                     ->maxLength(255)
                     ->columnSpanFull(),
@@ -112,13 +92,6 @@ class KanbanCardResource extends Resource
                     ->searchable()
                     ->label('Item #')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('department')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('bin_number')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('bin_location')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('description')
                     ->limit(30)
                     ->searchable(),

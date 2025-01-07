@@ -18,6 +18,7 @@ use App\Models\PurchaseOrder;
 use App\Services\Sage100Service;
 use Illuminate\Support\Facades\Auth;
 use Filament\Actions\ViewAction;
+use App\Enums\Department;
 
 class InventoryItemResource extends Resource
 {
@@ -86,7 +87,13 @@ class InventoryItemResource extends Resource
                         Forms\Components\TextInput::make('reorder_lead_time')
                             ->numeric()
                             ->suffix('days'),
+                        Forms\Components\Select::make('department')
+                            ->options(Department::getOptions())
+                            ->nullable()
+                            ->searchable(),
                         Forms\Components\TextInput::make('storage_location')
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('bin_number')
                             ->maxLength(255),
                         Forms\Components\TextInput::make('sage_item_code')
                             ->maxLength(255)
@@ -110,6 +117,15 @@ class InventoryItemResource extends Resource
                 Tables\Columns\TextColumn::make('category')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('department')
+                    ->formatStateUsing(
+                        fn($state) =>
+                        $state instanceof Department
+                            ? $state->getLabel()
+                            : ucfirst((string) $state)
+                    )
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('current_stock')
                     ->sortable()
                     ->color(

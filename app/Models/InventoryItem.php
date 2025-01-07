@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use App\Services\Sage100Service;
+use App\Enums\Department;
 
 class InventoryItem extends Model
 
@@ -22,16 +23,39 @@ class InventoryItem extends Model
         'current_stock',
         'reorder_lead_time',
         'storage_location',
+        'bin_number',
         'qr_code',
         'active',
-        'sage_item_code'
+        'sage_item_code',
+        'department'
     ];
 
     protected $casts = [
         'minimum_stock' => 'decimal:2',
         'current_stock' => 'decimal:2',
-        'active' => 'boolean'
+        'active' => 'boolean',
+        // 'department' => Department::class
     ];
+
+    protected static function booted()
+    {
+        static::created(function ($inventoryItem) {
+            // Check if a kanban card already exists for this SKU
+            $existingCard = KanbanCard::whereHas('inventoryItem', function ($query) use ($inventoryItem) {
+                $query->where('sku', $inventoryItem->sku);
+            })->first();
+
+            if (!$existingCard) {
+                KanbanCard::create([
+                    'inventory_item_id' => $inventoryItem->id,
+                    'reorder_point' => $inventoryItem->minimum_stock,
+                    'status' => KanbanCard::STATUS_ACTIVE,
+                    'department' => 'Default', // You might want to adjust this
+                    'unit_of_measure' => $inventoryItem->unit_of_measure,
+                ]);
+            }
+        });
+    }
 
     // Relationships
     public function suppliers()
