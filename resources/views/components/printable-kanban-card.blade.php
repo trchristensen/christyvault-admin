@@ -1,6 +1,15 @@
 <div class="mx-auto bg-white kanban-card {{ $getSizeClasses() }}" id="printable-card">
     <div class="flex flex-col h-full p-4">
-        {{-- Header with QR Code --}}
+        @if (request('type') === 'movement')
+            {{-- Movement Card (Simplified for reordering) --}}
+            <div class="mb-4 text-center">
+                <div class="inline-block px-3 py-1 text-xs font-bold text-red-700 bg-red-100 rounded-full">
+                    REORDER CARD
+                </div>
+            </div>
+        @endif
+
+        {{-- Common Elements --}}
         <div class="flex justify-center mb-2">
             <div
                 class="{{ match ($size) {
@@ -43,39 +52,43 @@
             @endif
         </div>
 
-        {{-- Location Info --}}
-        <div class="grid {{ $kanbanCard->bin_number ? 'grid-cols-2' : 'grid-cols-1' }} gap-4 mb-4">
-            <div class="text-center">
-                <p class="text-gray-600 text-[0.7em] uppercase">Department</p>
-                <p class="font-bold text-[1.2em]">{{ $kanbanCard->inventoryItem->department }}</p>
+        @if (request('type') !== 'movement')
+            {{-- Storage Card Specific Info --}}
+            <div class="grid {{ $kanbanCard->bin_number ? 'grid-cols-2' : 'grid-cols-1' }} gap-4 mb-4">
+                <div class="text-center">
+                    <p class="text-gray-600 text-[0.7em] uppercase">Department</p>
+                    <p class="font-bold text-[1.2em]">{{ $kanbanCard->inventoryItem->department }}</p>
+                </div>
+                @if ($kanbanCard->inventoryItem->storage_location)
+                    <div class="text-center">
+                        <p class="text-gray-600 text-[0.7em] uppercase">Storage Location</p>
+                        <p class="font-bold text-[1.2em]">{{ $kanbanCard->inventoryItem->storage_location }}</p>
+                    </div>
+                @endif
+                @if ($kanbanCard->bin_number)
+                    <div class="text-center">
+                        <p class="text-gray-600 text-[0.7em] uppercase">Bin Number</p>
+                        <p class="font-bold text-[1.2em]">{{ $kanbanCard->bin_number }}</p>
+                    </div>
+                @endif
             </div>
-            @if ($kanbanCard->inventoryItem->storage_location)
-                <div class="text-center">
-                    <p class="text-gray-600 text-[0.7em] uppercase">Storage Location</p>
-                    <p class="font-bold text-[1.2em]">{{ $kanbanCard->inventoryItem->storage_location }}</p>
-                </div>
-            @endif
-            @if ($kanbanCard->bin_number)
-                <div class="text-center">
-                    <p class="text-gray-600 text-[0.7em] uppercase">Bin Number</p>
-                    <p class="font-bold text-[1.2em]">{{ $kanbanCard->bin_number }}</p>
-                </div>
-            @endif
-        </div>
 
-        @if ($kanbanCard->description)
-            <div class="mb-4 text-center">
-                <p class="text-gray-600 text-[0.7em] uppercase">Description</p>
-                <p class="text-[0.9em]">{{ $kanbanCard->description }}</p>
-            </div>
+            @if ($kanbanCard->description)
+                <div class="mb-4 text-center">
+                    <p class="text-gray-600 text-[0.7em] uppercase">Description</p>
+                    <p class="text-[0.9em]">{{ $kanbanCard->description }}</p>
+                </div>
+            @endif
         @endif
 
-        {{-- Reorder Info --}}
+        {{-- Reorder Info (Emphasized on Movement Card) --}}
         @if ($kanbanCard->reorder_point)
             <div class="mt-auto text-center">
-                <div class="pt-4 border-t border-gray-200">
+                <div
+                    class="pt-4 border-t border-gray-200 {{ request('type') === 'movement' ? 'bg-red-50 p-4 rounded-lg' : '' }}">
                     <p class="text-gray-600 text-[0.8em] uppercase">Reorder Point</p>
-                    <p class="font-bold text-[1.8em]">
+                    <p
+                        class="font-bold {{ request('type') === 'movement' ? 'text-[2.2em] text-red-600' : 'text-[1.8em]' }}">
                         {{-- if the reorder point has .00 as the decimal, don't show it --}}
                         {{ number_format($kanbanCard->reorder_point, strpos($kanbanCard->reorder_point, '.00') !== false ? 0 : 2) }}
                         @if ($kanbanCard->unit_of_measure)

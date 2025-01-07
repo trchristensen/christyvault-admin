@@ -11,20 +11,36 @@
 <body class="bg-gray-100">
     <div class="container mx-auto">
         <div class="mb-4 no-print">
-            <div class="max-w-xl mb-4 ">
-                <label class="block text-sm font-medium text-gray-700">Select Card Size:</label>
-                <select id="cardSize" class="block w-full h-8 mt-1 border-gray-300 rounded-md">
-                    <option class="p-4" value="standard"
-                        {{ !request('size') || request('size') === 'standard' ? 'selected' : '' }}>
-                        Standard (5" x 7")
-                    </option>
-                    <option class="p-4" value="large" {{ request('size') === 'large' ? 'selected' : '' }}>
-                        Large (Letter Size - 8.5" x 11")
-                    </option>
-                    <option class="p-4" value="small" {{ request('size') === 'small' ? 'selected' : '' }}>
-                        Small (3" x 5")
-                    </option>
-                </select>
+            <div class="max-w-xl mb-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Card Type:</label>
+                        <select id="cardType" class="block w-full h-8 mt-1 border-gray-300 rounded-md">
+                            <option value="storage" {{ request('type') === 'storage' ? 'selected' : '' }}>
+                                Storage Card (Bin)
+                            </option>
+                            <option value="movement" {{ request('type') === 'movement' ? 'selected' : '' }}>
+                                Movement Card (Reorder)
+                            </option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Card Size:</label>
+                        <select id="cardSize" class="block w-full h-8 mt-1 border-gray-300 rounded-md">
+                            <option value="standard"
+                                {{ !request('size') || request('size') === 'standard' ? 'selected' : '' }}>
+                                Standard (5" x 7")
+                            </option>
+                            <option value="large" {{ request('size') === 'large' ? 'selected' : '' }}>
+                                Large (8.5" x 11")
+                            </option>
+                            <option value="small" {{ request('size') === 'small' ? 'selected' : '' }}>
+                                Small (3" x 5")
+                            </option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             @if (request('size'))
@@ -46,24 +62,13 @@
     </div>
 
     <script>
-        document.getElementById('cardSize').addEventListener('change', function() {
-            if (this.value) {
+        ['cardSize', 'cardType'].forEach(selectId => {
+            document.getElementById(selectId).addEventListener('change', function() {
                 const currentUrl = new URL(window.location.href);
-                currentUrl.searchParams.set('size', this.value);
+                currentUrl.searchParams.set(selectId === 'cardSize' ? 'size' : 'type', this.value);
                 window.location.href = currentUrl.toString();
-            }
+            });
         });
-
-        // Only auto-print if size is selected and not the initial page load
-        // window.onload = function() {
-        //     const urlParams = new URLSearchParams(window.location.search);
-        //     const size = urlParams.get('size');
-        //     if (size && document.referrer) { // Only auto-print if coming from another page
-        //         setTimeout(function() {
-        //             window.print();
-        //         }, 500);
-        //     }
-        // };
     </script>
 </body>
 
