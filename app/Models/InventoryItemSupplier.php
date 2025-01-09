@@ -14,7 +14,6 @@ class InventoryItemSupplier extends Model
         'supplier_id',
         'is_preferred',
         'supplier_sku',
-        'cost_per_unit',
         'minimum_order_quantity',
         'lead_time_days',
         'last_supplied_at',
@@ -23,7 +22,6 @@ class InventoryItemSupplier extends Model
 
     protected $casts = [
         'is_preferred' => 'boolean',
-        'cost_per_unit' => 'decimal:2',
         'minimum_order_quantity' => 'decimal:2',
         'last_supplied_at' => 'datetime'
     ];

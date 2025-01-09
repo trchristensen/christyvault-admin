@@ -21,7 +21,6 @@ class InventoryItem extends Model
         'unit_of_measure',
         'minimum_stock',
         'current_stock',
-        'reorder_lead_time',
         'storage_location',
         'bin_number',
         'qr_code',
@@ -50,7 +49,6 @@ class InventoryItem extends Model
                     'inventory_item_id' => $inventoryItem->id,
                     'reorder_point' => $inventoryItem->minimum_stock,
                     'status' => KanbanCard::STATUS_ACTIVE,
-                    'department' => 'Default', // You might want to adjust this
                     'unit_of_measure' => $inventoryItem->unit_of_measure,
                 ]);
             }
@@ -64,7 +62,6 @@ class InventoryItem extends Model
             ->withPivot([
                 'is_preferred',
                 'supplier_sku',
-                'cost_per_unit',
                 'minimum_order_quantity',
                 'lead_time_days',
                 'last_supplied_at',

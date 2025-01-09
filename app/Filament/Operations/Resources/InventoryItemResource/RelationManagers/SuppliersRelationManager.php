@@ -7,6 +7,7 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
 
 class SuppliersRelationManager extends RelationManager
 {
@@ -21,11 +22,6 @@ class SuppliersRelationManager extends RelationManager
                 Forms\Components\TextInput::make('supplier_sku')
                     ->label('Supplier SKU')
                     ->maxLength(255),
-                Forms\Components\TextInput::make('cost_per_unit')
-                    ->label('Cost per Unit')
-                    ->numeric()
-                    ->prefix('$')
-                    ->required(),
                 Forms\Components\TextInput::make('minimum_order_quantity')
                     ->label('Minimum Order Quantity')
                     ->numeric()
@@ -36,7 +32,7 @@ class SuppliersRelationManager extends RelationManager
                     ->numeric()
                     ->required(),
                 Forms\Components\Toggle::make('is_preferred')
-                    ->dehydrateStateUsing(fn($state): string => $state ? 'true' : 'false')
+                    ->dehydrateStateUsing(fn($state) => (bool) $state)
                     ->label('Preferred Supplier'),
                 Forms\Components\Textarea::make('notes')
                     ->rows(3),
@@ -53,9 +49,6 @@ class SuppliersRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('supplier_sku')
                     ->label('Supplier SKU')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('cost_per_unit')
-                    ->money('USD')
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('minimum_order_quantity')
                     ->numeric()
                     ->sortable(),
@@ -81,11 +74,6 @@ class SuppliersRelationManager extends RelationManager
                         $action->getRecordSelect(),
                         Forms\Components\TextInput::make('supplier_sku')
                             ->label('Supplier SKU'),
-                        Forms\Components\TextInput::make('cost_per_unit')
-                            ->label('Cost per Unit')
-                            ->numeric()
-                            ->prefix('$')
-                            ->required(),
                         Forms\Components\TextInput::make('minimum_order_quantity')
                             ->label('Minimum Order Quantity')
                             ->numeric()
@@ -95,7 +83,11 @@ class SuppliersRelationManager extends RelationManager
                             ->numeric(),
                         Forms\Components\Toggle::make('is_preferred')
                             ->label('Preferred Supplier'),
-                    ]),
+                    ])
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $data['is_preferred'] = $data['is_preferred'] ? 'true' : 'false';
+                        return $data;
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

@@ -84,9 +84,6 @@ class InventoryItemResource extends Resource
                         Forms\Components\TextInput::make('current_stock')
                             ->numeric()
                             ->default(0),
-                        Forms\Components\TextInput::make('reorder_lead_time')
-                            ->numeric()
-                            ->suffix('days'),
                         Forms\Components\Select::make('department')
                             ->options(Department::getOptions())
                             ->nullable()

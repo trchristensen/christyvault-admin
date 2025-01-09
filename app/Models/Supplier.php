@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+
 class Supplier extends Model
 {
     protected $fillable = [
@@ -27,7 +28,6 @@ class Supplier extends Model
             ->withPivot([
                 'is_preferred',
                 'supplier_sku',
-                'cost_per_unit',
                 'minimum_order_quantity',
                 'lead_time_days',
                 'last_supplied_at',

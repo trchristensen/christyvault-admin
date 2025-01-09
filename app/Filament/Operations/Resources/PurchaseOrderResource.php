@@ -43,15 +43,14 @@ class PurchaseOrderResource extends Resource
                     ->default('draft')
                     ->required(),
 
-                Forms\Components\DateTimePicker::make('order_date')
-                    ->default(now()),
+                Forms\Components\DatePicker::make('order_date')
+                    ->default(now())
+                    ->required(),
 
-                Forms\Components\DateTimePicker::make('expected_delivery_date')
+                Forms\Components\DatePicker::make('expected_delivery_date')
                     ->after('order_date'),
 
-                Forms\Components\DateTimePicker::make('received_date')
-                    ->after('order_date')
-                    ->visible(fn(Get $get): bool => $get('status') === 'received'),
+                Forms\Components\DatePicker::make('received_date'),
 
                 Forms\Components\TextInput::make('total_amount')
                     ->required()
@@ -178,11 +177,11 @@ class PurchaseOrderResource extends Resource
                 ->default('draft')
                 ->required(),
 
-            Forms\Components\DateTimePicker::make('order_date')
+            Forms\Components\DatePicker::make('order_date')
                 ->default(now())
                 ->required(),
 
-            Forms\Components\DateTimePicker::make('expected_delivery_date')
+            Forms\Components\DatePicker::make('expected_delivery_date')
                 ->after('order_date'),
 
             Forms\Components\Textarea::make('notes')
