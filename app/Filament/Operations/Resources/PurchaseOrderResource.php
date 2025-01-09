@@ -47,8 +47,7 @@ class PurchaseOrderResource extends Resource
                     ->default(now())
                     ->required(),
 
-                Forms\Components\DatePicker::make('expected_delivery_date')
-                    ->after('order_date'),
+                Forms\Components\DatePicker::make('expected_delivery_date'),
 
                 Forms\Components\DatePicker::make('received_date'),
 
