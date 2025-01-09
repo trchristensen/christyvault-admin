@@ -139,6 +139,7 @@ class InventoryItemsRelationManager extends RelationManager
                             $processedData = [
                                 'purchase_order_id' => $this->getOwnerRecord()->id,
                                 'inventory_item_id' => $record->id,
+                                'supplier_id' => $this->getOwnerRecord()->supplier_id,
                                 'supplier_sku' => $data['supplier_sku'] ?? null,
                                 'quantity' => $data['quantity'],
                                 'unit_price' => $data['unit_price'],
