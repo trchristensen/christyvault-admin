@@ -64,6 +64,21 @@ class PurchaseOrderResource extends Resource
                 Forms\Components\Hidden::make('created_by_user_id')
                     ->default(fn() => Auth::id())
                     ->dehydrated(fn($state) => filled($state)),
+
+                Forms\Components\Section::make('Invoice Information')
+                    ->schema([
+                        Forms\Components\TextInput::make('invoice_number')
+                            ->label('Vendor Invoice Number')
+                            ->maxLength(255),
+                        Forms\Components\FileUpload::make('invoice_image_path')
+                            ->label('Invoice Image')
+                            ->image()
+                            ->directory('invoices')
+                            ->visibility('private')
+                            ->downloadable()
+                            ->openable(),
+                    ])
+                    ->collapsible(),
             ]);
     }
 
@@ -93,15 +108,15 @@ class PurchaseOrderResource extends Resource
                     ]),
 
                 Tables\Columns\TextColumn::make('order_date')
-                    ->dateTime()
+                    ->date()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('expected_delivery_date')
-                    ->dateTime()
+                    ->date()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('received_date')
-                    ->dateTime()
+                    ->date()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('total_amount')
