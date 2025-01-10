@@ -111,6 +111,7 @@ class KanbanCard extends Model
             DB::table('purchase_order_items')->insert([
                 'purchase_order_id' => $purchaseOrder->id,
                 'inventory_item_id' => $this->inventory_item_id,
+                'supplier_id' => $supplier->id,
                 'supplier_sku' => $supplier->pivot->supplier_sku,
                 'quantity' => $quantity,
                 'unit_price' => $costPerUnit,
