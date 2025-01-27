@@ -30,7 +30,7 @@
                         <select id="cardSize" class="block w-full h-8 mt-1 border-gray-300 rounded-md">
                             <option value="standard"
                                 {{ !request('size') || request('size') === 'standard' ? 'selected' : '' }}>
-                                Standard (5" x 7")
+                                Standard (4" x 6")
                             </option>
                             <option value="large" {{ request('size') === 'large' ? 'selected' : '' }}>
                                 Large (8.5" x 11")

@@ -9,47 +9,57 @@
             </div>
         @endif
 
-        {{-- Common Elements --}}
-        <div class="flex justify-center mb-2">
-            <div
-                class="{{ match ($size) {
-                    'large' => 'w-[4.5in] h-[4.5in]',
-                    'small' => 'w-[2in] h-[2in]',
-                    default => 'w-[3in] h-[3in]',
-                } }}">
-                <div class="w-full h-full">
-                    <svg viewBox="0 0 {{ match ($size) {
-                        'large' => '1500 1500',
-                        'small' => '800 800',
-                        default => '1200 1200',
-                    } }}"
-                        class="w-full h-full">
-                        {!! $kanbanCard->generateQrCode($size) !!}
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        {{-- Item Name & SKU --}}
-        <div class="mb-2 text-center">
+        {{-- Item Name & SKU at the top --}}
+        <div class="mb-4 text-center">
             @if ($kanbanCard->inventoryItem->name)
-                <h2
-                    class="{{ match ($size) {
-                        'large' => 'text-4xl',
-                        'small' => 'text-xl',
-                        default => 'text-2xl',
-                    } }} font-bold leading-tight">
+                <h2 class="{{ match ($size) {
+                    'large' => 'text-4xl',
+                    'small' => 'text-xl',
+                    default => 'text-2xl',
+                } }} font-bold leading-tight">
                     {{ $kanbanCard->inventoryItem->name }}</h2>
             @endif
             @if ($kanbanCard->inventoryItem->sku)
-                <p
-                    class="{{ match ($size) {
-                        'large' => 'text-xl',
-                        'small' => 'text-sm',
-                        default => 'text-base',
-                    } }} text-gray-600">
+                <p class="{{ match ($size) {
+                    'large' => 'text-xl',
+                    'small' => 'text-sm',
+                    default => 'text-base',
+                } }} text-gray-600">
                     Item #: {{ $kanbanCard->inventoryItem->sku }}</p>
             @endif
+        </div>
+
+        {{-- QR Code and Image side by side --}}
+        <div class="flex justify-between mb-4 space-x-4">
+            {{-- QR Code --}}
+            <div class="{{ match ($size) {
+                'large' => 'w-[2.5in] h-[2.5in]',
+                'small' => 'w-[1.25in] h-[1.25in]',
+                default => 'w-[1.75in] h-[1.75in]',
+            } }}">
+                <svg viewBox="0 0 {{ match ($size) {
+                    'large' => '1500 1500',
+                    'small' => '800 800',
+                    default => '1200 1200',
+                } }}" class="w-full h-full">
+                    {!! $kanbanCard->generateQrCode($size) !!}
+                </svg>
+            </div>
+
+            {{-- Product Image (if available) --}}
+            <div class="{{ match ($size) {
+                'large' => 'w-[2.5in] h-[2.5in]',
+                'small' => 'w-[1.25in] h-[1.25in]',
+                default => 'w-[1.75in] h-[1.75in]',
+            } }} bg-gray-100 rounded flex items-center justify-center">
+                @if ($kanbanCard->inventoryItem->image_path)
+                    <img src="{{ Storage::url($kanbanCard->inventoryItem->image_path) }}" 
+                         alt="{{ $kanbanCard->inventoryItem->name }}"
+                         class="object-contain w-full h-full">
+                @else
+                    <span class="text-gray-400">No Image</span>
+                @endif
+            </div>
         </div>
 
         {{-- Location Info (Always show, but styled differently for movement cards) --}}
