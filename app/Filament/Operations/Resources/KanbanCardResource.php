@@ -97,7 +97,7 @@ class KanbanCardResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('reorder_point')
                     ->numeric(),
-                Tables\Columns\TextColumn::make('inventoryItem.unit_of_measure')
+                Tables\Columns\TextColumn::make('unit_of_measure')
                     ->label('Unit of Measure'),
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([

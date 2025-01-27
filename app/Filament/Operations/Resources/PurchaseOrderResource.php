@@ -123,8 +123,21 @@ class PurchaseOrderResource extends Resource
                     ->money('USD')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('createdBy.name')
-                    ->label('Created By'),
+                // Tables\Columns\TextColumn::make('createdBy.name')
+                //     ->label('Created By'),
+
+                // Add this new column before the total_amount
+                Tables\Columns\TextColumn::make('items_count')
+                    ->label('Items')
+                    ->counts('items'),
+
+                Tables\Columns\TextColumn::make('items.name')
+                    ->label('Items')
+                    ->listWithLineBreaks()
+                    ->limitList(3)
+                    ->expandableLimitedList()
+                    ->searchable()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
