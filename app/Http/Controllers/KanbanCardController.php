@@ -23,10 +23,14 @@ class KanbanCardController extends Controller
     {
         $kanbanCard = KanbanCard::findOrFail($id);
 
-        // Verify the inventory_item_id matches (security check)
-        if ($request->inventory_item_id != $kanbanCard->inventory_item_id) {
+        // Verify both inventory_item_id and scan_token
+        if ($request->inventory_item_id != $kanbanCard->inventory_item_id || 
+            $request->token !== $kanbanCard->scan_token) {
             abort(400, 'Invalid QR code');
         }
+
+        // Generate new token after successful scan
+        $kanbanCard->refreshScanToken();
 
         // Handle POST request (quantity update)
         if ($request->isMethod('post')) {

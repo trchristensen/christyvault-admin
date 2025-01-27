@@ -16,6 +16,7 @@ use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\SvgWriter;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class KanbanCard extends Model
 {
@@ -156,10 +157,10 @@ class KanbanCard extends Model
      */
     public function generateQrCode(string $size = 'standard'): string
     {
-        // Use the named route 'kanban-cards.scan'
         $scanUrl = route('kanban-cards.scan', [
             'id' => $this->id,
             'inventory_item_id' => $this->inventory_item_id,
+            'token' => $this->scan_token
         ]);
 
         // Log the URL for debugging
@@ -187,5 +188,32 @@ class KanbanCard extends Model
         );
 
         return $builder->build()->getString();
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($kanbanCard) {
+            $kanbanCard->scan_token = Str::random(32);
+        });
+    }
+
+    public function refreshScanToken(): void
+    {
+        $this->update([
+            'scan_token' => Str::random(32)
+        ]);
+    }
+
+    public function getScanTokenAttribute($value)
+    {
+        // If no token exists, generate one
+        if (empty($value)) {
+            $token = Str::random(32);
+            $this->update(['scan_token' => $token]);
+            return $token;
+        }
+        return $value;
     }
 }
