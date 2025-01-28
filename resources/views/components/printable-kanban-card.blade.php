@@ -1,4 +1,4 @@
-<div class="mx-auto bg-white kanban-card {{ $getSizeClasses() }}" id="printable-card">
+<div class="border border-gray-200 border-dotted mx-auto bg-white kanban-card {{ $getSizeClasses() }}" id="printable-card">
     <div class="flex flex-col h-full p-4">
         @if (request('type') === 'movement')
             {{-- Movement Card (Simplified for reordering) --}}
