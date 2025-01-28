@@ -136,6 +136,7 @@ class KanbanCard extends Model
         Notification::make()
             ->title('Kanban Card Scanned')
             ->body("Card scanned for {$this->inventoryItem->name} - Remaining: {$quantity} {$this->unit_of_measure}")
+            ->success()
             ->icon('heroicon-o-qr-code')
             ->actions([
                 Action::make('view')
