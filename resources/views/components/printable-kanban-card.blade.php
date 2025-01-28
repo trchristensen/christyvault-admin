@@ -98,9 +98,7 @@
                     <p
                         class="font-bold {{ request('type') === 'movement' ? 'text-[2.2em] text-red-600' : 'text-[1.8em]' }}">
                         {{ number_format($kanbanCard->reorder_point, strpos($kanbanCard->reorder_point, '.00') !== false ? 0 : 2) }}
-                        @if ($kanbanCard->unit_of_measure)
-                            {{ Str::plural($kanbanCard->unit_of_measure) }}
-                        @endif
+                        {{ Str::plural($kanbanCard->unit_of_measure, $kanbanCard->reorder_point) }}
                     </p>
                 </div>
             </div>
