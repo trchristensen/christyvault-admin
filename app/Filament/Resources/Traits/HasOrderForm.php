@@ -8,6 +8,8 @@ use App\Models\Product;
 use Filament\Forms;
 use Carbon\Carbon;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
+use Schmeits\FilamentCharacterCounter\Forms\Components\Textarea;
+
 
 trait HasOrderForm
 {
@@ -186,8 +188,9 @@ trait HasOrderForm
                             'sm' => 4,
                             'md' => 4,
                         ]),
-                    Forms\Components\Textarea::make('special_instructions')
-                        ->columnSpan(12),
+                    Textarea::make('special_instructions')
+                        ->columnSpan(12)
+                        ->characterLimit(166),
                 ])
                 ->columns(12),
             Forms\Components\Section::make('Products')

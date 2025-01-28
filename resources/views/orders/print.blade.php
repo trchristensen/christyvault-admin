@@ -193,9 +193,28 @@
             width: calc(100% - 80px);
             min-width: 760px;
             text-indent: 100px;
-            height: 118px;
+            /* height: 118px; */
+            height: 60px;
+            overflow: hidden;
             line-height: 30px;
+            /* border: 1px solid red; */
         }
+        .cemetery-time {
+            position: absolute;
+            top: 910px;
+            left: 30px;
+            width: 970px;
+            min-width: 760px;
+            height: 30px;
+            overflow: hidden;
+            line-height: 30px;
+            /* border: 1px solid red; */
+        }
+        .cemetery-time span {
+            margin-right: 300px;
+        }
+
+
 
         .template {
             /* opacity: 1; */
@@ -299,6 +318,10 @@
                 {{ $order->special_instructions }}
             </div>
         @endif
+        <div class="cemetery-time">
+            <span>Arrive:</span>
+            <span>Leave:</span>
+        </div>
 
 
     </article>

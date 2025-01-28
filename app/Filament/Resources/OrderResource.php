@@ -25,6 +25,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Resources\Components\Tab;
 use App\Filament\Resources\Traits\HasOrderForm;
 use Filament\Support\Enums\MaxWidth;
+use Illuminate\Support\Facades\DB;
 
 class OrderResource extends Resource
 {
@@ -116,11 +117,40 @@ class OrderResource extends Resource
                     ->html(),
 
             ])
-            ->defaultGroup('assigned_delivery_date')
+            ->defaultGroup('delivery_group')
             ->groups([
-                Tables\Grouping\Group::make('assigned_delivery_date')
-                    ->label('Delivery Date')
-                    ->date()
+                Tables\Grouping\Group::make('delivery_group')
+                    ->label('Delivery Schedule')
+                    ->getTitleFromRecordUsing(function ($record) {
+                        if (!$record->assigned_delivery_date) {
+                            return 'Unassigned Orders';
+                        }
+                        
+                        $today = now()->startOfDay();
+                        $assignedDate = $record->assigned_delivery_date->startOfDay();
+                        
+                        if ($assignedDate->lt($today)) {
+                            return 'Past Orders';
+                        }
+                        
+                        // If within next 3 weeks
+                        if ($assignedDate->lte($today->copy()->addWeeks(3))) {
+                            return $assignedDate->format('l, M j, Y');
+                        }
+                        
+                        return 'Future Orders (> 3 weeks)';
+                    })
+                    ->orderQueryUsing(function (Builder $query, string $direction) {
+                        return $query->orderBy(DB::raw('
+                            CASE 
+                                WHEN assigned_delivery_date IS NULL THEN 0
+                                WHEN assigned_delivery_date < CURRENT_DATE THEN 3
+                                WHEN assigned_delivery_date <= CURRENT_DATE + INTERVAL \'21 days\' THEN 1
+                                ELSE 2
+                            END
+                        '))
+                        ->orderBy('assigned_delivery_date', $direction);
+                    })
                     ->collapsible()
             ])
             ->filters([
