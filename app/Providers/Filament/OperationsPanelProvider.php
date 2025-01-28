@@ -84,6 +84,7 @@ class OperationsPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            ->databaseNotifications();
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s');
     }
 }

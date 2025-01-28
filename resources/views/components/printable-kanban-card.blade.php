@@ -30,7 +30,7 @@
         </div>
 
         {{-- QR Code and Image side by side --}}
-        <div class="flex justify-between mb-4 space-x-4">
+        <div class="flex {{ $kanbanCard->inventoryItem->image ? 'justify-between' : 'justify-center' }} mb-4 space-x-4">
             {{-- QR Code --}}
             <div class="{{ match ($size) {
                 'large' => 'w-[2.5in] h-[2.5in]',
@@ -47,19 +47,17 @@
             </div>
 
             {{-- Product Image (if available) --}}
-            <div class="{{ match ($size) {
-                'large' => 'w-[2.5in] h-[2.5in]',
-                'small' => 'w-[1.25in] h-[1.25in]',
-                default => 'w-[1.75in] h-[1.75in]',
-            } }} bg-gray-100 rounded flex items-center justify-center">
-                @if ($kanbanCard->inventoryItem->image_path)
-                    <img src="{{ Storage::url($kanbanCard->inventoryItem->image_path) }}" 
+            @if ($kanbanCard->inventoryItem->image)
+                <div class="{{ match ($size) {
+                    'large' => 'w-[2.5in] h-[2.5in]',
+                    'small' => 'w-[1.25in] h-[1.25in]',
+                    default => 'w-[1.75in] h-[1.75in]',
+                } }} rounded flex items-center justify-center">
+                    <img src="{{ Storage::url($kanbanCard->inventoryItem->image) }}" 
                          alt="{{ $kanbanCard->inventoryItem->name }}"
                          class="object-contain w-full h-full">
-                @else
-                    <span class="text-gray-400">No Image</span>
-                @endif
-            </div>
+                </div>
+            @endif
         </div>
 
         {{-- Location Info (Always show, but styled differently for movement cards) --}}

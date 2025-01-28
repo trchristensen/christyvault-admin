@@ -73,6 +73,11 @@ class InventoryItemResource extends Resource
                             ->preload(),
                         Forms\Components\TextInput::make('unit_of_measure')
                             ->required(),
+                            Forms\Components\FileUpload::make('image')
+                            ->directory('inventory-images')
+                            ->image()
+                            ->maxSize(1024)
+                            ->maxFiles(1)
                     ])->columns(2),
 
                 Forms\Components\Section::make('Stock Information')
@@ -100,6 +105,7 @@ class InventoryItemResource extends Resource
                 Forms\Components\Toggle::make('active')
                     ->default(true)
                     ->dehydrateStateUsing(fn($state): string => $state ? 'true' : 'false'),
+                    
             ]);
     }
 

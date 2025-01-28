@@ -26,7 +26,8 @@ class InventoryItem extends Model
         'qr_code',
         'active',
         'sage_item_code',
-        'department'
+        'department',
+        'image'
     ];
 
     protected $casts = [
