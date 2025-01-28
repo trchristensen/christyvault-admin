@@ -73,7 +73,9 @@ class InventoryItemResource extends Resource
                             ->preload(),
                         Forms\Components\TextInput::make('unit_of_measure')
                             ->required(),
-                            Forms\Components\FileUpload::make('image')
+                        Forms\Components\FileUpload::make('image')
+                            ->disk('public')
+                            ->visibility('public')
                             ->directory('inventory-images')
                             ->image()
                             ->maxSize(1024)
