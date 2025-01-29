@@ -16,6 +16,7 @@ use App\Models\InventoryItem;
 use App\Models\Supplier;
 use Filament\Forms\Components\Select;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class PurchaseOrderResource extends Resource
 {
@@ -74,6 +75,20 @@ class PurchaseOrderResource extends Resource
                     ->searchable()
                     ->toggleable(),
 
+                Tables\Columns\IconColumn::make('is_liner_load')
+                    ->label('Liner Load')
+                    ->boolean()
+                    ->visible(fn (?Model $record): bool => 
+                        $record?->supplier?->name === 'Wilbert'
+                    ),
+
+                Tables\Columns\TextColumn::make('order_deadline')
+                    ->label('Order Deadline')
+                    ->date()
+                    ->visible(fn (?Model $record): bool => 
+                        $record?->supplier?->name === 'Wilbert'
+                    ),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -129,7 +144,24 @@ class PurchaseOrderResource extends Resource
                     ->relationship('supplier', 'name')
                     ->required()
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->live(),
+
+                Forms\Components\Toggle::make('is_liner_load')
+                    ->label('Liner Load')
+                    ->visible(fn (Get $get): bool => 
+                        Supplier::find($get('supplier_id'))?->name === 'Wilbert'
+                    )
+                    ->default(false),
+
+                Forms\Components\DatePicker::make('order_deadline')
+                    ->label('Order Deadline')
+                    ->visible(fn (Get $get): bool => 
+                        Supplier::find($get('supplier_id'))?->name === 'Wilbert'
+                    )
+                    ->required(fn (Get $get): bool => 
+                        $get('is_liner_load') === true
+                    ),
 
                 Forms\Components\Select::make('status')
                     ->options([
