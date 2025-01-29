@@ -15,12 +15,111 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\InventoryItem;
 use App\Models\Supplier;
 use Filament\Forms\Components\Select;
+use Illuminate\Database\Eloquent\Builder;
 
 class PurchaseOrderResource extends Resource
 {
     protected static ?string $model = PurchaseOrder::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('supplier.name')
+                    ->sortable()
+                    ->searchable(),
+
+                Tables\Columns\BadgeColumn::make('status')
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
+                        'draft' => 'Draft',
+                        'submitted' => 'Submitted',
+                        'received' => 'Received',
+                        'awaiting_invoice' => 'Awaiting Invoice',
+                        'cancelled' => 'Cancelled',
+                        'completed' => 'Completed',
+                        default => $state,
+                    })
+                    ->colors([
+                        'warning' => 'draft',
+                        'primary' => 'submitted',
+                        'success' => 'received',
+                        'danger' => 'cancelled',
+                        'info' => 'awaiting_invoice',
+                        'success' => 'completed',
+                    ]),
+
+                Tables\Columns\TextColumn::make('order_date')
+                    ->date()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('expected_delivery_date')
+                    ->date()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('received_date')
+                    ->date()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('total_amount')
+                    ->money('USD')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('items.name')
+                    ->label('Items')
+                    ->listWithLineBreaks()
+                    ->limitList(3)
+                    ->expandableLimitedList()
+                    ->searchable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->groups([
+                Tables\Grouping\Group::make('status')
+                    ->label('Status')
+                    ->getTitleFromRecordUsing(fn ($record): string => match ($record->status) {
+                        'draft' => 'Draft',
+                        'submitted' => 'Submitted',
+                        'received' => 'Received',
+                        'awaiting_invoice' => 'Awaiting Invoice',
+                        'cancelled' => 'Cancelled',
+                        'completed' => 'Completed',
+                        default => ucfirst($record->status),
+                    })
+                    ->collapsible()
+            ])
+            ->defaultGroup('status')
+            ->filters([
+                Tables\Filters\SelectFilter::make('status')
+                    ->multiple()
+                    ->options([
+                        'draft' => 'Draft',
+                        'submitted' => 'Submitted',
+                        'received' => 'Received',
+                        'awaiting_invoice' => 'Awaiting Invoice',
+                        'cancelled' => 'Cancelled',
+                        'completed' => 'Completed',
+                    ])
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
 
     public static function form(Form $form): Form
     {
@@ -79,88 +178,6 @@ class PurchaseOrderResource extends Resource
                             ->openable(),
                     ])
                     ->collapsible(),
-            ]);
-    }
-
-    public static function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                Tables\Columns\TextColumn::make('supplier.name')
-                    ->sortable()
-                    ->searchable(),
-
-                Tables\Columns\BadgeColumn::make('status')
-                    ->formatStateUsing(fn(string $state): string => match ($state) {
-                        'draft' => 'Draft',
-                        'submitted' => 'Submitted',
-                        'received' => 'Received',
-                        'awaiting_invoice' => 'Awaiting Invoice',
-                        'cancelled' => 'Cancelled',
-                        'completed' => 'Completed',
-                        default => $state,
-                    })
-                    ->colors([
-                        'warning' => 'draft',
-                        'primary' => 'submitted',
-                        'success' => 'received',
-                        'danger' => 'cancelled',
-                        'info' => 'awaiting_invoice',
-                        'success' => 'completed',
-                    ]),
-
-                Tables\Columns\TextColumn::make('order_date')
-                    ->date()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('expected_delivery_date')
-                    ->date()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('received_date')
-                    ->date()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('total_amount')
-                    ->money('USD')
-                    ->sortable(),
-
-                // Tables\Columns\TextColumn::make('createdBy.name')
-                //     ->label('Created By'),
-
-                // Add this new column before the total_amount
-                Tables\Columns\TextColumn::make('items_count')
-                    ->label('Items')
-                    ->counts('items'),
-
-                Tables\Columns\TextColumn::make('items.name')
-                    ->label('Items')
-                    ->listWithLineBreaks()
-                    ->limitList(3)
-                    ->expandableLimitedList()
-                    ->searchable()
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->filters([
-                //
-            ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
             ]);
     }
 
