@@ -97,6 +97,7 @@ class PurchaseOrderResource extends Resource
                         'received' => 'Received',
                         'awaiting_invoice' => 'Awaiting Invoice',
                         'cancelled' => 'Cancelled',
+                        'completed' => 'Completed',
                         default => $state,
                     })
                     ->colors([
@@ -105,6 +106,7 @@ class PurchaseOrderResource extends Resource
                         'success' => 'received',
                         'danger' => 'cancelled',
                         'info' => 'awaiting_invoice',
+                        'success' => 'completed',
                     ]),
 
                 Tables\Columns\TextColumn::make('order_date')
