@@ -12,6 +12,8 @@ use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Filament\Forms\Get;
+use Illuminate\Support\Collection;
 
 class InventoryItemsRelationManager extends RelationManager
 {
@@ -103,8 +105,48 @@ class InventoryItemsRelationManager extends RelationManager
                     ->form(fn(Tables\Actions\AttachAction $action): array => [
                         $action->getRecordSelect()
                             ->label('Inventory Item')
+                            ->options(fn(Get $get): Collection => InventoryItem::query()
+                                ->with(['suppliers' => function($query) {
+                                    $query->select('suppliers.id', 'suppliers.name')
+                                        ->wherePivot('is_preferred', '=', DB::raw('true'))
+                                        ->withPivot('supplier_sku');
+                                }])
+                                ->leftJoin('inventory_item_suppliers', function($join) {
+                                    $join->on('inventory_items.id', '=', 'inventory_item_suppliers.inventory_item_id')
+                                        ->where('inventory_item_suppliers.supplier_id', '=', $this->getOwnerRecord()->supplier_id)
+                                        ->where('inventory_item_suppliers.is_preferred', '=', DB::raw('true'));
+                                })
+                                ->whereNotExists(function ($query) {
+                                    $query->select(DB::raw(1))
+                                        ->from('purchase_order_items')
+                                        ->whereColumn('purchase_order_items.inventory_item_id', 'inventory_items.id')
+                                        ->where('purchase_order_items.purchase_order_id', $this->getOwnerRecord()->id);
+                                })
+                                ->select('inventory_items.*')
+                                ->orderByRaw('CASE WHEN inventory_item_suppliers.supplier_id IS NOT NULL THEN 0 ELSE 1 END')
+                                ->where(function($query) use ($get) {
+                                    $query->where('sku', 'like', '%' . $get('sku') . '%')
+                                          ->orWhere('name', 'like', '%' . $get('name') . '%');
+                                })
+                                ->get()
+                                ->mapWithKeys(function ($item) {
+                                    $preferredSupplier = $item->suppliers->first();
+                                    $supplierInfo = $preferredSupplier 
+                                        ? $preferredSupplier->name . 
+                                          ($preferredSupplier->pivot->supplier_sku ? ' (' . $preferredSupplier->pivot->supplier_sku . ')' : '')
+                                        : '';
+
+                                    return [
+                                        $item->id => '<div style="line-height: 1.2;">
+                                                        <span style="font-size: 0.9em; font-weight: bold;">' . $item->sku . '</span><br>' . 
+                                                        $item->name . 
+                                                        ($supplierInfo ? '<br>' . $supplierInfo : '') .
+                                                    '</div>'
+                                    ];
+                                }))
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->allowHtml(),
                         Forms\Components\TextInput::make('supplier_sku')
                             ->label('Supplier SKU')
                             ->nullable(),

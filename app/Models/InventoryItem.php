@@ -88,12 +88,12 @@ class InventoryItem extends Model
             ->withTimestamps();
     }
 
-    // Helper Methods
+    // Replace the helper method with a proper relationship
     public function preferredSupplier()
     {
-        return $this->suppliers()
-            ->wherePivot('is_preferred', '=', DB::raw('true'))
-            ->first();
+        return $this->belongsToMany(Supplier::class, 'inventory_item_suppliers')
+            ->wherePivot('is_preferred', '=', true)
+            ->limit(1);
     }
 
     public function needsReorder()
