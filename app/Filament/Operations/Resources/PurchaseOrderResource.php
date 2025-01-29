@@ -73,7 +73,6 @@ class PurchaseOrderResource extends Resource
                             ->maxLength(255),
                         Forms\Components\FileUpload::make('invoice_image_path')
                             ->label('Invoice Image')
-                            ->image()
                             ->directory('invoices')
                             ->visibility('private')
                             ->downloadable()

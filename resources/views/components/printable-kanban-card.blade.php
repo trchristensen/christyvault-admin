@@ -98,7 +98,7 @@
         @if ($kanbanCard->reorder_point)
             <div class="mt-auto text-center">
                 <div
-                    class="pt-4 border-t border-gray-200 {{ request('type') === 'movement' ? 'bg-red-50 p-4 rounded-lg' : '' }}">
+                    class="pt-2 border-t border-gray-500 {{ request('type') === 'movement' ? 'bg-red-50 p-4 rounded-lg' : '' }}">
                     <p class="text-gray-600 text-[0.8em] uppercase">Reorder Point</p>
                     <p
                         class="font-bold {{ request('type') === 'movement' ? 'text-[2.2em] text-red-600' : 'text-[1.8em]' }}">
