@@ -39,6 +39,7 @@ class PurchaseOrderResource extends Resource
                         'received' => 'Received',
                         'awaiting_invoice' => 'Awaiting Invoice',
                         'cancelled' => 'Cancelled',
+                        'completed' => 'Completed',
                     ])
                     ->default('draft')
                     ->required(),
