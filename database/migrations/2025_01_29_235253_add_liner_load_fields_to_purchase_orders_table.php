@@ -9,7 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('purchase_orders', function (Blueprint $table) {
-            $table->date('order_deadline')->nullable();
             $table->boolean('is_liner_load')->default(false);
         });
     }
@@ -17,7 +16,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('purchase_orders', function (Blueprint $table) {
-            $table->dropColumn(['order_deadline', 'is_liner_load']);
+            $table->dropColumn(['is_liner_load']);
         });
     }
 };

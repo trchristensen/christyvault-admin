@@ -82,12 +82,7 @@ class PurchaseOrderResource extends Resource
                         $record?->supplier?->name === 'Wilbert'
                     ),
 
-                Tables\Columns\TextColumn::make('order_deadline')
-                    ->label('Order Deadline')
-                    ->date()
-                    ->visible(fn (?Model $record): bool => 
-                        $record?->supplier?->name === 'Wilbert'
-                    ),
+              
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -153,15 +148,6 @@ class PurchaseOrderResource extends Resource
                         Supplier::find($get('supplier_id'))?->name === 'Wilbert'
                     )
                     ->default(false),
-
-                Forms\Components\DatePicker::make('order_deadline')
-                    ->label('Order Deadline')
-                    ->visible(fn (Get $get): bool => 
-                        Supplier::find($get('supplier_id'))?->name === 'Wilbert'
-                    )
-                    ->required(fn (Get $get): bool => 
-                        $get('is_liner_load') === true
-                    ),
 
                 Forms\Components\Select::make('status')
                     ->options([
