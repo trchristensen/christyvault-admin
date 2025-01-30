@@ -27,7 +27,8 @@ class InventoryItem extends Model
         'active',
         'sage_item_code',
         'department',
-        'image'
+        'image',
+        'is_liner_load'
     ];
 
     protected $casts = [
