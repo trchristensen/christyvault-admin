@@ -15,14 +15,18 @@ class PurchaseOrder extends Model
         'received_date',
         'total_amount',
         'notes',
-        'created_by_user_id'
+        'created_by_user_id',
+        'is_liner_load',
+        'invoice_number',
+        'invoice_image_path'
     ];
 
     protected $casts = [
         'order_date' => 'datetime',
         'expected_delivery_date' => 'datetime',
         'received_date' => 'datetime',
-        'total_amount' => 'decimal:2'
+        'total_amount' => 'decimal:2',
+        'is_liner_load' => 'boolean'
     ];
 
     // Status constants

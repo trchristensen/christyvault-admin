@@ -143,7 +143,10 @@ class PurchaseOrderResource extends Resource
                     ->live(),
 
                 Forms\Components\Toggle::make('is_liner_load')
+                    ->live()
                     ->label('Liner Load')
+                    ->dehydrateStateUsing(fn($state): string => $state ? 'true' : 'false')
+                    ->default(false)
                     ->visible(fn (Get $get): bool => 
                         Supplier::find($get('supplier_id'))?->name === 'Wilbert'
                     )
