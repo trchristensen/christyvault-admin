@@ -162,6 +162,8 @@ class PurchaseOrderResource extends Resource
                     ->required(),
 
                 Forms\Components\DatePicker::make('order_date')
+                    ->label(fn (Get $get) => $get('is_liner_load') ? 'Order Deadline' : 'Order Date')
+                    ->live()
                     ->default(now())
                     ->required(),
 
