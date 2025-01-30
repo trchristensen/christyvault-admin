@@ -146,10 +146,16 @@ class InventoryItemsRelationManager extends RelationManager
                             ->allowHtml(),
                         Forms\Components\TextInput::make('supplier_sku')
                             ->label('Supplier SKU')
-                            ->default($this->getOwnerRecord()->items->first()->sku)
+                            ->default(function () {
+                                $firstItem = $this->getOwnerRecord()->items->first();
+                                return $firstItem?->sku ?? null;
+                            })
                             ->nullable(),
                         Forms\Components\TextInput::make('quantity')
-                            ->label('Quantity' . ' (' . $this->getOwnerRecord()->items->first()->unit_of_measure . ')' )
+                            ->label(function () {
+                                $firstItem = $this->getOwnerRecord()->items->first();
+                                return 'Quantity' . ($firstItem ? ' (' . $firstItem->unit_of_measure . ')' : '');
+                            })
                             ->numeric()
                             ->required()
                             ->default(1)
