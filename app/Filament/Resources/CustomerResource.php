@@ -38,6 +38,9 @@ class CustomerResource extends Resource
                             ->email()
                             ->maxLength(255),
                         PhoneInput::make('phone')->defaultCountry('US'),
+                        Forms\Components\TextInput::make('contact_name')
+                            ->label('Contact Name')
+                            ->maxLength(255),
                     ]),
 
                 Forms\Components\Section::make('Location')

@@ -242,6 +242,9 @@
                     }
                 @endphp
 
+                @if($order->customer->contact_name)
+                    Call {{ $order->customer->contact_name }} - 
+                @endif
                 {{ $formattedPhone }}
             </span>
         </div>
