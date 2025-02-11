@@ -43,6 +43,34 @@ trait HasOrderForm
                         ->searchable()
                         ->allowHtml()
                         ->reactive()
+                        ->suffixAction(function ($state) {
+                            if (!$state) return null;
+                            
+                            return Forms\Components\Actions\Action::make('edit')
+                                ->icon('heroicon-m-pencil-square')
+                                ->modalHeading('Edit Customer')
+                                ->modalSubmitActionLabel('Save changes')
+                                ->form([
+                                    Forms\Components\TextInput::make('name')
+                                        ->required()
+                                        ->maxLength(255),
+                                    Forms\Components\TextInput::make('email')
+                                        ->email()
+                                        ->maxLength(255),
+                                    PhoneInput::make('phone')
+                                        ->defaultCountry('US'),
+                                    Forms\Components\TextInput::make('contact_name')
+                                        ->maxLength(255)
+                                        ->label('Contact Name'),
+                                ])
+                                ->fillForm(fn() => Customer::find($state)->toArray())
+                                ->action(function (array $data, $state): void {
+                                    $customer = Customer::find($state);
+                                    $customer->update($data);
+                                })
+                                ->modalWidth('lg')
+                                ->visible(fn ($state): bool => (bool)$state);
+                        })
                         ->afterStateUpdated(function (callable $set, $state) {
                             if (!$state) {
                                 $set('location_id', null);

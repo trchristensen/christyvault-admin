@@ -78,6 +78,10 @@
                     <div class="flex items-center gap-2">
                         <x-heroicon-o-phone class="w-4 h-4" />
                         <p>{{ $record->customer->phone }}</p>
+                        @if ($record->customer->contact_name)
+                            <span class="text-gray-500">-</span>
+                            <p>{{ $record->customer->contact_name }}</p>
+                        @endif
                     </div>
                 @endif
             </div>

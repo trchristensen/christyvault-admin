@@ -175,6 +175,9 @@
                                                             }
                                                         @endphp
                                                         {{ $formattedPhone }}
+                                                        @if($order->customer->contact_name)
+                                                            - {{ $order->customer->contact_name }}
+                                                        @endif
                                                     </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
@@ -215,6 +218,9 @@
                                                             }
                                                         @endphp
                                                         {{ $formattedPhone }}
+                                                        @if($order->customer->contact_name)
+                                                            - {{ $order->customer->contact_name }}
+                                                        @endif
                                                     </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
@@ -254,7 +260,11 @@
                                                                 $formattedPhone = $order->customer->phone;
                                                             }
                                                         @endphp
+                                                         @if($order->customer->contact_name)
+                                                            Call {{ $order->customer->contact_name }} -
+                                                        @endif
                                                         {{ $formattedPhone }}
+                                                       
                                                     </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
@@ -334,6 +344,9 @@
                                                             }
                                                         @endphp
                                                         {{ $formattedPhone }}
+                                                        @if($order->customer->contact_name)
+                                                            - {{ $order->customer->contact_name }}
+                                                        @endif
                                                     </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
@@ -374,6 +387,9 @@
                                                             }
                                                         @endphp
                                                         {{ $formattedPhone }}
+                                                        @if($order->customer->contact_name)
+                                                            - {{ $order->customer->contact_name }}
+                                                        @endif
                                                     </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
@@ -414,6 +430,9 @@
                                                             }
                                                         @endphp
                                                         {{ $formattedPhone }}
+                                                        @if($order->customer->contact_name)
+                                                            - {{ $order->customer->contact_name }}
+                                                        @endif
                                                     </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
