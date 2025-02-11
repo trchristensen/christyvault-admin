@@ -1,3 +1,6 @@
+@php
+    use Propaganistas\LaravelPhone\PhoneNumber;
+@endphp
 <!-- add css -->
 <style>
     .grid-cols-2 {
@@ -77,10 +80,17 @@
                 @if ($record->customer->phone)
                     <div class="flex items-center gap-2">
                         <x-heroicon-o-phone class="w-4 h-4" />
-                        <p>{{ $record->customer->phone }}</p>
-                        @if ($record->customer->contact_name)
-                            <span class="text-gray-500">-</span>
-                            <p>{{ $record->customer->contact_name }}</p>
+                        @php
+                            try {
+                                $formattedPhone = (new PhoneNumber($record->customer->phone, 'US'))->formatNational();
+                            } catch (\Exception $e) {
+                                $formattedPhone = $record->customer->phone;
+                            }
+                        @endphp
+                        @if($record->customer->contact_name)
+                            <p>Call {{ $record->customer->contact_name }} - {{ $formattedPhone }}</p>
+                        @else
+                            <p>{{ $formattedPhone }}</p>
                         @endif
                     </div>
                 @endif
