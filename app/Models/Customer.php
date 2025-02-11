@@ -15,6 +15,7 @@ class Customer extends Model
         'name',
         'email',
         'phone',
+        'contact_name',
     ];
 
     public function orders(): HasMany

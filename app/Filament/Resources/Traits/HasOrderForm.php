@@ -9,8 +9,9 @@ use Filament\Forms;
 use Carbon\Carbon;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 use Schmeits\FilamentCharacterCounter\Forms\Components\Textarea;
-
-
+use Filament\Forms\Components\Split;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Grid;
 trait HasOrderForm
 {
     public static function getOrderFormSchema(?string $defaultDate = null): array
@@ -60,7 +61,11 @@ trait HasOrderForm
                             Forms\Components\TextInput::make('email')
                                 ->email()
                                 ->maxLength(255),
-                            PhoneInput::make('phone')->defaultCountry('US'),
+                            PhoneInput::make('phone')
+                                ->defaultCountry('US'),
+                            Forms\Components\TextInput::make('contact_name')
+                                ->maxLength(255)
+                                ->label('Contact Name'),
 
                             Forms\Components\Section::make('Location')
                                 ->schema([
@@ -69,15 +74,38 @@ trait HasOrderForm
                                         ->maxLength(255),
                                     Forms\Components\TextInput::make('location.address_line2')
                                         ->maxLength(255),
-                                    Forms\Components\TextInput::make('location.city')
-                                        ->required()
-                                        ->maxLength(255),
-                                    Forms\Components\TextInput::make('location.state')
-                                        ->required()
-                                        ->maxLength(255),
-                                    Forms\Components\TextInput::make('location.postal_code')
-                                        ->required()
-                                        ->maxLength(20),
+                                    Grid::make([
+                                        'default' => 1,
+                                        'sm' => 1,
+                                        'md' => 12,
+                                    ])
+                                        ->schema([
+                                            Forms\Components\TextInput::make('location.city')
+                                                ->required()
+                                                ->maxLength(255)
+                                                ->columnSpan([
+                                                    'default' => 1,
+                                                    'sm' => 1,
+                                                    'md' => 6,
+                                                ]),
+                                            Forms\Components\TextInput::make('location.state')
+                                                ->required()
+                                                ->default('CA')
+                                                ->maxLength(255)
+                                                ->columnSpan([
+                                                    'default' => 1,
+                                                    'sm' => 1,
+                                                    'md' => 3,
+                                                ]),
+                                            Forms\Components\TextInput::make('location.postal_code')
+                                                ->required()
+                                                ->maxLength(20)
+                                                ->columnSpan([
+                                                    'default' => 1,
+                                                    'sm' => 1,
+                                                    'md' => 3,
+                                                ]),
+                                        ]),
                                     Forms\Components\Select::make('location.location_type')
                                         ->options([
                                             'business' => 'Business',
