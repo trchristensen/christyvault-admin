@@ -112,20 +112,22 @@
             font-weight: bold;
         }
 
-        .rack-label .qr-code {
+        .rack-label .img {
             width: 60pt;  /* ~0.7 inch */
             height: 60pt;
             flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
+            object-fit: contain;
         }
-
-        .rack-label .qr-code svg {
+        .rack-label .img img {
             width: 100%;
             height: 100%;
             display: block;
         }
+
+  
 
         @media print {
             body {
@@ -180,8 +182,14 @@
             </div>
             
             @if (request('size', 'large') === 'large')
-                <div class="qr-code">
-                    {!! $kanbanCard->generateQrCode('small') !!}
+                <div class="img">
+                    {{-- {!! $kanbanCard->generateQrCode('small') !!} --}}
+                    {{-- inventory item image --}}
+                    @if ($kanbanCard->inventoryItem->image)
+                        <img src="{{ Storage::url($kanbanCard->inventoryItem->image) }}" 
+                             alt="{{ $kanbanCard->inventoryItem->name }}"
+                             class="object-contain w-full h-full" />
+                    @endif
                 </div>
             @endif
         </div>
