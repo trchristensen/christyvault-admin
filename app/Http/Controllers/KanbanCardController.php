@@ -76,4 +76,11 @@ class KanbanCardController extends Controller
             'kanbanCard' => $kanbanCard
         ]);
     }
+
+    public function printLabel(KanbanCard $kanbanCard)
+    {
+        return view('kanban-cards.print-label', [
+            'kanbanCard' => $kanbanCard
+        ]);
+    }
 }

@@ -15,6 +15,7 @@ use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 use Filament\Tables\Actions\Action;
 use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Builder;
 
 class KanbanCardResource extends Resource
 {
@@ -111,7 +112,6 @@ class KanbanCardResource extends Resource
                         KanbanCard::STATUS_ORDERED => 'Ordered',
                         default => $state,
                     }),
-
                 Tables\Columns\TextColumn::make('last_scanned_at')
                     ->dateTime()
                     ->sortable(),
@@ -125,14 +125,11 @@ class KanbanCardResource extends Resource
             ->groups([
                 Tables\Grouping\Group::make('status')
                     ->label('Status')
-                    ->getTitleFromRecordUsing(fn(KanbanCard $record): string => match ($record->status) {
-                        KanbanCard::STATUS_ACTIVE => 'Active Cards',
-                        KanbanCard::STATUS_PENDING_ORDER => 'Pending Order Cards',
-                        KanbanCard::STATUS_ORDERED => 'Ordered Cards',
-                        default => $record->status,
-                    })
+                    // ->getTitleFromRecordUsing(fn (KanbanCard $record): string => ucfirst($record->status->getLabel()))
+                    ->orderQueryUsing(fn (Builder $query, string $direction) => $query->orderBy('status', $direction))
                     ->collapsible()
             ])
+       
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
@@ -158,8 +155,19 @@ class KanbanCardResource extends Resource
                 Tables\Actions\Action::make('printKanban')
                     ->label('Print Kanban')
                     ->icon('heroicon-o-printer')
-                    ->url(fn(KanbanCard $record): string =>
-                    route('kanban-cards.print', $record))
+                    ->url(fn(KanbanCard $record): string => 
+                        route('kanban-cards.print', [
+                            'kanbanCard' => $record,
+                            'size' => request('size', 'standard'),
+                            'type' => request('type', 'storage')
+                        ]))
+                    ->openUrlInNewTab(),
+
+                Tables\Actions\Action::make('printLabel')
+                    ->label('Print Label')
+                    ->icon('heroicon-o-tag')
+                    ->url(fn(KanbanCard $record): string => 
+                        route('kanban-cards.print-label', $record))
                     ->openUrlInNewTab(),
             ])
             ->bulkActions([
