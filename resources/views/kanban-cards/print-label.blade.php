@@ -72,20 +72,21 @@
             min-width: 0;
         }
 
-        .rack-label .sku {
+        .rack-label .name {
             font-weight: bold;
             font-size: 11pt;
             line-height: 1;
             margin-bottom: 1pt;
         }
 
-        .rack-label .name {
+        .rack-label .sku {
             font-size: 8pt;
             line-height: 1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             margin-bottom: 2pt;
+            font-weight: bold;
         }
 
         .rack-label .details {
@@ -108,6 +109,7 @@
 
         .rack-label .value {
             color: #000;
+            font-weight: bold;
         }
 
         .rack-label .qr-code {
@@ -152,8 +154,11 @@
     <div class="rack-label size-{{ request('size', 'large') }}" id="printable-label">
         <div class="content">
             <div class="info">
-                <div class="sku">{{ $kanbanCard->inventoryItem->sku }}</div>
                 <div class="name">{{ $kanbanCard->inventoryItem->name }}</div>
+                <div class="sku">{{ $kanbanCard->inventoryItem->sku }}</div>
+                <div class="description">
+                    {{ $kanbanCard->inventoryItem->description }}
+                </div>
                 <div class="details">
                     <div class="detail-row">
                         <span class="label">Dept:</span>
@@ -161,12 +166,12 @@
                     </div>
                     @if($kanbanCard->inventoryItem->storage_location)
                         <div class="detail-row">
-                            <span class="label">Loc:</span>
+                            <span class="label">Location:</span>
                             <span class="value">{{ $kanbanCard->inventoryItem->storage_location }}</span>
                         </div>
                     @endif
                     <div class="detail-row">
-                        <span class="label">ROP:</span>
+                        <span class="label">Reorder Point:</span>
                         <span class="value">{{ $kanbanCard->reorder_point }} {{ $kanbanCard->unit_of_measure }}</span>
                     </div>
                 </div>
