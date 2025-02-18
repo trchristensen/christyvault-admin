@@ -157,6 +157,7 @@
                 <div class="name">{{ $kanbanCard->inventoryItem->name }}</div>
                 <div class="sku">{{ $kanbanCard->inventoryItem->sku }}</div>
                 <div class="description">
+                    <div class="detail-row">
                     {{ $kanbanCard->inventoryItem->description }}
                 </div>
                 <div class="details">
