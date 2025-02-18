@@ -158,7 +158,8 @@
                 <div class="sku">{{ $kanbanCard->inventoryItem->sku }}</div>
                 <div class="description">
                     <div class="detail-row">
-                    {{ $kanbanCard->inventoryItem->description }}
+                        {{ $kanbanCard->inventoryItem->description }}
+                    </div>
                 </div>
                 <div class="details">
                     <div class="detail-row">
