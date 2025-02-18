@@ -83,4 +83,17 @@ class KanbanCardController extends Controller
             'kanbanCard' => $kanbanCard
         ]);
     }
+
+    public function printLabelsBulk(Request $request)
+    {
+        $kanbanCardIds = explode(',', $request->kanbanCards);
+        $kanbanCards = KanbanCard::whereIn('id', $kanbanCardIds)
+            ->with('inventoryItem')  // Eager load the inventory items
+            ->get();
+        
+        return view('kanban-cards.print-labels-bulk', [
+            'kanbanCards' => $kanbanCards,
+            'size' => $request->size ?? 'large'
+        ]);
+    }
 }

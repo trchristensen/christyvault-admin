@@ -173,6 +173,16 @@ class KanbanCardResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('printLabels')
+                        ->label('Print Labels')
+                        ->icon('heroicon-o-printer')
+                        ->action(function (Collection $records) {
+                            return redirect()->route('kanban-cards.print-labels-bulk', [
+                                'kanbanCards' => $records->pluck('id')->join(','),
+                                'size' => request('size', 'large')
+                            ]);
+                        })
+                        ->openUrlInNewTab()
                 ]),
             ]);
     }

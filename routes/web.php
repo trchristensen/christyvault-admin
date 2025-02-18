@@ -53,6 +53,9 @@ Route::get('/kanban-cards/{kanbanCard}/component', function (KanbanCard $kanbanC
 Route::get('/kanban-cards/{kanbanCard}/print-label', [KanbanCardController::class, 'printLabel'])
     ->name('kanban-cards.print-label');
 
+Route::get('/kanban-cards/print-labels-bulk', [KanbanCardController::class, 'printLabelsBulk'])
+    ->name('kanban-cards.print-labels-bulk');
+
 Route::middleware(['auth'])->group(function () {
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])
         ->name('notifications.mark-as-read');
