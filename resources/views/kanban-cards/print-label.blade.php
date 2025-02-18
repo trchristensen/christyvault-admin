@@ -119,15 +119,15 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            object-fit: contain;
         }
+
         .rack-label .img img {
             width: 100%;
             height: 100%;
             display: block;
+            object-fit: contain;
+            object-position: center;
         }
-
-  
 
         @media print {
             body {
@@ -188,7 +188,7 @@
                     @if ($kanbanCard->inventoryItem->image)
                         <img src="{{ Storage::url($kanbanCard->inventoryItem->image) }}" 
                              alt="{{ $kanbanCard->inventoryItem->name }}"
-                             class="object-contain w-full h-full" />
+                        />
                     @endif
                 </div>
             @endif

@@ -211,7 +211,7 @@
                             @if ($kanbanCard->inventoryItem->image)
                                 <img src="{{ Storage::url($kanbanCard->inventoryItem->image) }}" 
                                      alt="{{ $kanbanCard->inventoryItem->name }}"
-                                     class="object-contain w-full h-full" />
+                                />
                             @endif
                         </div>
                     @endif
