@@ -89,7 +89,7 @@
             font-weight: bold;
         }
 
-        .rack-label .details {
+        .rack-label .details, .rack-label .description {
             font-size: 6.5pt;
             line-height: 1.2;
         }
