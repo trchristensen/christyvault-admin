@@ -172,7 +172,8 @@ class KanbanCardResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->requiresConfirmation(),
                     Tables\Actions\BulkAction::make('printLabels')
                         ->label('Print Labels')
                         ->icon('heroicon-o-printer')
@@ -183,6 +184,7 @@ class KanbanCardResource extends Resource
                             ]);
                         })
                         ->openUrlInNewTab()
+                        ->visible(fn () => true)
                 ]),
             ]);
     }

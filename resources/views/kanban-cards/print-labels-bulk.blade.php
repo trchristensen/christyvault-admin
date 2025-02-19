@@ -39,39 +39,40 @@
         }
 
         .labels-grid {
-            display: grid;
-            grid-gap: 0;
+            display: block;
             margin: 0 auto;
         }
 
-        /* For 3" x 1" labels */
-        .labels-grid.size-large {
-            grid-template-columns: repeat(2, 216pt); /* Two 3-inch columns */
-            grid-template-rows: repeat(5, 72pt);     /* Five 1-inch rows */
+        .labels-row {
+            display: grid;
+            grid-gap: 0;
+            margin-bottom: 0;
+            page-break-inside: avoid;
         }
 
-        /* For 2" x 1" labels */
-        .labels-grid.size-small {
-            grid-template-columns: repeat(3, 144pt); /* Three 2-inch columns */
-            grid-template-rows: repeat(5, 72pt);     /* Five 1-inch rows */
+        .labels-row.size-large {
+            grid-template-columns: repeat(2, 216pt);
         }
 
-        /* Label styles - exactly matching single label */
+        .labels-row.size-small {
+            grid-template-columns: repeat(3, 144pt);
+        }
+
         .rack-label {
             background: white;
             border: 1px solid #000;
             box-sizing: border-box;
-            height: 72pt !important; /* 1 inch */
+            height: 72pt !important;
             margin: 0;
             padding: 4pt;
         }
 
         .rack-label.size-large {
-            width: 216pt !important; /* 3 inches */
+            width: 216pt !important;
         }
 
         .rack-label.size-small {
-            width: 144pt !important; /* 2 inches */
+            width: 144pt !important;
         }
 
         .rack-label .content {
@@ -128,7 +129,7 @@
         }
 
         .rack-label .img {
-            width: 60pt;  /* ~0.7 inch */
+            width: 60pt;
             height: 60pt;
             flex-shrink: 0;
             display: flex;
@@ -153,6 +154,12 @@
             .controls {
                 display: none;
             }
+            .labels-row {
+                break-inside: avoid;
+            }
+            .labels-row:nth-child(10) {
+                page-break-after: always;
+            }
         }
 
         select {
@@ -176,46 +183,50 @@
         <button class="close-btn" onclick="window.close()">Close</button>
     </div>
 
-    <div class="labels-grid size-{{ request('size', 'large') }}">
-        @foreach($kanbanCards as $kanbanCard)
-            <div class="rack-label size-{{ request('size', 'large') }}">
-                <div class="content">
-                    <div class="info">
-                        <div class="name">{{ $kanbanCard->inventoryItem->name }}</div>
-                        <div class="sku">{{ $kanbanCard->inventoryItem->sku }}</div>
-                        <div class="description">
-                            <div class="detail-row">
-                                {{ $kanbanCard->inventoryItem->description }}
+    <div class="labels-grid">
+        @foreach($kanbanCards->chunk(request('size', 'large') === 'large' ? 2 : 3) as $row)
+            <div class="labels-row size-{{ request('size', 'large') }}">
+                @foreach($row as $kanbanCard)
+                    <div class="rack-label size-{{ request('size', 'large') }}">
+                        <div class="content">
+                            <div class="info">
+                                <div class="name">{{ $kanbanCard->inventoryItem->name }}</div>
+                                <div class="sku">{{ $kanbanCard->inventoryItem->sku }}</div>
+                                <div class="description">
+                                    <div class="detail-row">
+                                        {{ $kanbanCard->inventoryItem->description }}
+                                    </div>
+                                </div>
+                                <div class="details">
+                                    <div class="detail-row">
+                                        <span class="label">Dept:</span>
+                                        <span class="value">{{ $kanbanCard->inventoryItem->department }}</span>
+                                    </div>
+                                    @if($kanbanCard->inventoryItem->storage_location)
+                                        <div class="detail-row">
+                                            <span class="label">Location:</span>
+                                            <span class="value">{{ $kanbanCard->inventoryItem->storage_location }}</span>
+                                        </div>
+                                    @endif
+                                    <div class="detail-row">
+                                        <span class="label">Reorder Point:</span>
+                                        <span class="value">{{ $kanbanCard->reorder_point }} {{ $kanbanCard->unit_of_measure }}</span>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="details">
-                            <div class="detail-row">
-                                <span class="label">Dept:</span>
-                                <span class="value">{{ $kanbanCard->inventoryItem->department }}</span>
-                            </div>
-                            @if($kanbanCard->inventoryItem->storage_location)
-                                <div class="detail-row">
-                                    <span class="label">Location:</span>
-                                    <span class="value">{{ $kanbanCard->inventoryItem->storage_location }}</span>
+                            
+                            @if (request('size', 'large') === 'large')
+                                <div class="img">
+                                    @if ($kanbanCard->inventoryItem->image)
+                                        <img src="{{ Storage::url($kanbanCard->inventoryItem->image) }}" 
+                                             alt="{{ $kanbanCard->inventoryItem->name }}"
+                                        />
+                                    @endif
                                 </div>
                             @endif
-                            <div class="detail-row">
-                                <span class="label">Reorder Point:</span>
-                                <span class="value">{{ $kanbanCard->reorder_point }} {{ $kanbanCard->unit_of_measure }}</span>
-                            </div>
                         </div>
                     </div>
-                    
-                    @if (request('size', 'large') === 'large')
-                        <div class="img">
-                            @if ($kanbanCard->inventoryItem->image)
-                                <img src="{{ Storage::url($kanbanCard->inventoryItem->image) }}" 
-                                     alt="{{ $kanbanCard->inventoryItem->name }}"
-                                />
-                            @endif
-                        </div>
-                    @endif
-                </div>
+                @endforeach
             </div>
         @endforeach
     </div>
