@@ -212,7 +212,7 @@
         }
         .cemetery-time span {
             margin-right: 300px;
-            margin-right: 70px;
+            margin-right: 150px;
         }
 
 
