@@ -198,10 +198,12 @@
                                     </div>
                                 </div>
                                 <div class="details">
-                                    <div class="detail-row">
-                                        <span class="label">Dept:</span>
-                                        <span class="value">{{ $kanbanCard->inventoryItem->department }}</span>
-                                    </div>
+                                    @if($kanbanCard->bin_number)
+                                        <div class="detail-row">
+                                            <span class="label">Bin #:</span>
+                                            <span class="value">{{ $kanbanCard->bin_number }}</span>
+                                        </div>
+                                    @endif
                                     @if($kanbanCard->inventoryItem->storage_location)
                                         <div class="detail-row">
                                             <span class="label">Location:</span>

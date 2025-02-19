@@ -212,6 +212,7 @@
         }
         .cemetery-time span {
             margin-right: 300px;
+            margin-right: 70px;
         }
 
 
@@ -324,6 +325,7 @@
         <div class="cemetery-time">
             <span>Arrive:</span>
             <span>Leave:</span>
+            <span>Driver:</span>
         </div>
 
 
