@@ -78,7 +78,8 @@
         .rack-label .content {
             height: 100%;
             display: flex;
-            align-items: center;
+            /* align-items: center; */
+            align-items: start;
             justify-content: space-between;
             gap: 6pt;
         }
@@ -90,7 +91,7 @@
 
         .rack-label .name {
             font-weight: bold;
-            font-size: 11pt;
+            font-size: 12pt;
             line-height: 1;
             margin-bottom: 1pt;
         }
@@ -106,7 +107,7 @@
         }
 
         .rack-label .details, .rack-label .description {
-            font-size: 6.5pt;
+            font-size: 8pt;
             line-height: 1.2;
         }
 
