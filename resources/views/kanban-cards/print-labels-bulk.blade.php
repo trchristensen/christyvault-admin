@@ -119,7 +119,7 @@
 
         .rack-label .label {
             font-weight: bold;
-            color: #666;
+            color: #000;
             flex-shrink: 0;
         }
 
