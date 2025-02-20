@@ -176,6 +176,7 @@
     <div class="controls">
         <label>Label Size:</label>
         <select id="labelSize">
+            <option value="xl" {{ request('size') === 'xl' ? 'selected' : '' }}>2.5" x 5"</option>
             <option value="large" {{ request('size') === 'large' ? 'selected' : '' }}>1" x 3"</option>
             <option value="small" {{ request('size') === 'small' ? 'selected' : '' }}>1" x 2"</option>
         </select>
@@ -185,50 +186,16 @@
     </div>
 
     <div class="labels-grid">
-        @foreach($kanbanCards->chunk(request('size', 'large') === 'large' ? 2 : 3) as $row)
+        @foreach($kanbanCards->chunk(
+            request('size') === 'xl' ? 1 : 
+            (request('size', 'large') === 'large' ? 2 : 3)
+        ) as $row)
             <div class="labels-row size-{{ request('size', 'large') }}">
                 @foreach($row as $kanbanCard)
-                    <div class="rack-label size-{{ request('size', 'large') }}">
-                        <div class="content">
-                            <div class="info">
-                                <div class="name">{{ $kanbanCard->inventoryItem->name }}</div>
-                                <div class="sku">{{ $kanbanCard->inventoryItem->sku }}</div>
-                                <div class="description">
-                                    <div class="detail-row">
-                                        {{ $kanbanCard->inventoryItem->description }}
-                                    </div>
-                                </div>
-                                <div class="details">
-                                    @if($kanbanCard->bin_number)
-                                        <div class="detail-row">
-                                            <span class="label">Bin #:</span>
-                                            <span class="value">{{ $kanbanCard->bin_number }}</span>
-                                        </div>
-                                    @endif
-                                    @if($kanbanCard->inventoryItem->storage_location)
-                                        <div class="detail-row">
-                                            <span class="label">Location:</span>
-                                            <span class="value">{{ $kanbanCard->inventoryItem->storage_location }}</span>
-                                        </div>
-                                    @endif
-                                    <div class="detail-row">
-                                        <span class="label">Reorder Point:</span>
-                                        <span class="value">{{ $kanbanCard->reorder_point }} {{ $kanbanCard->unit_of_measure }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            @if (request('size', 'large') === 'large')
-                                <div class="img">
-                                    @if ($kanbanCard->inventoryItem->image)
-                                        <img src="{{ Storage::url($kanbanCard->inventoryItem->image) }}" 
-                                             alt="{{ $kanbanCard->inventoryItem->name }}"
-                                        />
-                                    @endif
-                                </div>
-                            @endif
-                        </div>
-                    </div>
+                    @include('kanban-cards.partials.rack-label', [
+                        'kanbanCard' => $kanbanCard,
+                        'size' => request('size', 'large')
+                    ])
                 @endforeach
             </div>
         @endforeach
