@@ -33,27 +33,12 @@ class Notifications extends Page implements HasTable
                 auth()->user()->notifications()->getQuery()
             )
             ->columns([
-                TextColumn::make('title')
+               TextColumn::make('data.title')
                     ->label('Title')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('type')
-                    ->label('Type')
-                    ->searchable()
-                    ->sortable(),
-                // TextColumn::make('data.inventory_item_name')
-                //     ->label('Item')
-                //     ->searchable()
-                //     ->sortable(),
-                // TextColumn::make('data.bin_number')
-                //     ->label('Bin')
-                //     ->searchable(),
-                // TextColumn::make('data.bin_location')
-                //     ->label('Location')
-                //     ->searchable(),
-                // TextColumn::make('data.scanned_by')
-                //     ->label('Scanned By')
-                //     ->searchable(),
+                    ->searchable(),
+                TextColumn::make('data.body')
+                    ->label('Message')
+                    ->wrap(),
                 TextColumn::make('created_at')
                     ->label('Time')
                     ->dateTime()
