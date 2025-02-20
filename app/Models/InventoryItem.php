@@ -165,10 +165,7 @@ class InventoryItem extends Model
             return null;
         }
         
-        // Generate a signed URL that expires in 1 hour
-        return Storage::disk('r2')->temporaryUrl(
-            $this->image,
-            now()->addHour()
-        );
+        // If using R2/S3, return the URL directly
+        return Storage::disk('r2')->url($this->image);
     }
 }
