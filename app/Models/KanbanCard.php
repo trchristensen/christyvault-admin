@@ -17,6 +17,7 @@ use Endroid\QrCode\Writer\SvgWriter;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Notifications\KanbanCardQuantityUpdated;
 
 class KanbanCard extends Model
 {
@@ -132,19 +133,16 @@ class KanbanCard extends Model
 
     public function updateQuantity(float $quantity)
     {
-        // Use Filament's notification system
-        Notification::make()
+        // Flash notification for immediate feedback
+        \Filament\Notifications\Notification::make()
             ->title('Kanban Card Scanned')
             ->body("Card scanned for {$this->inventoryItem->name} - Remaining: {$quantity} {$this->unit_of_measure}")
             ->success()
-            ->icon('heroicon-o-qr-code')
-            ->actions([
-                Action::make('view')
-                    ->button()
-                    ->url(url("/operations/resources/kanban-cards/{$this->id}")),
-            ])
-            ->database()
             ->send();
+
+        // Database notification
+        $users = User::where('email', 'tchristensen@christyvault.com')->get();
+        LaravelNotification::send($users, new KanbanCardQuantityUpdated($this, $quantity));
     }
 
     public function canBeScanned(): bool

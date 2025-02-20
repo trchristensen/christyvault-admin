@@ -72,7 +72,7 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-briefcase')
                     ->visible(fn(): bool => auth()->user()?->email === 'tchristensen@christyvault.com')
             ])
-            // ->databaseNotifications()
+            ->databaseNotifications()
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('13rem')
             // ->collapsedSidebarWidth('5rem')
