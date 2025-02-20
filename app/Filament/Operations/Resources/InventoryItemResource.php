@@ -120,7 +120,7 @@ class InventoryItemResource extends Resource
                     ->label('Image')
                     ->disk('r2')
                     ->size(40)
-                    ->defaultImageUrl(url('/images/no-image.png'))
+                    ->defaultImageUrl(url('https://r2.bytoddchristensen.com/inventory-images/image-placeholder-base.png'))
                     ->extraImgAttributes(['loading' => 'lazy']),
                 Tables\Columns\TextColumn::make('sku')
                     ->searchable(),

@@ -91,7 +91,7 @@ class KanbanCardResource extends Resource
                     ->label('Image')
                     ->disk('r2')
                     ->circular()
-                    ->defaultImageUrl(url('/images/no-image.png'))
+                    ->defaultImageUrl(url('https://r2.bytoddchristensen.com/inventory-images/image-placeholder-base.png'))
                     ->size(40)
                     ->extraImgAttributes(['loading' => 'lazy']),
                 Tables\Columns\TextColumn::make('inventoryItem.name')
