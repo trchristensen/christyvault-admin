@@ -74,7 +74,7 @@ class InventoryItemResource extends Resource
                         Forms\Components\TextInput::make('unit_of_measure')
                             ->required(),
                         Forms\Components\FileUpload::make('image')
-                            ->disk('public')
+                            ->disk('r2')
                             ->visibility('public')
                             ->directory('inventory-images')
                             ->image()

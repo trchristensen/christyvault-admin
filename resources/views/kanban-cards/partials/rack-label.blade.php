@@ -42,7 +42,7 @@
         @if ($size === 'xl')
             @if ($kanbanCard->inventoryItem->image)
                 <div class="product-image">
-                    <img src="{{ Storage::url($kanbanCard->inventoryItem->image) }}" 
+                    <img src="{{ $kanbanCard->inventoryItem->image_url }}" 
                          alt="{{ $kanbanCard->inventoryItem->name }}" />
                 </div>
             @endif
@@ -53,7 +53,7 @@
         @elseif (request('size', 'large') === 'large')
             <div class="img">
                 @if ($kanbanCard->inventoryItem->image)
-                    <img src="{{ Storage::url($kanbanCard->inventoryItem->image) }}" 
+                    <img src="{{ $kanbanCard->inventoryItem->image_url }}" 
                          alt="{{ $kanbanCard->inventoryItem->name }}" />
                 @endif
             </div>

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use App\Services\Sage100Service;
 use App\Enums\Department;
+use Illuminate\Support\Facades\Storage;
 
 class InventoryItem extends Model
 
@@ -52,6 +53,20 @@ class InventoryItem extends Model
                     'status' => KanbanCard::STATUS_ACTIVE,
                     'unit_of_measure' => $inventoryItem->unit_of_measure,
                 ]);
+            }
+        });
+
+        // Delete old image when updating
+        static::updating(function ($item) {
+            if ($item->isDirty('image') && $item->getOriginal('image')) {
+                Storage::disk('r2')->delete($item->getOriginal('image'));
+            }
+        });
+        
+        // Delete image when deleting item
+        static::deleting(function ($item) {
+            if ($item->image) {
+                Storage::disk('r2')->delete($item->image);
             }
         });
     }
@@ -142,5 +157,18 @@ class InventoryItem extends Model
         }
 
         return $result;
+    }
+
+    public function getImageUrlAttribute()
+    {
+        if (!$this->image) {
+            return null;
+        }
+        
+        // Generate a signed URL that expires in 1 hour
+        return Storage::disk('r2')->temporaryUrl(
+            $this->image,
+            now()->addHour()
+        );
     }
 }
