@@ -94,12 +94,12 @@ class KanbanCardResource extends Resource
                     ->defaultImageUrl(url('https://r2.bytoddchristensen.com/inventory-images/image-placeholder-base.png'))
                     ->size(40)
                     ->extraImgAttributes(['loading' => 'lazy']),
-                Tables\Columns\TextColumn::make('inventoryItem.name')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('inventoryItem.sku')
+                     Tables\Columns\TextColumn::make('inventoryItem.sku')
                     ->searchable()
                     ->label('Item #')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('inventoryItem.name')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('description')
                     ->limit(30)
@@ -121,6 +121,7 @@ class KanbanCardResource extends Resource
                         default => $state,
                     }),
                 Tables\Columns\TextColumn::make('last_scanned_at')
+                    ->label('Last Scanned')
                     ->dateTime()
                     ->sortable(),
                 // Tables\Columns\TextColumn::make('scannedBy.name')
