@@ -106,9 +106,9 @@ class InventoryItem extends Model
     // Replace the helper method with a proper relationship
     public function preferredSupplier()
     {
-        return $this->belongsToMany(Supplier::class, 'inventory_item_suppliers')
-            ->wherePivot('is_preferred', '=', true)
-            ->limit(1);
+        return $this->suppliers()
+            ->wherePivot('is_preferred', true)
+            ->first();
     }
 
     public function needsReorder()
@@ -165,7 +165,6 @@ class InventoryItem extends Model
             return null;
         }
         
-        // If using R2/S3, return the URL directly
         return Storage::disk('r2')->url($this->image);
     }
 }
