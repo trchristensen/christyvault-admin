@@ -102,7 +102,7 @@ class KanbanCard extends Model
             // Create a new purchase order
             $purchaseOrder = PurchaseOrder::create([
                 'status' => 'draft',
-                'supplier_id' => $supplier->id,
+                'supplier_id' => $supplier->id ?? 1,
                 'created_by_user_id' => Auth::id(),
                 'total_amount' => $totalAmount,
                 'notes' => 'Created from Kanban card scan'
