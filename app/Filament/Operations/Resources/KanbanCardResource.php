@@ -147,36 +147,30 @@ class KanbanCardResource extends Resource
                     ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('scan')
-                    ->icon('heroicon-o-qr-code')
-                    ->action(fn(KanbanCard $record) => $record->markAsScanned())
-                    ->requiresConfirmation()
-                    ->visible(fn(KanbanCard $record) => $record->canBeScanned()),
-
-                // Tables\Actions\Action::make('downloadQrCode')
-                //     ->label('Download QR')
-                //     ->icon('heroicon-o-arrow-down-tray')
-                //     ->tooltip('Download QR code as SVG')
-                //     ->url(fn(KanbanCard $record) => $record->qr_code_url)
-                //     ->openUrlInNewTab(),
-                Tables\Actions\Action::make('printKanban')
-                    ->label('Print Kanban')
-                    ->icon('heroicon-o-printer')
-                    ->url(fn(KanbanCard $record): string => 
-                        route('kanban-cards.print', [
-                            'kanbanCard' => $record,
-                            'size' => request('size', 'standard'),
-                            'type' => request('type', 'storage')
-                        ]))
-                    ->openUrlInNewTab(),
-
-                Tables\Actions\Action::make('printLabel')
-                    ->label('Print Label')
-                    ->icon('heroicon-o-tag')
-                    ->url(fn(KanbanCard $record): string => 
-                        route('kanban-cards.print-label', $record))
-                    ->openUrlInNewTab(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\Action::make('scan')
+                        ->icon('heroicon-o-qr-code')
+                        ->action(fn(KanbanCard $record) => $record->markAsScanned())
+                        ->requiresConfirmation()
+                        ->visible(fn(KanbanCard $record) => $record->canBeScanned()),
+                    Tables\Actions\Action::make('printKanban')
+                        ->label('Print Kanban')
+                        ->icon('heroicon-o-printer')
+                        ->url(fn(KanbanCard $record): string => 
+                            route('kanban-cards.print', [
+                                'kanbanCard' => $record,
+                                'size' => request('size', 'standard'),
+                                'type' => request('type', 'storage')
+                            ]))
+                        ->openUrlInNewTab(),
+                    Tables\Actions\Action::make('printLabel')
+                        ->label('Print Label')
+                        ->icon('heroicon-o-tag')
+                        ->url(fn(KanbanCard $record): string => 
+                            route('kanban-cards.print-label', $record))
+                        ->openUrlInNewTab(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

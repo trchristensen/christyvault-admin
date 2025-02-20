@@ -189,20 +189,21 @@ class InventoryItemResource extends Resource
                     ->modalSubmitActionLabel('Yes, sync now'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('syncWithSage')
-                    ->label('Sync with Sage 100')
-                    ->icon('heroicon-o-arrow-path')
-                    ->action(function (InventoryItem $record) {
-                        $result = $record->syncWithSage();
-
-                        Notification::make()
-                            ->title('Synced with Sage 100')
-                            ->body($result['message'])
-                            ->success()
-                            ->send();
-                    })
-                    ->visible(fn(InventoryItem $record) => $record->sage_item_code !== null),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\Action::make('syncWithSage')
+                        ->label('Sync with Sage 100')
+                        ->icon('heroicon-o-arrow-path')
+                        ->action(function (InventoryItem $record) {
+                            $result = $record->syncWithSage();
+                            Notification::make()
+                                ->title('Synced with Sage 100')
+                                ->body($result['message'])
+                                ->success()
+                                ->send();
+                        })
+                        ->visible(fn(InventoryItem $record) => $record->sage_item_code !== null),
+                ])
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
