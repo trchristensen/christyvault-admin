@@ -57,7 +57,7 @@
                         'small' => 'w-[1.25in] h-[1.25in]',
                         default => 'w-[1.75in] h-[1.75in]',
                     } }} rounded flex items-center justify-center">
-                        <img src="{{ Storage::url($kanbanCard->inventoryItem->image) }}" 
+                        <img src="{{ Storage::url($kanbanCard->inventoryItem->image_url) }}" 
                              alt="{{ $kanbanCard->inventoryItem->name }}"
                              class="object-contain w-full h-full">
                     </div>
