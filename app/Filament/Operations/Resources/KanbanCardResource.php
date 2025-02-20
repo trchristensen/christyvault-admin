@@ -16,6 +16,7 @@ use Illuminate\Support\HtmlString;
 use Filament\Tables\Actions\Action;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Columns\ImageColumn;
 
 class KanbanCardResource extends Resource
 {
@@ -86,6 +87,13 @@ class KanbanCardResource extends Resource
     {
         return $table
             ->columns([
+                ImageColumn::make('inventoryItem.image')
+                    ->label('Image')
+                    ->disk('r2')
+                    ->circular()
+                    ->defaultImageUrl(url('/images/no-image.png'))
+                    ->size(40)
+                    ->extraImgAttributes(['loading' => 'lazy']),
                 Tables\Columns\TextColumn::make('inventoryItem.name')
                     ->searchable()
                     ->sortable(),

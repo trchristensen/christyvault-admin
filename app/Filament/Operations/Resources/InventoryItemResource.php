@@ -19,6 +19,7 @@ use App\Services\Sage100Service;
 use Illuminate\Support\Facades\Auth;
 use Filament\Actions\ViewAction;
 use App\Enums\Department;
+use Filament\Tables\Columns\ImageColumn;
 
 class InventoryItemResource extends Resource
 {
@@ -115,6 +116,12 @@ class InventoryItemResource extends Resource
     {
         return $table
             ->columns([
+                ImageColumn::make('image')
+                    ->label('Image')
+                    ->disk('r2')
+                    ->size(40)
+                    ->defaultImageUrl(url('/images/no-image.png'))
+                    ->extraImgAttributes(['loading' => 'lazy']),
                 Tables\Columns\TextColumn::make('sku')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('name')
