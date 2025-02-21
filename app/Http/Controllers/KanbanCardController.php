@@ -77,11 +77,16 @@ class KanbanCardController extends Controller
         ]);
     }
 
-    public function printLabel(KanbanCard $kanbanCard)
+    public function printLabel(Request $request, KanbanCard $kanbanCard)
     {
-        return view('kanban-cards.print-label', [
-            'kanbanCard' => $kanbanCard
-        ]);
+        return response()
+            ->view('kanban-cards.print-label', [
+                'kanbanCard' => $kanbanCard,
+                'size' => $request->size ?? 'xl'
+            ])
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 
     public function printLabelsBulk(Request $request)
@@ -93,7 +98,7 @@ class KanbanCardController extends Controller
         
         return view('kanban-cards.print-labels-bulk', [
             'kanbanCards' => $kanbanCards,
-            'size' => $request->size ?? 'large'
+            'size' => $request->size ?? 'xl'
         ]);
     }
 }

@@ -1,4 +1,4 @@
-<div class="rack-label size-{{ $size ?? request('size', 'large') }}">
+<div class="rack-label size-{{ $size ?? request('size', 'xl') }}">
     <div class="content">
         <div class="info">
             <div class="top-info">
@@ -11,7 +11,7 @@
                 </div>
             </div>
             
-            <div class="bottom-info">
+            {{-- <div class="bottom-info">
                 @if($kanbanCard->inventoryItem->storage_location)
                     <div class="detail-row">
                         <span class="label">Location:</span>
@@ -36,27 +36,31 @@
                         </span>
                     </div>
                 @endif
-            </div>
+            </div> --}}
         </div>
-        
-        @if ($size === 'xl')
-            @if ($kanbanCard->inventoryItem->image)
-                <div class="product-image">
-                    <img src="{{ $kanbanCard->inventoryItem->image_url }}" 
-                         alt="{{ $kanbanCard->inventoryItem->name }}" />
+
+        @if ($size !== 'small')
+            @if ($size === 'xl')
+                <div class="media-column">
+                    @if ($kanbanCard->inventoryItem->image)
+                        <div class="product-image">
+                            <img src="{{ $kanbanCard->inventoryItem->image_url }}" 
+                                 alt="{{ $kanbanCard->inventoryItem->name }}" />
+                        </div>
+                    @endif
+                    
+                    <div class="qr-code">
+                        {!! $kanbanCard->generateQrCode('small') !!}
+                    </div>
+                </div>
+            @else
+                <div class="img">
+                    @if ($kanbanCard->inventoryItem->image)
+                        <img src="{{ $kanbanCard->inventoryItem->image_url }}" 
+                             alt="{{ $kanbanCard->inventoryItem->name }}" />
+                    @endif
                 </div>
             @endif
-            
-            <div class="qr-code">
-                {!! $kanbanCard->generateQrCode('small') !!}
-            </div>
-        @elseif (request('size', 'large') === 'large')
-            <div class="img">
-                @if ($kanbanCard->inventoryItem->image)
-                    <img src="{{ $kanbanCard->inventoryItem->image_url }}" 
-                         alt="{{ $kanbanCard->inventoryItem->name }}" />
-                @endif
-            </div>
         @endif
     </div>
 </div> 
