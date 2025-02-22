@@ -236,41 +236,60 @@ button {
 .labels-grid {
     display: block;
     margin: 0 auto;
+    padding: 0;
 }
 
 .labels-row {
     display: grid;
-    grid-gap: 0;
-    margin-bottom: 0;
+    grid-gap: 0.25in; /* Add some gap between labels */
+    margin-bottom: 0.25in; /* Space between rows */
     page-break-inside: avoid;
 }
 
-.labels-row.size-large {
-    grid-template-columns: repeat(2, 216pt);
-}
-
+/* Small (2" x 1") - 3 per row */
 .labels-row.size-small {
     grid-template-columns: repeat(3, 144pt);
 }
 
-.labels-row.size-xl {
-    grid-template-columns: repeat(1, 360pt); /* One label per row for XL size */
+/* Large (3" x 1") - 2 per row */
+.labels-row.size-large {
+    grid-template-columns: repeat(2, 216pt);
 }
 
+/* XL (5" x 2.5") - 1 per row */
+.labels-row.size-xl {
+    grid-template-columns: repeat(1, 360pt);
+}
+
+/* Print-specific styles */
 @media print {
     body {
         margin: 0;
         padding: 0;
         background: white;
     }
+
     .controls {
         display: none;
     }
+
+    .labels-grid {
+        margin: 0;
+    }
+
     .labels-row {
         break-inside: avoid;
+        page-break-inside: avoid;
     }
-    .labels-row:nth-child(10) {
-        page-break-after: always;
+
+    /* Force page break after every few labels */
+    .labels-row:nth-child(3n) {
+        page-break-after: always; /* Break after every 3rd row */
+    }
+
+    /* Remove any outlines/borders used for debugging */
+    * {
+        outline: none !important;
     }
 }
 

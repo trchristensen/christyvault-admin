@@ -29,6 +29,8 @@ use App\Filament\Resources\OrderResource\Widgets\CalendarWidget;
 use App\Filament\Widgets\CalendarWidget as WidgetsCalendarWidget;
 use Filament\Support\Enums\MaxWidth;
 use Filament\Navigation\NavigationItem;
+use App\Filament\Pages\SalesDashboard;
+use App\Filament\Widgets\SalesStatsWidget;
 
 
 class AdminPanelProvider extends PanelProvider
@@ -55,6 +57,7 @@ class AdminPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
                 DeliveryCalendar::class,
                 \App\Filament\Pages\SystemAdmin::class,
+                SalesDashboard::class,
             ])
             ->navigationGroups([
                 NavigationGroup::make()
@@ -103,7 +106,8 @@ class AdminPanelProvider extends PanelProvider
                 // Widgets\FilamentInfoWidget::class,
                 // WidgetsCalendarWidget::class,
                 RecentOrdersWidget::class,
-                OrderStatisticsWidget::class
+                OrderStatisticsWidget::class,
+                SalesStatsWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
