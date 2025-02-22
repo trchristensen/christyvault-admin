@@ -62,7 +62,7 @@ class InventoryItem extends Model
                 Storage::disk('r2')->delete($item->getOriginal('image'));
             }
         });
-        
+
         // Delete image when deleting item
         static::deleting(function ($item) {
             if ($item->image) {
@@ -107,7 +107,7 @@ class InventoryItem extends Model
     public function preferredSupplier()
     {
         return $this->suppliers()
-            ->wherePivot('is_preferred', true)
+            ->whereRaw('inventory_item_suppliers.is_preferred IS TRUE')
             ->first();
     }
 
@@ -164,7 +164,7 @@ class InventoryItem extends Model
         if (!$this->image) {
             return null;
         }
-        
+
         return Storage::disk('r2')->url($this->image);
     }
 }
