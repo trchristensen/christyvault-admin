@@ -77,7 +77,7 @@ class SystemAdmin extends Page implements HasTable
                 TableAction::make('download')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->action(function ($record) {
-                        $path = 'Christy Vault/' . $record->filename;
+                        $path = 'laravel-backup/' . $record->filename;
                         return Response::download(Storage::disk('local')->path($path));
                     }),
                 TableAction::make('delete')
@@ -85,7 +85,7 @@ class SystemAdmin extends Page implements HasTable
                     ->color('danger')
                     ->requiresConfirmation()
                     ->action(function ($record) {
-                        $path = 'Christy Vault/' . $record->filename;
+                        $path = 'laravel-backup/' . $record->filename;
                         Storage::disk('local')->delete($path);
                         Notification::make()
                             ->title('Backup deleted')

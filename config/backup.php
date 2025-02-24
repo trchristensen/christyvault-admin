@@ -147,7 +147,7 @@ return [
             /*
              * The filename prefix used for the backup zip file.
              */
-            'filename_prefix' => env('APP_NAME'),
+            'filename_prefix' => '',
 
             /*
              * The disk names on which the backups will be stored.
@@ -256,7 +256,7 @@ return [
      */
     'monitor_backups' => [
         [
-            'name' => env('APP_NAME', 'Christy Vault'),
+            'name' => 'laravel-backup',
             'disks' => ['r2'],
             'health_checks' => [
                 \Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumAgeInDays::class => 1,
