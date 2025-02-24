@@ -65,7 +65,7 @@ class SystemAdmin extends Page implements HasTable
                 return str_ends_with($file, '.zip');
             })
             ->map(function($file) {
-                return [
+                return (object)[
                     'filename' => basename($file),
                     'size' => Storage::disk('r2')->size($file),
                     'date' => Carbon::createFromTimestamp(Storage::disk('r2')->lastModified($file)),
@@ -75,8 +75,8 @@ class SystemAdmin extends Page implements HasTable
         return $table
             ->query(
                 // Convert collection to query builder
-                \Illuminate\Database\Eloquent\Builder::query()
-                    ->fromQuery($backups->toQuery(), ['filename', 'size', 'date'])
+                collect($backups)
+                    ->transform(fn ($item) => (array) $item)
             )
             ->columns([
                 TextColumn::make('filename')
