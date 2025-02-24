@@ -312,6 +312,23 @@ trait HasOrderForm
                                 ->required()
                                 ->reactive()
                                 ->searchable()
+                                ->getSearchResultsUsing(function (string $search): array {
+                                    return Product::query()
+                                        ->active()
+                                        ->where(function ($query) use ($search) {
+                                            $query->where('name', 'ilike', "%{$search}%")
+                                                ->orWhere('sku', 'ilike', "%{$search}%");
+                                        })
+                                        ->limit(50)
+                                        ->get()
+                                        ->mapWithKeys(fn(Product $product) => [
+                                            $product->id => view('filament.components.product-option', [
+                                                'sku' => $product->sku,
+                                                'name' => $product->name,
+                                            ])->render()
+                                        ])
+                                        ->toArray();
+                                })
                                 ->afterStateUpdated(
                                     fn($state, callable $set) =>
                                     $set('price', Product::find($state)?->price ?? 0)
