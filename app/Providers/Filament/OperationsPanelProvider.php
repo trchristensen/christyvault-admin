@@ -55,7 +55,11 @@ class OperationsPanelProvider extends PanelProvider
             ->navigationItems([
                 NavigationItem::make('Admin Panel')
                     ->url('/')
-                    ->icon('heroicon-o-building-office')
+                    ->icon('heroicon-o-building-office'),
+                NavigationItem::make('Sales Panel')
+                    ->url('/sales')
+                    ->icon('heroicon-o-presentation-chart-line')
+                    ->visible(fn(): bool => auth()->user()?->email === 'tchristensen@christyvault.com')
             ])
 
             ->discoverResources(in: app_path('Filament/Operations/Resources'), for: 'App\\Filament\\Operations\\Resources')
