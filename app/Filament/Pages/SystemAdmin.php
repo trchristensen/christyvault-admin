@@ -59,25 +59,8 @@ class SystemAdmin extends Page implements HasTable
 
     public function table(Table $table): Table
     {
-        // Get files from R2 storage
-        $backups = collect(Storage::disk('r2')->files())
-            ->filter(function($file) {
-                return str_ends_with($file, '.zip');
-            })
-            ->map(function($file) {
-                return (object)[
-                    'filename' => basename($file),
-                    'size' => Storage::disk('r2')->size($file),
-                    'date' => Carbon::createFromTimestamp(Storage::disk('r2')->lastModified($file)),
-                ];
-            });
-
         return $table
-            ->query(
-                // Convert collection to query builder
-                collect($backups)
-                    ->transform(fn ($item) => (array) $item)
-            )
+            ->query(Backup::query())
             ->columns([
                 TextColumn::make('filename')
                     ->label('File')
@@ -94,14 +77,14 @@ class SystemAdmin extends Page implements HasTable
                 TableAction::make('download')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->action(function ($record) {
-                        return Storage::disk('r2')->download($record['filename']);
+                        return Storage::disk('r2')->download($record->filename);
                     }),
                 TableAction::make('delete')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->requiresConfirmation()
                     ->action(function ($record) {
-                        Storage::disk('r2')->delete($record['filename']);
+                        Storage::disk('r2')->delete($record->filename);
                         Notification::make()
                             ->title('Backup deleted')
                             ->success()
