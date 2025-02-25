@@ -50,16 +50,16 @@ class SalesPanelProvider extends PanelProvider
                 Widgets\FilamentInfoWidget::class,
             ])
             ->navigationItems([
-                 NavigationItem::make('Admin Panel')
+                NavigationItem::make('Admin Panel')
                     ->url('/')
                     ->icon('heroicon-o-building-office'),
                 NavigationItem::make('Operations Panel')
                     ->url('/operations')
                     ->icon('heroicon-o-briefcase')
                     ->visible(fn(): bool => auth()->user()?->email === 'tchristensen@christyvault.com'),
-                
+
             ])
-             ->maxContentWidth(MaxWidth::Full)
+            ->maxContentWidth(MaxWidth::Full)
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('13rem')
             ->middleware([

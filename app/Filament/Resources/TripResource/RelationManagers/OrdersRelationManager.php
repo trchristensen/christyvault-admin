@@ -54,11 +54,11 @@ class OrdersRelationManager extends RelationManager
                         $assignedDate = $record->assigned_delivery_date?->format('M j, Y') ?? 'Not set';
 
                         return "
-                            <div class='p-2 bg-gray-50 rounded'>
+                            <div class='p-2 rounded bg-gray-50'>
                                 <div class='grid grid-cols-2 gap-4'>
                                     <div>
                                         <div class='font-medium text-primary-600'>{$record->order_number}</div>
-                                        <div class='text-sm font-medium mt-1'>{$record->customer->name}</div>
+                                        <div class='mt-1 text-sm font-medium'>{$record->customer->name}</div>
                                         <div class='text-sm text-gray-600'>{$record->location->full_address}</div>
                                     </div>
                                     <div>
@@ -73,12 +73,12 @@ class OrdersRelationManager extends RelationManager
                                         </div>
                                     </div>
                                 </div>
-                                <div class='mt-2 text-sm text-gray-500 border-t pt-2'>
-                                    <div class='font-medium mb-1'>Products:</div>
+                                <div class='pt-2 mt-2 text-sm text-gray-500 border-t'>
+                                    <div class='mb-1 font-medium'>Products:</div>
                                     {$productsHtml}
                                 </div>
                                 " . ($record->delivery_notes ? "
-                                <div class='mt-2 text-sm text-gray-600 border-t pt-2'>
+                                <div class='pt-2 mt-2 text-sm text-gray-600 border-t'>
                                     <span class='font-medium'>Delivery Notes:</span> {$record->delivery_notes}
                                 </div>" : "") . "
                             </div>
@@ -124,8 +124,8 @@ class OrdersRelationManager extends RelationManager
                                             $html = "
                                                 <div class='p-2'>
                                                     <div class='font-medium text-primary-600'>{$order->order_number} - {$order->customer->name}</div>
-                                                    <div class='text-sm text-gray-600 mt-1'>{$order->location->full_address}</div>
-                                                    <div class='grid grid-cols-2 gap-2 text-sm mt-1'>
+                                                    <div class='mt-1 text-sm text-gray-600'>{if($order->location) {$order->location->full_address} {else} {$order->customer->primaryLocation->full_address} {/if}</div>
+                                                    <div class='grid grid-cols-2 gap-2 mt-1 text-sm'>
                                                         <div>
                                                             <span class='font-medium'>Requested:</span> {$requestedDate}
                                                         </div>
@@ -133,7 +133,7 @@ class OrdersRelationManager extends RelationManager
                                                             <span class='font-medium'>Assigned:</span> {$assignedDate}
                                                         </div>
                                                     </div>
-                                                    <div class='text-sm text-gray-500 mt-1'>{$productsHtml}</div>
+                                                    <div class='mt-1 text-sm text-gray-500'>{$productsHtml}</div>
                                                 </div>
                                             ";
 

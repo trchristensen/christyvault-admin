@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 class Location extends Model
@@ -54,7 +56,20 @@ class Location extends Model
             ->withPivot('type', 'sequence')
             ->withTimestamps();
     }
-    
+
+    // Add this to your existing Location model
+    public function contacts(): BelongsToMany
+    {
+        return $this->belongsToMany(Contact::class, 'contact_location')
+            ->withPivot('is_primary')
+            ->withTimestamps();
+    }
+
+    public function salesVisits(): HasMany
+    {
+        return $this->hasMany(SalesVisit::class);
+    }
+
 
     public function getFullAddressAttribute(): string
     {

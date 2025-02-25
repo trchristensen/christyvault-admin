@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Customer extends Model
 {
@@ -17,6 +18,18 @@ class Customer extends Model
         'phone',
         'contact_name',
     ];
+
+    public function contacts(): BelongsToMany
+    {
+        return $this->belongsToMany(Contact::class, 'customer_contact')
+            ->withPivot('is_primary')
+            ->withTimestamps();
+    }
+
+    public function salesVisits(): HasMany
+    {
+        return $this->hasMany(SalesVisit::class);
+    }
 
     public function orders(): HasMany
     {
@@ -49,10 +62,10 @@ class Customer extends Model
                 $locationData = request()->input('location');
                 $locationData['name'] = $customer->name;
                 $locationData['location_type'] = 'cemetery';
-                
+
                 // Create the location
                 $location = Location::create($locationData);
-                
+
                 // Attach the location with pivot data
                 $customer->locations()->attach($location->id, [
                     'type' => 'primary',
@@ -74,9 +87,9 @@ class Customer extends Model
                 $locationData = request()->input('location');
                 $locationData['name'] = $customer->name;
                 $locationData['location_type'] = 'cemetery';
-                
+
                 $location = $customer->locations()->first();
-                
+
                 if ($location) {
                     $location->update($locationData);
                 } else {
