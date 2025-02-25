@@ -115,7 +115,10 @@ class SalesPerformance extends Page implements HasForms
             ->whereNull('orders.deleted_at')
             ->whereBetween('orders.created_at', [$start, $end])
             ->selectRaw("DATE_TRUNC('month', orders.created_at) as date")
-            ->selectRaw('SUM(order_product.quantity) as total_quantity')
+            ->selectRaw('SUM(CASE
+                WHEN order_product.fill_load = true THEN COALESCE(order_product.quantity_delivered, order_product.quantity)
+                ELSE order_product.quantity
+            END) as total_quantity')
             ->groupBy('date')
             ->orderBy('date');
 
