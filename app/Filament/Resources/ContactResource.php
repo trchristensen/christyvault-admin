@@ -43,14 +43,6 @@ class ContactResource extends Resource
                         PhoneInput::make('mobile_phone')
                             ->label('Mobile Phone')
                             ->defaultCountry('US'),
-                        Forms\Components\Select::make('type')
-                            ->options([
-                                'sales' => 'Sales',
-                                'delivery' => 'Delivery',
-                                'billing' => 'Billing',
-                            ])
-                            ->native(false)
-                            ->placeholder('Select a type'),
                         Forms\Components\TextInput::make('title')
                             ->maxLength(255),
                         Forms\Components\Select::make('contact_type')
