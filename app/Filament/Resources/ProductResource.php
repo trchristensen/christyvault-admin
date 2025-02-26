@@ -35,7 +35,9 @@ class ProductResource extends Resource
                     ->options([
                         'Wilbert Burial Vaults' => 'Wilbert Burial Vaults',
                         'Wilbert Urn Vaults' => 'Wilbert Urn Vaults',
+                        'Wilbert Cremation Urns' => 'Wilbert Cremation Urns',
                         'Outer Burial Containers' => 'Outer Burial Containers',
+                        'Marker Foundations' => 'Marker Foundations',
                         'Cremation Urn' => 'Cremation Urn',
                         'Other' => 'Other',
                     ])
