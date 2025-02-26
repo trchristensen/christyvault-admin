@@ -26,7 +26,6 @@ class ContactResource extends Resource
 
             Forms\Components\TextInput::make('email')
                 ->email()
-                ->required()
                 ->maxLength(255),
 
             Forms\Components\TextInput::make('phone')
