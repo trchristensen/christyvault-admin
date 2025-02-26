@@ -12,6 +12,8 @@ class Contact extends Model
         'name',
         'email',
         'phone',
+        'phone_extension',
+        'mobile_phone',
         'title',
         'is_active',
         'contact_type',
