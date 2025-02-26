@@ -1,32 +1,6 @@
 <x-filament-panels::page>
     {{ $this->form }}
 
-    <div class="p-4 mb-4 bg-white rounded-lg shadow">
-        <h3 class="mb-4 text-lg font-bold">Debug Information</h3>
-
-        <div class="mb-4">
-            <h4 class="font-semibold">Current Settings:</h4>
-            <pre class="p-2 bg-gray-100 rounded">
-Location ID: {{ $this->locationId }}
-Timeframe: {{ $this->timeframe }}
-            </pre>
-        </div>
-
-        <div class="mb-4">
-            <h4 class="font-semibold">Sales Data ({{ $this->salesResults?->count() ?? 0 }} records):</h4>
-            <pre class="p-2 bg-gray-100 rounded">
-                @json($this->salesResults ?? [], JSON_PRETTY_PRINT)
-            </pre>
-        </div>
-
-        <div class="mb-4">
-            <h4 class="font-semibold">Visits Data ({{ $this->visitsResults?->count() ?? 0 }} records):</h4>
-            <pre class="p-2 bg-gray-100 rounded">
-                @json($this->visitsResults ?? [], JSON_PRETTY_PRINT)
-            </pre>
-        </div>
-    </div>
-
     <div class="p-4 bg-white rounded-lg shadow">
         <h3 class="mb-4 text-lg font-bold">Performance Chart</h3>
         <div x-data="{
@@ -92,6 +66,12 @@ Timeframe: {{ $this->timeframe }}
                                 position: 'right',
                                 stacked: false,
                                 beginAtZero: true,
+                                min: 0,
+                                max: Math.max(5, Math.ceil(Math.max(...this.chartData.datasets.find(d => d.yAxisID === 'y1').data))),
+                                ticks: {
+                                    stepSize: 1,
+                                    precision: 0
+                                },
                                 title: {
                                     display: true,
                                     text: 'Number of Visits'
@@ -127,10 +107,7 @@ Timeframe: {{ $this->timeframe }}
                     // Create new chart with updated data
                     this.chart = new Chart($refs.canvas, {
                         type: 'bar',
-                        data: {
-                            datasets: newData.datasets,
-                            labels: newData.labels
-                        },
+                        data: newData,
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
@@ -172,6 +149,12 @@ Timeframe: {{ $this->timeframe }}
                                     position: 'right',
                                     stacked: false,
                                     beginAtZero: true,
+                                    min: 0,
+                                    max: Math.max(5, Math.ceil(Math.max(...newData.datasets.find(d => d.yAxisID === 'y1').data))),
+                                    ticks: {
+                                        stepSize: 1,
+                                        precision: 0
+                                    },
                                     title: {
                                         display: true,
                                         text: 'Number of Visits'
