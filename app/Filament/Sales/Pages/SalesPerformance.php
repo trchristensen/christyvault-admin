@@ -127,34 +127,22 @@ class SalesPerformance extends Page implements HasForms
         if ($this->locationId !== 'all') {
             $rawOrders = DB::table('orders')
                 ->where('location_id', $this->locationId)
-                ->whereNull('deleted_at')
-                ->whereBetween('created_at', [$start, $end])
+                ->whereNull('orders.deleted_at')
+                ->whereBetween('orders.created_at', [$start, $end])
                 ->get();
 
             logger()->info('Raw orders found:', [
                 'count' => $rawOrders->count(),
                 'sample' => $rawOrders->take(5)
             ]);
-        }
 
-        // Modify the base query to handle 'all' locations
-        $salesQuery = DB::table('orders')
-            ->join('order_product', 'orders.id', '=', 'order_product.order_id')
-            ->join('products', 'order_product.product_id', '=', 'products.id')
-            ->whereNull('orders.deleted_at')
-            ->whereBetween('orders.created_at', [$start, $end]);
-
-        // Only add location filter if not 'all'
-        if ($this->locationId !== 'all') {
-            $salesQuery->where('orders.location_id', $this->locationId);
-
-            // Let's also check the intermediate join results
+            // Check join results with qualified column names
             $joinCheck = DB::table('orders')
-                ->where('location_id', $this->locationId)
-                ->whereNull('deleted_at')
-                ->whereBetween('created_at', [$start, $end])
+                ->where('orders.location_id', $this->locationId)
+                ->whereNull('orders.deleted_at')
+                ->whereBetween('orders.created_at', [$start, $end])
                 ->join('order_product', 'orders.id', '=', 'order_product.order_id')
-                ->select('orders.id', 'order_product.quantity')
+                ->select('orders.id', 'orders.created_at', 'order_product.quantity')
                 ->get();
 
             logger()->info('Join check results:', [
@@ -163,7 +151,18 @@ class SalesPerformance extends Page implements HasForms
             ]);
         }
 
-        // Rest of your query remains the same
+        // Main query with qualified column names
+        $salesQuery = DB::table('orders')
+            ->join('order_product', 'orders.id', '=', 'order_product.order_id')
+            ->join('products', 'order_product.product_id', '=', 'products.id')
+            ->whereNull('orders.deleted_at')
+            ->whereBetween('orders.created_at', [$start, $end]);
+
+        if ($this->locationId !== 'all') {
+            $salesQuery->where('orders.location_id', $this->locationId);
+        }
+
+        // Rest of your query with qualified columns
         $salesQuery->selectRaw("DATE_TRUNC('month', orders.created_at) as date")
             ->selectRaw("COALESCE(products.product_type, 'Other') as product_type")
             ->selectRaw('SUM(CASE
@@ -173,7 +172,6 @@ class SalesPerformance extends Page implements HasForms
             ->groupBy('date', DB::raw("COALESCE(products.product_type, 'Other')"))
             ->orderBy('date');
 
-        logger()->info('Sales query:', ['sql' => $salesQuery->toSql()]);
         $salesResults = $salesQuery->get();
         logger()->info('Sales results:', ['results' => $salesResults]);
 
