@@ -115,13 +115,27 @@ class SalesPerformance extends Page implements HasForms
 
     private function loadChartData()
     {
-        logger()->info('loadChartData called', [
-            'locationId' => $this->locationId,
-            'timeframe' => $this->timeframe
-        ]);
-
         $start = now()->subYear()->startOfMonth();
         $end = now()->endOfMonth();
+
+        logger()->info('Date range:', [
+            'start' => $start->toDateTimeString(),
+            'end' => $end->toDateTimeString()
+        ]);
+
+        // First, let's check raw orders for this location
+        if ($this->locationId !== 'all') {
+            $rawOrders = DB::table('orders')
+                ->where('location_id', $this->locationId)
+                ->whereNull('deleted_at')
+                ->whereBetween('created_at', [$start, $end])
+                ->get();
+
+            logger()->info('Raw orders found:', [
+                'count' => $rawOrders->count(),
+                'sample' => $rawOrders->take(5)
+            ]);
+        }
 
         // Modify the base query to handle 'all' locations
         $salesQuery = DB::table('orders')
@@ -133,6 +147,20 @@ class SalesPerformance extends Page implements HasForms
         // Only add location filter if not 'all'
         if ($this->locationId !== 'all') {
             $salesQuery->where('orders.location_id', $this->locationId);
+
+            // Let's also check the intermediate join results
+            $joinCheck = DB::table('orders')
+                ->where('location_id', $this->locationId)
+                ->whereNull('deleted_at')
+                ->whereBetween('created_at', [$start, $end])
+                ->join('order_product', 'orders.id', '=', 'order_product.order_id')
+                ->select('orders.id', 'order_product.quantity')
+                ->get();
+
+            logger()->info('Join check results:', [
+                'count' => $joinCheck->count(),
+                'sample' => $joinCheck->take(5)
+            ]);
         }
 
         // Rest of your query remains the same
