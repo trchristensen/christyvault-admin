@@ -63,15 +63,21 @@ class SalesPerformance extends Page implements HasForms
             ])
         ]);
 
+        $locationOptions = collect([
+            'all' => 'All Locations'
+        ])->merge(
+            $locationsByOrders->pluck('name', 'id')
+                ->map(fn($name, $id) => trim($name))
+        );
+
+        logger()->info('Location options:', [
+            'options' => $locationOptions->toArray()
+        ]);
+
         return $form->schema([
             Select::make('locationId')
                 ->label('Location')
-                ->options([
-                    'all' => 'All Locations',
-                    ...$locationsByOrders->mapWithKeys(fn($location) => [
-                        $location->id => $location->name
-                    ])->toArray()
-                ])
+                ->options($locationOptions)
                 ->default('all')
                 ->live()
                 ->afterStateUpdated(function ($state) {
@@ -136,7 +142,7 @@ class SalesPerformance extends Page implements HasForms
         ]);
 
         if ($this->locationId !== 'all') {
-            // First verify the location exists and log its details
+            // First verify the location exists
             $location = DB::table('locations')
                 ->where('id', $this->locationId)
                 ->first();
@@ -147,26 +153,18 @@ class SalesPerformance extends Page implements HasForms
                 'location' => $location
             ]);
 
-            // Get raw orders with order_product data
-            $orderData = DB::table('orders')
-                ->where('orders.location_id', $this->locationId)
-                ->whereNull('orders.deleted_at')
-                ->whereBetween('orders.created_at', [$start, $end])
-                ->join('order_product', 'orders.id', '=', 'order_product.order_id')
-                ->join('products', 'order_product.product_id', '=', 'products.id')
-                ->select(
-                    'orders.id',
-                    'orders.created_at',
-                    'order_product.quantity',
-                    'order_product.quantity_delivered',
-                    'order_product.fill_load',
-                    'products.product_type'
-                )
+            // Debug query for this specific location
+            $orderCheck = DB::table('orders')
+                ->where('location_id', $this->locationId)
+                ->whereNull('deleted_at')
+                ->whereBetween('created_at', [$start, $end])
+                ->select('id', 'created_at', 'location_id')
                 ->get();
 
-            logger()->info('Order data:', [
-                'count' => $orderData->count(),
-                'sample' => $orderData->take(3)
+            logger()->info('Orders for location:', [
+                'locationId' => $this->locationId,
+                'orderCount' => $orderCheck->count(),
+                'sampleOrders' => $orderCheck->take(3)
             ]);
         }
 
