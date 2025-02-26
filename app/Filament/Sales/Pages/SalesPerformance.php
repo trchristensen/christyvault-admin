@@ -56,22 +56,18 @@ class SalesPerformance extends Page implements HasForms
             ->orderByRaw('COALESCE(SUM(order_product.quantity), 0) DESC')
             ->get();
 
-        logger()->info('Available locations:', [
-            'locations' => $locationsByOrders->map(fn($loc) => [
-                'id' => $loc->id,
-                'name' => $loc->name
-            ])
-        ]);
-
-        $locationOptions = collect([
+        // Create options array with string keys
+        $locationOptions = [
             'all' => 'All Locations'
-        ])->merge(
-            $locationsByOrders->pluck('name', 'id')
-                ->map(fn($name, $id) => trim($name))
-        );
+        ];
 
-        logger()->info('Location options:', [
-            'options' => $locationOptions->toArray()
+        foreach ($locationsByOrders as $location) {
+            $locationOptions[(string)$location->id] = trim($location->name);
+        }
+
+        logger()->info('Location options created:', [
+            'options' => $locationOptions,
+            'firstFewLocations' => array_slice($locationOptions, 0, 5, true)
         ]);
 
         return $form->schema([
@@ -81,9 +77,10 @@ class SalesPerformance extends Page implements HasForms
                 ->default('all')
                 ->live()
                 ->afterStateUpdated(function ($state) {
-                    logger()->info('Location changed', [
+                    logger()->info('Location selection:', [
                         'newValue' => $state,
-                        'type' => gettype($state)
+                        'type' => gettype($state),
+                        'locationId' => $this->locationId
                     ]);
                     $this->locationId = $state;
                     $this->loadChartData();
@@ -136,36 +133,39 @@ class SalesPerformance extends Page implements HasForms
         $start = now()->subYear()->startOfMonth();
         $end = now()->endOfMonth();
 
-        logger()->info('Date range:', [
-            'start' => $start->toDateTimeString(),
-            'end' => $end->toDateTimeString()
-        ]);
-
         if ($this->locationId !== 'all') {
-            // First verify the location exists
-            $location = DB::table('locations')
-                ->where('id', $this->locationId)
-                ->first();
-
-            logger()->info('Location check:', [
-                'requestedId' => $this->locationId,
-                'requestedIdType' => gettype($this->locationId),
-                'location' => $location
+            // Debug the location ID before querying
+            logger()->info('Processing location:', [
+                'locationId' => $this->locationId,
+                'type' => gettype($this->locationId)
             ]);
 
-            // Debug query for this specific location
-            $orderCheck = DB::table('orders')
-                ->where('location_id', $this->locationId)
+            // Check if location exists
+            $location = Location::find($this->locationId);
+
+            if (!$location) {
+                logger()->error('Location not found:', [
+                    'requestedId' => $this->locationId
+                ]);
+                return;
+            }
+
+            // Check for orders
+            $orders = Order::where('location_id', $this->locationId)
                 ->whereNull('deleted_at')
                 ->whereBetween('created_at', [$start, $end])
-                ->select('id', 'created_at', 'location_id')
                 ->get();
 
-            logger()->info('Orders for location:', [
+            logger()->info('Orders found:', [
                 'locationId' => $this->locationId,
-                'orderCount' => $orderCheck->count(),
-                'sampleOrders' => $orderCheck->take(3)
+                'orderCount' => $orders->count(),
+                'sampleOrders' => $orders->take(3)->toArray()
             ]);
+
+            if ($orders->isEmpty()) {
+                logger()->info('No orders found for location in date range');
+                return;
+            }
         }
 
         // Main query
