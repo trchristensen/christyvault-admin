@@ -57,8 +57,11 @@ class CustomerResource extends Resource
                             ->required()
                             ->native(false)
                             ->afterStateHydrated(function ($component, $state, $record) {
-                                if ($record && $record->locations()->first()) {
-                                    $component->state($record->locations()->first()->location_type);
+                                if ($record) {
+                                    $location = $record->locations()->first();
+                                    if ($location) {
+                                        $component->state($location->location_type);
+                                    }
                                 }
                             }),
                         Forms\Components\TextInput::make('location.address_line1')
@@ -66,8 +69,11 @@ class CustomerResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->afterStateHydrated(function ($component, $state, $record) {
-                                if ($record && $record->locations()->first()) {
-                                    $component->state($record->locations()->first()->address_line1);
+                                if ($record) {
+                                    $location = $record->locations()->first();
+                                    if ($location) {
+                                        $component->state($location->address_line1);
+                                    }
                                 }
                             }),
                         Forms\Components\TextInput::make('location.address_line2')
@@ -107,13 +113,29 @@ class CustomerResource extends Resource
                                 Forms\Components\TextInput::make('location.latitude')
                                     ->numeric()
                                     ->rules(['nullable', 'numeric', 'between:-90,90'])
-                                    ->step(0.000001)
-                                    ->placeholder('e.g. 41.878113'),
+                                    ->step(0.000000000001)
+                                    ->afterStateHydrated(function ($component, $state, $record) {
+                                        if ($record) {
+                                            $location = $record->locations()->first();
+                                            if ($location) {
+                                                $component->state($location->latitude);
+                                            }
+                                        }
+                                    })
+                                    ->placeholder('e.g. 37.957702'),
                                 Forms\Components\TextInput::make('location.longitude')
                                     ->numeric()
                                     ->rules(['nullable', 'numeric', 'between:-180,180'])
-                                    ->step(0.000001)
-                                    ->placeholder('e.g. -87.629799'),
+                                    ->step(0.000000000001)
+                                    ->afterStateHydrated(function ($component, $state, $record) {
+                                        if ($record) {
+                                            $location = $record->locations()->first();
+                                            if ($location) {
+                                                $component->state($location->longitude);
+                                            }
+                                        }
+                                    })
+                                    ->placeholder('e.g. -121.290780'),
                             ]),
                     ])->columns(2),
             ])
