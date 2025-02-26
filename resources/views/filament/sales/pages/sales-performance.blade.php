@@ -70,7 +70,10 @@ Timeframe: {{ $this->timeframe }}
                         },
                         scales: {
                             x: {
-                                stacked: false,
+                                stacked: true,
+                                grid: {
+                                    display: false
+                                }
                             },
                             y: {
                                 type: 'linear',
@@ -87,6 +90,7 @@ Timeframe: {{ $this->timeframe }}
                                 type: 'linear',
                                 display: true,
                                 position: 'right',
+                                stacked: false,
                                 beginAtZero: true,
                                 title: {
                                     display: true,
@@ -97,8 +101,8 @@ Timeframe: {{ $this->timeframe }}
                                 }
                             }
                         },
-                        barPercentage: 0.8,
-                        categoryPercentage: 0.9
+                        barPercentage: 0.9,
+                        categoryPercentage: 0.8
                     }
                 });
             },
@@ -146,7 +150,10 @@ Timeframe: {{ $this->timeframe }}
                             },
                             scales: {
                                 x: {
-                                    stacked: false,
+                                    stacked: true,
+                                    grid: {
+                                        display: false
+                                    }
                                 },
                                 y: {
                                     type: 'linear',
@@ -163,6 +170,7 @@ Timeframe: {{ $this->timeframe }}
                                     type: 'linear',
                                     display: true,
                                     position: 'right',
+                                    stacked: false,
                                     beginAtZero: true,
                                     title: {
                                         display: true,
