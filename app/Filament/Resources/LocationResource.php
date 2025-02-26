@@ -64,13 +64,13 @@ class LocationResource extends Resource
                         Forms\Components\TextInput::make('latitude')
                             ->numeric()
                             ->rules(['nullable', 'numeric', 'between:-90,90'])
-                            ->step(0.000001)
-                            ->placeholder('e.g. 41.878113'),
+                            ->step(0.000000000001)
+                            ->placeholder('e.g. 37.957702'),
                         Forms\Components\TextInput::make('longitude')
                             ->numeric()
                             ->rules(['nullable', 'numeric', 'between:-180,180'])
-                            ->step(0.000001)
-                            ->placeholder('e.g. -87.629799'),
+                            ->step(0.000000000001)
+                            ->placeholder('e.g. -121.290780'),
                     ])->columns(2),
             ]);
     }
