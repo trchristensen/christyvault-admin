@@ -30,6 +30,16 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
+                Forms\Components\Select::make('product_type')
+                    ->label('Product Type')
+                    ->options([
+                        'Wilbert Burial Vaults' => 'Wilbert Burial Vaults',
+                        'Wilbert Urn Vaults' => 'Wilbert Urn Vaults',
+                        'Outer Burial Containers' => 'Outer Burial Containers',
+                        'Cremation Urn' => 'Cremation Urn',
+                        'Other' => 'Other',
+                    ])
+                    ->native(false),
                 Forms\Components\Textarea::make('description')
                     ->maxLength(65535)
                     ->columnSpanFull(),
@@ -47,9 +57,9 @@ class ProductResource extends Resource
                     ->imageEditor()
                     ->columnSpanFull(),
                 Forms\Components\Checkbox::make('is_active')
-                            ->default('TRUE')
-                            ->label('Active')
-                            ->dehydrateStateUsing(fn($state) => $state ? 'TRUE' : 'FALSE'),
+                    ->default('TRUE')
+                    ->label('Active')
+                    ->dehydrateStateUsing(fn($state) => $state ? 'TRUE' : 'FALSE'),
                 // Forms\Components\KeyValue::make('specifications')
                 //     ->columnSpanFull(),
             ]);
@@ -63,6 +73,9 @@ class ProductResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('sku')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('product_type')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('price')
                     ->money()
                     ->sortable(),

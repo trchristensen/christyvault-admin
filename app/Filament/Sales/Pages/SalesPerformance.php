@@ -81,20 +81,42 @@ class SalesPerformance extends Page implements HasForms
         ])->columns(2);
     }
 
-    public function loadChartData(): void
+    public function updatedLocationId($value)
     {
-        logger()->info('1. loadChartData called', [
+        logger()->info('Location changed', ['newValue' => $value]);
+
+        $this->loadChartData();
+
+        // Make sure we have data before dispatching
+        if (empty($this->chartData['datasets'])) {
+            logger()->warning('No datasets available for dispatch');
+            return;
+        }
+
+        logger()->info('About to dispatch event with data:', [
+            'chartData' => $this->chartData
+        ]);
+
+        // Explicitly structure the event data
+        $this->dispatch('chartDataUpdated', chartData: [
+            'datasets' => $this->chartData['datasets'],
+            'labels' => $this->chartData['labels']
+        ]);
+    }
+
+    private function loadChartData()
+    {
+        logger()->info('loadChartData called', [
             'locationId' => $this->locationId,
             'timeframe' => $this->timeframe
         ]);
 
         if (!$this->locationId) {
-            logger()->info('2. No locationId, returning empty data');
             $this->chartData = [
                 'datasets' => [],
                 'labels' => [],
             ];
-            $this->dispatch('chartDataUpdated', chartData: $this->chartData);
+            $this->dispatch('chartDataUpdated', data: $this->chartData);
             return;
         }
 
@@ -108,18 +130,20 @@ class SalesPerformance extends Page implements HasForms
 
         $end = now()->endOfMonth();
 
-        // Get sales data
+        // Get sales data by product type
         $salesQuery = DB::table('orders')
             ->join('order_product', 'orders.id', '=', 'order_product.order_id')
+            ->join('products', 'order_product.product_id', '=', 'products.id')
             ->where('orders.location_id', $this->locationId)
             ->whereNull('orders.deleted_at')
             ->whereBetween('orders.created_at', [$start, $end])
             ->selectRaw("DATE_TRUNC('month', orders.created_at) as date")
+            ->selectRaw("COALESCE(products.product_type, 'Other') as product_type")
             ->selectRaw('SUM(CASE
                 WHEN order_product.fill_load = true THEN COALESCE(order_product.quantity_delivered, order_product.quantity)
                 ELSE order_product.quantity
             END) as total_quantity')
-            ->groupBy('date')
+            ->groupBy('date', DB::raw("COALESCE(products.product_type, 'Other')"))
             ->orderBy('date');
 
         logger()->info('3. Sales query:', ['sql' => $salesQuery->toSql()]);
@@ -165,35 +189,73 @@ class SalesPerformance extends Page implements HasForms
                 ?->total_visits ?? 0;
         }
 
-        $chartData = [
-            'datasets' => [
-                [
-                    'label' => 'Products Ordered',
-                    'data' => $salesData,
-                    'backgroundColor' => '#36A2EB',
-                    'yAxisID' => 'y',
-                    'borderRadius' => 4,
-                ],
-                [
-                    'label' => 'Visits',
-                    'data' => $visitsData,
-                    'backgroundColor' => '#FF6384',
-                    'yAxisID' => 'y1',
-                    'borderRadius' => 4,
-                ],
-            ],
-            'labels' => $labels,
+        // Transform the data for the chart
+        $dates = $salesResults->pluck('date')->unique()->sort()->values();
+        $productTypes = $salesResults->pluck('product_type')->unique()->values();
+
+        // Define a neutral, distinct color palette
+        $colors = [
+            'Wilbert Burial Vaults' => '#4A6FA5',  // Muted blue
+            'Wilbert Urn Vaults' => '#98A6B5',     // Cool gray
+            'Outer Burial Containers' => '#6B4E3D', // Warm brown
+            'Other' => '#8B8589',                  // Neutral gray
+            'Visits' => '#C4B7A6'                  // Warm beige
         ];
 
-        $this->chartData = $chartData;
+        // First create product datasets
+        $productDatasets = [];
+        foreach ($productTypes as $type) {
+            $data = [];
+            foreach ($dates as $date) {
+                $quantity = $salesResults
+                    ->where('date', $date)
+                    ->where('product_type', $type)
+                    ->sum('total_quantity');
+                $data[] = $quantity;
+            }
 
-        logger()->info('5. About to dispatch event with data:', [
-            'chartData' => $chartData
-        ]);
+            $productDatasets[] = [
+                'label' => $type,
+                'data' => $data,
+                'backgroundColor' => $colors[$type] ?? '#' . substr(md5($type), 0, 6),
+                'yAxisID' => 'y',
+                'stack' => 'products',
+                'borderRadius' => 4,
+            ];
+        }
 
-        $this->dispatch('chartDataUpdated', chartData: $chartData);
+        // Add visits dataset separately
+        $visitsDataset = [
+            'label' => 'Visits',
+            'data' => array_values($visitsData),
+            'backgroundColor' => $colors['Visits'],
+            'yAxisID' => 'y1',
+            'stack' => 'visits',
+            'borderRadius' => 4,
+        ];
 
-        logger()->info('6. Event dispatched');
+        // Ensure proper data structure
+        $chartData = [
+            'datasets' => array_values(array_merge($productDatasets, [$visitsDataset])), // Ensure numeric array
+            'labels' => $dates->map(fn($date) => Carbon::parse($date)->format('M Y'))->values()->toArray(),
+        ];
+
+        // Verify data structure before assignment
+        if (!empty($chartData['datasets'])) {
+            $this->chartData = $chartData;
+            logger()->info('Chart data loaded successfully', [
+                'datasets' => count($chartData['datasets']),
+                'labels' => count($chartData['labels'])
+            ]);
+        } else {
+            logger()->warning('No datasets generated in loadChartData');
+            $this->chartData = [
+                'datasets' => [],
+                'labels' => []
+            ];
+        }
+
+        $this->dispatch('chartDataUpdated', data: $this->chartData);
     }
 
     public function refreshChart()

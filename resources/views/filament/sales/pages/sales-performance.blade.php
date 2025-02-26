@@ -70,14 +70,13 @@ Timeframe: {{ $this->timeframe }}
                         },
                         scales: {
                             x: {
-                                grid: {
-                                    display: false
-                                }
+                                stacked: false,
                             },
                             y: {
                                 type: 'linear',
                                 display: true,
                                 position: 'left',
+                                stacked: true,
                                 beginAtZero: true,
                                 title: {
                                     display: true,
@@ -106,8 +105,14 @@ Timeframe: {{ $this->timeframe }}
 
             updateChartData(newData) {
                 console.log('updateChartData called with:', newData);
-                if (!this.chart || !newData || !newData.datasets) {
-                    console.log('Invalid chart data or no chart instance');
+
+                if (!this.chart) {
+                    console.error('No chart instance');
+                    return;
+                }
+
+                if (!newData || !Array.isArray(newData.datasets)) {
+                    console.error('Invalid chart data structure:', newData);
                     return;
                 }
 
@@ -118,7 +123,10 @@ Timeframe: {{ $this->timeframe }}
                     // Create new chart with updated data
                     this.chart = new Chart($refs.canvas, {
                         type: 'bar',
-                        data: newData,
+                        data: {
+                            datasets: newData.datasets,
+                            labels: newData.labels
+                        },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
@@ -138,14 +146,13 @@ Timeframe: {{ $this->timeframe }}
                             },
                             scales: {
                                 x: {
-                                    grid: {
-                                        display: false
-                                    }
+                                    stacked: false,
                                 },
                                 y: {
                                     type: 'linear',
                                     display: true,
                                     position: 'left',
+                                    stacked: true,
                                     beginAtZero: true,
                                     title: {
                                         display: true,
@@ -165,23 +172,22 @@ Timeframe: {{ $this->timeframe }}
                                         drawOnChartArea: false
                                     }
                                 }
-                            },
-                            barPercentage: 0.8,
-                            categoryPercentage: 0.9
+                            }
                         }
                     });
+
                     console.log('Chart updated successfully');
                 } catch (error) {
                     console.error('Error updating chart:', error);
                 }
             }
         }" x-init="initChart();
-        $wire.on('chartDataUpdated', (eventData) => {
-            console.log('Received chartDataUpdated event:', eventData);
-            if (eventData.chartData) {
-                updateChartData(eventData.chartData);
+        $wire.on('chartDataUpdated', (event) => {
+            console.log('Received chartDataUpdated event:', event);
+            if (event.chartData) {
+                updateChartData(event.chartData);
             } else {
-                console.error('No chart data in event:', eventData);
+                console.error('No chart data in event:', event);
             }
         });" wire:ignore class="relative" style="height: 400px;">
             <canvas x-ref="canvas"></canvas>
