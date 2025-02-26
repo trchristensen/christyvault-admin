@@ -145,9 +145,9 @@ class SalesPerformance extends Page implements HasForms
             ->groupBy('date', DB::raw("COALESCE(products.product_type, 'Other')"))
             ->orderBy('date');
 
-        logger()->info('3. Sales query:', ['sql' => $salesQuery->toSql()]);
+        logger()->info('Sales query:', ['sql' => $salesQuery->toSql()]);
         $salesResults = $salesQuery->get();
-        logger()->info('4. Sales results:', ['results' => $salesResults]);
+        logger()->info('Sales results:', ['results' => $salesResults]);
 
         // Get visits data with same 'all' handling
         $visitsQuery = DB::table('sales_visits')
