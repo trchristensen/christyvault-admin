@@ -44,7 +44,7 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->passwordReset()
             ->profile()
-            ->spa()
+            // ->spa()
             ->colors([
                 'primary' => '#1c3366',
             ])

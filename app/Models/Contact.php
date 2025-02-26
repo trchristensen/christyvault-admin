@@ -13,7 +13,8 @@ class Contact extends Model
         'email',
         'phone',
         'title',
-        'is_active'
+        'is_active',
+        'contact_type',
     ];
 
     protected $casts = [
