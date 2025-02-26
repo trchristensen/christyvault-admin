@@ -47,12 +47,21 @@ class SalesPerformance extends Page implements HasForms
 
     public function form(Form $form): Form
     {
+        // Get locations ordered by total orders
+        $locationsByOrders = Location::select('locations.*')
+            ->leftJoin('orders', 'locations.id', '=', 'orders.location_id')
+            ->leftJoin('order_product', 'orders.id', '=', 'order_product.order_id')
+            ->whereNull('orders.deleted_at')
+            ->groupBy('locations.id')
+            ->orderByRaw('COALESCE(SUM(order_product.quantity), 0) DESC')
+            ->get();
+
         return $form->schema([
             Select::make('locationId')
                 ->label('Location')
                 ->options(fn() => [
                     'all' => 'All Locations',
-                    ...Location::orderBy('name')->pluck('name', 'id')
+                    ...$locationsByOrders->pluck('name', 'id')
                 ])
                 ->default('all')
                 ->live()
