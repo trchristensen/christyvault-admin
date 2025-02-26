@@ -14,6 +14,7 @@ use Flowframe\Trend\Trend;
 use Flowframe\Trend\TrendValue;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Filament\Forms\Components\Forms;
 
 class SalesPerformance extends Page implements HasForms
 {
@@ -25,7 +26,7 @@ class SalesPerformance extends Page implements HasForms
     protected static ?string $navigationGroup = 'Reports';
     protected static string $view = 'filament.sales.pages.sales-performance';
 
-    public ?int $locationId = null;
+    public ?string $locationId = 'all';
     public ?string $timeframe = 'last_year';
     public array $chartData = [];
     public $salesResults;
@@ -35,11 +36,6 @@ class SalesPerformance extends Page implements HasForms
 
     public function mount(): void
     {
-        // Set Cedar Lawn as default location
-        if (!$this->locationId) {
-            $this->locationId = Location::where('name', 'like', '%Cedar Lawn%')->first()->id;
-        }
-
         $this->form->fill([
             'locationId' => $this->locationId,
             'timeframe' => $this->timeframe ?? 'last_year'
@@ -54,7 +50,11 @@ class SalesPerformance extends Page implements HasForms
         return $form->schema([
             Select::make('locationId')
                 ->label('Location')
-                ->options(Location::pluck('name', 'id'))
+                ->options(fn() => [
+                    'all' => 'All Locations',
+                    ...Location::orderBy('name')->pluck('name', 'id')
+                ])
+                ->default('all')
                 ->live()
                 ->afterStateUpdated(function ($state) {
                     logger()->info('Location changed', ['newValue' => $state]);
@@ -111,33 +111,23 @@ class SalesPerformance extends Page implements HasForms
             'timeframe' => $this->timeframe
         ]);
 
-        if (!$this->locationId) {
-            $this->chartData = [
-                'datasets' => [],
-                'labels' => [],
-            ];
-            $this->dispatch('chartDataUpdated', data: $this->chartData);
-            return;
-        }
-
-        $start = match ($this->timeframe) {
-            'last_year' => now()->subYear()->startOfMonth(),
-            'year' => now()->startOfYear(),
-            '6months' => now()->subMonths(6)->startOfMonth(),
-            '3months' => now()->subMonths(3)->startOfMonth(),
-            'month' => now()->startOfMonth(),
-        };
-
+        $start = now()->subYear()->startOfMonth();
         $end = now()->endOfMonth();
 
-        // Get sales data by product type
+        // Modify the base query to handle 'all' locations
         $salesQuery = DB::table('orders')
             ->join('order_product', 'orders.id', '=', 'order_product.order_id')
             ->join('products', 'order_product.product_id', '=', 'products.id')
-            ->where('orders.location_id', $this->locationId)
             ->whereNull('orders.deleted_at')
-            ->whereBetween('orders.created_at', [$start, $end])
-            ->selectRaw("DATE_TRUNC('month', orders.created_at) as date")
+            ->whereBetween('orders.created_at', [$start, $end]);
+
+        // Only add location filter if not 'all'
+        if ($this->locationId !== 'all') {
+            $salesQuery->where('orders.location_id', $this->locationId);
+        }
+
+        // Rest of your query remains the same
+        $salesQuery->selectRaw("DATE_TRUNC('month', orders.created_at) as date")
             ->selectRaw("COALESCE(products.product_type, 'Other') as product_type")
             ->selectRaw('SUM(CASE
                 WHEN order_product.fill_load = true THEN COALESCE(order_product.quantity_delivered, order_product.quantity)
@@ -150,11 +140,16 @@ class SalesPerformance extends Page implements HasForms
         $salesResults = $salesQuery->get();
         logger()->info('4. Sales results:', ['results' => $salesResults]);
 
-        // Get visits data
+        // Get visits data with same 'all' handling
         $visitsQuery = DB::table('sales_visits')
-            ->where('location_id', $this->locationId)
-            ->whereBetween('created_at', [$start, $end])
-            ->selectRaw("DATE_TRUNC('month', created_at) as date")
+            ->whereBetween('created_at', [$start, $end]);
+
+        // Only filter by location if not 'all'
+        if ($this->locationId !== 'all') {
+            $visitsQuery->where('location_id', $this->locationId);
+        }
+
+        $visitsQuery->selectRaw("DATE_TRUNC('month', created_at) as date")
             ->selectRaw('COUNT(*) as total_visits')
             ->groupBy('date')
             ->orderBy('date');
