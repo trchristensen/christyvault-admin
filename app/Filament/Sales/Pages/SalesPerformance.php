@@ -194,7 +194,7 @@ class SalesPerformance extends Page implements HasForms
             'Wilbert Urn Vaults' => '#98A6B5',     // Cool gray
             'Outer Burial Containers' => '#6B4E3D', // Warm brown
             'Other' => '#8B8589',                  // Neutral gray
-            'Visits' => '#C4B7A6'                  // Warm beige
+            'Visits' => '#3333'                  // Warm beige
         ];
 
         // First create product datasets
