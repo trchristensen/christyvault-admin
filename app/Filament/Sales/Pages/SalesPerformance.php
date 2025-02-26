@@ -56,17 +56,29 @@ class SalesPerformance extends Page implements HasForms
             ->orderByRaw('COALESCE(SUM(order_product.quantity), 0) DESC')
             ->get();
 
+        logger()->info('Available locations:', [
+            'locations' => $locationsByOrders->map(fn($loc) => [
+                'id' => $loc->id,
+                'name' => $loc->name
+            ])
+        ]);
+
         return $form->schema([
             Select::make('locationId')
                 ->label('Location')
-                ->options(fn() => [
+                ->options([
                     'all' => 'All Locations',
-                    ...$locationsByOrders->pluck('name', 'id')
+                    ...$locationsByOrders->mapWithKeys(fn($location) => [
+                        $location->id => $location->name
+                    ])->toArray()
                 ])
                 ->default('all')
                 ->live()
                 ->afterStateUpdated(function ($state) {
-                    logger()->info('Location changed', ['newValue' => $state]);
+                    logger()->info('Location changed', [
+                        'newValue' => $state,
+                        'type' => gettype($state)
+                    ]);
                     $this->locationId = $state;
                     $this->loadChartData();
                 })
@@ -123,35 +135,42 @@ class SalesPerformance extends Page implements HasForms
             'end' => $end->toDateTimeString()
         ]);
 
-        // First, let's check raw orders for this location
         if ($this->locationId !== 'all') {
-            $rawOrders = DB::table('orders')
-                ->where('location_id', $this->locationId)
-                ->whereNull('orders.deleted_at')
-                ->whereBetween('orders.created_at', [$start, $end])
-                ->get();
+            // First verify the location exists and log its details
+            $location = DB::table('locations')
+                ->where('id', $this->locationId)
+                ->first();
 
-            logger()->info('Raw orders found:', [
-                'count' => $rawOrders->count(),
-                'sample' => $rawOrders->take(5)
+            logger()->info('Location check:', [
+                'requestedId' => $this->locationId,
+                'requestedIdType' => gettype($this->locationId),
+                'location' => $location
             ]);
 
-            // Check join results with qualified column names
-            $joinCheck = DB::table('orders')
+            // Get raw orders with order_product data
+            $orderData = DB::table('orders')
                 ->where('orders.location_id', $this->locationId)
                 ->whereNull('orders.deleted_at')
                 ->whereBetween('orders.created_at', [$start, $end])
                 ->join('order_product', 'orders.id', '=', 'order_product.order_id')
-                ->select('orders.id', 'orders.created_at', 'order_product.quantity')
+                ->join('products', 'order_product.product_id', '=', 'products.id')
+                ->select(
+                    'orders.id',
+                    'orders.created_at',
+                    'order_product.quantity',
+                    'order_product.quantity_delivered',
+                    'order_product.fill_load',
+                    'products.product_type'
+                )
                 ->get();
 
-            logger()->info('Join check results:', [
-                'count' => $joinCheck->count(),
-                'sample' => $joinCheck->take(5)
+            logger()->info('Order data:', [
+                'count' => $orderData->count(),
+                'sample' => $orderData->take(3)
             ]);
         }
 
-        // Main query with qualified column names
+        // Main query
         $salesQuery = DB::table('orders')
             ->join('order_product', 'orders.id', '=', 'order_product.order_id')
             ->join('products', 'order_product.product_id', '=', 'products.id')
@@ -162,7 +181,6 @@ class SalesPerformance extends Page implements HasForms
             $salesQuery->where('orders.location_id', $this->locationId);
         }
 
-        // Rest of your query with qualified columns
         $salesQuery->selectRaw("DATE_TRUNC('month', orders.created_at) as date")
             ->selectRaw("COALESCE(products.product_type, 'Other') as product_type")
             ->selectRaw('SUM(CASE
@@ -173,7 +191,12 @@ class SalesPerformance extends Page implements HasForms
             ->orderBy('date');
 
         $salesResults = $salesQuery->get();
-        logger()->info('Sales results:', ['results' => $salesResults]);
+        logger()->info('Final query results:', [
+            'locationId' => $this->locationId,
+            'sql' => $salesQuery->toSql(),
+            'bindings' => $salesQuery->getBindings(),
+            'results' => $salesResults
+        ]);
 
         // Get visits data with same 'all' handling
         $visitsQuery = DB::table('sales_visits')
