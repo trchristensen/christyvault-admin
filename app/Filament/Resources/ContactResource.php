@@ -45,15 +45,11 @@ class ContactResource extends Resource
                             ->defaultCountry('US'),
                         Forms\Components\TextInput::make('title')
                             ->maxLength(255),
-                        Forms\Components\Select::make('contact_type')
-                            ->options([
-                                'sales' => 'Sales',
-                                'delivery' => 'Delivery',
-                                'billing' => 'Billing',
-                                'orders' => 'Orders',
-                                'other' => 'Other',
-                            ])
-                            ->required(),
+                        Forms\Components\Select::make('contact_types')
+                            ->relationship('contactTypes', 'name')
+                            ->multiple()
+                            ->preload()
+                            ->native(false),
                         Forms\Components\Select::make('locations')
                             ->relationship('locations', 'name')
                             ->multiple()

@@ -37,4 +37,9 @@ class Contact extends Model
     {
         return $this->hasMany(SalesVisit::class);
     }
+
+    public function contactTypes(): BelongsToMany
+    {
+        return $this->belongsToMany(ContactType::class);
+    }
 }
