@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Traits;
 
 use App\Enums\OrderStatus;
-use App\Models\Customer;
+use App\Models\Location;
 use App\Models\Product;
 use Filament\Forms;
 use Carbon\Carbon;
@@ -12,6 +12,7 @@ use Schmeits\FilamentCharacterCounter\Forms\Components\Textarea;
 use Filament\Forms\Components\Split;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Grid;
+
 trait HasOrderForm
 {
     public static function getOrderFormSchema(?string $defaultDate = null): array
@@ -20,18 +21,18 @@ trait HasOrderForm
             Forms\Components\Section::make('Order Details')
                 ->description(fn($record) => $record?->order_number)
                 ->schema([
-                    Forms\Components\Select::make('customer_id')
-                        ->label('Customer')
+                    Forms\Components\Select::make('location_id')
+                        ->label('Location')
                         ->options(function () {
-                            return Customer::query()
-                                ->with('locations')
+                            return Location::query()
+                                ->with('preferredDeliveryContact')
                                 ->get()
-                                ->mapWithKeys(function ($customer) {
-                                    return [$customer->id => view('filament.components.customer-option', [
-                                        'name' => $customer->name,
-                                        'location' => $customer->locations()->first()?->full_address,
-                                        'email' => $customer->email,
-                                        'phone' => $customer->phone,
+                                ->mapWithKeys(function ($location) {
+                                    return [$location->id => view('filament.components.location-option', [
+                                        'name' => $location->name,
+                                        'address' => $location->full_address,
+                                        'contact' => $location->preferredDeliveryContact?->name,
+                                        'phone' => $location->preferredDeliveryContact?->phone,
                                     ])->render()];
                                 });
                         })
@@ -45,96 +46,33 @@ trait HasOrderForm
                         ->reactive()
                         ->suffixAction(function ($state) {
                             if (!$state) return null;
-                            
+
                             return Forms\Components\Actions\Action::make('edit')
                                 ->icon('heroicon-m-pencil-square')
-                                ->modalHeading('Edit Customer')
+                                ->modalHeading('Edit Location')
                                 ->modalSubmitActionLabel('Save changes')
                                 ->form([
                                     Forms\Components\TextInput::make('name')
                                         ->required()
                                         ->maxLength(255),
-                                    Forms\Components\TextInput::make('email')
-                                        ->email()
-                                        ->maxLength(255),
-                                    PhoneInput::make('phone')
-                                        ->defaultCountry('US'),
-                                    Forms\Components\TextInput::make('contact_name')
-                                        ->maxLength(255)
-                                        ->label('Contact Name'),
-                                ])
-                                ->fillForm(fn() => Customer::find($state)->toArray())
-                                ->action(function (array $data, $state): void {
-                                    $customer = Customer::find($state);
-                                    $customer->update($data);
-                                })
-                                ->modalWidth('lg')
-                                ->visible(fn ($state): bool => (bool)$state);
-                        })
-                        ->afterStateUpdated(function (callable $set, $state) {
-                            if (!$state) {
-                                $set('location_id', null);
-                                return;
-                            }
-
-                            $location = Customer::find($state)?->locations()->first();
-                            if ($location) {
-                                $set('location_id', $location->id);
-                            }
-                        })
-                        ->createOptionForm([
-                            Forms\Components\TextInput::make('name')
-                                ->required()
-                                ->maxLength(255),
-                            Forms\Components\TextInput::make('email')
-                                ->email()
-                                ->maxLength(255),
-                            PhoneInput::make('phone')
-                                ->defaultCountry('US'),
-                            Forms\Components\TextInput::make('contact_name')
-                                ->maxLength(255)
-                                ->label('Contact Name'),
-
-                            Forms\Components\Section::make('Location')
-                                ->schema([
-                                    Forms\Components\TextInput::make('location.address_line1')
+                                    Forms\Components\TextInput::make('address_line1')
                                         ->required()
                                         ->maxLength(255),
-                                    Forms\Components\TextInput::make('location.address_line2')
+                                    Forms\Components\TextInput::make('address_line2')
                                         ->maxLength(255),
-                                    Grid::make([
-                                        'default' => 1,
-                                        'sm' => 1,
-                                        'md' => 12,
-                                    ])
-                                        ->schema([
-                                            Forms\Components\TextInput::make('location.city')
-                                                ->required()
-                                                ->maxLength(255)
-                                                ->columnSpan([
-                                                    'default' => 1,
-                                                    'sm' => 1,
-                                                    'md' => 6,
-                                                ]),
-                                            Forms\Components\TextInput::make('location.state')
-                                                ->required()
-                                                ->default('CA')
-                                                ->maxLength(255)
-                                                ->columnSpan([
-                                                    'default' => 1,
-                                                    'sm' => 1,
-                                                    'md' => 3,
-                                                ]),
-                                            Forms\Components\TextInput::make('location.postal_code')
-                                                ->required()
-                                                ->maxLength(20)
-                                                ->columnSpan([
-                                                    'default' => 1,
-                                                    'sm' => 1,
-                                                    'md' => 3,
-                                                ]),
-                                        ]),
-                                    Forms\Components\Select::make('location.location_type')
+                                    Forms\Components\TextInput::make('city')
+                                        ->required()
+                                        ->maxLength(255),
+                                    Forms\Components\TextInput::make('state')
+                                        ->required()
+                                        ->default('CA')
+                                        ->maxLength(255),
+                                    Forms\Components\TextInput::make('postal_code')
+                                        ->required()
+                                        ->maxLength(20),
+                                    PhoneInput::make('phone')
+                                        ->defaultCountry('US'),
+                                    Forms\Components\Select::make('location_type')
                                         ->options([
                                             'business' => 'Business',
                                             'residential' => 'Residential',
@@ -144,37 +82,104 @@ trait HasOrderForm
                                         ])
                                         ->required(),
                                 ])
+                                ->fillForm(fn() => Location::find($state)->toArray())
+                                ->action(function (array $data, $state): void {
+                                    $location = Location::find($state);
+                                    $location->update($data);
+                                })
+                                ->modalWidth('lg')
+                                ->visible(fn($state): bool => (bool)$state);
+                        })
+                        ->createOptionForm([
+                            Forms\Components\TextInput::make('name')
+                                ->required()
+                                ->maxLength(255),
+                            Forms\Components\TextInput::make('address_line1')
+                                ->required()
+                                ->maxLength(255),
+                            Forms\Components\TextInput::make('address_line2')
+                                ->maxLength(255),
+                            Grid::make([
+                                'default' => 1,
+                                'sm' => 1,
+                                'md' => 12,
+                            ])
+                                ->schema([
+                                    Forms\Components\TextInput::make('city')
+                                        ->required()
+                                        ->maxLength(255)
+                                        ->columnSpan([
+                                            'default' => 1,
+                                            'sm' => 1,
+                                            'md' => 6,
+                                        ]),
+                                    Forms\Components\TextInput::make('state')
+                                        ->required()
+                                        ->default('CA')
+                                        ->maxLength(255)
+                                        ->columnSpan([
+                                            'default' => 1,
+                                            'sm' => 1,
+                                            'md' => 3,
+                                        ]),
+                                    Forms\Components\TextInput::make('postal_code')
+                                        ->required()
+                                        ->maxLength(20)
+                                        ->columnSpan([
+                                            'default' => 1,
+                                            'sm' => 1,
+                                            'md' => 3,
+                                        ]),
+                                ]),
+                            Forms\Components\Select::make('location_type')
+                                ->options([
+                                    'business' => 'Business',
+                                    'residential' => 'Residential',
+                                    'funeral_home' => 'Funeral Home',
+                                    'cemetery' => 'Cemetery',
+                                    'other' => 'Other',
+                                ])
+                                ->required(),
+                            PhoneInput::make('phone')
+                                ->defaultCountry('US'),
+
+                            Forms\Components\Section::make('Contact')
+                                ->schema([
+                                    Forms\Components\TextInput::make('contact.name')
+                                        ->required()
+                                        ->label('Contact Name'),
+                                    PhoneInput::make('contact.phone')
+                                        ->defaultCountry('US'),
+                                    PhoneInput::make('contact.mobile_phone')
+                                        ->label('Mobile Phone')
+                                        ->defaultCountry('US'),
+                                ])
                         ])
-                        ->createOptionUsing(function (array $data, $set) {
-                            $customer = Customer::create([
+                        ->createOptionUsing(function (array $data): int {
+                            $location = Location::create([
                                 'name' => $data['name'],
-                                'email' => $data['email'],
+                                'address_line1' => $data['address_line1'],
+                                'address_line2' => $data['address_line2'],
+                                'city' => $data['city'],
+                                'state' => $data['state'],
+                                'postal_code' => $data['postal_code'],
                                 'phone' => $data['phone'],
+                                'location_type' => $data['location_type'],
                             ]);
 
-                            $location = $customer->locations()->create([
-                                'name' => $data['name'],
-                                'address_line1' => $data['location']['address_line1'],
-                                'address_line2' => $data['location']['address_line2'],
-                                'city' => $data['location']['city'],
-                                'state' => $data['location']['state'],
-                                'postal_code' => $data['location']['postal_code'],
-                                'location_type' => $data['location']['location_type'],
-                            ]);
+                            if (isset($data['contact'])) {
+                                $contact = $location->contacts()->create([
+                                    'name' => $data['contact']['name'],
+                                    'phone' => $data['contact']['phone'],
+                                    'mobile_phone' => $data['contact']['mobile_phone'],
+                                ]);
 
-                            $set('location_id', $location->id);
-
-                            return $customer->id;
-                        }),
-                    Forms\Components\Hidden::make('location_id')
-                        ->afterStateUpdated(function ($state, $set, $get) {
-                            if ($customerId = $get('customer_id')) {
-                                $customer = Customer::find($customerId);
-                                if ($customer && $customer->locations()->first()) {
-                                    $set('location_id', $customer->locations()->first()->id);
-                                }
+                                $location->update(['preferred_delivery_contact_id' => $contact->id]);
                             }
+
+                            return $location->id;
                         }),
+
                     Forms\Components\Select::make('status')
                         ->options(collect(OrderStatus::cases())->mapWithKeys(function ($status) {
                             return [$status->value => str($status->value)
@@ -204,18 +209,13 @@ trait HasOrderForm
                             'sm' => 4,
                             'md' => 4,
                         ])
-                        // ->default(now()),
-                        ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
+                        ->default(fn() => $defaultDate ?? now()),
                     Forms\Components\DatePicker::make('assigned_delivery_date')
                         ->native(false)
                         ->columnSpan([
                             'sm' => 4,
                             'md' => 4,
                         ]),
-                    // ->default(fn() => $defaultDate ?? now()),  // Use passed date or fallback to now()
-
-                    // ->minDate(today()),
-
                     Forms\Components\TimePicker::make('delivery_time')
                         ->label("Deliver By time")
                         ->nullable()
@@ -269,13 +269,12 @@ trait HasOrderForm
                                         ->maxLength(255),
                                     Forms\Components\TextInput::make('description')
                                         ->maxLength(255),
-                                    Forms\Components\TextInput::make('price')  // Add price field
+                                    Forms\Components\TextInput::make('price')
                                         ->required()
                                         ->numeric()
                                         ->default(0)
                                         ->prefix('$')
                                         ->label('Price'),
-                                    // stock
                                     Forms\Components\TextInput::make('stock')
                                         ->required()
                                         ->numeric()
@@ -369,7 +368,6 @@ trait HasOrderForm
                                     'lg' => 1,
                                 ])
                                 ->numeric()
-                                // disabled if status is not delivered. the line below is not working
                                 ->disabled(function (\Filament\Forms\Get $get): bool {
                                     $status = $get('../../status');
                                     return !in_array($status, [
