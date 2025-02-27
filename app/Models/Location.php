@@ -25,6 +25,8 @@ class Location extends Model
         'location_type',
         'notes',
         'preferred_delivery_contact_id',
+        'phone',
+        'email'
     ];
 
     protected $casts = [

@@ -39,6 +39,12 @@ class LocationResource extends Resource
                             ])
                             ->required()
                             ->native(false),
+                        PhoneInput::make('phone')
+                            ->label('Phone')
+                            ->defaultCountry('US'),
+                        Forms\Components\TextInput::make('email')
+                            ->label('Email')
+                            ->email(),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Address Details')
