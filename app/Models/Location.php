@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Location extends Model
 {
@@ -23,6 +24,7 @@ class Location extends Model
         'longitude',
         'location_type',
         'notes',
+        'preferred_delivery_contact_id',
     ];
 
     protected $casts = [
@@ -70,6 +72,10 @@ class Location extends Model
         return $this->hasMany(SalesVisit::class);
     }
 
+    public function preferredDeliveryContact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class, 'preferred_delivery_contact_id');
+    }
 
     public function getFullAddressAttribute(): string
     {

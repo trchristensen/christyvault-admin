@@ -4,12 +4,14 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\LocationResource\Pages;
 use App\Models\Location;
+use App\Models\Contact;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 
 class LocationResource extends Resource
 {
@@ -72,6 +74,50 @@ class LocationResource extends Resource
                             ->step(0.000000000001)
                             ->placeholder('e.g. -121.290780'),
                     ])->columns(2),
+
+                Forms\Components\Select::make('preferred_delivery_contact_id')
+                    ->relationship(
+                        'preferredDeliveryContact',
+                        'name',
+                        fn($query) => $query->orderBy('name')
+                    )
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('email')
+                            ->email()
+                            ->maxLength(255),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                PhoneInput::make('phone')
+                                    ->label('Office Phone')
+                                    ->defaultCountry('US'),
+                                Forms\Components\TextInput::make('phone_extension')
+                                    ->label('Extension')
+                                    ->maxLength(10)
+                                    ->placeholder('x1234'),
+                            ]),
+                        PhoneInput::make('mobile_phone')
+                            ->label('Mobile Phone')
+                            ->defaultCountry('US'),
+                        Forms\Components\Select::make('contact_types')
+                            ->relationship('contactTypes', 'name')
+                            ->multiple()
+                            ->preload()
+                            ->required()
+                            ->native(false),
+                    ])
+                    ->getOptionLabelFromRecordUsing(fn(Contact $record) => "
+                        <div class='font-medium'>{$record->name}</div>
+                        <div class='text-sm text-gray-500'>
+                            {$record->phone}" .
+                        ($record->phone_extension ? " x{$record->phone_extension}" : '') .
+                        ($record->mobile_phone ? " • Mobile: {$record->mobile_phone}" : '') . "
+                        </div>")
+                    ->searchable()
+                    ->preload()
+                    ->allowHtml(),
             ]);
     }
 
