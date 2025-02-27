@@ -40,37 +40,66 @@ class LocationResource extends Resource
                             ->required()
                             ->native(false),
                         PhoneInput::make('phone')
-                            ->label('Main Phone Number')
-                            ->helperText('This is the main phone number, not just for deliveries. Please make a contact for specifics like deliveries.')
+                            ->label('General Phone Number')
+                            ->helperText('This is the general phone number, not just for deliveries. Please make a contact for specifics like deliveries.')
                             ->defaultCountry('US'),
                         Forms\Components\TextInput::make('email')
-                            ->label('Email')
+                            ->label('General Email')
                             ->email(),
                         Forms\Components\Select::make('preferred_delivery_contact_id')
                             ->label('Preferred contact for delivery')
                             ->relationship(
                                 'preferredDeliveryContact',
                                 'name',
-                                function (Builder $query, Location $record) {
+                                function (Builder $query, ?Location $record) {
+                                    if (!$record) {
+                                        return $query;
+                                    }
+
                                     // First, get contacts linked to this location
                                     $linkedContactIds = $record->contacts()->pluck('contacts.id');
 
                                     // Only add the CASE statement if we have linked contacts
                                     if ($linkedContactIds->isNotEmpty()) {
                                         return $query
-                                            ->selectRaw('contacts.*, CASE
-                                                WHEN contacts.id IN (' . $linkedContactIds->join(',') . ') THEN 1
-                                                ELSE 0
-                                            END as is_linked')
-                                            ->orderByDesc('is_linked')
+                                            ->orderByRaw("CASE
+                                                WHEN id IN (" . $linkedContactIds->join(',') . ") THEN 0
+                                                ELSE 1
+                                            END")
                                             ->orderBy('name');
                                     }
 
-                                    // If no linked contacts, just order by name
                                     return $query->orderBy('name');
                                 }
                             )
                             ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('email')
+                                    ->email()
+                                    ->maxLength(255),
+                                Forms\Components\Grid::make(2)
+                                    ->schema([
+                                        PhoneInput::make('phone')
+                                            ->label('Office Phone')
+                                            ->defaultCountry('US'),
+                                        Forms\Components\TextInput::make('phone_extension')
+                                            ->label('Extension')
+                                            ->maxLength(10)
+                                            ->placeholder('x1234'),
+                                    ]),
+                                PhoneInput::make('mobile_phone')
+                                    ->label('Mobile Phone')
+                                    ->defaultCountry('US'),
+                                Forms\Components\Select::make('contact_types')
+                                    ->relationship('contactTypes', 'name')
+                                    ->multiple()
+                                    ->preload()
+                                    ->required()
+                                    ->native(false),
+                            ])
+                            ->editOptionForm([
                                 Forms\Components\TextInput::make('name')
                                     ->required()
                                     ->maxLength(255),
