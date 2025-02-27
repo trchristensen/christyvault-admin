@@ -240,33 +240,48 @@
 
                     // Format preferred contact's phone if available
 if ($order->location->preferredDeliveryContact) {
+    $contact = $order->location->preferredDeliveryContact;
+    $phone = $contact->phone;
+    $mobile = $contact->mobile_phone;
+
+    // Format main phone
     try {
-        $formattedPhone = (new PhoneNumber(
-            $order->location->preferredDeliveryContact->phone,
-            'US',
-        ))->formatNational();
+        $formattedPhone = (new PhoneNumber($phone, 'US'))->format('(###) ###-####');
     } catch (\Exception $e) {
-        $formattedPhone = $order->location->preferredDeliveryContact->phone;
+        $formattedPhone = $phone;
     }
 
-    echo "Contact: {$order->location->preferredDeliveryContact->name} - {$formattedPhone}";
-
-    if ($order->location->preferredDeliveryContact->phone_extension) {
-        echo " x{$order->location->preferredDeliveryContact->phone_extension}";
+    // Format mobile phone
+    try {
+        $formattedMobile = $mobile
+            ? (new PhoneNumber($mobile, 'US'))->format('(###) ###-####')
+            : null;
+    } catch (\Exception $e) {
+        $formattedMobile = $mobile;
     }
-    if ($order->location->preferredDeliveryContact->mobile_phone) {
-        echo " • Mobile: {$order->location->preferredDeliveryContact->mobile_phone}";
+
+    echo "Contact: {$contact->name}";
+    if ($formattedPhone) {
+        echo " - {$formattedPhone}";
+        if ($contact->phone_extension) {
+            echo " x{$contact->phone_extension}";
+        }
+    }
+    if ($formattedMobile) {
+        echo " • M: {$formattedMobile}";
     }
 }
 // Format location phone as fallback
 elseif ($order->location->phone) {
     try {
-        $formattedPhone = (new PhoneNumber($order->location->phone, 'US'))->formatNational();
+        $formattedPhone = (new PhoneNumber($order->location->phone, 'US'))->format(
+            '(###) ###-####',
+                            );
                         } catch (\Exception $e) {
                             $formattedPhone = $order->location->phone;
                         }
 
-                        echo "Location: {$formattedPhone}";
+                        echo $formattedPhone;
                         if ($order->location->phone_extension) {
                             echo " x{$order->location->phone_extension}";
                         }
