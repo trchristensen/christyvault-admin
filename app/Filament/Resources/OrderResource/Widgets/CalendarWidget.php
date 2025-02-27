@@ -35,6 +35,7 @@ use Filament\Support\Colors\Color;
 use Filament\Notifications\Notification;
 use Filament\Facades\Filament;
 use Filament\Facades\Filament\MaxWidth;
+use App\Models\Location;
 
 class CalendarWidget extends FullCalendarWidget
 {
@@ -94,23 +95,20 @@ class CalendarWidget extends FullCalendarWidget
 
     public function onEventClick(array $event): void
     {
-        // Check if we clicked on an order within a trip
         if (isset($event['jsEvent']['target']['dataset']['orderId'])) {
             $orderId = $event['jsEvent']['target']['dataset']['orderId'];
-
-            $this->record = Order::with(['customer', 'orderProducts.product'])->find($orderId);
+            $this->record = Order::with(['location', 'orderProducts.product', 'location.preferredDeliveryContact'])->find($orderId);
             $this->mountAction('view');
             return;
         }
 
-        // Default trip/standalone order handling
         $uuid = $event['extendedProps']['uuid'];
         $type = $event['extendedProps']['type'];
 
         if ($type === 'trip') {
-            $this->record = Trip::with(['orders.customer', 'driver'])->where('uuid', $uuid)->first();
+            $this->record = Trip::with(['orders.location', 'driver'])->where('uuid', $uuid)->first();
         } else {
-            $this->record = Order::with(['customer', 'orderProducts.product'])->where('uuid', $uuid)->first();
+            $this->record = Order::with(['location', 'orderProducts.product', 'location.preferredDeliveryContact'])->where('uuid', $uuid)->first();
         }
 
         $this->mountAction('view');
@@ -566,10 +564,7 @@ class CalendarWidget extends FullCalendarWidget
 
     protected function getEventColor(Order $order): string
     {
-        // Cast the string status to enum instance
         $status = OrderStatus::from($order->status);
-
-        // Call color() on the enum instance
         return $status->color();
     }
 
@@ -583,7 +578,7 @@ class CalendarWidget extends FullCalendarWidget
     public function fetchEvents(array $fetchInfo): array
     {
         // Fetch Trips
-        $tripEvents = Trip::with(['orders.customer', 'orders.orderProducts.product', 'orders.location', 'driver'])
+        $tripEvents = Trip::with(['orders.location', 'orders.orderProducts.product', 'orders.location.preferredDeliveryContact', 'driver'])
             ->whereDate('scheduled_date', '>=', $fetchInfo['start'])
             ->whereDate('scheduled_date', '<=', $fetchInfo['end'])
             ->get()
@@ -594,8 +589,6 @@ class CalendarWidget extends FullCalendarWidget
                     'start' => $trip->scheduled_date->format('Y-m-d'),
                     'allDay' => true,
                     'backgroundColor' => 'transparent',
-                    // 'backgroundColor' => '#C6E7FF',
-                    // 'textColor' => '#1f2937',
                     'classNames' => ['trip-event'],
                     'extendedProps' => [
                         'type' => 'trip',
@@ -604,7 +597,7 @@ class CalendarWidget extends FullCalendarWidget
                         'driver_name' => $trip->driver?->name,
                         'orders' => $trip->orders->map(fn($order) => [
                             'id' => $order->id,
-                            'title' => $order->customer?->name ?? $order->order_number,
+                            'title' => $order->location?->name ?? $order->order_number,
                             'status' => Str::headline($order->status),
                             'requested_delivery_date' => $order->requested_delivery_date?->format('M j'),
                             'delivered_at' => $order->delivered_at?->format('M j, g:i A'),
@@ -612,62 +605,48 @@ class CalendarWidget extends FullCalendarWidget
                             'extendedProps' => [
                                 'location_line1' => $order->location?->address_line1,
                                 'location_line2' => $order->location ?
-                                    "{$order->location->city}, {$order->location->state}" : null,
-                                'delivered_at' => $order->delivered_at?->format('M j, g:i A'),
-                                'start_time' => $order->trip?->start_time?->format('g:i A'),
-                                'arrived_at' => $order->arrived_at?->format('M j, g:i A'),
+                                    "{$order->location->city}, {$order->location->state}" : '',
+                                'contact_name' => $order->location?->preferredDeliveryContact?->name,
+                                'contact_phone' => $order->location?->preferredDeliveryContact?->phone,
                             ],
-                            'products' => $order->orderProducts->map(fn($op) => [
-                                'quantity' => $op->quantity,
-                                'sku' => $op->product->sku,
-                                'fill_load' => $op->fill_load
-                            ])->toArray(),
                         ])->toArray()
                     ],
                 ];
             });
 
         // Fetch standalone Orders
-        $orderEvents = Order::whereNull('trip_id')
-            ->with(['customer', 'orderProducts.product', 'location'])
-            ->whereDate('requested_delivery_date', '>=', $fetchInfo['start'])
-            ->whereDate('requested_delivery_date', '<=', $fetchInfo['end'])
+        $orderEvents = Order::with(['location', 'orderProducts.product', 'location.preferredDeliveryContact'])
+            ->whereNull('trip_id')
+            ->whereDate('assigned_delivery_date', '>=', $fetchInfo['start'])
+            ->whereDate('assigned_delivery_date', '<=', $fetchInfo['end'])
             ->get()
             ->map(function (Order $order) {
                 return [
                     'id' => 'order_' . $order->id,
-                    'title' => $order->customer?->name ?? $order->order_number,
-                    'start' => $order->assigned_delivery_date?->format('Y-m-d') ?? $order->requested_delivery_date->format('Y-m-d'),
+                    'title' => $order->location?->name ?? $order->order_number,
+                    'start' => $order->assigned_delivery_date->format('Y-m-d'),
                     'allDay' => true,
-                    'backgroundColor' => 'transparent',
-                    'borderColor' => 'transparent',
-                    'classNames' => [
-                        'standalone-order',
-                        'status-' . strtolower($order->status)
-                    ],
+                    'backgroundColor' => $this->getEventColor($order),
+                    'borderColor' => $this->getEventColor($order),
+                    'textColor' => '#ffffff',
                     'extendedProps' => [
                         'type' => 'order',
                         'uuid' => $order->uuid,
                         'status' => Str::headline($order->status),
-                        'requested_delivery_date' => $order->requested_delivery_date?->format('M j'),
-                        'order_date' => $order->order_date?->format('M j'),
-                        'arrived_at' => $order->arrived_at?->format('M j, g:i A'),
-                        'start_time' => $order->trip?->start_time?->format('g:i A'),
-                        'delivered_at' => $order->delivered_at?->format('M j, g:i A'),
-                        'delivery_notes' => $order->delivery_notes,
                         'location_line1' => $order->location?->address_line1,
                         'location_line2' => $order->location ?
-                            "{$order->location->city}, {$order->location->state}" : null,
-                        'products' => $order->orderProducts->map(fn($op) => [
-                            'quantity' => $op->quantity,
-                            'sku' => $op->product->sku,
-                            'fill_load' => $op->fill_load
-                        ])->toArray(),
+                            "{$order->location->city}, {$order->location->state}" : '',
+                        'contact_name' => $order->location?->preferredDeliveryContact?->name,
+                        'contact_phone' => $order->location?->preferredDeliveryContact?->phone,
+                        'requested_delivery_date' => $order->requested_delivery_date?->format('M j'),
+                        'delivered_at' => $order->delivered_at?->format('M j, g:i A'),
+                        'order_date' => $order->order_date?->format('M j'),
+                        'start_time' => $order->start_time?->format('g:i A'),
                     ],
                 ];
             });
 
-        return $tripEvents->concat($orderEvents)->toArray();
+        return [...$tripEvents, ...$orderEvents];
     }
 
 

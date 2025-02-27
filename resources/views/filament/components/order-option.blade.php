@@ -1,21 +1,22 @@
-<div class="flex flex-col gap-1">
-    <div class="flex items-center gap-2">
-        <span class="font-medium">{{ $orderNumber }}</span>
-        <span class="text-gray-500">{{ $customerName }}</span>
-    </div>
-    <div class="flex flex-col items-start text-sm text-gray-500">
-        @if ($location_line1)
-            <div>{{ $location_line1 }}</div>
-        @endif
-        @if ($location_line2)
-            <div>{{ $location_line2 }}</div>
-        @endif
-        <div>Status: {{ $status }}</div>
+<div class="py-1">
+    <div class="font-medium">{{ $orderNumber }}</div>
+    @if ($location_line1 || $location_line2)
+        <div class="text-sm text-gray-500">
+            @if ($location_line1)
+                {{ $location_line1 }}<br>
+            @endif
+            @if ($location_line2)
+                {{ $location_line2 }}
+            @endif
+        </div>
+    @endif
+    <div class="text-sm text-gray-500">
         @if ($requestedDeliveryDate)
-            <div>Requested: {{ $requestedDeliveryDate }}</div>
+            Requested: {{ $requestedDeliveryDate }}
         @endif
         @if ($assignedDeliveryDate)
-            <div>Assigned: {{ $assignedDeliveryDate }}</div>
+            | Assigned: {{ $assignedDeliveryDate }}
         @endif
     </div>
+    <div class="text-sm text-gray-500">Status: {{ str($status)->headline() }}</div>
 </div>

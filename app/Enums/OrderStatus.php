@@ -30,20 +30,20 @@ enum OrderStatus: string
         };
     }
 
-    // public function color(): string
-    // {
-    //     return match ($this) {
-    //         self::PENDING => Colors::YELLOW[500],
-    //         self::CONFIRMED => Colors::BLUE[500],
-    //         self::IN_PRODUCTION => Colors::PURPLE[500],
-    //         self::READY_FOR_DELIVERY => Colors::TEAL[500],
-    //         self::OUT_FOR_DELIVERY => Colors::ORANGE[500],
-    //         self::DELIVERED => Colors::GREEN[500],
-    //         self::CANCELLED => Colors::RED[500],
-    //         self::INVOICED => Colors::INDIGO[500],
-    //         self::COMPLETED => Colors::GREEN[500],
-    //     };
-    // }
+    public function color(): string
+    {
+        return match ($this) {
+            self::PENDING => '#FFA500',     // Orange
+            self::CONFIRMED => '#4299E1',   // Blue
+            self::IN_PRODUCTION => '#9F7AEA', // Purple
+            self::READY_FOR_DELIVERY => '#48BB78',   // Green
+            self::OUT_FOR_DELIVERY => '#48BB78',   // Green
+            self::DELIVERED => '#48BB78',   // Green
+            self::CANCELLED => '#E53E3E',   // Red
+            self::INVOICED => '#38B2AC',    // Teal
+            self::COMPLETED => '#2F855A',   // Dark Green
+        };
+    }
 
     public static function toArray(): array
     {
