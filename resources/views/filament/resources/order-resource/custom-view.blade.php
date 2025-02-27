@@ -40,13 +40,65 @@
         width: 100%;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        max-width: calc(100vw - 4rem); /* Account for modal and content padding */
+        max-width: calc(100vw - 4rem);
+        cursor: grab;
+        @apply touch-pan-x;
+    }
+
+    .products-table-container:active {
+        cursor: grabbing;
     }
 
     .products-table-content {
         position: relative;
         min-width: 848px;
         width: max-content;
+    }
+
+    /* Product items and borders */
+    .product-item {
+        @apply border-gray-200 dark:border-gray-700;
+    }
+
+    /* Text colors */
+    .text-gray-400 {
+        @apply dark:text-gray-500;
+    }
+
+    .text-gray-500 {
+        @apply dark:text-gray-400;
+    }
+
+    .text-gray-600 dark:text-gray-400 {
+        @apply dark:text-gray-300;
+    }
+
+    .text-gray-800 {
+        @apply dark:text-gray-100;
+    }
+
+    /* Modal styles */
+    .fi-modal-window {
+        max-width: calc(100vw - 2rem) !important;
+        width: calc(100vw - 2rem) !important;
+        @apply bg-white dark:bg-gray-900;
+    }
+
+    @media (min-width: 640px) {
+        .fi-modal-window {
+            max-width: min(90vw, 1200px) !important;
+            width: auto !important;
+        }
+    }
+
+    .fi-modal-content {
+        max-width: 100%;
+        padding: 1rem;
+    }
+
+    /* Background colors */
+    .bg-gray-50 {
+        @apply dark:bg-gray-900;
     }
 
     @media (max-width: 768px) {
@@ -59,36 +111,46 @@
         }
     }
 
-    /* Override Filament's modal styles for better mobile responsiveness */
-    .fi-modal-window {
-        max-width: calc(100vw - 2rem) !important; /* Account for viewport padding */
-        width: calc(100vw - 2rem) !important;
-        /* margin: 1rem !important; */
+    /* Dark mode text and background colors */
+    .order-container {
+        @apply text-gray-900 dark:text-white;
+        @apply bg-white dark:bg-gray-800;
+       
     }
 
-    @media (min-width: 640px) {
-        .fi-modal-window {
-            max-width: min(90vw, 1200px) !important; /* Cap the maximum width */
-            width: auto !important;
-            /* margin: 2rem auto !important; */
-        }
+    .products-table-container {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        max-width: calc(100vw - 4rem);
     }
 
-    /* Ensure modal content doesn't overflow */
-    .fi-modal-content {
-        max-width: 100%;
-        padding: 1rem;
+    /* Table styles */
+    .products-table-content {
+        @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700;
+        min-width: 848px;
+        width: max-content;
+    }
+
+    /* Table header and content */
+    .products-table-content .product-item {
+        @apply bg-white dark:bg-gray-800;
+    }
+
+    /* Grid sections */
+    .grid-cols-4 > div {
+        @apply bg-white dark:bg-gray-800 p-4 rounded-lg;
     }
 </style>
 <div class="p-4 order-container">
     <div class="flex items-start justify-between mb-4">
         <div>
-            <h2 class="font-bold text-gray-400 dark:text-gray-600">{{ $record->order_number }}</h2>
+            <h2 class="font-bold text-gray-400 dark:text-gray-600 dark:text-white">{{ $record->order_number }}</h2>
 
         </div>
         <div class="flex items-center gap-4">
             {{-- get the fucking label, not the value --}}
-            <p class="text-sm font-bold text-gray-600">
+            <p class="text-sm font-bold text-gray-600 dark:text-gray-400">
                 {{ App\Enums\PlantLocation::from($record->plant_location)->getLabel() }}</p>
             <div class="px-2 py-1 text-sm font-medium text-gray-800 border rounded-full"
                 style="background-color: {{ $record->status_color['background'] }}; color: {{ $record->status_color['text'] }}; border-color: {{ $record->status_color['border'] }}">
@@ -97,10 +159,10 @@
         </div>
     </div>
 
-    <div class="relative flex p-4 mb-4 rounded-lg bg-gray-50">
+    <div class="relative flex p-4 mb-4 rounded-lg bg-gray-50 dark:bg-gray-800">
         <div class="flex flex-col items-center justify-center mr-4">
             <div
-                class="flex flex-col items-center justify-start w-8 gap-0 text-gray-400 border-r border-gray-200 dark:text-gray-600 font-lighter dark:border-gray-800">
+                class="flex flex-col items-center justify-start w-8 gap-0 text-gray-400 border-r border-gray-200 dark:text-gray-600 dark:text-gray-400 font-lighter dark:border-gray-600">
                 <span>S</span>
                 <span>O</span>
                 <span>L</span>
@@ -163,12 +225,12 @@
             </div>
             <div class="grid grid-cols-1 gap-4">
                 <div>
-                    <p class="text-sm text-gray-600">Requested Date</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Requested Date</p>
                     <p class="font-medium">{{ $record->requested_delivery_date?->format('M j, Y') }}</p>
                 </div>
                 <div>
                     <!-- date of order -->
-                    <p class="text-sm text-gray-600">Date of Order</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Date of Order</p>
                     <p class="font-medium">{{ $record->order_date?->format('M j, Y') }}</p>
                 </div>
             </div>
@@ -184,33 +246,33 @@
                 <p class="text-gray-500">No products found for this order</p>
             @else
             <div class="products-table-container">
-                <div class="p-2 rounded-lg bg-gray-50 products-table-content">
+                <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-800 products-table-content">
                     <!-- header -->
 
                     <div
-                        class="flex items-center justify-between w-full p-2 m-0 mt-0 border-b border-gray-200 product-item last:border-b-0 dark:border-gray-800">
+                        class="flex items-center justify-between w-full p-2 m-0 mt-0 border-b border-gray-200 product-item last:border-b-0 dark:border-gray-600">
                         <div class="grid w-full grid-cols-12">
                             <div
-                                class="flex items-center justify-center w-8 col-span-1 text-sm text-center text-gray-600 qty">
+                                class="flex items-center justify-center w-8 col-span-1 text-sm text-center text-gray-600 dark:text-gray-400 qty">
                                 #
                             </div>
                             <div class="flex flex-col items-start col-span-5 -ml-6 product-description">
-                                <p class="text-sm text-gray-600">Description</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Description</p>
                             </div>
                             <!-- location -->
-                            <div class="flex items-start col-span-3 text-sm text-gray-600">Location</div>
-                            <div class="col-span-1 text-sm text-gray-600 product-shipped">
+                            <div class="flex items-start col-span-3 text-sm text-gray-600 dark:text-gray-400">Location</div>
+                            <div class="col-span-1 text-sm text-gray-600 dark:text-gray-400 product-shipped">
                                 Shipped
                             </div>
 
                             <!-- unit price -->
                             <div
-                                class="flex justify-center w-full col-span-1 text-sm text-center text-gray-600 product-price">
+                                class="flex justify-center w-full col-span-1 text-sm text-center text-gray-600 dark:text-gray-400 product-price">
                                 Unit Price
                             </div>
                             <!-- total price -->
                             <div
-                                class="flex justify-center w-full col-span-1 text-sm text-center text-gray-600 product-total-price">
+                                class="flex justify-center w-full col-span-1 text-sm text-center text-gray-600 dark:text-gray-400 product-total-price">
                                 Amount
                             </div>
 
@@ -221,10 +283,10 @@
                     <!-- end header -->
                     @foreach ($record->orderProducts as $orderProduct)
                         <div
-                            class="flex items-center justify-between w-full p-2 m-0 mt-0 border-b border-gray-200 product-item last:border-b-0 dark:border-gray-800">
+                            class="flex items-center justify-between w-full p-2 m-0 mt-0 border-b border-gray-200 product-item last:border-b-0 dark:border-gray-600">
                             <div class="grid w-full grid-cols-12">
                                 <div
-                                    class="flex items-center justify-center w-8 col-span-1 text-center border-r border-gray-200 qty dark:border-gray-800">
+                                    class="text-white dark:text-gray-200 flex items-center justify-center w-8 col-span-1 text-center border-r border-gray-200 qty dark:border-gray-600">
                                     @if ($orderProduct->fill_load)
                                         <p class="font-medium">FL</p>
                                     @else
@@ -232,15 +294,15 @@
                                     @endif
                                 </div>
                                 <div class="flex flex-col items-start col-span-5 -ml-6 product-description">
-                                    <p class="font-medium">{{ $orderProduct->product->sku }}</p>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                    <p class="font-medium text-white dark:text-gray-200">{{ $orderProduct->product->sku }}</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400">
                                         {{ $orderProduct->product->name }}</p>
 
                                     @if ($orderProduct->notes)
                                         <p class="text-sm text-gray-500">{{ $orderProduct->notes }}</p>
                                     @endif
                                 </div>
-                                <div class="flex items-start col-span-3 text-sm text-gray-600">
+                                <div class="flex items-start col-span-3 text-sm text-gray-600 dark:text-gray-400">
                                     {{ $orderProduct->location }}</div>
                                 <!-- quantity delivered -->
                                 <div class="col-span-1 text-center product-shipped">
@@ -273,19 +335,19 @@
     <div class="grid grid-cols-4 gap-4">
         <!-- Delivery Info  -->
         <div class="flex flex-col items-start delivery-date">
-            <p class="text-sm text-gray-600">Assigned Date</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Assigned Date</p>
             <p>{{ optional($record->assigned_delivery_date)->format('D m/d/Y') }}</p>
         </div>
         <div class="delivery-time">
-            <p class="text-sm text-gray-600">Requested Delivery Time</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Requested Delivery Time</p>
             <p>{{ optional($record->delivery_time)->format('g:i A') }}</p>
         </div>
         <div class="service-date">
-            <p class="text-sm text-gray-600">Service Date</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Service Date</p>
             <p>{{ optional($record->service_date)->format('D m/d/Y') }}</p>
         </div>
         <div class="service-time">
-            <p class="text-sm text-gray-600">Service Time</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Service Time</p>
             <p>{{ optional($record->service_time)->format('g:i A') }}</p>
         </div>
     </div>

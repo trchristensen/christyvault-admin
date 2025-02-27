@@ -159,7 +159,7 @@
 /* Order container spacing */
 .order-container {
     @apply last:mb-0 p-2;
-    background-color: #ffffff;
+    /* background-color: #ffffff; */
     position: relative;
     box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.03);
 }
