@@ -199,6 +199,7 @@
             line-height: 30px;
             /* border: 1px solid red; */
         }
+
         .cemetery-time {
             position: absolute;
             top: 910px;
@@ -210,6 +211,7 @@
             line-height: 30px;
             /* border: 1px solid red; */
         }
+
         .cemetery-time span {
             margin-right: 300px;
             margin-right: 150px;
@@ -230,23 +232,46 @@
     <article>
         {{-- Customer Info Section --}}
         <div class="customer-info">
-            <span class="customer-name">{{ $order->customer->name }}</span>
-            <span class="customer-address">{{ $order->location->full_address ?? null }}</span>
+            <span class="customer-name">{{ $order->location->name }}</span>
+            <span class="customer-address">{{ $order->location->full_address }}</span>
             <span class="customer-phone">
                 @php
                     use Propaganistas\LaravelPhone\PhoneNumber;
 
-                    try {
-                        $formattedPhone = (new PhoneNumber($order->customer->phone, 'US'))->formatNational();
-                    } catch (\Exception $e) {
-                        $formattedPhone = $order->customer->phone; // Fallback to original number
+                    // Format preferred contact's phone if available
+if ($order->location->preferredDeliveryContact) {
+    try {
+        $formattedPhone = (new PhoneNumber(
+            $order->location->preferredDeliveryContact->phone,
+            'US',
+        ))->formatNational();
+    } catch (\Exception $e) {
+        $formattedPhone = $order->location->preferredDeliveryContact->phone;
+    }
+
+    echo "Contact: {$order->location->preferredDeliveryContact->name} - {$formattedPhone}";
+
+    if ($order->location->preferredDeliveryContact->phone_extension) {
+        echo " x{$order->location->preferredDeliveryContact->phone_extension}";
+    }
+    if ($order->location->preferredDeliveryContact->mobile_phone) {
+        echo " • Mobile: {$order->location->preferredDeliveryContact->mobile_phone}";
+    }
+}
+// Format location phone as fallback
+elseif ($order->location->phone) {
+    try {
+        $formattedPhone = (new PhoneNumber($order->location->phone, 'US'))->formatNational();
+                        } catch (\Exception $e) {
+                            $formattedPhone = $order->location->phone;
+                        }
+
+                        echo "Location: {$formattedPhone}";
+                        if ($order->location->phone_extension) {
+                            echo " x{$order->location->phone_extension}";
+                        }
                     }
                 @endphp
-
-                @if($order->customer->contact_name)
-                    Call {{ $order->customer->contact_name }} - 
-                @endif
-                {{ $formattedPhone }}
             </span>
         </div>
 
@@ -255,7 +280,7 @@
             <div class="invoice-date" style="height:18px;"></div>
             <div class="order-number" style="height:18px;"></div>
             <div class="order-date" style="height:18px;">
-                {{ $order->order_date->format('m/d/Y') ?? $order->created_at->format('m/d/Y') }}
+                {{ $order->order_date?->format('m/d/Y') ?? $order->created_at->format('m/d/Y') }}
             </div>
         </div>
 
