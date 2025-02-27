@@ -66,26 +66,31 @@ class LocationResource extends Resource
                                 ];
 
                                 foreach ($contacts as $contact) {
-                                    $optionLabel = view('filament.components.contact-option', [
-                                        'contact' => $contact,
-                                    ])->render();
+                                    $label = $contact->name;
 
+                                    // Add phone info if available
+                                    $phoneInfo = [];
+                                    if ($contact->phone) {
+                                        $phoneInfo[] = $contact->phone . ($contact->phone_extension ? " x{$contact->phone_extension}" : '');
+                                    }
+                                    if ($contact->mobile_phone) {
+                                        $phoneInfo[] = "Mobile: {$contact->mobile_phone}";
+                                    }
+
+                                    if (!empty($phoneInfo)) {
+                                        $label .= ' (' . implode(' • ', $phoneInfo) . ')';
+                                    }
+
+                                    // Add to appropriate group
                                     if ($linkedContactIds->contains($contact->id)) {
-                                        $groupedContacts['Linked Contacts'][$contact->id] = $optionLabel;
+                                        $groupedContacts['Linked Contacts'][$contact->id] = $label;
                                     } else {
-                                        $groupedContacts['Other Contacts'][$contact->id] = $optionLabel;
+                                        $groupedContacts['Other Contacts'][$contact->id] = $label;
                                     }
                                 }
 
                                 // Remove empty groups
-                                if (empty($groupedContacts['Linked Contacts'])) {
-                                    unset($groupedContacts['Linked Contacts']);
-                                }
-                                if (empty($groupedContacts['Other Contacts'])) {
-                                    unset($groupedContacts['Other Contacts']);
-                                }
-
-                                return $groupedContacts;
+                                return array_filter($groupedContacts, fn($group) => !empty($group));
                             })
                             ->afterStateUpdated(function ($state, $record, $set, $get) {
                                 if (!$state) return;
