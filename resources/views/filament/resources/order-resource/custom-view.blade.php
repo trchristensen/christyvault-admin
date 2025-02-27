@@ -69,32 +69,49 @@
         <div class="grid justify-between w-full grid-cols-2 gap-4">
 
             <div class="flex flex-col items-start gap-1">
-
                 <p class="font-bold">{{ $record->location->name }}</p>
                 <p>{{ $record->location->full_address }}</p>
 
-                @if ($record->preferredDeliveryContact)
+                @if ($record->location->preferredDeliveryContact)
                     <div class="flex items-center gap-2">
                         <x-heroicon-o-phone class="w-4 h-4" />
                         @php
                             try {
                                 $formattedPhone = (new PhoneNumber(
-                                    $record->preferredDeliveryContact->phone,
+                                    $record->location->preferredDeliveryContact->phone,
                                     'US',
                                 ))->formatNational();
                             } catch (\Exception $e) {
-                                $formattedPhone = $record->preferredDeliveryContact->phone;
+                                $formattedPhone = $record->location->preferredDeliveryContact->phone;
                             }
                         @endphp
-                        <p>Contact {{ $record->preferredDeliveryContact->name }}
-                            @if ($record->preferredDeliveryContact->phone)
+                        <p>Contact: {{ $record->location->preferredDeliveryContact->name }}
+                            @if ($record->location->preferredDeliveryContact->phone)
                                 - {{ $formattedPhone }}
-                                @if ($record->preferredDeliveryContact->phone_extension)
-                                    x{{ $record->preferredDeliveryContact->phone_extension }}
+                                @if ($record->location->preferredDeliveryContact->phone_extension)
+                                    x{{ $record->location->preferredDeliveryContact->phone_extension }}
                                 @endif
                             @endif
-                            @if ($record->preferredDeliveryContact->mobile_phone)
-                                • Mobile: {{ $record->preferredDeliveryContact->mobile_phone }}
+                            @if ($record->location->preferredDeliveryContact->mobile_phone)
+                                • Mobile: {{ $record->location->preferredDeliveryContact->mobile_phone }}
+                            @endif
+                        </p>
+                    </div>
+                @endif
+
+                @if ($record->location->phone)
+                    <div class="flex items-center gap-2">
+                        <x-heroicon-o-phone class="w-4 h-4" />
+                        @php
+                            try {
+                                $formattedPhone = (new PhoneNumber($record->location->phone, 'US'))->formatNational();
+                            } catch (\Exception $e) {
+                                $formattedPhone = $record->location->phone;
+                            }
+                        @endphp
+                        <p>Location: {{ $formattedPhone }}
+                            @if ($record->location->phone_extension)
+                                x{{ $record->location->phone_extension }}
                             @endif
                         </p>
                     </div>
