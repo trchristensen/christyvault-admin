@@ -236,28 +236,52 @@
             <span class="customer-address">{{ $order->location->full_address }}</span>
             <span class="customer-phone">
                 @php
-                    use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
-                    use Ysfkaya\FilamentPhoneInput\PhoneInput;
+                    use Propaganistas\LaravelPhone\PhoneNumber;
 
                     // Format preferred contact's phone if available
 if ($order->location->preferredDeliveryContact) {
     $contact = $order->location->preferredDeliveryContact;
+    $phone = $contact->phone;
+    $mobile = $contact->mobile_phone;
 
-    echo "Contact: {$contact->name} - ";
+    // Format main phone
+    try {
+        $formattedPhone = (new PhoneNumber($phone, 'US'))->format('(###) ###-####');
+    } catch (\Exception $e) {
+        $formattedPhone = $phone;
+    }
 
-    if ($contact->phone) {
-        echo PhoneInput::format($contact->phone, PhoneInputNumberType::NATIONAL);
+    // Format mobile phone
+    try {
+        $formattedMobile = $mobile
+            ? (new PhoneNumber($mobile, 'US'))->format('(###) ###-####')
+            : null;
+    } catch (\Exception $e) {
+        $formattedMobile = $mobile;
+    }
+
+    echo "Contact: {$contact->name}";
+    if ($formattedPhone) {
+        echo " - {$formattedPhone}";
         if ($contact->phone_extension) {
             echo " x{$contact->phone_extension}";
         }
     }
-    if ($contact->mobile_phone) {
-        echo ' • M: ' . PhoneInput::format($contact->mobile_phone, PhoneInputNumberType::NATIONAL);
+    if ($formattedMobile) {
+        echo " • M: {$formattedMobile}";
+    }
+}
+// Format location phone as fallback
+elseif ($order->location->phone) {
+    try {
+        $formattedPhone = (new PhoneNumber($order->location->phone, 'US'))->format(
+            '(###) ###-####',
+                            );
+                        } catch (\Exception $e) {
+                            $formattedPhone = $order->location->phone;
                         }
-                    }
-                    // Format location phone as fallback
-                    elseif ($order->location->phone) {
-                        echo PhoneInput::format($order->location->phone, PhoneInputNumberType::NATIONAL);
+
+                        echo $formattedPhone;
                         if ($order->location->phone_extension) {
                             echo " x{$order->location->phone_extension}";
                         }
