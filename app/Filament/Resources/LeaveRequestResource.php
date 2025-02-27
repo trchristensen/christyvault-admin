@@ -22,6 +22,7 @@ class LeaveRequestResource extends Resource
 
     protected static ?string $navigationGroup = 'Human Resources';
 
+
     public static function form(Form $form): Form
     {
         return $form
