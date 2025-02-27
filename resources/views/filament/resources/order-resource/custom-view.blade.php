@@ -245,7 +245,37 @@
             @if ($record->orderProducts->isEmpty())
                 <p class="text-gray-500">No products found for this order</p>
             @else
-            <div class="products-table-container">
+            <div class="products-table-container"
+                x-data="{ 
+                    isDown: false,
+                    startX: null,
+                    scrollLeft: null,
+                    handleMouseDown(e) {
+                        this.isDown = true;
+                        this.$el.style.cursor = 'grabbing';
+                        this.startX = e.pageX - this.$el.offsetLeft;
+                        this.scrollLeft = this.$el.scrollLeft;
+                    },
+                    handleMouseLeave() {
+                        this.isDown = false;
+                        this.$el.style.cursor = 'grab';
+                    },
+                    handleMouseUp() {
+                        this.isDown = false;
+                        this.$el.style.cursor = 'grab';
+                    },
+                    handleMouseMove(e) {
+                        if (!this.isDown) return;
+                        e.preventDefault();
+                        const x = e.pageX - this.$el.offsetLeft;
+                        const walk = (x - this.startX) * 2;
+                        this.$el.scrollLeft = this.scrollLeft - walk;
+                    }
+                }"
+                @mousedown="handleMouseDown"
+                @mouseleave="handleMouseLeave"
+                @mouseup="handleMouseUp"
+                @mousemove="handleMouseMove">
                 <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-800 products-table-content">
                     <!-- header -->
 
