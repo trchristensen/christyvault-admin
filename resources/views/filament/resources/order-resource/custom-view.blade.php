@@ -69,10 +69,10 @@
         <div class="grid justify-between w-full grid-cols-2 gap-4">
 
             <div class="flex flex-col items-start gap-1">
-                <p class="font-bold">{{ $record->location->name }}</p>
-                <p>{{ $record->location->full_address }}</p>
+                <p class="font-bold">{{ optional($record->location)->name ?? 'N/A' }}</p>
+                <p>{{ optional($record->location)->full_address ?? 'N/A' }}</p>
 
-                @if ($record->location->preferredDeliveryContact)
+                @if ($record->location && $record->location->preferredDeliveryContact)
                     <div class="flex items-center gap-2">
                         <x-heroicon-o-phone class="w-4 h-4" />
                         @php
@@ -99,7 +99,7 @@
                     </div>
                 @endif
 
-                @if ($record->location->phone)
+                @if ($record->location && $record->location->phone)
                     <div class="flex items-center gap-2">
                         <x-heroicon-o-phone class="w-4 h-4" />
                         @php
