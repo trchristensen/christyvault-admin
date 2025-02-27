@@ -66,9 +66,10 @@ class LocationResource extends Resource
                                 ];
 
                                 foreach ($contacts as $contact) {
-                                    $label = $contact->name;
+                                    // Build the HTML for the contact option
+                                    $html = "<div class='font-medium'>{$contact->name}</div>";
 
-                                    // Add phone info if available
+                                    // Phone numbers line
                                     $phoneInfo = [];
                                     if ($contact->phone) {
                                         $phoneInfo[] = $contact->phone . ($contact->phone_extension ? " x{$contact->phone_extension}" : '');
@@ -76,16 +77,21 @@ class LocationResource extends Resource
                                     if ($contact->mobile_phone) {
                                         $phoneInfo[] = "Mobile: {$contact->mobile_phone}";
                                     }
-
                                     if (!empty($phoneInfo)) {
-                                        $label .= ' (' . implode(' • ', $phoneInfo) . ')';
+                                        $html .= "<div class='text-sm text-gray-500'>" . implode(' • ', $phoneInfo) . "</div>";
+                                    }
+
+                                    // Linked locations line
+                                    if ($contact->locations->isNotEmpty()) {
+                                        $locationInfo = $contact->locations->map(fn($loc) => "{$loc->name} ({$loc->city})")->join(', ');
+                                        $html .= "<div class='mt-1 text-xs text-gray-400'>Linked to: {$locationInfo}</div>";
                                     }
 
                                     // Add to appropriate group
                                     if ($linkedContactIds->contains($contact->id)) {
-                                        $groupedContacts['Linked Contacts'][$contact->id] = $label;
+                                        $groupedContacts['Linked Contacts'][$contact->id] = $html;
                                     } else {
-                                        $groupedContacts['Other Contacts'][$contact->id] = $label;
+                                        $groupedContacts['Other Contacts'][$contact->id] = $html;
                                     }
                                 }
 
