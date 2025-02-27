@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Enums\OrderStatus;
 use App\Filament\Resources\OrderResource\Pages;
-use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\Order;
 use App\Models\Product;
@@ -53,7 +52,7 @@ class OrderResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('customer.name')
+                Tables\Columns\TextColumn::make('location.name')
                     ->searchable()
                     ->sortable()
                     ->description(fn(Order $record): string => $record->location->full_address ?? ''),
@@ -125,31 +124,31 @@ class OrderResource extends Resource
                         if (!$record->assigned_delivery_date) {
                             return 'Unassigned Orders';
                         }
-                        
+
                         $today = now()->startOfDay();
                         $assignedDate = $record->assigned_delivery_date->startOfDay();
-                        
+
                         if ($assignedDate->lt($today)) {
                             return 'Past Orders';
                         }
-                        
+
                         // If within next 3 weeks
                         if ($assignedDate->lte($today->copy()->addWeeks(3))) {
                             return $assignedDate->format('l, M j, Y');
                         }
-                        
+
                         return 'Future Orders (> 3 weeks)';
                     })
                     ->orderQueryUsing(function (Builder $query, string $direction) {
                         return $query->orderBy(DB::raw('
-                            CASE 
+                            CASE
                                 WHEN assigned_delivery_date IS NULL THEN 0
                                 WHEN assigned_delivery_date < CURRENT_DATE THEN 3
                                 WHEN assigned_delivery_date <= CURRENT_DATE + INTERVAL \'21 days\' THEN 1
                                 ELSE 2
                             END
                         '))
-                        ->orderBy('assigned_delivery_date', $direction);
+                            ->orderBy('assigned_delivery_date', $direction);
                     })
                     ->collapsible()
             ])

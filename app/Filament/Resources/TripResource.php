@@ -62,7 +62,7 @@ class TripResource extends Resource
 
                             $ordersHtml .= "
                                 <div class='p-2 mb-3 rounded bg-gray-50'>
-                                    <div class='font-medium'>{$stopLabel}{$order->customer->name}</div>
+                                    <div class='font-medium'>{$stopLabel}{$order->location->name}</div>
                                     <div class='text-sm text-gray-600'>{$order->location->full_address}</div>
                                     <div class='mt-1 text-sm text-gray-500'>{$productsHtml}</div>
                                 </div>
@@ -143,7 +143,7 @@ class TripResource extends Resource
     {
         return parent::getEloquentQuery()
             ->with([
-                'orders.customer',
+                'orders.location.preferredDeliveryContact',
                 'orders.location',
                 'orders.orderProducts.product',
                 'driver'
