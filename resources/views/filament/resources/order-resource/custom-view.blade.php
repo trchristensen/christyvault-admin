@@ -35,6 +35,50 @@
     .product-item:last-of-type {
         border-bottom: none;
     }
+
+    .products-table-container {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        max-width: calc(100vw - 4rem); /* Account for modal and content padding */
+    }
+
+    .products-table-content {
+        position: relative;
+        min-width: 848px;
+        width: max-content;
+    }
+
+    @media (max-width: 768px) {
+        .grid-cols-2 {
+            grid-template-columns: 1fr;
+        }
+        
+        .grid-cols-4 {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    /* Override Filament's modal styles for better mobile responsiveness */
+    .fi-modal-window {
+        max-width: calc(100vw - 2rem) !important; /* Account for viewport padding */
+        width: calc(100vw - 2rem) !important;
+        /* margin: 1rem !important; */
+    }
+
+    @media (min-width: 640px) {
+        .fi-modal-window {
+            max-width: min(90vw, 1200px) !important; /* Cap the maximum width */
+            width: auto !important;
+            /* margin: 2rem auto !important; */
+        }
+    }
+
+    /* Ensure modal content doesn't overflow */
+    .fi-modal-content {
+        max-width: 100%;
+        padding: 1rem;
+    }
 </style>
 <div class="p-4 order-container">
     <div class="flex items-start justify-between mb-4">
@@ -139,7 +183,8 @@
             @if ($record->orderProducts->isEmpty())
                 <p class="text-gray-500">No products found for this order</p>
             @else
-                <div class="p-2 rounded-lg bg-gray-50">
+            <div class="products-table-container">
+                <div class="p-2 rounded-lg bg-gray-50 products-table-content">
                     <!-- header -->
 
                     <div
@@ -221,6 +266,7 @@
                         </div>
                     @endforeach
                 </div>
+            </div>
             @endif
         </div>
     </div>
