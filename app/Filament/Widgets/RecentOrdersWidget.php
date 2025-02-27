@@ -8,6 +8,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Filament\Tables\Actions\Action;
+use Illuminate\Database\Eloquent\Model;
 
 class RecentOrdersWidget extends BaseWidget
 {
@@ -32,7 +33,7 @@ class RecentOrdersWidget extends BaseWidget
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('customer.name')
+                Tables\Columns\TextColumn::make('location.name')
                     ->searchable()
                     ->sortable()
                     ->description(fn(Order $record): string => $record->location->full_address ?? ''),
@@ -94,29 +95,29 @@ class RecentOrdersWidget extends BaseWidget
 
             ->actions([
                 Action::make('view')
-                ->stickyModalFooter()
-                ->modalContent(fn($record) => view(
-                    'filament.resources.order-resource.custom-view',
-                    ['record' => $record]
-                ))
-                // ->modalHeading(fn($record) => $record->order_number)
-                ->form([])
-                ->modalFooterActions([
-                    Action::make('edit')
-                        ->modalWidth('7xl')
-                        ->url(fn (Order $record): string => route('filament.admin.resources.orders.edit', ['record' => $record]))
-                        ->stickyModalFooter(),
-                    Action::make('delete')
-                        ->label('Delete')
-                        ->color('danger')
-                        ->icon('heroicon-o-trash'),
-                    Action::make('print')
-                        ->label('Print Delivery Tag')
-                        ->color('gray')
-                        ->icon('heroicon-o-printer')
-                        ->url(fn(Order $record) => route('orders.print', ['order' => $record]))
-                        ->openUrlInNewTab(),
-                ]),
+                    ->stickyModalFooter()
+                    ->modalContent(fn($record) => view(
+                        'filament.resources.order-resource.custom-view',
+                        ['record' => $record]
+                    ))
+                    // ->modalHeading(fn($record) => $record->order_number)
+                    ->form([])
+                    ->modalFooterActions([
+                        Action::make('edit')
+                            ->modalWidth('7xl')
+                            ->url(fn(Order $record): string => route('filament.admin.resources.orders.edit', ['record' => $record]))
+                            ->stickyModalFooter(),
+                        Action::make('delete')
+                            ->label('Delete')
+                            ->color('danger')
+                            ->icon('heroicon-o-trash'),
+                        Action::make('print')
+                            ->label('Print Delivery Tag')
+                            ->color('gray')
+                            ->icon('heroicon-o-printer')
+                            ->url(fn(Order $record) => route('orders.print', ['order' => $record]))
+                            ->openUrlInNewTab(),
+                    ]),
                 Action::make('print preview')
                     ->label(null)
                     ->iconButton()
@@ -126,5 +127,4 @@ class RecentOrdersWidget extends BaseWidget
                 Tables\Actions\EditAction::make(),
             ]);
     }
-    
 }
