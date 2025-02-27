@@ -72,6 +72,43 @@ class LocationResource extends Resource
                                     return $query->orderBy('name');
                                 }
                             )
+                            ->afterStateUpdated(function ($state, $record, $set, $get) {
+                                if (!$state) return; // Skip if no contact selected
+
+                                // Get the contact
+                                $contact = Contact::find($state);
+                                if (!$contact) return;
+
+                                // If we're editing an existing location
+                                if ($record) {
+                                    // Check if relationship doesn't exist
+                                    if (!$record->contacts()->where('contacts.id', $contact->id)->exists()) {
+                                        // Add the relationship
+                                        $record->contacts()->attach($contact);
+
+                                        // Force a refresh of the form to show updated linked locations
+                                        $record->refresh();
+                                    }
+                                } else {
+                                    // For new locations, store the contact ID to be used after creation
+                                    $set('_temp_contact_to_link', $state);
+                                }
+                            })
+                            ->getOptionLabelFromRecordUsing(
+                                fn(Contact $record) => "
+                        <div class='font-medium'>{$record->name}</div>
+                        <div class='text-sm text-gray-500'>
+                            {$record->phone}" .
+                                    ($record->phone_extension ? " x{$record->phone_extension}" : '') .
+                                    ($record->mobile_phone ? " • Mobile: {$record->mobile_phone}" : '') . "
+                        </div>" .
+                                    ($record->locations->isNotEmpty() ? "
+                        <div class='mt-1 text-xs text-gray-400'>
+                            Linked to: " . $record->locations->map(function ($location) {
+                                        return "{$location->name} ({$location->city})";
+                                    })->join(', ') . "
+                        </div>" : "")
+                            )
                             ->createOptionForm([
                                 Forms\Components\TextInput::make('name')
                                     ->required()
@@ -126,13 +163,6 @@ class LocationResource extends Resource
                                     ->required()
                                     ->native(false),
                             ])
-                            ->getOptionLabelFromRecordUsing(fn(Contact $record) => "
-                        <div class='font-medium'>{$record->name}</div>
-                        <div class='text-sm text-gray-500'>
-                            {$record->phone}" .
-                                ($record->phone_extension ? " x{$record->phone_extension}" : '') .
-                                ($record->mobile_phone ? " • Mobile: {$record->mobile_phone}" : '') . "
-                        </div>")
                             ->searchable()
                             ->preload()
                             ->allowHtml(),
