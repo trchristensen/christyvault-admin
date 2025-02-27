@@ -73,23 +73,23 @@ class ContactResource extends Resource
                 ->searchable()
                 ->sortable(),
 
-            Tables\Columns\TextColumn::make('email')
+            Tables\Columns\TextColumn::make('locations.name')
+                ->badge()
+                ->separator(',')
                 ->searchable()
                 ->sortable(),
 
             Tables\Columns\TextColumn::make('phone')
                 ->searchable(),
 
+            Tables\Columns\TextColumn::make('mobile_phone')
+                ->searchable(),
+
             Tables\Columns\TextColumn::make('title')
                 ->searchable(),
 
-            Tables\Columns\TextColumn::make('locations.name')
-                ->badge()
-                ->separator(',')
-                ->searchable(),
-
-            Tables\Columns\IconColumn::make('is_active')
-                ->boolean()
+            Tables\Columns\TextColumn::make('email')
+                ->searchable()
                 ->sortable(),
 
             Tables\Columns\TextColumn::make('created_at')

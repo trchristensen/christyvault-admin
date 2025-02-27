@@ -45,6 +45,67 @@ class LocationResource extends Resource
                         Forms\Components\TextInput::make('email')
                             ->label('Email')
                             ->email(),
+                        Forms\Components\Select::make('preferred_delivery_contact_id')
+                            ->label('Preferred contact for delivery')
+                            ->relationship(
+                                'preferredDeliveryContact',
+                                'name',
+                                function (Builder $query, Location $record) {
+                                    // First, get contacts linked to this location
+                                    $linkedContactIds = $record->contacts()->pluck('contacts.id');
+
+                                    // Only add the CASE statement if we have linked contacts
+                                    if ($linkedContactIds->isNotEmpty()) {
+                                        return $query
+                                            ->selectRaw('contacts.*, CASE
+                                                WHEN contacts.id IN (' . $linkedContactIds->join(',') . ') THEN 1
+                                                ELSE 0
+                                            END as is_linked')
+                                            ->orderByDesc('is_linked')
+                                            ->orderBy('name');
+                                    }
+
+                                    // If no linked contacts, just order by name
+                                    return $query->orderBy('name');
+                                }
+                            )
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('email')
+                                    ->email()
+                                    ->maxLength(255),
+                                Forms\Components\Grid::make(2)
+                                    ->schema([
+                                        PhoneInput::make('phone')
+                                            ->label('Office Phone')
+                                            ->defaultCountry('US'),
+                                        Forms\Components\TextInput::make('phone_extension')
+                                            ->label('Extension')
+                                            ->maxLength(10)
+                                            ->placeholder('x1234'),
+                                    ]),
+                                PhoneInput::make('mobile_phone')
+                                    ->label('Mobile Phone')
+                                    ->defaultCountry('US'),
+                                Forms\Components\Select::make('contact_types')
+                                    ->relationship('contactTypes', 'name')
+                                    ->multiple()
+                                    ->preload()
+                                    ->required()
+                                    ->native(false),
+                            ])
+                            ->getOptionLabelFromRecordUsing(fn(Contact $record) => "
+                        <div class='font-medium'>{$record->name}</div>
+                        <div class='text-sm text-gray-500'>
+                            {$record->phone}" .
+                                ($record->phone_extension ? " x{$record->phone_extension}" : '') .
+                                ($record->mobile_phone ? " • Mobile: {$record->mobile_phone}" : '') . "
+                        </div>")
+                            ->searchable()
+                            ->preload()
+                            ->allowHtml(),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Address Details')
@@ -80,50 +141,6 @@ class LocationResource extends Resource
                             ->step(0.000000000001)
                             ->placeholder('e.g. -121.290780'),
                     ])->columns(2),
-
-                Forms\Components\Select::make('preferred_delivery_contact_id')
-                    ->relationship(
-                        'preferredDeliveryContact',
-                        'name',
-                        fn($query) => $query->orderBy('name')
-                    )
-                    ->createOptionForm([
-                        Forms\Components\TextInput::make('name')
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('email')
-                            ->email()
-                            ->maxLength(255),
-                        Forms\Components\Grid::make(2)
-                            ->schema([
-                                PhoneInput::make('phone')
-                                    ->label('Office Phone')
-                                    ->defaultCountry('US'),
-                                Forms\Components\TextInput::make('phone_extension')
-                                    ->label('Extension')
-                                    ->maxLength(10)
-                                    ->placeholder('x1234'),
-                            ]),
-                        PhoneInput::make('mobile_phone')
-                            ->label('Mobile Phone')
-                            ->defaultCountry('US'),
-                        Forms\Components\Select::make('contact_types')
-                            ->relationship('contactTypes', 'name')
-                            ->multiple()
-                            ->preload()
-                            ->required()
-                            ->native(false),
-                    ])
-                    ->getOptionLabelFromRecordUsing(fn(Contact $record) => "
-                        <div class='font-medium'>{$record->name}</div>
-                        <div class='text-sm text-gray-500'>
-                            {$record->phone}" .
-                        ($record->phone_extension ? " x{$record->phone_extension}" : '') .
-                        ($record->mobile_phone ? " • Mobile: {$record->mobile_phone}" : '') . "
-                        </div>")
-                    ->searchable()
-                    ->preload()
-                    ->allowHtml(),
             ]);
     }
 
