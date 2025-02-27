@@ -50,27 +50,9 @@ class LocationResource extends Resource
                             ->label('Preferred contact for delivery')
                             ->relationship(
                                 'preferredDeliveryContact',
-                                'name',
-                                function (Builder $query, ?Location $record) {
-                                    return $query->orderBy('name');
-                                }
+                                'name'
                             )
-                            ->getOptionLabelFromRecordUsing(
-                                fn(Contact $record) => "
-                        <div class='font-medium'>{$record->name}</div>
-                        <div class='text-sm text-gray-500'>
-                            {$record->phone}" .
-                                    ($record->phone_extension ? " x{$record->phone_extension}" : '') .
-                                    ($record->mobile_phone ? " • Mobile: {$record->mobile_phone}" : '') . "
-                        </div>" .
-                                    ($record->locations->isNotEmpty() ? "
-                        <div class='mt-1 text-xs text-gray-400'>
-                            Linked to: " . $record->locations->map(function ($location) {
-                                        return "{$location->name} ({$location->city})";
-                                    })->join(', ') . "
-                        </div>" : "")
-                            )
-                            ->getOptionsUsing(function ($record) {
+                            ->options(function (?Location $record) {
                                 // Get all contacts
                                 $contacts = Contact::orderBy('name')->get();
 
@@ -84,10 +66,14 @@ class LocationResource extends Resource
                                 ];
 
                                 foreach ($contacts as $contact) {
+                                    $optionLabel = view('filament.components.contact-option', [
+                                        'contact' => $contact,
+                                    ])->render();
+
                                     if ($linkedContactIds->contains($contact->id)) {
-                                        $groupedContacts['Linked Contacts'][$contact->id] = $contact;
+                                        $groupedContacts['Linked Contacts'][$contact->id] = $optionLabel;
                                     } else {
-                                        $groupedContacts['Other Contacts'][$contact->id] = $contact;
+                                        $groupedContacts['Other Contacts'][$contact->id] = $optionLabel;
                                     }
                                 }
 
