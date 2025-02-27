@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use Barryvdh\Snappy\Facades\SnappyPdf;
+use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
+use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
+
 
 class DeliveryTagController extends Controller
 {
@@ -11,6 +14,17 @@ class DeliveryTagController extends Controller
     {
         if (!file_exists(public_path('images/form.jpeg'))) {
             abort(404, 'Form template not found');
+        }
+
+        // Format phone numbers before passing to view
+        $contact = $order->location->preferredDeliveryContact;
+        if ($contact) {
+            $contact->formatted_phone = $contact->phone ? PhoneInput::format($contact->phone, PhoneInputNumberType::NATIONAL) : null;
+            $contact->formatted_mobile = $contact->mobile_phone ? PhoneInput::format($contact->mobile_phone, PhoneInputNumberType::NATIONAL) : null;
+        }
+
+        if ($order->location->phone) {
+            $order->location->formatted_phone = PhoneInput::format($order->location->phone, PhoneInputNumberType::NATIONAL);
         }
 
         $pdf = SnappyPdf::loadView('orders.print', ['order' => $order])
@@ -25,8 +39,6 @@ class DeliveryTagController extends Controller
             ->setOption('zoom', 1.0)
             ->setOption('background', true)  // Enable backgrounds
             ->setOption('window-status', 'ready');  // Wait for window.status to be 'ready'
-
-
 
         return response($pdf->output())
             ->header('Content-Type', 'application/pdf')
