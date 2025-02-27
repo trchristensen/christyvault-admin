@@ -70,28 +70,33 @@
 
             <div class="flex flex-col items-start gap-1">
 
-                <p class="font-bold">{{ $record->customer->name }}</p>
-                @if ($record->customer?->locations->first())
-                    <p>{{ $record->customer->locations->first()->full_address }}</p>
-                @else
-                    <p></p>
-                @endif
+                <p class="font-bold">{{ $record->location->name }}</p>
+                <p>{{ $record->location->full_address }}</p>
 
-                @if ($record->customer->phone)
+                @if ($record->preferredDeliveryContact)
                     <div class="flex items-center gap-2">
                         <x-heroicon-o-phone class="w-4 h-4" />
                         @php
                             try {
-                                $formattedPhone = (new PhoneNumber($record->customer->phone, 'US'))->formatNational();
+                                $formattedPhone = (new PhoneNumber(
+                                    $record->preferredDeliveryContact->phone,
+                                    'US',
+                                ))->formatNational();
                             } catch (\Exception $e) {
-                                $formattedPhone = $record->customer->phone;
+                                $formattedPhone = $record->preferredDeliveryContact->phone;
                             }
                         @endphp
-                        @if($record->customer->contact_name)
-                            <p>Call {{ $record->customer->contact_name }} - {{ $formattedPhone }}</p>
-                        @else
-                            <p>{{ $formattedPhone }}</p>
-                        @endif
+                        <p>Contact {{ $record->preferredDeliveryContact->name }}
+                            @if ($record->preferredDeliveryContact->phone)
+                                - {{ $formattedPhone }}
+                                @if ($record->preferredDeliveryContact->phone_extension)
+                                    x{{ $record->preferredDeliveryContact->phone_extension }}
+                                @endif
+                            @endif
+                            @if ($record->preferredDeliveryContact->mobile_phone)
+                                • Mobile: {{ $record->preferredDeliveryContact->mobile_phone }}
+                            @endif
+                        </p>
                     </div>
                 @endif
             </div>
