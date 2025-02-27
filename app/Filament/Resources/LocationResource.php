@@ -52,48 +52,9 @@ class LocationResource extends Resource
                                 'preferredDeliveryContact',
                                 'name',
                                 function (Builder $query, ?Location $record) {
-                                    if (!$record) {
-                                        return $query;
-                                    }
-
-                                    // First, get contacts linked to this location
-                                    $linkedContactIds = $record->contacts()->pluck('contacts.id');
-
-                                    // Only add the CASE statement if we have linked contacts
-                                    if ($linkedContactIds->isNotEmpty()) {
-                                        return $query
-                                            ->orderByRaw("CASE
-                                                WHEN id IN (" . $linkedContactIds->join(',') . ") THEN 0
-                                                ELSE 1
-                                            END")
-                                            ->orderBy('name');
-                                    }
-
                                     return $query->orderBy('name');
                                 }
                             )
-                            ->afterStateUpdated(function ($state, $record, $set, $get) {
-                                if (!$state) return; // Skip if no contact selected
-
-                                // Get the contact
-                                $contact = Contact::find($state);
-                                if (!$contact) return;
-
-                                // If we're editing an existing location
-                                if ($record) {
-                                    // Check if relationship doesn't exist
-                                    if (!$record->contacts()->where('contacts.id', $contact->id)->exists()) {
-                                        // Add the relationship
-                                        $record->contacts()->attach($contact);
-
-                                        // Force a refresh of the form to show updated linked locations
-                                        $record->refresh();
-                                    }
-                                } else {
-                                    // For new locations, store the contact ID to be used after creation
-                                    $set('_temp_contact_to_link', $state);
-                                }
-                            })
                             ->getOptionLabelFromRecordUsing(
                                 fn(Contact $record) => "
                         <div class='font-medium'>{$record->name}</div>
@@ -109,6 +70,52 @@ class LocationResource extends Resource
                                     })->join(', ') . "
                         </div>" : "")
                             )
+                            ->getOptionsUsing(function ($record) {
+                                // Get all contacts
+                                $contacts = Contact::orderBy('name')->get();
+
+                                // If we're editing an existing location, get its linked contacts
+                                $linkedContactIds = $record ? $record->contacts()->pluck('contacts.id') : collect();
+
+                                // Group the contacts
+                                $groupedContacts = [
+                                    'Linked Contacts' => [],
+                                    'Other Contacts' => [],
+                                ];
+
+                                foreach ($contacts as $contact) {
+                                    if ($linkedContactIds->contains($contact->id)) {
+                                        $groupedContacts['Linked Contacts'][$contact->id] = $contact;
+                                    } else {
+                                        $groupedContacts['Other Contacts'][$contact->id] = $contact;
+                                    }
+                                }
+
+                                // Remove empty groups
+                                if (empty($groupedContacts['Linked Contacts'])) {
+                                    unset($groupedContacts['Linked Contacts']);
+                                }
+                                if (empty($groupedContacts['Other Contacts'])) {
+                                    unset($groupedContacts['Other Contacts']);
+                                }
+
+                                return $groupedContacts;
+                            })
+                            ->afterStateUpdated(function ($state, $record, $set, $get) {
+                                if (!$state) return;
+
+                                $contact = Contact::find($state);
+                                if (!$contact) return;
+
+                                if ($record) {
+                                    if (!$record->contacts()->where('contacts.id', $contact->id)->exists()) {
+                                        $record->contacts()->attach($contact);
+                                        $record->refresh();
+                                    }
+                                } else {
+                                    $set('_temp_contact_to_link', $state);
+                                }
+                            })
                             ->createOptionForm([
                                 Forms\Components\TextInput::make('name')
                                     ->required()
