@@ -105,7 +105,7 @@
         .grid-cols-2 {
             grid-template-columns: 1fr;
         }
-        
+
         .grid-cols-4 {
             grid-template-columns: 1fr 1fr;
         }
@@ -115,7 +115,7 @@
     .order-container {
         @apply text-gray-900 dark:text-white;
         @apply bg-white dark:bg-gray-800;
-       
+
     }
 
     .products-table-container {
@@ -138,7 +138,7 @@
     }
 
     /* Grid sections */
-    .grid-cols-4 > div {
+    .grid-cols-4>div {
         @apply bg-white dark:bg-gray-800 p-4 rounded-lg;
     }
 </style>
@@ -245,8 +245,7 @@
             @if ($record->orderProducts->isEmpty())
                 <p class="text-gray-500">No products found for this order</p>
             @else
-            <div class="products-table-container"
-                x-data="{ 
+                <div class="products-table-container" x-data="{
                     isDown: false,
                     startX: null,
                     scrollLeft: null,
@@ -271,94 +270,93 @@
                         const walk = (x - this.startX) * 2;
                         this.$el.scrollLeft = this.scrollLeft - walk;
                     }
-                }"
-                @mousedown="handleMouseDown"
-                @mouseleave="handleMouseLeave"
-                @mouseup="handleMouseUp"
-                @mousemove="handleMouseMove">
-                <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-800 products-table-content">
-                    <!-- header -->
+                }" @mousedown="handleMouseDown"
+                    @mouseleave="handleMouseLeave" @mouseup="handleMouseUp" @mousemove="handleMouseMove">
+                    <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-800 products-table-content">
+                        <!-- header -->
 
-                    <div
-                        class="flex items-center justify-between w-full p-2 m-0 mt-0 border-b border-gray-200 product-item last:border-b-0 dark:border-gray-600">
-                        <div class="grid w-full grid-cols-12">
-                            <div
-                                class="flex items-center justify-center w-8 col-span-1 text-sm text-center text-gray-600 dark:text-gray-400 qty">
-                                #
-                            </div>
-                            <div class="flex flex-col items-start col-span-5 -ml-6 product-description">
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Description</p>
-                            </div>
-                            <!-- location -->
-                            <div class="flex items-start col-span-3 text-sm text-gray-600 dark:text-gray-400">Location</div>
-                            <div class="col-span-1 text-sm text-gray-600 dark:text-gray-400 product-shipped">
-                                Shipped
-                            </div>
-
-                            <!-- unit price -->
-                            <div
-                                class="flex justify-center w-full col-span-1 text-sm text-center text-gray-600 dark:text-gray-400 product-price">
-                                Unit Price
-                            </div>
-                            <!-- total price -->
-                            <div
-                                class="flex justify-center w-full col-span-1 text-sm text-center text-gray-600 dark:text-gray-400 product-total-price">
-                                Amount
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    <!-- end header -->
-                    @foreach ($record->orderProducts as $orderProduct)
                         <div
                             class="flex items-center justify-between w-full p-2 m-0 mt-0 border-b border-gray-200 product-item last:border-b-0 dark:border-gray-600">
                             <div class="grid w-full grid-cols-12">
                                 <div
-                                    class="text-white dark:text-gray-200 flex items-center justify-center w-8 col-span-1 text-center border-r border-gray-200 qty dark:border-gray-600">
-                                    @if ($orderProduct->fill_load)
-                                        <p class="font-medium">FL</p>
-                                    @else
-                                        <p class="font-medium">{{ $orderProduct->quantity }}</p>
-                                    @endif
+                                    class="flex items-center justify-center w-8 col-span-1 text-sm text-center text-gray-600 dark:text-gray-400 qty">
+                                    #
                                 </div>
                                 <div class="flex flex-col items-start col-span-5 -ml-6 product-description">
-                                    <p class="font-medium text-white dark:text-gray-200">{{ $orderProduct->product->sku }}</p>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400">
-                                        {{ $orderProduct->product->name }}</p>
-
-                                    @if ($orderProduct->notes)
-                                        <p class="text-sm text-gray-500">{{ $orderProduct->notes }}</p>
-                                    @endif
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Description</p>
                                 </div>
+                                <!-- location -->
                                 <div class="flex items-start col-span-3 text-sm text-gray-600 dark:text-gray-400">
-                                    {{ $orderProduct->location }}</div>
-                                <!-- quantity delivered -->
-                                <div class="col-span-1 text-center product-shipped">
-                                    {{ $orderProduct->quantity_delivered }}
+                                    Location</div>
+                                <div class="col-span-1 text-sm text-gray-600 dark:text-gray-400 product-shipped">
+                                    Shipped
                                 </div>
+
                                 <!-- unit price -->
-                                <div class="flex justify-center w-full col-span-1 text-center product-price">
-                                    @if ($orderProduct->price > 0)
-                                        ${{ number_format($orderProduct->price, 2) }}
-                                    @endif
+                                <div
+                                    class="flex justify-center w-full col-span-1 text-sm text-center text-gray-600 dark:text-gray-400 product-price">
+                                    Unit Price
                                 </div>
                                 <!-- total price -->
-                                <div class="flex justify-center w-full col-span-1 text-center product-total-price">
-                                    @if ($orderProduct->quantity_delivered && $orderProduct->price > 0)
-                                        ${{ number_format($orderProduct->price * $orderProduct->quantity_delivered, 2) }}
-                                    @elseif($orderProduct->quantity && $orderProduct->price > 0)
-                                        ${{ number_format($orderProduct->price * $orderProduct->quantity, 2) }}
-                                    @endif
+                                <div
+                                    class="flex justify-center w-full col-span-1 text-sm text-center text-gray-600 dark:text-gray-400 product-total-price">
+                                    Amount
                                 </div>
 
                             </div>
 
                         </div>
-                    @endforeach
+
+                        <!-- end header -->
+                        @foreach ($record->orderProducts as $orderProduct)
+                            <div
+                                class="flex items-center justify-between w-full p-2 m-0 mt-0 border-b border-gray-200 product-item last:border-b-0 dark:border-gray-600">
+                                <div class="grid w-full grid-cols-12">
+                                    <div
+                                        class="flex items-center justify-center w-8 col-span-1 text-center text-white border-r border-gray-200 dark:text-gray-200 qty dark:border-gray-600">
+                                        @if ($orderProduct->fill_load)
+                                            <p class="font-medium">FL</p>
+                                        @else
+                                            <p class="font-medium">{{ $orderProduct->quantity }}</p>
+                                        @endif
+                                    </div>
+                                    <div class="flex flex-col items-start col-span-5 -ml-6 product-description">
+                                        <p class="font-medium text-black dark:text-gray-200">
+                                            {{ $orderProduct->product->sku }}</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            {{ $orderProduct->product->name }}</p>
+
+                                        @if ($orderProduct->notes)
+                                            <p class="text-sm text-gray-500">{{ $orderProduct->notes }}</p>
+                                        @endif
+                                    </div>
+                                    <div class="flex items-start col-span-3 text-sm text-gray-600 dark:text-gray-400">
+                                        {{ $orderProduct->location }}</div>
+                                    <!-- quantity delivered -->
+                                    <div class="col-span-1 text-center product-shipped">
+                                        {{ $orderProduct->quantity_delivered }}
+                                    </div>
+                                    <!-- unit price -->
+                                    <div class="flex justify-center w-full col-span-1 text-center product-price">
+                                        @if ($orderProduct->price > 0)
+                                            ${{ number_format($orderProduct->price, 2) }}
+                                        @endif
+                                    </div>
+                                    <!-- total price -->
+                                    <div class="flex justify-center w-full col-span-1 text-center product-total-price">
+                                        @if ($orderProduct->quantity_delivered && $orderProduct->price > 0)
+                                            ${{ number_format($orderProduct->price * $orderProduct->quantity_delivered, 2) }}
+                                        @elseif($orderProduct->quantity && $orderProduct->price > 0)
+                                            ${{ number_format($orderProduct->price * $orderProduct->quantity, 2) }}
+                                        @endif
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
-            </div>
             @endif
         </div>
     </div>
