@@ -313,7 +313,7 @@
                                 class="flex items-center justify-between w-full p-2 m-0 mt-0 border-b border-gray-200 product-item last:border-b-0 dark:border-gray-600">
                                 <div class="grid w-full grid-cols-12">
                                     <div
-                                        class="flex items-center justify-center w-8 col-span-1 text-center text-white border-r border-gray-200 dark:text-gray-200 qty dark:border-gray-600">
+                                        class="flex items-center justify-center w-8 col-span-1 text-center text-black border-r border-gray-200 dark:text-gray-200 qty dark:border-gray-600">
                                         @if ($orderProduct->fill_load)
                                             <p class="font-medium">FL</p>
                                         @else
