@@ -154,7 +154,8 @@
                 {{ App\Enums\PlantLocation::from($record->plant_location)->getLabel() }}</p>
             <div class="px-2 py-1 text-sm font-medium text-gray-800 border rounded-full"
                 style="background-color: {{ $record->status_color['background'] }}; color: {{ $record->status_color['text'] }}; border-color: {{ $record->status_color['border'] }}">
-                {{ ucfirst($record->status) }}
+                {{-- get the status label (it's an enum) --}}
+                {{ App\Enums\OrderStatus::from($record->status)->label() }}
             </div>
         </div>
     </div>
