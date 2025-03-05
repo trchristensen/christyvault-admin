@@ -359,6 +359,10 @@ elseif ($order->location->phone) {
         {{-- Instructions --}}
         @if ($order->special_instructions)
             <div class="instructions">
+                {{-- if status is will call, show "Will Call in bold with underline" --}}
+                @if ($order->status == 'will_call')
+                    <strong style="margin-right:12px;text-decoration:underline">WILL CALL</strong>
+                @endif
                 {{ $order->special_instructions }}
             </div>
         @endif

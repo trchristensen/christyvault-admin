@@ -6,6 +6,7 @@ enum OrderStatus: string
 {
     case PENDING = 'pending';
     case CONFIRMED = 'confirmed';
+    case WILL_CALL = 'will_call';
     case IN_PRODUCTION = 'in_production';
     case READY_FOR_DELIVERY = 'ready_for_delivery';
     case OUT_FOR_DELIVERY = 'out_for_delivery';
@@ -20,6 +21,7 @@ enum OrderStatus: string
         return match ($this) {
             self::PENDING => 'Pending',
             self::CONFIRMED => 'Confirmed',
+            self::WILL_CALL => 'Will Call',
             self::IN_PRODUCTION => 'In Production',
             self::READY_FOR_DELIVERY => 'Ready for Delivery',
             self::OUT_FOR_DELIVERY => 'Out for Delivery',
@@ -34,6 +36,7 @@ enum OrderStatus: string
     {
         return match ($this) {
             self::PENDING => '#FFA500',     // Orange
+            self::WILL_CALL => '#FFA500',   // Orange
             self::CONFIRMED => '#4299E1',   // Blue
             self::IN_PRODUCTION => '#9F7AEA', // Purple
             self::READY_FOR_DELIVERY => '#48BB78',   // Green
