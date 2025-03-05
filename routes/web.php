@@ -60,3 +60,31 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])
         ->name('notifications.mark-as-read');
 });
+
+
+// This is for a completely different project
+// routes/web.php
+Route::get('/oauth/client-metadata.json', function () {
+    return response()->json([
+        "client_id" => "https://christyvault.net/oauth/client-metadata.json",
+        "application_type" => "native",
+        "client_name" => "Communities",
+        "client_uri" => "https://christyvault.net",
+        "dpop_bound_access_tokens" => true,
+        "grant_types" => [
+            "authorization_code",
+            "refresh_token"
+        ],
+        "redirect_uris" => [
+            "myapp://oauth/callback"
+        ],
+        "response_types" => [
+            "code"
+        ],
+        "scope" => "atproto",
+        "token_endpoint_auth_method" => "none"
+    ], 200, [
+        'Content-Type' => 'application/json',
+        'Access-Control-Allow-Origin' => '*'
+    ]);
+});
