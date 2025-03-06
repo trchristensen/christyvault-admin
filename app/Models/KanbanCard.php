@@ -96,9 +96,9 @@ class KanbanCard extends Model
                 $purchaseOrder->items()->attach($this->inventory_item_id, [
                     'inventory_item_id' => $this->inventory_item_id,
                     'supplier_id' => $preferredSupplier->id,
-                    'quantity' => $this->reorder_quantity,
+                    'quantity' => $this->quantity ? $this->quantity : 1,
                     'unit_price' => $preferredSupplier->pivot->unit_price ?? 0,
-                    'total_price' => ($this->reorder_quantity * ($preferredSupplier->pivot->unit_price ?? 0)),
+                    'total_price' => ($this->quantity * ($preferredSupplier->pivot->unit_price ?? 0)),
                     'received_quantity' => 0,
                 ]);
             }
