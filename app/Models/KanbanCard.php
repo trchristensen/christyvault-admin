@@ -102,12 +102,16 @@ class KanbanCard extends Model
                     'received_quantity' => 0,
                 ]);
 
-                // Send Filament notification for purchase order creation
-                 \Filament\Notifications\Notification::make()
+                // Send both Filament flash notification and database notification
+                \Filament\Notifications\Notification::make()
                     ->title('Purchase Order Created')
                     ->body("Purchase order created for {$this->inventoryItem->name}")
                     ->success()
                     ->send();
+
+                // Send database notification
+                $users = User::where('email', 'tchristensen@christyvault.com')->get();
+                LaravelNotification::send($users, new KanbanCardScanned($this, $purchaseOrder));
             }
 
             // Update the kanban card
@@ -116,9 +120,6 @@ class KanbanCard extends Model
                 'status' => self::STATUS_PENDING_ORDER,
                 'scan_token' => Str::random(32),
             ]);
-
-            // Send notification
-            event(new KanbanCardScanned($this));
 
             return $this;
         });
