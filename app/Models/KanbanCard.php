@@ -87,14 +87,13 @@ class KanbanCard extends Model
                 $purchaseOrder = PurchaseOrder::create([
                     'supplier_id' => $preferredSupplier->id,
                     'status' => 'draft',
-                    'created_by_user_id' => auth()->id(),
                     'notes' => 'Created from Kanban card scan',
                     'order_date' => now(),
                     'expected_delivery_date' => now()->addDays($preferredSupplier->lead_time ?? 7),
                 ]);
 
-                // Create the purchase order item
-                $purchaseOrder->items()->create([
+                // Attach the inventory item to the purchase order
+                $purchaseOrder->items()->attach($this->inventory_item_id, [
                     'inventory_item_id' => $this->inventory_item_id,
                     'quantity' => $this->reorder_quantity,
                     'unit_price' => $preferredSupplier->pivot->unit_price ?? 0,
