@@ -103,14 +103,9 @@ class KanbanCard extends Model
                 ]);
 
                 // Send Filament notification for purchase order creation
-                Notification::make()
+                 \Filament\Notifications\Notification::make()
                     ->title('Purchase Order Created')
                     ->body("Purchase order created for {$this->inventoryItem->name}")
-                    // ->actions([
-                    //     Action::make('view')
-                    //         ->button()
-                    //         ->url(route('filament.resources.purchase-orders.edit', $purchaseOrder))
-                    // ])
                     ->success()
                     ->send();
             }
