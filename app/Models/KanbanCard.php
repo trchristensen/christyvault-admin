@@ -101,11 +101,24 @@ class KanbanCard extends Model
                     'total_price' => ($this->quantity * ($preferredSupplier->pivot->unit_price ?? 0)),
                     'received_quantity' => 0,
                 ]);
+
+                // Send Filament notification for purchase order creation
+                Notification::make()
+                    ->title('Purchase Order Created')
+                    ->body("Purchase order created for {$this->inventoryItem->name}")
+                    // ->actions([
+                    //     Action::make('view')
+                    //         ->button()
+                    //         ->url(route('filament.resources.purchase-orders.edit', $purchaseOrder))
+                    // ])
+                    ->success()
+                    ->send();
             }
 
             // Update the kanban card
             $this->update([
                 'last_scanned_at' => now(),
+                'status' => self::STATUS_PENDING_ORDER,
                 'scan_token' => Str::random(32),
             ]);
 
