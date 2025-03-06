@@ -95,8 +95,11 @@ class KanbanCard extends Model
                 // Attach the inventory item to the purchase order
                 $purchaseOrder->items()->attach($this->inventory_item_id, [
                     'inventory_item_id' => $this->inventory_item_id,
+                    'supplier_id' => $preferredSupplier->id,
                     'quantity' => $this->reorder_quantity,
                     'unit_price' => $preferredSupplier->pivot->unit_price ?? 0,
+                    'total_price' => ($this->reorder_quantity * ($preferredSupplier->pivot->unit_price ?? 0)),
+                    'received_quantity' => 0,
                 ]);
             }
 
