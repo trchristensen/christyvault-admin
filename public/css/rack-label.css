@@ -185,7 +185,7 @@ button {
 
 /* Bigger fonts for XL */
 .rack-label.size-xl .name {
-    font-size: 24pt;
+    font-size: 20pt;
     line-height: 1.1;
     margin-bottom: 8pt;
 }
