@@ -61,6 +61,11 @@ class KanbanCard extends Model
         return $this->belongsTo(InventoryItem::class);
     }
 
+    public function preferredSupplier()
+    {
+        return $this->inventoryItem->preferredSupplier();
+    }
+
     public function scannedBy()
     {
         return $this->belongsTo(User::class, 'scanned_by_user_id');
@@ -76,22 +81,23 @@ class KanbanCard extends Model
     public function markAsScanned()
     {
         return DB::transaction(function () {
-            // Create a purchase order if there's a preferred supplier
-            if ($this->preferredSupplier) {
+            // Get the preferred supplier
+            $preferredSupplier = $this->preferredSupplier();
+            if ($preferredSupplier) {
                 $purchaseOrder = PurchaseOrder::create([
-                    'supplier_id' => $this->preferredSupplier->id,
+                    'supplier_id' => $preferredSupplier->id,
                     'status' => 'draft',
                     'created_by_user_id' => auth()->id(),
                     'notes' => 'Created from Kanban card scan',
                     'order_date' => now(),
-                    'expected_delivery_date' => now()->addDays($this->preferredSupplier->lead_time ?? 7),
+                    'expected_delivery_date' => now()->addDays($preferredSupplier->lead_time ?? 7),
                 ]);
 
                 // Create the purchase order item
                 $purchaseOrder->items()->create([
                     'inventory_item_id' => $this->inventory_item_id,
                     'quantity' => $this->reorder_quantity,
-                    'unit_price' => $this->preferredSupplier->pivot->unit_price ?? 0,
+                    'unit_price' => $preferredSupplier->pivot->unit_price ?? 0,
                 ]);
             }
 
