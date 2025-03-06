@@ -75,60 +75,37 @@ class KanbanCard extends Model
     // Methods
     public function markAsScanned()
     {
-        // Only proceed if the card can be scanned
-        if (!$this->canBeScanned()) {
-            return false;
-        }
+        return DB::transaction(function () {
+            // Create a purchase order if there's a preferred supplier
+            if ($this->preferredSupplier) {
+                $purchaseOrder = PurchaseOrder::create([
+                    'supplier_id' => $this->preferredSupplier->id,
+                    'status' => 'draft',
+                    'created_by_user_id' => auth()->id(),
+                    'notes' => 'Created from Kanban card scan',
+                    'order_date' => now(),
+                    'expected_delivery_date' => now()->addDays($this->preferredSupplier->lead_time ?? 7),
+                ]);
 
-        DB::transaction(function () {
-            // Update the kanban card
-            $this->update([
-                'status' => self::STATUS_PENDING_ORDER,
-                'last_scanned_at' => now(),
-                'scanned_by_user_id' => Auth::id()
-            ]);
-
-            // Get the preferred supplier
-            $supplier = $this->inventoryItem->preferredSupplier();
-
-            if (!$supplier) {
-                throw new \Exception('Cannot create purchase order: No preferred supplier set for this inventory item.');
+                // Create the purchase order item
+                $purchaseOrder->items()->create([
+                    'inventory_item_id' => $this->inventory_item_id,
+                    'quantity' => $this->reorder_quantity,
+                    'unit_price' => $this->preferredSupplier->pivot->unit_price ?? 0,
+                ]);
             }
 
-            // Get the cost per unit from the supplier pivot
-            $quantity = $this->reorder_point ?? 1;
-            $costPerUnit = $supplier->pivot->cost_per_unit ?? 0;
-            $totalAmount = $quantity * $costPerUnit;
-
-            // Create a new purchase order
-            $purchaseOrder = PurchaseOrder::create([
-                'status' => 'draft',
-                'supplier_id' => $supplier->id,
-                'created_by_user_id' => Auth::id(),
-                'total_amount' => $totalAmount,
-                'notes' => 'Created from Kanban card scan'
-            ]);
-
-            // Insert the purchase order item
-            DB::table('purchase_order_items')->insert([
-                'purchase_order_id' => $purchaseOrder->id,
-                'inventory_item_id' => $this->inventory_item_id,
-                'supplier_id' => $supplier->id,
-                'supplier_sku' => $supplier->pivot->supplier_sku,
-                'quantity' => $quantity,
-                'unit_price' => $costPerUnit,
-                'total_price' => $totalAmount,
-                'received_quantity' => 0,
-                'created_at' => now(),
-                'updated_at' => now()
+            // Update the kanban card
+            $this->update([
+                'last_scanned_at' => now(),
+                'scan_token' => Str::random(32),
             ]);
 
             // Send notification
-            $admins = User::where('email', 'tchristensen@christyvault.com')->get();
-            LaravelNotification::send($admins, new KanbanCardScanned($this));
-        });
+            event(new KanbanCardScanned($this));
 
-        return true;
+            return $this;
+        });
     }
 
     public function updateQuantity(float $quantity)
