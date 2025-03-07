@@ -30,11 +30,11 @@ class TripResource extends JsonResource
                     'order_number' => $order->order_number,
                     'stop_number' => $order->stop_number,
                     'status' => $order->status,
-                    'customer' => [
-                        'name' => $order->customer->name,
-                        'phone' => $order->customer->phone,
-                        'email' => $order->customer->email,
-                    ],
+                    // 'customer' => [
+                    //     'name' => $order->customer->name,
+                    //     'phone' => $order->customer->phone,
+                    //     'email' => $order->customer->email,
+                    // ],
                     'location' => [
                         'name' => $order->location->name,
                         'full_address' => implode(', ', array_filter([
