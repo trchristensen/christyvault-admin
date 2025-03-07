@@ -26,7 +26,6 @@ class TripController extends Controller
                 ->with([
                     'driver',
                     'orders' => fn($q) => $q->orderBy('stop_number', 'asc'),
-                    'orders.customer',
                     'orders.location',
                     'orders.orderProducts.product'
                 ])
@@ -51,7 +50,6 @@ class TripController extends Controller
             $trip->load([
                 'driver',
                 'orders' => fn($q) => $q->orderBy('stop_number', 'asc'),
-                'orders.customer',
                 'orders.location',
                 'orders.orderProducts.product'
             ]);
