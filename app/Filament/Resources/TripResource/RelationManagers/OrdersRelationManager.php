@@ -107,7 +107,7 @@ class OrdersRelationManager extends RelationManager
                                     Order::query()
                                         ->whereNull('trip_id')
                                         ->whereNotIn('status', ['delivered', 'cancelled'])
-                                        ->with(['customer', 'location', 'orderProducts.product'])
+                                        ->with(['location', 'orderProducts.product'])
                                         ->get()
                                         ->mapWithKeys(function ($order) {
                                             // Build products HTML
@@ -123,8 +123,8 @@ class OrdersRelationManager extends RelationManager
                                             // Build the option HTML
                                             $html = "
                                                 <div class='p-2'>
-                                                    <div class='font-medium text-primary-600'>{$order->order_number} - {$order->customer->name}</div>
-                                                    <div class='mt-1 text-sm text-gray-600'>{if($order->location) {$order->location->full_address} {else} {$order->customer->primaryLocation->full_address} {/if}</div>
+                                                    <div class='font-medium text-primary-600'>{$order->order_number} - {$order->location->name}</div>
+                                                    <div class='mt-1 text-sm text-gray-600'>{if($order->location) {$order->location->full_address} {else} {$order->location->full_address} {/if}</div>
                                                     <div class='grid grid-cols-2 gap-2 mt-1 text-sm'>
                                                         <div>
                                                             <span class='font-medium'>Requested:</span> {$requestedDate}
