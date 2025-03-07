@@ -58,7 +58,7 @@ class OrdersRelationManager extends RelationManager
                                 <div class='grid grid-cols-2 gap-4'>
                                     <div>
                                         <div class='font-medium text-primary-600'>{$record->order_number}</div>
-                                        <div class='mt-1 text-sm font-medium'>{$record->customer->name}</div>
+                                        <div class='mt-1 text-sm font-medium'>{$record->location->name}</div>
                                         <div class='text-sm text-gray-600'>{$record->location->full_address}</div>
                                     </div>
                                     <div>
@@ -179,5 +179,16 @@ class OrdersRelationManager extends RelationManager
                         }
                     })
             ]);
+    }
+
+    public function getTableColumns(): array
+    {
+        return [
+            Tables\Columns\TextColumn::make('order_number')
+                ->searchable(),
+            Tables\Columns\TextColumn::make('location.name')
+                ->searchable(),
+            // ... other columns ...
+        ];
     }
 }
