@@ -131,11 +131,17 @@ class OrdersRelationManager extends RelationManager
                                             $requestedDate = $order->requested_delivery_date?->format('M j, Y') ?? 'Not set';
                                             $assignedDate = $order->assigned_delivery_date?->format('M j, Y') ?? 'Not set';
 
+                                            if($order->location) {
+                                                $location = $order->location->full_address;
+                                            } else {
+                                                $location = '';
+                                            }
+
                                             // Build the option HTML
                                             $html = "
                                                 <div class='p-2'>
                                                     <div class='font-medium text-primary-600'>{$order->order_number} - {$order->location->name}</div>
-                                                    <div class='mt-1 text-sm text-gray-600'>{{ $order->location ? $order->location->full_address : '' }}</div>
+                                                    <div class='mt-1 text-sm text-gray-600'>{$location}</div>
                                                     <div class='grid grid-cols-2 gap-2 mt-1 text-sm'>
                                                         <div>
                                                             <span class='font-medium'>Requested:</span> {$requestedDate}
