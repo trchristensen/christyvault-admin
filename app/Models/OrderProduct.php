@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
-use Illuminate\Support\Facades\DB;
 
 class OrderProduct extends Pivot
 {
@@ -25,26 +24,8 @@ class OrderProduct extends Pivot
     ];
 
     protected $casts = [
-        'fill_load' => 'boolean',
+        'fill_load' => 'integer',
     ];
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($model) {
-            // Force the fill_load to be a proper PostgreSQL boolean
-            if (isset($model->attributes['fill_load'])) {
-                $model->attributes['fill_load'] = DB::raw($model->attributes['fill_load'] ? 'TRUE' : 'FALSE');
-            }
-        });
-
-        static::updating(function ($model) {
-            if (isset($model->attributes['fill_load'])) {
-                $model->attributes['fill_load'] = DB::raw($model->attributes['fill_load'] ? 'TRUE' : 'FALSE');
-            }
-        });
-    }
 
     public function order(): BelongsTo
     {

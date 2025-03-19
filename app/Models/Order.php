@@ -79,7 +79,7 @@ class Order extends Model
                 foreach (request()->input('data.orderProducts') as $product) {
                     $order->orderProducts()->create([
                         'product_id' => $product['product_id'],
-                        'fill_load' => (bool) ($product['fill_load'] ?? false),
+                        'fill_load' => $product['fill_load'] ?? 0,
                         'quantity' => $product['quantity'] ?? null,
                         'price' => $product['price'] ?? 0,
                         'location' => $product['location'] ?? null,
