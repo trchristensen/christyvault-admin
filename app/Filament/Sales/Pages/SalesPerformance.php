@@ -182,7 +182,7 @@ class SalesPerformance extends Page implements HasForms
         $salesQuery->selectRaw("DATE_TRUNC('month', orders.created_at) as date")
             ->selectRaw("COALESCE(products.product_type, 'Other') as product_type")
             ->selectRaw('SUM(CASE
-                WHEN order_product.fill_load = true THEN COALESCE(order_product.quantity_delivered, order_product.quantity)
+                WHEN order_product.fill_load = 1 THEN COALESCE(order_product.quantity_delivered, order_product.quantity)
                 ELSE order_product.quantity
             END) as total_quantity')
             ->groupBy('date', DB::raw("COALESCE(products.product_type, 'Other')"))
