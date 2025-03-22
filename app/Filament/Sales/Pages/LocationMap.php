@@ -62,7 +62,7 @@ class LocationMap extends Page implements HasForms
         // Get location data with order counts
         $query = Location::select('locations.*')
             ->selectRaw('COALESCE(SUM(CASE
-                WHEN order_product.fill_load = true
+                WHEN order_product.fill_load = 1
                 THEN COALESCE(order_product.quantity_delivered, order_product.quantity)
                 ELSE order_product.quantity
             END), 0) as total_products')
@@ -72,7 +72,7 @@ class LocationMap extends Page implements HasForms
             ->whereBetween('orders.created_at', [$start, $end])
             ->groupBy('locations.id', 'locations.name', 'locations.latitude', 'locations.longitude')
             ->havingRaw('COALESCE(SUM(CASE
-                WHEN order_product.fill_load = true
+                WHEN order_product.fill_load = 1
                 THEN COALESCE(order_product.quantity_delivered, order_product.quantity)
                 ELSE order_product.quantity
             END), 0) > 0');
