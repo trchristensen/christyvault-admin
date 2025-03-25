@@ -7,6 +7,7 @@ use App\Http\Controllers\LeaveCalendarFeedController;
 use App\Http\Controllers\KanbanCardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\InventoryItemController;
+use App\Http\Controllers\OrderController;
 use App\Models\KanbanCard;
 use Illuminate\Support\Facades\Route;
 
@@ -60,3 +61,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])
         ->name('notifications.mark-as-read');
 });
+
+Route::get('/admin/orders/{record}/duplicate', [OrderController::class, 'duplicate'])
+    ->name('filament.admin.resources.orders.duplicate')
+    ->middleware(['auth']);

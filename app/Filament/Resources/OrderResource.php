@@ -202,7 +202,13 @@ class OrderResource extends Resource
                     ->url(fn(Order $record): string => route('orders.print', $record))
                     ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
+                Action::make('duplicate')
+                ->label('Duplicate')
+                ->icon('heroicon-o-document-duplicate')
+                ->color('gray')
+                ->url(fn (Order $record): string => route('filament.admin.resources.orders.duplicate', ['record' => $record]))
+                ->openUrlInNewTab(),
+                Tables\Actions\DeleteAction::make(),
 
                 // Action::make('mark_delivered')
                 //     ->label('Mark Delivered')

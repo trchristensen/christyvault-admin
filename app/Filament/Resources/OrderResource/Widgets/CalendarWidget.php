@@ -540,6 +540,12 @@ class CalendarWidget extends FullCalendarWidget
                     Actions\EditAction::make()
                         ->modalWidth('7xl')
                         ->stickyModalFooter(),
+                    Action::make('duplicate')
+                        ->label('Duplicate Order')
+                        ->color('gray')
+                        ->icon('heroicon-o-document-duplicate')
+                        ->url(fn(Order $record) => route('filament.admin.resources.orders.duplicate', ['record' => $record]))
+                        ->openUrlInNewTab(),
                     Actions\DeleteAction::make(),
                     Action::make('print')
                         ->label('Print Delivery Tag')
