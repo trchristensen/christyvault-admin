@@ -44,6 +44,16 @@ trait HasOrderForm
                         ->searchable()
                         ->allowHtml()
                         ->reactive()
+                        ->afterStateUpdated(function ($state, Forms\Set $set) {
+                            if (!$state) return;
+                            
+                            $location = Location::find($state);
+                            if ($location && strtolower($location->city) === 'colma') {
+                                $set('plant_location', \App\Enums\PlantLocation::COLMA_LOCALS->value);
+                            } else {
+                                $set('plant_location', \App\Enums\PlantLocation::COLMA_MAIN->value);
+                            }
+                        })
                         ->suffixAction(function ($state) {
                             if (!$state) return null;
 
