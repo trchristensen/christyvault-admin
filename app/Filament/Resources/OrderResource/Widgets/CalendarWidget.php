@@ -621,16 +621,81 @@ class CalendarWidget extends FullCalendarWidget
             });
 
         // Fetch standalone Orders
-        $orderEvents = Order::with(['location', 'orderProducts.product', 'location.preferredDeliveryContact'])
+        $orders = Order::with(['location', 'orderProducts.product', 'location.preferredDeliveryContact'])
             ->whereNull('trip_id')
-            ->whereDate('assigned_delivery_date', '>=', $fetchInfo['start'])
-            ->whereDate('assigned_delivery_date', '<=', $fetchInfo['end'])
-            ->get()
-            ->map(function (Order $order) {
-                return [
+            ->where(function ($query) use ($fetchInfo) {
+                $query->where(function ($q) use ($fetchInfo) {
+                    // Orders with assigned delivery dates within range
+                    $q->whereNotNull('assigned_delivery_date')
+                        ->whereDate('assigned_delivery_date', '>=', $fetchInfo['start'])
+                        ->whereDate('assigned_delivery_date', '<=', $fetchInfo['end']);
+                })
+                ->orWhere(function ($q) use ($fetchInfo) {
+                    // Unassigned orders - use requested_delivery_date
+                    $q->whereNull('assigned_delivery_date')
+                        ->whereNotNull('requested_delivery_date')
+                        ->whereDate('requested_delivery_date', '>=', $fetchInfo['start'])
+                        ->whereDate('requested_delivery_date', '<=', $fetchInfo['end']);
+                })
+                ->orWhere(function ($q) use ($fetchInfo) {
+                    // Orders with neither date - fall back to order_date
+                    $q->whereNull('assigned_delivery_date')
+                        ->whereNull('requested_delivery_date')
+                        ->whereDate('order_date', '>=', $fetchInfo['start'])
+                        ->whereDate('order_date', '<=', $fetchInfo['end']);
+                });
+            })
+            ->get();
+        
+        // Map orders to events
+        $orderEvents = [];
+        
+        // Group orders by display date
+        $groupedOrders = [];
+        foreach ($orders as $order) {
+            $displayDate = $order->assigned_delivery_date ?? 
+                          $order->requested_delivery_date ?? 
+                          $order->order_date;
+            
+            $date = $displayDate->format('Y-m-d');
+            if (!isset($groupedOrders[$date])) {
+                $groupedOrders[$date] = [];
+            }
+            
+            $groupedOrders[$date][] = $order;
+        }
+        
+        // Sort each day's orders by plant_location
+        foreach ($groupedOrders as $date => $dateOrders) {
+            // Sort this day's orders
+            usort($dateOrders, function($a, $b) {
+                $priorityA = match ($a->plant_location) {
+                    'colma_main' => 1,
+                    'colma_locals' => 2,
+                    'tulare_plant' => 3,
+                    default => 4
+                };
+                
+                $priorityB = match ($b->plant_location) {
+                    'colma_main' => 1,
+                    'colma_locals' => 2,
+                    'tulare_plant' => 3,
+                    default => 4
+                };
+                
+                return $priorityA <=> $priorityB;
+            });
+            
+            // Map each order to event format after sorting
+            foreach ($dateOrders as $order) {
+                $displayDate = $order->assigned_delivery_date ?? 
+                              $order->requested_delivery_date ?? 
+                              $order->order_date;
+                           
+                $orderEvents[] = [
                     'id' => 'order_' . $order->id,
                     'title' => $order->location?->name ?? $order->order_number,
-                    'start' => $order->assigned_delivery_date->format('Y-m-d'),
+                    'start' => $displayDate->format('Y-m-d'),
                     'allDay' => true,
                     'backgroundColor' => $this->getEventColor($order),
                     'borderColor' => $this->getEventColor($order),
@@ -640,7 +705,7 @@ class CalendarWidget extends FullCalendarWidget
                         'uuid' => $order->uuid,
                         'status' => Str::headline($order->status),
                         'location_line1' => $order->location?->address_line1,
-                        'location_line2' => $order->location ?
+                        'location_line2' => $order->location ? 
                             "{$order->location->city}, {$order->location->state}" : '',
                         'contact_name' => $order->location?->preferredDeliveryContact?->name,
                         'contact_phone' => $order->location?->preferredDeliveryContact?->phone,
@@ -650,7 +715,8 @@ class CalendarWidget extends FullCalendarWidget
                         'start_time' => $order->start_time?->format('g:i A'),
                     ],
                 ];
-            });
+            }
+        }
 
         return [...$tripEvents, ...$orderEvents];
     }
