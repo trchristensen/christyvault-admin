@@ -83,45 +83,108 @@ class KanbanCard extends Model
         return DB::transaction(function () {
             // Get the preferred supplier
             $preferredSupplier = $this->preferredSupplier();
-            if ($preferredSupplier) {
-                $purchaseOrder = PurchaseOrder::create([
-                    'supplier_id' => $preferredSupplier->id,
-                    'status' => 'draft',
-                    'notes' => 'Created from Kanban card scan',
-                    'order_date' => now(),
-                    'expected_delivery_date' => now()->addDays($preferredSupplier->lead_time ?? 7),
-                ]);
-
-                // Attach the inventory item to the purchase order
-                $purchaseOrder->items()->attach($this->inventory_item_id, [
-                    'inventory_item_id' => $this->inventory_item_id,
-                    'supplier_id' => $preferredSupplier->id,
-                    'quantity' => $this->quantity ? $this->quantity : 1,
-                    'unit_price' => $preferredSupplier->pivot->unit_price ?? 0,
-                    'total_price' => ($this->quantity * ($preferredSupplier->pivot->unit_price ?? 0)),
-                    'received_quantity' => 0,
-                ]);
-
-                // Send both Filament flash notification and database notification
+            
+            if (!$preferredSupplier) {
                 \Filament\Notifications\Notification::make()
-                    ->title('Purchase Order Created')
-                    ->body("Purchase order created for {$this->inventoryItem->name}")
-                    ->success()
+                    ->title('Error')
+                    ->body("No preferred supplier found for {$this->inventoryItem->name}")
+                    ->danger()
                     ->send();
-
-                // Send database notification
-                $users = User::where('email', 'tchristensen@christyvault.com')->get();
-                LaravelNotification::send($users, new KanbanCardScanned($this, $purchaseOrder));
+                return $this;
             }
 
-            // Update the kanban card
+            // Find existing draft POs for this supplier
+            $existingDraftPOs = PurchaseOrder::where('supplier_id', $preferredSupplier->id)
+                ->where('status', 'draft')
+                ->latest()
+                ->get();
+
+            // Update the kanban card status
             $this->update([
                 'last_scanned_at' => now(),
                 'status' => self::STATUS_PENDING_ORDER,
                 'scan_token' => Str::random(32),
             ]);
 
+            // Show notification with action buttons
+            \Filament\Notifications\Notification::make()
+                ->title('Kanban Card Scanned')
+                ->body("Choose how to process {$this->inventoryItem->name}")
+                ->actions([
+                    Action::make('createNew')
+                        ->label('Create New PO')
+                        ->button()
+                        ->color('primary')
+                        ->url(route('purchase-orders.create', [
+                            'kanban_card_id' => $this->id,
+                            'supplier_id' => $preferredSupplier->id,
+                            'inventory_item_id' => $this->inventory_item_id,
+                            'is_liner_load' => $preferredSupplier->name === 'Wilbert'
+                        ])),
+                    ...($existingDraftPOs->isNotEmpty() ? [
+                        Action::make('viewExisting')
+                            ->label('View Existing POs')
+                            ->button()
+                            ->color('secondary')
+                            ->url(route('purchase-orders.index', [
+                                'tableSearch' => $preferredSupplier->name,
+                                'kanban_card_id' => $this->id,
+                                'inventory_item_id' => $this->inventory_item_id
+                            ]))
+                    ] : [])
+                ])
+                ->persistent()
+                ->send();
+
+            // Send database notification
+            $users = User::where('email', 'tchristensen@christyvault.com')->get();
+            LaravelNotification::send($users, new KanbanCardScanned($this));
+
             return $this;
+        });
+    }
+
+    public function addToPurchaseOrder(PurchaseOrder $purchaseOrder, ?int $quantity = null)
+    {
+        return DB::transaction(function () use ($purchaseOrder, $quantity) {
+            $preferredSupplier = $this->preferredSupplier();
+            
+            if (!$preferredSupplier || $purchaseOrder->supplier_id !== $preferredSupplier->id) {
+                throw new \Exception('Invalid supplier for this purchase order');
+            }
+
+            // Check if the item is already in the PO
+            $existingItem = $purchaseOrder->items()
+                ->where('inventory_item_id', $this->inventory_item_id)
+                ->first();
+
+            if ($existingItem) {
+                // Update the quantity if the item already exists
+                $newQuantity = $existingItem->pivot->quantity + ($quantity ?: 1);
+                $purchaseOrder->items()->updateExistingPivot($this->inventory_item_id, [
+                    'quantity' => $newQuantity,
+                    'total_price' => ($newQuantity * ($preferredSupplier->pivot->unit_price ?? 0)),
+                ]);
+            } else {
+                // Attach the inventory item to the purchase order
+                $purchaseOrder->items()->attach($this->inventory_item_id, [
+                    'inventory_item_id' => $this->inventory_item_id,
+                    'supplier_id' => $preferredSupplier->id,
+                    'quantity' => $quantity ?: 1,
+                    'unit_price' => $preferredSupplier->pivot->unit_price ?? 0,
+                    'total_price' => (($quantity ?: 1) * ($preferredSupplier->pivot->unit_price ?? 0)),
+                    'received_quantity' => 0,
+                ]);
+            }
+
+            // Send notification
+            \Filament\Notifications\Notification::make()
+                ->title('Purchase Order Updated')
+                ->body("Added {$this->inventoryItem->name} to purchase order")
+                ->success()
+                ->send();
+
+            return $purchaseOrder;
         });
     }
 
