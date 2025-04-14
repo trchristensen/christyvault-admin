@@ -16,9 +16,7 @@ class PurchaseOrder extends Model
         'total_amount',
         'notes',
         'created_by_user_id',
-        'is_liner_load',
-        'invoice_number',
-        'invoice_image_path'
+        'is_liner_load'
     ];
 
     protected $casts = [
@@ -63,6 +61,11 @@ class PurchaseOrder extends Model
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(PurchaseOrderDocument::class);
     }
 
     // Scopes

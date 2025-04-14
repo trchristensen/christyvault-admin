@@ -17,6 +17,7 @@ use App\Models\Supplier;
 use Filament\Forms\Components\Select;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\PurchaseOrderDocument;
 
 class PurchaseOrderResource extends Resource
 {
@@ -188,17 +189,39 @@ class PurchaseOrderResource extends Resource
                     ->default(fn() => Auth::id())
                     ->dehydrated(fn($state) => filled($state)),
 
-                Forms\Components\Section::make('Invoice Information')
+                Forms\Components\Section::make('Documents')
                     ->schema([
-                        Forms\Components\TextInput::make('invoice_number')
-                            ->label('Vendor Invoice Number')
-                            ->maxLength(255),
-                        Forms\Components\FileUpload::make('invoice_image_path')
-                            ->label('Invoice Image')
-                            ->directory('invoices')
-                            ->visibility('private')
-                            ->downloadable()
-                            ->openable(),
+                        Forms\Components\Repeater::make('documents')
+                            ->relationship()
+                            ->schema([
+                                Forms\Components\Select::make('type')
+                                    ->options(PurchaseOrderDocument::getTypes())
+                                    ->required(),
+                                Forms\Components\TextInput::make('document_number')
+                                    ->label('Document Number')
+                                    ->helperText('e.g. Invoice number, BOL number, Quote number')
+                                    ->maxLength(255),
+                                Forms\Components\FileUpload::make('file_path')
+                                    ->label('Document File')
+                                    ->disk('r2')
+                                    ->directory('purchase-order-documents')
+                                    ->visibility('private')
+                                    ->downloadable()
+                                    ->openable(),
+                                Forms\Components\Textarea::make('notes')
+                                    ->rows(2),
+                            ])
+                            ->itemLabel(fn (array $state): ?string => 
+                                $state['type'] ? PurchaseOrderDocument::getTypes()[$state['type']] . 
+                                ($state['document_number'] ? " - {$state['document_number']}" : '') : null
+                            )
+                            ->collapsible()
+                            ->collapseAllAction(
+                                fn (Forms\Components\Actions\Action $action) => $action->label('Collapse all')
+                            )
+                            ->expandAllAction(
+                                fn (Forms\Components\Actions\Action $action) => $action->label('Expand all')
+                            ),
                     ])
                     ->collapsible(),
             ]);
