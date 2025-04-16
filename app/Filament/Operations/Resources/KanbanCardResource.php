@@ -131,11 +131,29 @@ class KanbanCardResource extends Resource
                 //     ->view('filament.tables.columns.qr-code'),
             ])
             ->defaultGroup('status')
+            ->defaultSort('status', 'asc')
+            ->modifyQueryUsing(function (Builder $query) {
+                // Add a custom sort order for status
+                $query->orderByRaw("
+                    CASE 
+                        WHEN status = 'active' THEN 3
+                        WHEN status = 'pending_order' THEN 2
+                        WHEN status = 'ordered' THEN 1
+                        ELSE 4
+                    END
+                ");
+            })
             ->groups([
                 Tables\Grouping\Group::make('status')
                     ->label('Status')
-                    // ->getTitleFromRecordUsing(fn (KanbanCard $record): string => ucfirst($record->status->getLabel()))
-                    ->orderQueryUsing(fn (Builder $query, string $direction) => $query->orderBy('status', $direction))
+                    ->orderQueryUsing(fn (Builder $query, string $direction) => $query->orderByRaw("
+                        CASE 
+                            WHEN status = 'active' THEN 3
+                            WHEN status = 'pending_order' THEN 2
+                            WHEN status = 'ordered' THEN 1
+                            ELSE 4
+                        END
+                    "))
                     ->collapsible()
             ])
        
