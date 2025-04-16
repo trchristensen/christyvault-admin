@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Notifications\KanbanCardQuantityUpdated;
+use Filament\Support\Facades\Filament;
 
 class KanbanCard extends Model
 {
@@ -115,7 +116,7 @@ class KanbanCard extends Model
                         ->label('Create New PO')
                         ->button()
                         ->color('primary')
-                        ->url(route('purchase-orders.create', [
+                        ->url(fn() => Filament::getUrl('operations/purchase-orders/create', [
                             'kanban_card_id' => $this->id,
                             'supplier_id' => $preferredSupplier->id,
                             'inventory_item_id' => $this->inventory_item_id,
@@ -126,7 +127,7 @@ class KanbanCard extends Model
                             ->label('View Existing POs')
                             ->button()
                             ->color('secondary')
-                            ->url(route('purchase-orders.index', [
+                            ->url(fn() => Filament::getUrl('operations/purchase-orders', [
                                 'tableSearch' => $preferredSupplier->name,
                                 'kanban_card_id' => $this->id,
                                 'inventory_item_id' => $this->inventory_item_id
