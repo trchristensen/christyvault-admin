@@ -94,60 +94,60 @@ class KanbanCard extends Model
                 return $this;
             }
 
-            // Find existing draft POs for this supplier
-            $existingDraftPOs = PurchaseOrder::where('supplier_id', $preferredSupplier->id)
-                ->where('status', 'draft')
-                ->latest()
-                ->get();
-
             // Update the kanban card status
             $this->update([
                 'last_scanned_at' => now(),
                 'status' => self::STATUS_PENDING_ORDER,
+                'scanned_by_user_id' => Auth::id(),
                 'scan_token' => Str::random(32),
             ]);
 
-            // Show notification with action buttons
-            \Filament\Notifications\Notification::make()
-                ->title('Kanban Card Scanned')
-                ->body("Choose how to process {$this->inventoryItem->name}")
-                ->actions([
-                    Action::make('createNew')
-                        ->label('Create New PO')
-                        ->button()
-                        ->color('primary')
-                        ->url(route('filament.operations.resources.purchase-orders.create', [
-                            'kanban_card_id' => $this->id,
-                            'supplier_id' => $preferredSupplier->id,
-                            'inventory_item_id' => $this->inventory_item_id,
-                            'is_liner_load' => $preferredSupplier->name === 'Wilbert'
-                        ])),
-                    ...($existingDraftPOs->isNotEmpty() ? [
-                        Action::make('viewExisting')
-                            ->label('View Existing POs')
-                            ->button()
-                            ->color('secondary')
-                            ->url(route('filament.operations.resources.purchase-orders.index', [
-                                'tableSearch' => $preferredSupplier->name,
-                                'kanban_card_id' => $this->id,
-                                'inventory_item_id' => $this->inventory_item_id
-                            ]))
-                    ] : [])
-                ])
-                ->persistent()
-                ->send();
+            // Create a new purchase order
+            $purchaseOrder = PurchaseOrder::create([
+                'supplier_id' => $preferredSupplier->id,
+                'status' => PurchaseOrder::STATUS_DRAFT,
+                'order_date' => now(),
+                'total_amount' => 0,
+                'created_by_user_id' => Auth::id(),
+                'is_liner_load' => $preferredSupplier->name === 'Wilbert'
+            ]);
 
-            // Send database notification
-            $users = User::where('email', 'tchristensen@christyvault.com')->get();
-            LaravelNotification::send($users, new KanbanCardScanned($this));
+            try {
+                // Add the item to the purchase order
+                $this->addToPurchaseOrder($purchaseOrder, 1, true); // Suppress duplicate notifications
+
+                // Show success notification
+                \Filament\Notifications\Notification::make()
+                    ->title('Kanban Card Scanned')
+                    ->body("Created purchase order for {$this->inventoryItem->name}")
+                    ->success()
+                    ->send();
+
+                // Send database notification
+                $users = User::where('email', 'tchristensen@christyvault.com')->get();
+                LaravelNotification::send($users, new KanbanCardScanned($this));
+
+            } catch (\Exception $e) {
+                Log::error('Failed to add item to purchase order', [
+                    'kanban_card_id' => $this->id,
+                    'purchase_order_id' => $purchaseOrder->id,
+                    'error' => $e->getMessage()
+                ]);
+
+                \Filament\Notifications\Notification::make()
+                    ->title('Error')
+                    ->body("Failed to add {$this->inventoryItem->name} to purchase order")
+                    ->danger()
+                    ->send();
+            }
 
             return $this;
         });
     }
 
-    public function addToPurchaseOrder(PurchaseOrder $purchaseOrder, ?int $quantity = null)
+    public function addToPurchaseOrder(PurchaseOrder $purchaseOrder, ?int $quantity = null, bool $suppressNotifications = false)
     {
-        return DB::transaction(function () use ($purchaseOrder, $quantity) {
+        return DB::transaction(function () use ($purchaseOrder, $quantity, $suppressNotifications) {
             $preferredSupplier = $this->preferredSupplier();
             
             if (!$preferredSupplier || $purchaseOrder->supplier_id !== $preferredSupplier->id) {
@@ -178,12 +178,14 @@ class KanbanCard extends Model
                 ]);
             }
 
-            // Send notification
-            \Filament\Notifications\Notification::make()
-                ->title('Purchase Order Updated')
-                ->body("Added {$this->inventoryItem->name} to purchase order")
-                ->success()
-                ->send();
+            // Only send notification if not suppressed
+            if (!$suppressNotifications) {
+                \Filament\Notifications\Notification::make()
+                    ->title('Purchase Order Updated')
+                    ->body("Added {$this->inventoryItem->name} to purchase order")
+                    ->success()
+                    ->send();
+            }
 
             return $purchaseOrder;
         });
