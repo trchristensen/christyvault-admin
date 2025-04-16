@@ -11,6 +11,7 @@ class RecentPurchaseOrdersWidget extends TableWidget
 {
     protected static ?int $sort = 3;
     protected int $defaultPaginationPageOption = 5;
+    protected int | string | array $columnSpan = 'full';
 
     protected function getTableQuery(): Builder
     {
@@ -38,6 +39,14 @@ class RecentPurchaseOrdersWidget extends TableWidget
             TextColumn::make('expected_delivery_date')
                 ->date()
                 ->sortable(),
+            TextColumn::make('items')
+                ->label('Items')
+                ->formatStateUsing(fn ($state, $record) => 
+                    $record->items->take(3)->map(fn ($item) => 
+                        "{$item->pivot->quantity}x {$item->name}"
+                    )->join(', ') . 
+                    ($record->items->count() > 3 ? ", ... +" . ($record->items->count() - 3) . " more" : "")
+                ),
         ];
     }
 

@@ -9,13 +9,14 @@ class LatestNotificationsWidget extends TableWidget
 {
     protected static ?int $sort = 2;
     protected int $defaultPaginationPageOption = 5;
+    protected int | string | array $columnSpan = 'full';
 
     protected function getTableQuery(): Builder
     {
         return auth()->user()
             ->notifications()
             ->latest()
-            ->take(5)
+            ->take(3)
             ->getQuery();
     }
 

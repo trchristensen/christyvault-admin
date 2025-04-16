@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class InventoryStatsWidget extends StatsOverviewWidget
 {
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 1;
 
     protected function getStats(): array
     {
