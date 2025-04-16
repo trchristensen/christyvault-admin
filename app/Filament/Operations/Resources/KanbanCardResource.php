@@ -173,6 +173,13 @@ class KanbanCardResource extends Resource
                         ->action(fn(KanbanCard $record) => $record->markAsScanned())
                         ->requiresConfirmation()
                         ->visible(fn(KanbanCard $record) => $record->canBeScanned()),
+                    Tables\Actions\Action::make('setActive')
+                        ->label('Set Active')
+                        ->icon('heroicon-o-check-circle')
+                        ->action(fn(KanbanCard $record) => $record->update(['status' => KanbanCard::STATUS_ACTIVE]))
+                        ->requiresConfirmation()
+                        ->visible(fn(KanbanCard $record) => $record->status !== KanbanCard::STATUS_ACTIVE)
+                        ->successNotificationTitle('Kanban card status set to active'),
                     Tables\Actions\Action::make('printKanban')
                         ->label('Print Kanban')
                         ->icon('heroicon-o-printer')
