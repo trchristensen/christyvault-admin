@@ -53,7 +53,8 @@ class PurchaseOrderResource extends Resource
                         'danger' => 'cancelled',
                         'info' => 'awaiting_invoice',
                         'success' => 'completed',
-                    ]),
+                    ])
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('order_date')
                     ->date()
@@ -113,6 +114,21 @@ class PurchaseOrderResource extends Resource
                     ->collapsible()
             ])
             ->defaultGroup('status')
+            ->defaultSort('status', 'asc')
+            ->modifyQueryUsing(function (Builder $query) {
+                // Add a custom sort order for status
+                $query->orderByRaw("
+                    CASE 
+                        WHEN status = 'completed' THEN 6
+                        WHEN status = 'cancelled' THEN 5
+                        WHEN status = 'awaiting_invoice' THEN 4
+                        WHEN status = 'received' THEN 3
+                        WHEN status = 'submitted' THEN 2
+                        WHEN status = 'draft' THEN 1
+                        ELSE 7
+                    END
+                ");
+            })
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->multiple()
