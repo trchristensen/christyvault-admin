@@ -22,10 +22,11 @@ class LatestNotificationsWidget extends TableWidget
     protected function getTableColumns(): array
     {
         return [
-            \Filament\Tables\Columns\TextColumn::make('data.inventory_item_name')
-                ->label('Item'),
-            \Filament\Tables\Columns\TextColumn::make('data.bin_number')
-                ->label('Bin'),
+            \Filament\Tables\Columns\TextColumn::make('data.title')
+                ->label('Title'),
+            \Filament\Tables\Columns\TextColumn::make('data.body')
+                ->label('Description')
+                ->wrap(),
             \Filament\Tables\Columns\TextColumn::make('created_at')
                 ->label('Time')
                 ->dateTime()

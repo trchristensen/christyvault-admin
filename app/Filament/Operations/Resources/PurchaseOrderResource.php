@@ -21,6 +21,12 @@ use App\Models\PurchaseOrderDocument;
 use Illuminate\Support\Facades\DB;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Collection;
+use Filament\Infolist\Infolist;
+use Filament\Infolist\Components\Section;
+use Filament\Infolist\Components\Grid;
+use Filament\Infolist\Components\TextEntry;
+use Filament\Infolist\Components\IconEntry;
+use Filament\Infolist\Components\RepeatableEntry;
 
 class PurchaseOrderResource extends Resource
 {
@@ -142,6 +148,23 @@ class PurchaseOrderResource extends Resource
                     ])
             ])
             ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->url(null)
+                    ->modalContent(fn (PurchaseOrder $record) => view('livewire.view-purchase-order', [
+                        'record' => $record,
+                    ]))
+                    ->modalSubmitAction(false)
+                    ->modalCancelAction(false)
+                    ->modalHeading('Purchase Order Details')
+                    ->modalFooterActions([
+                        Tables\Actions\EditAction::make()
+                            ->url(fn (PurchaseOrder $record): string => 
+                                static::getUrl('edit', ['record' => $record])
+                            ),
+                        Tables\Actions\DeleteAction::make(),
+                    ])
+                    ->stickyModalHeader()
+                    ->stickyModalFooter(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('merge')
                     ->icon('heroicon-o-arrow-path-rounded-square')
@@ -252,8 +275,10 @@ class PurchaseOrderResource extends Resource
                             ->where('id', '!=', $record->id)
                             ->exists()
                     )
-                    ->requiresConfirmation()
+                    ->requiresConfirmation(),
             ])
+            ->recordAction('view')
+            ->recordUrl(null)
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
@@ -351,7 +376,8 @@ class PurchaseOrderResource extends Resource
                         ->requiresConfirmation()
                         ->modalDescription('This will merge all selected purchase orders for each supplier into one. Orders will be grouped by supplier.')
                 ]),
-            ]);
+            ])
+            ->recordAction('view');
     }
 
     public static function form(Form $form): Form
