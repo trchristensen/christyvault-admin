@@ -269,7 +269,6 @@ class PurchaseOrderResource extends Resource
                             ->send();
                     })
                     ->visible(fn (Model $record) => 
-                        $record->status === 'draft' && 
                         PurchaseOrder::where('supplier_id', $record->supplier_id)
                             ->where('status', 'draft')
                             ->where('id', '!=', $record->id)
