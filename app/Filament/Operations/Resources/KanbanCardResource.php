@@ -180,7 +180,9 @@ class KanbanCardResource extends Resource
                         ->requiresConfirmation()
                         ->visible(fn(KanbanCard $record) => $record->status !== KanbanCard::STATUS_ACTIVE)
                         ->successNotification(
-                            notification: 'Kanban card status set to active'
+                            \Filament\Notifications\Notification::make()
+                                ->title('Kanban card status set to active')
+                                ->success()
                         ),
                     Tables\Actions\Action::make('printKanban')
                         ->label('Print Kanban')
