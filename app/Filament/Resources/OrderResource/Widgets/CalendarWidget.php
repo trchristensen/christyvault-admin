@@ -352,12 +352,12 @@ class CalendarWidget extends FullCalendarWidget
                                                 ->whereNull('trip_id')
                                                 ->whereNotIn('id', $selectedOrderIds)  // Exclude already selected orders
                                                 ->whereNotIn('status', ['delivered', 'cancelled'])
-                                                ->with(['customer', 'location'])
+                                                ->with(['location'])
                                                 ->get()
                                                 ->mapWithKeys(fn(Order $order) => [
                                                     $order->id => view('filament.components.order-option', [
                                                         'orderNumber' => $order->order_number,
-                                                        'customerName' => $order->customer?->name,
+                                                        'customerName' => $order->location?->name,
                                                         'status' => $order->status,
                                                         'requestedDeliveryDate' => $order->requested_delivery_date?->format('M j'),
                                                         'assignedDeliveryDate' => $order->assigned_delivery_date?->format('M j'),
@@ -778,8 +778,7 @@ class CalendarWidget extends FullCalendarWidget
 
     public function handleOrderClick($orderId)
     {
-
-        $this->record = Order::with(['customer', 'orderProducts.product'])->find($orderId);
+        $this->record = Order::with(['location', 'orderProducts.product', 'location.preferredDeliveryContact'])->find($orderId);
         $this->mountAction('view');
     }
 }
