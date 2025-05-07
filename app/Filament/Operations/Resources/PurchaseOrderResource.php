@@ -454,7 +454,15 @@ class PurchaseOrderResource extends Resource
                                     ->directory('purchase-order-documents')
                                     ->visibility('private')
                                     ->downloadable()
-                                    ->openable(),
+                                    ->openable()
+                                    ->acceptedFileTypes([
+                                        'application/pdf',
+                                        'image/png',
+                                        'image/jpeg',
+                                        'image/jpg',
+                                        'image/gif',
+                                        'image/webp',
+                                    ]),
                                 Forms\Components\Textarea::make('notes')
                                     ->rows(2),
                             ])
