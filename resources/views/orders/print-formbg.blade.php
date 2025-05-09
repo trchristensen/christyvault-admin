@@ -4,11 +4,11 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <style>
-        .page-container {
-            position: relative;
-            width: 100%;
-            height: 1056px; /* Adjust this to match your form height exactly */
-            page-break-after: avoid;
+        /* .page-container {
+    position: relative;
+    width: 100%;
+    height: 1056px; Adjust this to match your form height exactly
+        page-break-after: avoid;
         }
 
         */ @page {

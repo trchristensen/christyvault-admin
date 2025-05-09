@@ -40,12 +40,13 @@ class DeliveryTagController extends Controller
         }
 
         $pdf = SnappyPdf::loadView('orders.print-formbg', ['order' => $order])
-            ->setOption('page-width', '8.5in')
-            ->setOption('page-height', '7.625in')
+            ->setOption('page-width', '11in')
+            ->setOption('page-height', '8.5in')
             ->setOption('margin-top', 0)
             ->setOption('margin-right', 0)
             ->setOption('margin-bottom', 0)
             ->setOption('margin-left', 0)
+            ->setOption('orientation', 'Landscape')
             ->setOption('enable-local-file-access', true)
             ->setOption('enable-smart-shrinking', false)
             ->setOption('zoom', 1.0)
