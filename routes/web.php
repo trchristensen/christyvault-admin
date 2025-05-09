@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/orders/calendar/print', [DeliveryCalendarPrintController::class, 'view'])->name('delivery-calendar.print');
 Route::get('/orders/{order}/print', [DeliveryTagController::class, 'view'])->name('orders.print');
+Route::get('/orders/{order}/print-formbg', [DeliveryTagController::class, 'viewWithFormBg'])->name('orders.print.formbg');
 
 // routes/web.php
 Route::get('calendar/feed/{token}', [CalendarFeedController::class, 'download'])
