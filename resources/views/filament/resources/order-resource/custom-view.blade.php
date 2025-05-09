@@ -157,12 +157,6 @@
                 {{-- get the status label (it's an enum) --}}
                 {{ App\Enums\OrderStatus::from($record->status)->label() }}
             </div>
-            <a href="{{ route('orders.print', ['order' => $record]) }}" target="_blank" class="inline-flex items-center px-3 py-1 text-sm font-medium text-white bg-gray-600 rounded hover:bg-gray-700">
-                Print Delivery Tag
-            </a>
-            <a href="{{ route('orders.print.formbg', ['order' => $record]) }}" target="_blank" class="inline-flex items-center px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700">
-                Download Digital Tag
-            </a>
         </div>
     </div>
 
