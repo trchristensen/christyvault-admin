@@ -194,12 +194,12 @@ class OrderResource extends Resource
                             ->icon('heroicon-o-printer')
                             ->url(fn(Order $record) => route('orders.print', ['order' => $record]))
                             ->openUrlInNewTab(),
-                        Action::make('view-digital-tag')
-                            ->label('View Digital Tag')
-                            ->color('gray')
-                            ->icon('heroicon-o-printer')
-                            ->url(fn(Order $record) => route('orders.print-formbg', ['order' => $record]))
-                            ->openUrlInNewTab(),
+                        // Action::make('view-digital-tag')
+                        //     ->label('View Digital Tag')
+                        //     ->color('gray')
+                        //     ->icon('heroicon-o-printer')
+                        //     ->url(fn(Order $record) => route('orders.print-formbg', ['order' => $record]))
+                        //     ->openUrlInNewTab(),
                     ]),
                 Action::make('print preview')
                     ->label(null)
