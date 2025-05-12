@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
             // OrderSeeder::class,
             // Add any other seeders you have here
             LocationSeeder::class,
-            CustomerSeeder::class,
+            // CustomerSeeder::class,
             ProductSeeder::class,
             PositionSeeder::class,
 

@@ -34,22 +34,36 @@
             /* font-weight: 700; */
         }
 
-        /* Keep your existing positioning styles */
-        .customer-info {
-            position: absolute;
-            top: 216px;
-            left: 80px;
-            width: 1000px;
-        }
-
         .order-info {
             position: absolute;
-            top: 220px;
-            right: 25px;
-            text-align: left;
-            /* background: #ccc; */
+            top: 210px;   /* Move further down */
+            right: 10px; /* Move further left */
+            width: 220px; /* Narrower to fit the form */
+            height: 120px;
+        }
+        .invoice-date-field {
+            position: absolute;
+            top: 10px;
+            left: 0px;
             width: 220px;
-            padding-left: 10px;
+            height: 20px;
+            font-size: 20px;
+        }
+        .customer-order-number-field {
+            position: absolute;
+            bottom: 48px;
+            left: 0px;
+            width: 220px;
+            height: 20px;
+            font-size: 20px;
+        }
+        .date-of-order-field {
+            position: absolute;
+            bottom: 0px;
+            left: 0px;
+            width: 220px;
+            height: 20px;
+            font-size: 20px;
         }
 
         .invoice-date {
@@ -296,7 +310,7 @@ elseif ($order->location->phone) {
             <div class="order-number" style="height:18px;"></div>
             @if($order->customer_order_number)
                 <div class="order-date" style="height:18px;">
-                    Customer Order #: {{ $order->customer_order_number }}
+                    {{ $order->customer_order_number }}
                 </div>
             @endif
             <div class="order-date" style="height:18px;">

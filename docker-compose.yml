@@ -1,0 +1,39 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: christyvault-app
+    container_name: christyvault-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=christyvault
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      # Add any other env vars you need
+
+  db:
+    image: postgres:15
+    container_name: christyvault-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: christyvault
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:

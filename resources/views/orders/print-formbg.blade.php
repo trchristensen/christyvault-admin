@@ -10,11 +10,16 @@
     height: 1056px; Adjust this to match your form height exactly
         page-break-after: avoid;
         }
+        
 
         */ @page {
             size: letter;
             margin: 0;
         }
+
+        /* * {
+            outline: 1px solid red;
+        } */
 
 
         body {
@@ -44,16 +49,34 @@
 
         .order-info {
             position: absolute;
-            top: 220px;
-            right: 25px;
-            text-align: left;
-            /* background: #ccc; */
-            width: 220px;
-            padding-left: 10px;
+            top: 210px;   /* Move further down */
+            right: 10px; /* Move further left */
+            width: 220px; /* Narrower to fit the form */
+            height: 120px;
         }
-
-        .invoice-date {
-            padding-left: 15px;
+        .invoice-date-field {
+            position: absolute;
+            top: 10px;
+            left: 0px;
+            width: 220px;
+            height: 20px;
+            font-size: 20px;
+        }
+        .customer-order-number-field {
+            position: absolute;
+            bottom: 48px;
+            left: 0px;
+            width: 220px;
+            height: 20px;
+            font-size: 20px;
+        }
+        .date-of-order-field {
+            position: absolute;
+            bottom: 0px;
+            left: 0px;
+            width: 220px;
+            height: 20px;
+            font-size: 20px;
         }
 
         /* Existing display block styles */
@@ -291,14 +314,16 @@ elseif ($order->location->phone) {
 
         {{-- Order Info Section --}}
         <div class="order-info">
-            <div class="invoice-date" style="height:18px;"></div>
-            <div class="order-number" style="height:18px;"></div>
+            <div class="invoice-date-field">
+                {{-- If you have an invoice date, show it here --}}
+                {{-- {{ $order->invoice_date?->format('m/d/Y') ?? '' }} --}}
+            </div>
             @if($order->customer_order_number)
-                <div class="order-date" style="height:18px;">
-                    Customer Order #: {{ $order->customer_order_number }}
+                <div class="customer-order-number-field">
+                    {{ $order->customer_order_number }}
                 </div>
             @endif
-            <div class="order-date" style="height:18px;">
+            <div class="date-of-order-field">
                 {{ $order->order_date?->format('m/d/Y') ?? $order->created_at->format('m/d/Y') }}
             </div>
         </div>
