@@ -225,6 +225,12 @@
                 @endif
             </div>
             <div class="grid grid-cols-1 gap-4">
+                @if($record->customer_order_number)
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Customer Order #</p>
+                        <p class="font-medium">{{ $record->customer_order_number }}</p>
+                    </div>
+                @endif
                 <div>
                     <p class="text-sm text-gray-600 dark:text-gray-400">Requested Date</p>
                     <p class="font-medium">{{ $record->requested_delivery_date?->format('M j, Y') }}</p>

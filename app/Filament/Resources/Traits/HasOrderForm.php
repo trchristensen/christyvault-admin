@@ -190,6 +190,15 @@ trait HasOrderForm
                             return $location->id;
                         }),
 
+                    Forms\Components\TextInput::make('customer_order_number')
+                        ->label('Customer Order #')
+                        ->nullable()
+                        ->maxLength(255)
+                        ->columnSpan([
+                            'sm' => 12,
+                            'md' => 4,
+                        ]),
+
                     Forms\Components\Select::make('status')
                         ->options(collect(OrderStatus::cases())->mapWithKeys(function ($status) {
                             return [$status->value => str($status->value)

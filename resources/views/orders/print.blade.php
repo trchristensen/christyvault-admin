@@ -294,6 +294,11 @@ elseif ($order->location->phone) {
         <div class="order-info">
             <div class="invoice-date" style="height:18px;"></div>
             <div class="order-number" style="height:18px;"></div>
+            @if($order->customer_order_number)
+                <div class="order-date" style="height:18px;">
+                    Customer Order #: {{ $order->customer_order_number }}
+                </div>
+            @endif
             <div class="order-date" style="height:18px;">
                 {{ $order->order_date?->format('m/d/Y') ?? $order->created_at->format('m/d/Y') }}
             </div>
