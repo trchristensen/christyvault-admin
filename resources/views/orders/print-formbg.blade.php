@@ -338,8 +338,12 @@ elseif ($order->location->phone) {
                         <span class="item-quantity">*</span>
                     @endif
                     <div class="item-details">
-                        <span class="item-sku">{{ $item->product->sku }}</span>
-                        <span class="item-name">{{ $item->product->name }}</span>
+                        @if ($item->product->is_custom_product)
+                            <span class="item-sku">{{ $item->custom_description }}</span>
+                        @else
+                            <span class="item-sku">{{ $item->product->sku }}</span>
+                            <span class="item-name">{{ $item->product->name }}</span>
+                        @endif
                         @if ($item->notes or $item->fill_load)
                             <div class="item-notes">
                                 └ @if ($item->fill_load)
