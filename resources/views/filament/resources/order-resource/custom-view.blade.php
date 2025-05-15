@@ -328,22 +328,14 @@
                                         @endif
                                     </div>
                                     <div class="flex flex-col items-start col-span-5 -ml-6 product-description">
-                                        @if ($orderProduct->is_custom_product && $orderProduct->custom_description)
+                                        @if ($orderProduct->is_custom_product)
                                             <p class="font-medium text-black dark:text-gray-200">
                                                 {{ $orderProduct->custom_description }}</p>
                                         @else
                                             <p class="font-medium text-black dark:text-gray-200">
-                                                {{-- if product->sku is not null, show it --}}
-                                                @if ($orderProduct->product->sku)
-                                                    {{ $orderProduct->product->sku }}
-                                                @endif
-                                                {{-- if product->sku is null, show the product name --}}
-                                                @if ($orderProduct->product->name)
-                                                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                        {{ $orderProduct->product->name }}
-                                                    </p>
-                                                @endif
-                                            @endif
+                                                {{ $orderProduct->product->sku }}</p>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                {{ $orderProduct->product->name }}</p>
                                         @endif
 
                                         @if ($orderProduct->notes)
