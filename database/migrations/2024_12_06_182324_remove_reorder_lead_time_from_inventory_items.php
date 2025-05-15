@@ -8,9 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('inventory_items', function (Blueprint $table) {
-            $table->dropColumn('reorder_lead_time');
-        });
+        if (Schema::hasColumn('inventory_items', 'reorder_lead_time')) {
+            Schema::table('inventory_items', function (Blueprint $table) {
+                $table->dropColumn('reorder_lead_time');
+            });
+        }
     }
 
     public function down(): void
