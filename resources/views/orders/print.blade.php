@@ -335,13 +335,17 @@ elseif ($order->location->phone) {
                         <span class="item-quantity">*</span>
                     @endif
                     <div class="item-details">
-                        <span class="item-sku">{{ $item->product->sku }}</span>
-                        <span class="item-name">{{ $item->product->name }}</span>
-                        @if ($item->notes or $item->fill_load)
+                        <span class="item-sku">{{ $item->display_sku }}</span>
+                        <span class="item-name">{{ $item->display_name }}</span>
+                        @if ($item->notes or $item->fill_load or $item->display_description)
                             <div class="item-notes">
                                 └ @if ($item->fill_load)
                                     <strong style="margin-right:12px;text-decoration:underline">FILL OUT LOAD</strong>
-                                @endif{{ $item->notes }}
+                                @endif
+                                @if ($item->display_description)
+                                    {{ $item->display_description }}
+                                @endif
+                                {{ $item->notes }}
                             </div>
                         @endif
                     </div>

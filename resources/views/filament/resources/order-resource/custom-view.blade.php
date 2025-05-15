@@ -328,10 +328,15 @@
                                         @endif
                                     </div>
                                     <div class="flex flex-col items-start col-span-5 -ml-6 product-description">
-                                        <p class="font-medium text-black dark:text-gray-200">
-                                            {{ $orderProduct->product->sku }}</p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">
-                                            {{ $orderProduct->product->name }}</p>
+                                        @if ($orderProduct->is_custom_product)
+                                            <p class="font-medium text-black dark:text-gray-200">
+                                                {{ $orderProduct->custom_description }}</p>
+                                        @else
+                                            <p class="font-medium text-black dark:text-gray-200">
+                                                {{ $orderProduct->product->sku }}</p>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                {{ $orderProduct->product->name }}</p>
+                                        @endif
 
                                         @if ($orderProduct->notes)
                                             <p class="text-sm text-gray-500">{{ $orderProduct->notes }}</p>

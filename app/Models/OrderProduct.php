@@ -14,6 +14,10 @@ class OrderProduct extends Pivot
     protected $fillable = [
         'order_id',
         'product_id',
+        'custom_sku',
+        'custom_name',
+        'custom_description',
+        'is_custom_product',
         'quantity',
         'quantity_delivered',
         'delivery_notes',
@@ -25,6 +29,7 @@ class OrderProduct extends Pivot
 
     protected $casts = [
         'fill_load' => 'integer',
+        'is_custom_product' => 'boolean',
     ];
 
     public function order(): BelongsTo
@@ -35,5 +40,20 @@ class OrderProduct extends Pivot
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function getDisplaySkuAttribute(): string
+    {
+        return $this->is_custom_product ? $this->custom_sku : $this->product->sku;
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->is_custom_product ? $this->custom_name : $this->product->name;
+    }
+
+    public function getDisplayDescriptionAttribute(): ?string
+    {
+        return $this->is_custom_product ? $this->custom_description : $this->product->description;
     }
 }

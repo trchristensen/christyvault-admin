@@ -38,6 +38,7 @@ trait HasOrderForm
                         })
                         ->required()
                         ->columnSpan([
+                            'default' => 12,
                             'sm' => 12,
                             'md' => 8,
                         ])
@@ -276,140 +277,146 @@ trait HasOrderForm
                         ->addActionLabel('Add a Product')
                         ->relationship()
                         ->schema([
-                            Forms\Components\Select::make('product_id')
-                                ->createOptionForm([
-                                    Forms\Components\TextInput::make('sku')
-                                        ->required()
-                                        ->label("Product Number")
-                                        ->maxLength(255),
-                                    Forms\Components\TextInput::make('name')
-                                        ->label("Product Name")
-                                        ->required()
-                                        ->maxLength(255),
-                                    Forms\Components\TextInput::make('description')
-                                        ->maxLength(255),
-                                    Forms\Components\TextInput::make('price')
-                                        ->required()
-                                        ->numeric()
-                                        ->default(0)
-                                        ->prefix('$')
-                                        ->label('Price'),
-                                    Forms\Components\TextInput::make('stock')
-                                        ->required()
-                                        ->numeric()
-                                        ->default(0)
-                                        ->label('Stock'),
-                                ])
-                                ->createOptionUsing(function (array $data): int {
-                                    return Product::create($data)->getKey();
-                                })
-                                ->createOptionAction(function (Forms\Components\Actions\Action $action) {
-                                    return $action
-                                        ->modalHeading('Create new product')
-                                        ->modalWidth('lg');
-                                })
-                                ->columnSpan([
-                                    'default' => 12,
-                                    'sm' => 12,
-                                    'md' => 12,
-                                    'lg' => 5,
-                                ])
-                                ->label('Product')
-                                ->options(
-                                    Product::query()
-                                        ->active()
-                                        ->get()
-                                        ->mapWithKeys(fn(Product $product) => [
-                                            $product->id => view('filament.components.product-option', [
-                                                'sku' => $product->sku,
-                                                'name' => $product->name,
-                                            ])->render()
+                            Forms\Components\Grid::make(12)
+                                ->schema([
+                                    Forms\Components\Toggle::make('is_custom_product')
+                                        ->label('Custom Product')
+                                        ->columnSpan(1)
+                                        ->inline(false)
+                                        ->reactive()
+                                        ->afterStateUpdated(function ($state, callable $set) {
+                                            if ($state) {
+                                                $set('product_id', null);
+                                            } else {
+                                                $set('custom_description', null);
+                                            }
+                                        }),
+                                    Forms\Components\Select::make('product_id')
+                                        ->createOptionForm([
+                                            Forms\Components\TextInput::make('sku')
+                                                ->required()
+                                                ->label('Product Number')
+                                                ->maxLength(255),
+                                            Forms\Components\TextInput::make('name')
+                                                ->label('Product Name')
+                                                ->required()
+                                                ->maxLength(255),
+                                            Forms\Components\TextInput::make('description')
+                                                ->maxLength(255),
+                                            Forms\Components\TextInput::make('price')
+                                                ->required()
+                                                ->numeric()
+                                                ->default(0)
+                                                ->prefix('$')
+                                                ->label('Price'),
+                                            Forms\Components\TextInput::make('stock')
+                                                ->required()
+                                                ->numeric()
+                                                ->default(0)
+                                                ->label('Stock'),
                                         ])
-                                )
-                                ->allowHtml()
-                                ->required()
-                                ->reactive()
-                                ->searchable()
-                                ->getSearchResultsUsing(function (string $search): array {
-                                    return Product::query()
-                                        ->active()
-                                        ->where(function ($query) use ($search) {
-                                            $query->where('name', 'ilike', "%{$search}%")
-                                                ->orWhere('sku', 'ilike', "%{$search}%");
+                                        ->createOptionUsing(function (array $data): int {
+                                            return Product::create($data)->getKey();
                                         })
-                                        ->limit(50)
-                                        ->get()
-                                        ->mapWithKeys(fn(Product $product) => [
-                                            $product->id => view('filament.components.product-option', [
-                                                'sku' => $product->sku,
-                                                'name' => $product->name,
-                                            ])->render()
-                                        ])
-                                        ->toArray();
-                                })
-                                ->afterStateUpdated(
-                                    fn($state, callable $set) =>
-                                    $set('price', Product::find($state)?->price ?? 0)
-                                ),
-                            Forms\Components\Toggle::make('fill_load')
-                                ->label('Fill load')
-                                ->columnSpan([
-                                    'default' => 12,
-                                    'sm' => 4,
-                                    'md' => 4,
-                                    'lg' => 1,
-                                ])
-                                ->inline(false)
-                                ->reactive()
-                                ->afterStateUpdated(function ($state, callable $set) {
-                                    if ($state) {
-                                        $set('quantity', null);
-                                    }
-                                }),
-                            Forms\Components\TextInput::make('quantity')
-                                ->numeric()
-                                ->columnSpan([
-                                    'default' => 12,
-                                    'sm' => 4,
-                                    'md' => 4,
-                                    'lg' => 1,
-                                ])
-                                ->default(1)
-                                ->required(fn(Forms\Get $get): bool => !$get('fill_load'))
-                                ->disabled(fn(Forms\Get $get): bool => $get('fill_load'))
-                                ->dehydrated(fn(Forms\Get $get): bool => !$get('fill_load')),
-                            Forms\Components\TextInput::make('quantity_delivered')
-                                ->label('Delivered')
-                                ->columnSpan([
-                                    'default' => 12,
-                                    'sm' => 4,
-                                    'md' => 4,
-                                    'lg' => 1,
-                                ])
-                                ->numeric()
-                                ->disabled(function (\Filament\Forms\Get $get): bool {
-                                    $status = $get('../../status');
-                                    return !in_array($status, [
-                                        OrderStatus::DELIVERED->value,
-                                        OrderStatus::INVOICED->value,
-                                        OrderStatus::COMPLETED->value,
-                                    ]);
-                                }),
-                            Forms\Components\Hidden::make('price')
-                                ->default(0),
-                            Forms\Components\TextInput::make('location')
-                                ->live()
-                                ->nullable()
-                                ->columnSpan([
-                                    'default' => 12,
-                                    'sm' => 12,
-                                    'md' => 12,
-                                    'lg' => 4,
+                                        ->createOptionAction(function (Forms\Components\Actions\Action $action) {
+                                            return $action
+                                                ->modalHeading('Create new product')
+                                                ->modalWidth('lg');
+                                        })
+                                        ->columnSpan(6)
+                                        ->label('Product')
+                                        ->options(
+                                            Product::query()
+                                                ->active()
+                                                ->get()
+                                                ->mapWithKeys(fn(Product $product) => [
+                                                    $product->id => view('filament.components.product-option', [
+                                                        'sku' => $product->sku,
+                                                        'name' => $product->name,
+                                                    ])->render()
+                                                ])
+                                        )
+                                        ->allowHtml()
+                                        ->required(fn (callable $get) => !$get('is_custom_product'))
+                                        ->reactive()
+                                        ->searchable()
+                                        ->visible(fn (callable $get) => !$get('is_custom_product'))
+                                        ->getSearchResultsUsing(function (string $search): array {
+                                            return Product::query()
+                                                ->active()
+                                                ->where(function ($query) use ($search) {
+                                                    $query->where('name', 'ilike', "%{$search}%")
+                                                        ->orWhere('sku', 'ilike', "%{$search}%");
+                                                })
+                                                ->limit(50)
+                                                ->get()
+                                                ->mapWithKeys(fn(Product $product) => [
+                                                    $product->id => view('filament.components.product-option', [
+                                                        'sku' => $product->sku,
+                                                        'name' => $product->name,
+                                                    ])->render()
+                                                ])
+                                                ->toArray();
+                                        })
+                                        ->afterStateUpdated(
+                                            fn($state, callable $set) =>
+                                            $set('price', Product::find($state)?->price ?? 0)
+                                        ),
+                                    Forms\Components\TextInput::make('custom_description')
+                                        ->label('Custom Product Description')
+                                        ->required(fn (callable $get) => $get('is_custom_product'))
+                                        ->visible(fn (callable $get) => $get('is_custom_product'))
+                                         ->columnSpan(6),
+                                    Forms\Components\Toggle::make('fill_load')
+                                        ->label('Fill load')
+                                        ->columnSpan(2)
+                                        ->inline(false)
+                                        ->reactive()
+                                        ->afterStateUpdated(function ($state, callable $set) {
+                                            if ($state) {
+                                                $set('quantity', null);
+                                            }
+                                        }),
+                                    Forms\Components\TextInput::make('quantity')
+                                        ->numeric()
+                                        ->columnSpan(2)
+                                        ->default(1)
+                                        ->required(fn(Forms\Get $get): bool => !$get('fill_load'))
+                                        ->disabled(fn(Forms\Get $get): bool => $get('fill_load'))
+                                        ->dehydrated(fn(Forms\Get $get): bool => !$get('fill_load')),
+                                    Forms\Components\TextInput::make('quantity_delivered')
+                                        ->label('Delivered')
+                                        ->columnSpan(1)
+                                        ->numeric()
+                                        ->disabled(function (\Filament\Forms\Get $get): bool {
+                                            $status = $get('../../status');
+                                            return !in_array($status, [
+                                                OrderStatus::DELIVERED->value,
+                                                OrderStatus::INVOICED->value,
+                                                OrderStatus::COMPLETED->value,
+                                            ]);
+                                        }),
                                 ]),
-                            Forms\Components\TextInput::make('notes')
-                                ->live()
-                                ->nullable()
-                                ->columnSpan(12)
+                            Forms\Components\Hidden::make('price')->default(0),
+                            Forms\Components\Grid::make(12)
+                                ->schema([
+                                    Forms\Components\TextInput::make('location')
+                                        ->label('Location')
+                                        ->live()
+                                        ->nullable()
+                                        ->columnSpan([
+                                            'default' => 12,
+                                            'lg' => 6,
+                                        ]),
+                                    Forms\Components\TextInput::make('notes')
+                                        ->label('Notes')
+                                        ->live()
+                                        ->nullable()
+                                        ->columnSpan([
+                                            'default' => 12,
+                                            'lg' => 6,
+                                        ]),
+                                ]),
                         ])
                         ->columns(12)
                 ]),
