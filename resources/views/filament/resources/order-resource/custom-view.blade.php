@@ -331,11 +331,15 @@
                                         @if ($orderProduct->is_custom_product)
                                             <p class="font-medium text-black dark:text-gray-200">
                                                 {{ $orderProduct->custom_description }}</p>
-                                        @else
+                                        @elseif ($orderProduct->product)
                                             <p class="font-medium text-black dark:text-gray-200">
                                                 {{ $orderProduct->product->sku }}</p>
                                             <p class="text-sm text-gray-600 dark:text-gray-400">
                                                 {{ $orderProduct->product->name }}</p>
+                                        @else
+                                            <p class="font-medium text-red-600 dark:text-red-400">
+                                                Product not found
+                                            </p>
                                         @endif
 
                                         @if ($orderProduct->notes)
