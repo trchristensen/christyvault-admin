@@ -8,9 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('inventory_item_suppliers', function (Blueprint $table) {
-            $table->dropColumn('cost_per_unit');
-        });
+            if (Schema::hasColumn('inventory_item_suppliers', 'cost_per_unit')) {
+                Schema::table('inventory_item_suppliers', function (Blueprint $table) {
+                    $table->dropColumn('cost_per_unit');
+                });
+            }
     }
 
     public function down(): void
