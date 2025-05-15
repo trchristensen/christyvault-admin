@@ -77,13 +77,13 @@ class RecentOrdersWidget extends BaseWidget
 
                             if (!isset($products[$key])) {
                                 if ($orderProduct->fill_load) {
-                                    $products[$key] = "Fill Load x {$orderProduct->product->sku}";
+                                    $products[$key] = "Fill Load x " . ($orderProduct->is_custom_product ? $orderProduct->custom_description : $orderProduct->product->sku);
                                 } else {
                                     $quantity = $record->orderProducts
                                         ->where('product_id', $orderProduct->product_id)
                                         ->where('fill_load', false)
                                         ->sum('quantity');
-                                    $products[$key] = "{$quantity} x {$orderProduct->product->sku}";
+                                    $products[$key] = "{$quantity} x " . ($orderProduct->is_custom_product ? $orderProduct->custom_description : $orderProduct->product->sku);
                                 }
                             }
                         }
