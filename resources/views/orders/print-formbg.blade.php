@@ -144,7 +144,13 @@
             left: 460px;
             top: 2px;
             font-size: 16px;
+        }
 
+        .item-delivered {
+            position: absolute;
+            left: 750px;
+            top: 2px;
+            font-size: 16px;
         }
 
         .item-sku {
@@ -361,6 +367,9 @@ elseif ($order->location->phone) {
                     {{-- <div class="item-amount">
                         ${{ $item->price * $item->quantity }}
                     </div> --}}
+                    <div class="item-delivered">
+                        {{ $item->quantity_delivered }}
+                    </div>
                 </div>
             @endforeach
         </div>
