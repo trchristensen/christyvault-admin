@@ -129,34 +129,32 @@ class OrderResource extends Resource
                 Tables\Grouping\Group::make('delivery_group')
                     ->label('Delivery Schedule')
                     ->getTitleFromRecordUsing(function ($record) {
-                        if (!$record->assigned_delivery_date) {
-                            return 'Unassigned Orders';
+                        // Use assigned_delivery_date, then requested_delivery_date, then order_date
+                        $date = $record->assigned_delivery_date ?? $record->requested_delivery_date ?? $record->order_date;
+                        if (!$date) {
+                            return 'Unscheduled Orders';
                         }
-
                         $today = now()->startOfDay();
-                        $assignedDate = $record->assigned_delivery_date->startOfDay();
-
-                        if ($assignedDate->lt($today)) {
+                        $dateValue = $date->startOfDay();
+                        if ($dateValue->lt($today)) {
                             return 'Past Orders';
                         }
-
-                        // If within next 3 weeks
-                        if ($assignedDate->lte($today->copy()->addWeeks(3))) {
-                            return $assignedDate->format('l, M j, Y');
+                        if ($dateValue->lte($today->copy()->addWeeks(3))) {
+                            return $dateValue->format('l, M j, Y');
                         }
-
                         return 'Future Orders (> 3 weeks)';
                     })
                     ->orderQueryUsing(function (Builder $query, string $direction) {
-                        return $query->orderBy(DB::raw('
+                        // Use assigned_delivery_date, then requested_delivery_date, then order_date for ordering
+                        return $query->orderByRaw('
                             CASE
-                                WHEN assigned_delivery_date IS NULL THEN 0
-                                WHEN assigned_delivery_date < CURRENT_DATE THEN 3
-                                WHEN assigned_delivery_date <= CURRENT_DATE + INTERVAL \'21 days\' THEN 1
-                                ELSE 2
+                                WHEN assigned_delivery_date IS NOT NULL THEN 0
+                                WHEN requested_delivery_date IS NOT NULL THEN 1
+                                WHEN order_date IS NOT NULL THEN 2
+                                ELSE 3
                             END
-                        '))
-                            ->orderBy('assigned_delivery_date', $direction);
+                        ')
+                        ->orderByRaw('COALESCE(assigned_delivery_date, requested_delivery_date, order_date) ' . $direction);
                     })
                     ->collapsible()
             ])
