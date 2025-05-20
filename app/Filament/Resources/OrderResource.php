@@ -94,23 +94,31 @@ class OrderResource extends Resource
                     ->label('Products')
                     ->formatStateUsing(function ($state, $record) {
                         $products = [];
-
                         foreach ($record->orderProducts as $orderProduct) {
-                            $key = $orderProduct->product_id . ($orderProduct->fill_load ? '-fill' : '');
+                            $isCustom = $orderProduct->is_custom_product;
+                            $key = ($isCustom ? 'custom-' . ($orderProduct->custom_description ?? $orderProduct->custom_name ?? $orderProduct->custom_sku ?? $orderProduct->id) : $orderProduct->product_id) . ($orderProduct->fill_load ? '-fill' : '');
 
                             if (!isset($products[$key])) {
                                 if ($orderProduct->fill_load) {
-                                    $products[$key] = "Fill Load x {$orderProduct->product->sku}";
+                                    $sku = $isCustom
+                                        ? ($orderProduct->custom_sku ?? $orderProduct->custom_name ?? 'Custom')
+                                        : ($orderProduct->product->sku ?? 'Unknown');
+                                    $products[$key] = "Fill Load x {$sku}";
                                 } else {
                                     $quantity = $record->orderProducts
                                         ->where('product_id', $orderProduct->product_id)
                                         ->where('fill_load', false)
                                         ->sum('quantity');
-                                    $products[$key] = "{$quantity} x {$orderProduct->product->sku}";
+                                    if ($isCustom) {
+                                        $desc = $orderProduct->custom_description ?? $orderProduct->custom_name ?? $orderProduct->custom_sku ?? 'Custom';
+                                        $products[$key] = "{$orderProduct->quantity} x {$desc}";
+                                    } else {
+                                        $sku = $orderProduct->product->sku ?? 'Unknown';
+                                        $products[$key] = "{$quantity} x {$sku}";
+                                    }
                                 }
                             }
                         }
-
                         return nl2br(implode("\n", array_values($products)));
                     })
                     ->html(),

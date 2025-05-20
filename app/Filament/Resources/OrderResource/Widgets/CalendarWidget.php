@@ -542,23 +542,23 @@ class CalendarWidget extends FullCalendarWidget
                         ->stickyModalFooter(),
                     Action::make('duplicate')
                         ->label('Duplicate Order')
-                        ->color('gray')
+                        ->color(COLOR::Yellow)
                         ->icon('heroicon-o-document-duplicate')
                         ->url(fn(Order $record) => route('filament.admin.resources.orders.duplicate', ['record' => $record]))
                         ->openUrlInNewTab(),
-                    Actions\DeleteAction::make(),
                     Action::make('print')
                         ->label('Print Delivery Tag')
-                        ->color('gray')
+                        ->color(COLOR::Green)
                         ->icon('heroicon-o-printer')
                         ->url(fn(Order $record) => route('orders.print', ['order' => $record]))
                         ->openUrlInNewTab(),
                     Action::make('view-digital-tag')
-                        ->label('View Digital Tag')
+                        ->label('Preview Delivery Tag')
                         ->color('gray')
                         ->icon('heroicon-o-printer')
                         ->url(fn(Order $record) => route('orders.print.formbg', ['order' => $record]))
                         ->openUrlInNewTab(),
+                    Actions\DeleteAction::make(),
                 ]);
         }
     }

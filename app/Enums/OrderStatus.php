@@ -16,6 +16,8 @@ enum OrderStatus: string
     case CANCELLED = 'cancelled';
     case INVOICED = 'invoiced';
     case COMPLETED = 'completed';
+    case TRANSFER = 'plant transfer';
+    case TRANSFERRED = 'plant transferred';
 
     public function label(): string
     {
@@ -32,6 +34,8 @@ enum OrderStatus: string
             self::CANCELLED => 'Cancelled',
             self::INVOICED => 'Invoiced',
             self::COMPLETED => 'Completed',
+            self::TRANSFER => "Plant Transfer",
+            self::TRANSFERRED => "Transferred",
         };
     }
 
@@ -50,6 +54,8 @@ enum OrderStatus: string
             self::CANCELLED => '#E53E3E',   // Red
             self::INVOICED => '#38B2AC',    // Teal
             self::COMPLETED => '#2F855A',   // Dark Green
+            self::TRANSFER => '#FFA500',   // Orange
+            self::TRANSFERRED => '#FFA500',   // Orange
         };
     }
 

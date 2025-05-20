@@ -394,6 +394,8 @@ trait HasOrderForm
                                                 OrderStatus::DELIVERED->value,
                                                 OrderStatus::INVOICED->value,
                                                 OrderStatus::COMPLETED->value,
+                                                OrderStatus::PICKED_UP->value,
+                                                OrderStatus::TRANSFERRED->value,
                                             ]);
                                         }),
                                 ]),
