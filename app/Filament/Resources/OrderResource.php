@@ -145,18 +145,19 @@ class OrderResource extends Resource
                         return 'Future Orders (> 3 weeks)';
                     })
                     ->orderQueryUsing(function (Builder $query, string $direction) {
-                        // Use assigned_delivery_date, then requested_delivery_date, then order_date for ordering
+                        // Prioritize upcoming/future orders, put past orders last
                         return $query->orderByRaw('
                             CASE
-                                WHEN assigned_delivery_date IS NOT NULL THEN 0
-                                WHEN requested_delivery_date IS NOT NULL THEN 1
-                                WHEN order_date IS NOT NULL THEN 2
-                                ELSE 3
+                                WHEN COALESCE(assigned_delivery_date, requested_delivery_date, order_date) >= CURRENT_DATE THEN 0
+                                WHEN COALESCE(assigned_delivery_date, requested_delivery_date, order_date) < CURRENT_DATE THEN 1
+                                ELSE 2
                             END
                         ')
                         ->orderByRaw('COALESCE(assigned_delivery_date, requested_delivery_date, order_date) ' . $direction);
                     })
                     ->collapsible()
+                    
+
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),

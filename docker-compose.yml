@@ -23,7 +23,7 @@ services:
       # Add any other env vars you need
 
   db:
-    image: postgres:15
+    image: postgis/postgis:17-3.4
     container_name: christyvault-db
     restart: unless-stopped
     environment:
