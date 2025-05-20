@@ -30,7 +30,7 @@ class DeliveryCalendarPrintController extends Controller
 
         // Get orders within date range, excluding weekends
         $orders = Order::query()
-            ->with(['customer', 'orderProducts.product', 'driver'])
+            ->with(['orderProducts.product', 'driver'])
             ->whereBetween('assigned_delivery_date', [$startDate, $endDate])
             ->whereRaw("EXTRACT(DOW FROM assigned_delivery_date) BETWEEN 1 AND 5") // Monday = 1, Friday = 5
             ->orderBy('assigned_delivery_date')
