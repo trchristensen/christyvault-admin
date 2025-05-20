@@ -52,8 +52,6 @@
             vertical-align: top;
             border: 1px solid #ddd;
             padding: 10px;
-            display: flex;
-            flex-direction: column;
             height: 100%;
         }
 
@@ -155,7 +153,7 @@
                                         @foreach ($orders[$date->format('Y-m-d')]->where('plant_location', 'colma_main') as $order)
                                             <div class="order">
                                                 <div class="order-header">
-                                                    {{ $order->customer?->name ?? 'No Customer' }}
+                                                    {{ $order->location?->name ?? 'No Location' }}
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
@@ -167,11 +165,11 @@
                                                         @php
                                                             try {
                                                                 $formattedPhone = (new PhoneNumber(
-                                                                    $order->customer->phone,
-                                                                    'US',
+                                                                    $order->location->preferredDeliveryContact->phone,
+                                                                    'US'
                                                                 ))->formatNational();
                                                             } catch (\Exception $e) {
-                                                                $formattedPhone = $order->customer->phone;
+                                                                $formattedPhone = $order->location->preferredDeliveryContact->phone;
                                                             }
                                                         @endphp
                                                         {{ $formattedPhone }}
@@ -195,7 +193,7 @@
                                         @foreach ($orders[$date->format('Y-m-d')]->where('plant_location', 'tulare_plant') as $order)
                                             <div class="order">
                                                 <div class="order-header">
-                                                    {{ $order->customer?->name ?? 'No Customer' }}
+                                                    {{ $order->location?->name ?? 'No Location' }}
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
@@ -207,11 +205,11 @@
                                                         @php
                                                             try {
                                                                 $formattedPhone = (new PhoneNumber(
-                                                                    $order->customer->phone,
-                                                                    'US',
+                                                                    $order->location->preferredDeliveryContact->phone,
+                                                                    'US'
                                                                 ))->formatNational();
                                                             } catch (\Exception $e) {
-                                                                $formattedPhone = $order->customer->phone;
+                                                                $formattedPhone = $order->location->preferredDeliveryContact->phone;
                                                             }
                                                         @endphp
                                                         {{ $formattedPhone }}
@@ -235,7 +233,7 @@
                                         @foreach ($orders[$date->format('Y-m-d')]->where('plant_location', 'colma_locals') as $order)
                                             <div class="order">
                                                 <div class="order-header">
-                                                    {{ $order->customer?->name ?? 'No Customer' }}
+                                                    {{ $order->location?->name ?? 'No Location' }}
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
@@ -247,11 +245,11 @@
                                                         @php
                                                             try {
                                                                 $formattedPhone = (new PhoneNumber(
-                                                                    $order->customer->phone,
-                                                                    'US',
+                                                                    $order->location->preferredDeliveryContact->phone,
+                                                                    'US'
                                                                 ))->formatNational();
                                                             } catch (\Exception $e) {
-                                                                $formattedPhone = $order->customer->phone;
+                                                                $formattedPhone = $order->location->preferredDeliveryContact->phone;
                                                             }
                                                         @endphp
                                                         {{ $formattedPhone }}
@@ -314,7 +312,7 @@
                                         @foreach ($orders[$date->format('Y-m-d')]->where('plant_location', 'colma_main') as $order)
                                             <div class="order">
                                                 <div class="order-header">
-                                                    {{ $order->customer?->name ?? 'No Customer' }}
+                                                    {{ $order->location?->name ?? 'No Location' }}
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
@@ -326,11 +324,11 @@
                                                         @php
                                                             try {
                                                                 $formattedPhone = (new PhoneNumber(
-                                                                    $order->customer->phone,
-                                                                    'US',
+                                                                    $order->location->preferredDeliveryContact->phone,
+                                                                    'US'
                                                                 ))->formatNational();
                                                             } catch (\Exception $e) {
-                                                                $formattedPhone = $order->customer->phone;
+                                                                $formattedPhone = $order->location->preferredDeliveryContact->phone;
                                                             }
                                                         @endphp
                                                         {{ $formattedPhone }}
@@ -354,7 +352,7 @@
                                         @foreach ($orders[$date->format('Y-m-d')]->where('plant_location', 'tulare_plant') as $order)
                                             <div class="order">
                                                 <div class="order-header">
-                                                    {{ $order->customer?->name ?? 'No Customer' }}
+                                                    {{ $order->location?->name ?? 'No Location' }}
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
@@ -366,11 +364,11 @@
                                                         @php
                                                             try {
                                                                 $formattedPhone = (new PhoneNumber(
-                                                                    $order->customer->phone,
-                                                                    'US',
+                                                                    $order->location->preferredDeliveryContact->phone,
+                                                                    'US'
                                                                 ))->formatNational();
                                                             } catch (\Exception $e) {
-                                                                $formattedPhone = $order->customer->phone;
+                                                                $formattedPhone = $order->location->preferredDeliveryContact->phone;
                                                             }
                                                         @endphp
                                                         {{ $formattedPhone }}
@@ -394,7 +392,7 @@
                                         @foreach ($orders[$date->format('Y-m-d')]->where('plant_location', 'colma_locals') as $order)
                                             <div class="order">
                                                 <div class="order-header">
-                                                    {{ $order->customer?->name ?? 'No Customer' }}
+                                                    {{ $order->location?->name ?? 'No Location' }}
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
@@ -406,11 +404,11 @@
                                                         @php
                                                             try {
                                                                 $formattedPhone = (new PhoneNumber(
-                                                                    $order->customer->phone,
-                                                                    'US',
+                                                                    $order->location->preferredDeliveryContact->phone,
+                                                                    'US'
                                                                 ))->formatNational();
                                                             } catch (\Exception $e) {
-                                                                $formattedPhone = $order->customer->phone;
+                                                                $formattedPhone = $order->location->preferredDeliveryContact->phone;
                                                             }
                                                         @endphp
                                                         {{ $formattedPhone }}
