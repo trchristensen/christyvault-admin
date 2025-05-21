@@ -166,6 +166,20 @@ class OrderResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options(OrderStatus::class)
                     ->multiple(),
+                Tables\Filters\Filter::make('product_notes')
+                    ->form([
+                        Forms\Components\TextInput::make('notes')
+                            ->label('Product Notes')
+                            ->placeholder('Search in product notes...'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['notes'],
+                            fn (Builder $query, $notes): Builder => $query->whereHas('orderProducts', function ($query) use ($notes) {
+                                $query->where('notes', 'like', "%{$notes}%");
+                            })
+                        );
+                    }),
                 Tables\Filters\Filter::make('requested_delivery_date')
                     ->form([
                         Forms\Components\DatePicker::make('from'),
@@ -190,13 +204,19 @@ class OrderResource extends Resource
                         'filament.resources.order-resource.custom-view',
                         ['record' => $record]
                     ))
-                    // ->modalHeading(fn($record) => $record->order_number)
                     ->form([])
                     ->modalFooterActions([
                         Action::make('edit')
                             ->modalWidth('7xl')
                             ->stickyModalFooter(),
                         Action::make('delete'),
+                        Action::make('restore')
+                            ->label('Restore')
+                            ->icon('heroicon-o-arrow-uturn-left')
+                            ->color('success')
+                            ->action(fn(Order $record) => $record->restore())
+                            ->requiresConfirmation()
+                            ->visible(fn(Order $record) => $record->trashed()),
                         Action::make('print')
                             ->label('Print Delivery Tag')
                             ->color('gray')
@@ -224,25 +244,11 @@ class OrderResource extends Resource
                 ->url(fn (Order $record): string => route('filament.admin.resources.orders.duplicate', ['record' => $record]))
                 ->openUrlInNewTab(),
                 Tables\Actions\DeleteAction::make(),
-
-                // Action::make('mark_delivered')
-                //     ->label('Mark Delivered')
-                //     ->icon('heroicon-o-truck')
-                //     ->color('success')
-                //     ->action(fn(Order $record) => $record->update(['status' => 'delivered']))
-                //     ->requiresConfirmation()
-                //     ->hidden(fn(Order $record) => $record->status === 'delivered'),
-                // Action::make('cancel_order')
-                //     ->label('Cancel Order')
-                //     ->icon('heroicon-o-x-circle')
-                //     ->color('danger')
-                //     ->action(fn(Order $record) => $record->update(['status' => 'cancelled']))
-                //     ->requiresConfirmation()
-                //     ->hidden(fn(Order $record) => in_array($record->status, ['delivered', 'cancelled'])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }
