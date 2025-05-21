@@ -4,9 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class OrderProduct extends Pivot
 {
+    use LogsActivity;
+
     protected $table = 'order_product';
 
     public $incrementing = true;
@@ -55,5 +59,13 @@ class OrderProduct extends Pivot
     public function getDisplayDescriptionAttribute(): ?string
     {
         return $this->is_custom_product ? $this->custom_description : $this->product->description;
+    }
+
+       public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnlyDirty()
+            ->logAll()
+            ->useLogName('order_product');
     }
 }

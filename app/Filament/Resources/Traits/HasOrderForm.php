@@ -290,7 +290,8 @@ trait HasOrderForm
                                             } else {
                                                 $set('custom_description', null);
                                             }
-                                        }),
+                                        })
+                                        ->live('blur'),
                                     Forms\Components\Select::make('product_id')
                                         ->createOptionForm([
                                             Forms\Components\TextInput::make('sku')
@@ -361,12 +362,14 @@ trait HasOrderForm
                                         ->afterStateUpdated(
                                             fn($state, callable $set) =>
                                             $set('price', Product::find($state)?->price ?? 0)
-                                        ),
+                                        )
+                                        ->live('blur'),
                                     Forms\Components\TextInput::make('custom_description')
                                         ->label('Custom Product Description')
                                         ->required(fn (callable $get) => $get('is_custom_product'))
                                         ->visible(fn (callable $get) => $get('is_custom_product'))
-                                         ->columnSpan(6),
+                                         ->columnSpan(6)
+                                         ->live('blur'),
                                     Forms\Components\Toggle::make('fill_load')
                                         ->label('Fill load')
                                         ->columnSpan(2)
@@ -376,14 +379,16 @@ trait HasOrderForm
                                             if ($state) {
                                                 $set('quantity', null);
                                             }
-                                        }),
+                                        })
+                                        ->live('blur'),
                                     Forms\Components\TextInput::make('quantity')
                                         ->numeric()
                                         ->columnSpan(2)
                                         ->default(1)
                                         ->required(fn(Forms\Get $get): bool => !$get('fill_load'))
                                         ->disabled(fn(Forms\Get $get): bool => $get('fill_load'))
-                                        ->dehydrated(fn(Forms\Get $get): bool => !$get('fill_load')),
+                                        ->dehydrated(fn(Forms\Get $get): bool => !$get('fill_load'))
+                                        ->live('blur'),
                                     Forms\Components\TextInput::make('quantity_delivered')
                                         ->label('Delivered')
                                         ->columnSpan(1)
@@ -421,6 +426,27 @@ trait HasOrderForm
                                 ]),
                         ])
                         ->columns(12)
+                        ->itemLabel(function ($state) {
+                            // If fill_load is true, show "Fill load" instead of quantity
+                            $quantityLabel = (!empty($state['fill_load'])) ? 'Fill load' : ($state['quantity'] ?? 1);
+
+                            // If using custom product, use the custom description
+                            if (($state['is_custom_product'] ?? false) && !empty($state['custom_description'])) {
+                                return "{$quantityLabel} x Custom - {$state['custom_description']}";
+                            }
+
+                            // Otherwise, look up the product by product_id
+                            $sku = '';
+                            $name = '';
+                            if (!empty($state['product_id'])) {
+                                $product = \App\Models\Product::find($state['product_id']);
+                                if ($product) {
+                                    $sku = $product->sku;
+                                    $name = $product->name;
+                                }
+                            }
+                            return "{$quantityLabel} x {$sku}" . ($name ? " - {$name}" : '');
+                        }),
                 ]),
         ];
     }
