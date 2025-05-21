@@ -60,8 +60,8 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Pages\SystemAdmin::class,
             ])
             ->navigationGroups([
-                NavigationGroup::make()
-                    ->label('Human Resources'),
+                // NavigationGroup::make()
+                //     ->label('Human Resources'),
                 NavigationGroup::make()
                     ->label('Delivery Management'),
                 NavigationGroup::make()

@@ -22,6 +22,11 @@ class LeaveRequestResource extends Resource
 
     protected static ?string $navigationGroup = 'Human Resources';
 
+     public static function canAccess(): bool
+    {
+        return auth()->user()->email === 'tchristensen@christyvault.com';
+    }
+
 
     public static function form(Form $form): Form
     {
