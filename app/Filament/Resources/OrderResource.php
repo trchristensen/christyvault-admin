@@ -90,9 +90,9 @@ class OrderResource extends Resource
                         default => 'gray',
                     }),
 
-                Tables\Columns\TextColumn::make('trip.trip_number')
-                    ->label('Trip')
-                    ->default('Unassigned'),
+                // Tables\Columns\TextColumn::make('trip.trip_number')
+                //     ->label('Trip')
+                //     ->default('Unassigned'),
 
                 Tables\Columns\TextColumn::make('orderProducts')
                     ->label('Products')
