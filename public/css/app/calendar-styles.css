@@ -1,3 +1,11 @@
+/* table.fc-scrollgrid.fc-scrollgrid-liquid {
+    min-width: 900px;
+}
+
+.filament-fullcalendar {
+    overflow-y: scroll;
+} */
+
 .fc-event-title-container {
     display: none !important;
 }

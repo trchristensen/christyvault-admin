@@ -49,6 +49,9 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => '#1c3366',
             ])
             ->maxContentWidth(MaxWidth::Full)
+            ->resources([
+                config('filament-logger.activity_resource')
+            ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
@@ -106,7 +109,7 @@ class AdminPanelProvider extends PanelProvider
                 // Widgets\AccountWidget::class,
                 // Widgets\FilamentInfoWidget::class,
                 // WidgetsCalendarWidget::class,
-                RecentOrdersWidget::class,
+                // RecentOrdersWidget::class,
                 OrderStatisticsWidget::class,
                 // SalesStatsWidget::class,
             ])

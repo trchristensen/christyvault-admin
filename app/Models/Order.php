@@ -12,11 +12,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use App\Enums\OrderStatus;
 use Filament\Support\Colors\Color;
-
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Order extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'order_number',
@@ -231,5 +232,14 @@ class Order extends Model
                 'border' => $getColor('Gray', 500),
             ],
         };
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnlyDirty()
+            ->logAll()
+            // change type to 'order'
+            ->useLogName('order');
     }
 }
