@@ -182,6 +182,20 @@ class OrderResource extends Resource
                             })
                         );
                     }),
+                    Tables\Filters\Filter::make('product_location')
+                    ->form([
+                        Forms\Components\TextInput::make('location')
+                            ->label('Location')
+                            ->placeholder('Search in location...'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['location'],
+                            fn (Builder $query, $notes): Builder => $query->whereHas('orderProducts', function ($query) use ($notes) {
+                                $query->where('location', 'like', "%{$notes}%");
+                            })
+                        );
+                    }),
                 Tables\Filters\Filter::make('requested_delivery_date')
                     ->form([
                         Forms\Components\DatePicker::make('from'),
