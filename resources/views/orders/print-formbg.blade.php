@@ -252,12 +252,22 @@
             opacity: 1;
             /* opacity: 0; */
         }
+
+        .order-number {
+            position: absolute;
+            top : 80px;
+            right: 100px;
+            font-size: 14px;
+        }
     </style>
 </head>
 
 <body>
     <img class="template" src="{{ public_path('images/form.jpeg') }}" style="width: 100%; object-fit: contain; object-position: top left; position: absolute; top: 0; left: 0; z-index: 0;">
     <article style="position: relative; z-index: 1;">
+        <div class="order-number">
+            {{ $order->order_number }}
+        </div>
         {{-- Customer Info Section --}}
         <div class="customer-info">
             <span class="customer-name">{{ $order->location->name }}</span>

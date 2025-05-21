@@ -49,7 +49,9 @@ class OrderResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('order_number')
                     ->label('Order #')
-                    ->searchable()
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->where('order_number', 'like', "%{$search}%");
+                    })
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('location.name')
