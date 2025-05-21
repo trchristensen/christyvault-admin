@@ -25,6 +25,8 @@ use Filament\Resources\Components\Tab;
 use App\Filament\Resources\Traits\HasOrderForm;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\Facades\DB;
+use Filament\Support\Colors\Color;
+
 
 class OrderResource extends Resource
 {
@@ -209,7 +211,6 @@ class OrderResource extends Resource
                         Action::make('edit')
                             ->modalWidth('7xl')
                             ->stickyModalFooter(),
-                        Action::make('delete'),
                         Action::make('restore')
                             ->label('Restore')
                             ->icon('heroicon-o-arrow-uturn-left')
@@ -217,33 +218,47 @@ class OrderResource extends Resource
                             ->action(fn(Order $record) => $record->restore())
                             ->requiresConfirmation()
                             ->visible(fn(Order $record) => $record->trashed()),
+                        Action::make('duplicate')
+                        ->label('Duplicate Order')
+                        ->color(COLOR::Yellow)
+                        ->icon('heroicon-o-document-duplicate')
+                        ->url(fn(Order $record) => route('filament.admin.resources.orders.duplicate', ['record' => $record]))
+                        ->openUrlInNewTab(),
                         Action::make('print')
                             ->label('Print Delivery Tag')
-                            ->color('gray')
+                            ->color(COLOR::Green)
                             ->icon('heroicon-o-printer')
                             ->url(fn(Order $record) => route('orders.print', ['order' => $record]))
                             ->openUrlInNewTab(),
                         Action::make('view-digital-tag')
-                        ->label('View Digital Tag')
-                        ->color('gray')
-                        ->icon('heroicon-o-printer')
-                        ->url(fn(Order $record) => route('orders.print.formbg', ['order' => $record]))
-                        ->openUrlInNewTab(),
+                            ->label('Preview Delivery Tag')
+                            ->color('gray')
+                            ->icon('heroicon-o-printer')
+                            ->url(fn(Order $record) => route('orders.print.formbg', ['order' => $record]))
+                            ->openUrlInNewTab(),
+                        Tables\Actions\DeleteAction::make(),
                     ]),
-                Action::make('print preview')
-                    ->label(null)
-                    ->iconButton()
-                    ->icon('heroicon-o-printer')
-                    ->url(fn(Order $record): string => route('orders.print', $record))
-                    ->openUrlInNewTab(),
-                Tables\Actions\EditAction::make(),
-                Action::make('duplicate')
-                ->label('Duplicate')
-                ->icon('heroicon-o-document-duplicate')
-                ->color('gray')
-                ->url(fn (Order $record): string => route('filament.admin.resources.orders.duplicate', ['record' => $record]))
-                ->openUrlInNewTab(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Action::make('Print Delivery Tag')
+                        ->label('Print Delivery Tag')
+                        ->icon('heroicon-o-printer')
+                        ->url(fn(Order $record): string => route('orders.print', $record))
+                        ->openUrlInNewTab(),
+                    Tables\Actions\EditAction::make(),
+                    Action::make('duplicate')
+                        ->label('Duplicate')
+                        ->icon('heroicon-o-document-duplicate')
+                        ->color('gray')
+                        ->url(fn (Order $record): string => route('filament.admin.resources.orders.duplicate', ['record' => $record]))
+                        ->openUrlInNewTab(),
+                      Action::make('view-digital-tag')
+                            ->label('Preview Delivery Tag')
+                            ->color('gray')
+                            ->icon('heroicon-o-printer')
+                            ->url(fn(Order $record) => route('orders.print.formbg', ['order' => $record]))
+                            ->openUrlInNewTab(),
+                    Tables\Actions\DeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
