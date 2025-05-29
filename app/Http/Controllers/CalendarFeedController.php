@@ -18,14 +18,14 @@ class CalendarFeedController extends Controller
             ->withoutAutoTimezoneComponents();  // Prevents timezone duplication
 
         Order::query()
-            ->with(['customer', 'orderProducts.product'])
+            ->with(['location', 'orderProducts.product'])
             ->withoutTrashed()
             ->whereNotIn('status', [OrderStatus::CANCELLED])
             ->get()
             ->each(function (Order $order) use ($calendar) {
                 $calendar->event(
                     Event::create()
-                        ->name($order->customer?->name ?? $order->order_number)
+                        ->name($order->location?->name ?? $order->order_number)
                         ->description($this->generateDescription($order))
                         ->uniqueIdentifier($order->id . '-' . time()) // Add timestamp to UID to force refresh
                         ->createdAt($order->created_at)

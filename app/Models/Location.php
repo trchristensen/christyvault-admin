@@ -26,12 +26,20 @@ class Location extends Model
         'notes',
         'preferred_delivery_contact_id',
         'phone',
-        'email'
+        'email',
+        'last_order_at',
+        'average_order_frequency_days',
+        'common_order_items',
+        'total_orders',
+        'average_order_value',
     ];
 
     protected $casts = [
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
+        'last_order_at' => 'datetime',
+        // 'common_order_items' => 'array',
+        'average_order_value' => 'decimal:2',
     ];
 
     public function getCoordinatesAttribute(): ?string
@@ -92,5 +100,114 @@ class Location extends Model
             $this->state,
             $this->postal_code,
         ])->filter()->join(', ');
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function updateOrderAnalytics(): void
+    {
+        $orders = $this->orders()
+            ->where('status', '!=', 'cancelled')
+            ->orderBy('order_date', 'desc')
+            ->get();
+
+        if ($orders->isEmpty()) {
+            return;
+        }
+
+        // Update last order date
+        $this->last_order_at = $orders->first()->order_date;
+        
+        // Update total orders
+        $this->total_orders = $orders->count();
+
+        // Calculate average order value
+        $this->average_order_value = $orders->avg(function ($order) {
+            return $order->orderProducts->sum(function ($product) {
+                return $product->quantity * $product->price;
+            });
+        });
+
+        // Calculate average order frequency
+        if ($orders->count() > 1) {
+            $orderDates = $orders->pluck('order_date')->sort();
+            $totalDays = 0;
+            $count = 0;
+
+            for ($i = 1; $i < $orderDates->count(); $i++) {
+                $days = $orderDates[$i]->diffInDays($orderDates[$i - 1]);
+                if ($days > 0) { // Only count if there's a gap
+                    $totalDays += $days;
+                    $count++;
+                }
+            }
+
+            $this->average_order_frequency_days = $count > 0 ? round($totalDays / $count) : null;
+        }
+
+        // Calculate common order items
+        $productCounts = [];
+        foreach ($orders as $order) {
+            foreach ($order->orderProducts as $product) {
+                $sku = $product->product->sku ?? 'Unknown SKU';
+                if ($sku === 'Unknown SKU') {
+                    continue; // Skip unknown SKUs
+                }
+                $productId = $product->product_id;
+                if (!isset($productCounts[$productId])) {
+                    $productCounts[$productId] = [
+                        'count' => 0,
+                        'sku' => $sku,
+                        'last_ordered' => $order->order_date,
+                    ];
+                }
+                $productCounts[$productId]['count']++;
+            }
+        }
+
+        // Sort by count and take top 5
+        uasort($productCounts, function ($a, $b) {
+            return $b['count'] <=> $a['count'];
+        });
+        
+        $this->common_order_items = array_slice($productCounts, 0, 5, true);
+        
+        $this->save();
+    }
+
+    public function getOrderStatusAttribute(): string
+    {
+        if (!$this->last_order_at) {
+            return 'No Orders';
+        }
+
+        $daysSinceLastOrder = now()->diffInDays($this->last_order_at);
+        
+        if (!$this->average_order_frequency_days) {
+            return 'New Customer';
+        }
+
+        if ($daysSinceLastOrder > ($this->average_order_frequency_days * 1.5)) {
+            return 'Overdue';
+        } elseif ($daysSinceLastOrder > $this->average_order_frequency_days) {
+            return 'Due Soon';
+        } else {
+            return 'Recently Ordered';
+        }
+    }
+
+    public function getOrderStatusColorAttribute(): string
+    {
+        return match($this->order_status) {
+            'No Orders' => 'gray',
+            'New Customer' => 'blue',
+            'Overdue' => 'red',
+            'Due Soon' => 'yellow',
+            'Recently Ordered' => 'green',
+            default => 'gray',
+        };
     }
 }

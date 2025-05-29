@@ -226,40 +226,84 @@ class LocationResource extends Resource
                     })
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('full_address')
-                    ->label('Address')
-                    ->searchable(query: function (Builder $query, string $search): Builder {
-                        return $query->where('address_line1', 'like', "%{$search}%")
-                            ->orWhere('city', 'like', "%{$search}%")
-                            ->orWhere('state', 'like', "%{$search}%")
-                            ->orWhere('postal_code', 'like', "%{$search}%");
-                    }),
-                Tables\Columns\TextColumn::make('coordinates')
-                    ->label('Coordinates')
-                    ->getStateUsing(
-                        fn($record): string =>
-                        $record->hasCoordinates()
-                            ? "{$record->latitude}, {$record->longitude}"
-                            : 'Not set'
-                    )
-                    ->searchable(['latitude', 'longitude']),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
+                Tables\Columns\TextColumn::make('city')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('state')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('order_status')
+                    ->badge()
+                    ->color(fn (Location $record): string => $record->order_status_color),
+                Tables\Columns\TextColumn::make('last_order_at')
+                    ->label('Last order at')
+                    ->formatStateUsing(function ($state) {
+                        if (!$state) return 'N/A';
+                        try {
+                            $date = \Carbon\Carbon::parse($state);
+                            $daysAgo = intval($date->diffInDays());
+                            $dateString = $date->format('n/j');
+                            return $daysAgo === 1
+                                ? "1 day ago ({$dateString})"
+                                : "{$daysAgo} days ago " . "\n" . "({$dateString})";
+                        } catch (\Exception $e) {
+                            return $state;
+                        }
+                    })
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('average_order_frequency_days')
+                    ->label('Avg. Order Frequency')
+                    ->formatStateUsing(fn ($state) => $state ? "{$state} days" : 'N/A')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('total_orders')
+                    ->label('Total Orders')
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('common_order_items')
+                    ->label('Common Items')
+                    ->formatStateUsing(function ($state) {
+                        // Always decode as JSON, no matter what
+                        $array = json_decode($state, true);
+                        if (!is_array($array) || empty($array)) return 'N/A';
+
+                        // Convert associative arrays (product_id as key) to indexed arrays
+                        $array = array_values($array);
+
+                        return collect($array)
+                            ->take(3)
+                            ->map(function ($item) {
+                                if (is_array($item) && isset($item['sku'], $item['count'])) {
+                                    return "{$item['count']} x {$item['sku']}";
+                                }
+                                return '';
+                            })
+                            ->filter()
+                            ->join("<br>"); // Each item on its own line, no commas
+                    })
+                    ->html()
+                    ->wrap()
+                    ->toggleable(),
             ])
+            ->defaultSort('last_order_at', 'desc')
             ->filters([
+                Tables\Filters\SelectFilter::make('order_status')
+                    ->options([
+                        'No Orders' => 'No Orders',
+                        'New Customer' => 'New Customer',
+                        'Overdue' => 'Overdue',
+                        'Due Soon' => 'Due Soon',
+                        'Recently Ordered' => 'Recently Ordered',
+                    ]),
                 Tables\Filters\SelectFilter::make('location_type')
                     ->options([
-                        'cemetery' => 'Cemetery',
-                        'section' => 'Cemetery Section',  // for specific yards/sections
+                        'business' => 'Business',
+                        'residential' => 'Residential',
                         'funeral_home' => 'Funeral Home',
+                        'cemetery' => 'Cemetery',
                         'other' => 'Other',
-                    ])
+                    ]),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),

@@ -3,7 +3,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      platforms:
+        - linux/arm64/v8
     image: christyvault-app
+    platform: linux/arm64/v8
     container_name: christyvault-app
     restart: unless-stopped
     working_dir: /var/www
@@ -23,17 +26,20 @@ services:
       # Add any other env vars you need
 
   db:
-    image: postgis/postgis:17-3.4
+    image: postgres:17
+    platform: linux/arm64/v8
     container_name: christyvault-db
     restart: unless-stopped
     environment:
       POSTGRES_DB: christyvault
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_INITDB_ARGS: "--data-checksums"
     ports:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-postgis.sh:/docker-entrypoint-initdb.d/init-postgis.sh
 
 volumes:
   db_data:
