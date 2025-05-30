@@ -735,7 +735,7 @@ class CalendarWidget extends FullCalendarWidget
 
         return [
             // 'initialView' => 'dayGridMonth',
-            'weekends' => true,
+            'weekends' => false,
             'initialView' => 'dayGridMonth',
             // 'multiMonth' => [
             //     'months' => 3, // Show only 3 months at a time
