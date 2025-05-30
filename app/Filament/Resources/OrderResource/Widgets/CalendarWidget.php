@@ -189,19 +189,16 @@ class CalendarWidget extends FullCalendarWidget
                 </div>
                 ${(event.extendedProps.orders || []).map(order => `
                     <div class="order-container status-${(order.status || '').toLowerCase()}" data-order-id="${order.id || ''}" onclick="event.stopPropagation();">
-                        ${order.title ? `<div class="order-title">${order.title}</div>` : ''}
-                        ${(order.extendedProps?.location_line1 || order.extendedProps?.location_line2) ? `
-                            <div class="order-address">
-                                ${order.extendedProps?.location_line2 ? `<div>${order.extendedProps.location_line2}</div>` : ''}
-                            </div>
-                        ` : ''}
-
+                        <div style=\"display:flex;align-items:center;\">
+                            ${order.title ? `<div class=\"order-title\">${order.title}</div>` : ''}
+                            ${order.order_number ? `<span class=\"order-number\" style=\"font-size:0.85em;color:#888;margin-left:0.5em;font-weight:500;\">#${order.order_number}</span>` : ''}
+                        </div>
                         ${order.requested_delivery_date ? `<div class="order-requested-delivery-date"><span>Requested: </span> ${order.requested_delivery_date}</div>` : ''}
                         ${order.order_date ? `<div class="order-date"><span>Ordered: </span>${order.order_date}</div>` : ''}
-                        <div class="pt-2 border-t order-status-wrapper border-gray-300/50">
-                        ${event.extendedProps?.status ? `<div class="overflow-hidden order-status">${event.extendedProps.delivered_at ? 'Delivered ' . event.extendedProps.delivered_at : event.extendedProps.status}</div>` : ''}
-                    </div>
-
+                        <div class="pt-2 border-t order-status-wrapper border-gray-300/50" style="display:flex;justify-content:space-between;align-items:center;">
+                          <div class="overflow-hidden order-status">${order.status ? order.status : ''}</div>
+                          ${order.order_number ? `<span class=\"order-number\" style=\"font-size:0.85em;color:#888;font-weight:500;\">#${order.order_number}</span>` : ''}
+                        </div>
                     </div>
                 `).join('')}
             `;
@@ -232,33 +229,31 @@ class CalendarWidget extends FullCalendarWidget
             const content = document.createElement('div');
             content.innerHTML = `
                 <div class="order-container status-${(event.extendedProps?.status || '').toLowerCase()}">
-                    ${event.title ? `<div class="order-title">${event.title}</div>` : ''}
+                    <div style=\"display:flex;align-items:center;\">
+                        ${event.title ? `<div class=\"order-title\">${event.title}</div>` : ''}
+                     
+                    </div>
                     ${(event.extendedProps?.location_line1 || event.extendedProps?.location_line2) ? `
                         <div class="order-address">
                             ${event.extendedProps?.location_line2 ? `<div>${event.extendedProps.location_line2}</div>` : ''}
                         </div>
                     ` : ''}
-                    <div class="pt-2 border-t order-status-wrapper border-gray-300/50">
-                        ${(() => {
-                            const status = event.extendedProps.status;
-                            let statusText = status;
-
-                            // Show different date info based on status
-                            if (status === 'Delivered' && event.extendedProps.delivered_at) {
-                                statusText = `${status} ${event.extendedProps.delivered_at}`;
-                            }
-                            else if (status === 'Out For Delivery' && event.extendedProps.start_time) {
-                                statusText = `${status} at ${event.extendedProps.start_time}`;
-                            }
-                            else if (status === 'Pending') {
-                                statusText = `${status} - Req: ${event.extendedProps.requested_delivery_date}`;
-                            }
-                            else if (status === 'Confirmed') {
-                                statusText = `${status} - Ord: ${event.extendedProps.order_date}`;
-                            }
-
-                            return `<div class="overflow-hidden order-status">${statusText}</div>`;
-                        })()}
+                    <div class="pt-2 border-t order-status-wrapper border-gray-300/50" style="display:flex;justify-content:space-between;align-items:center;">
+                      <div class="overflow-hidden order-status">${(() => {
+                        const status = event.extendedProps.status;
+                        let statusText = status;
+                        if (status === 'Delivered' && event.extendedProps.delivered_at) {
+                          statusText = `${status} ${event.extendedProps.delivered_at}`;
+                        } else if (status === 'Out For Delivery' && event.extendedProps.start_time) {
+                          statusText = `${status} at ${event.extendedProps.start_time}`;
+                        } else if (status === 'Pending') {
+                          statusText = `${status} - Req: ${event.extendedProps.requested_delivery_date}`;
+                        } else if (status === 'Confirmed') {
+                          statusText = `${status} - Ord: ${event.extendedProps.order_date}`;
+                        }
+                        return statusText;
+                      })()}</div>
+                      ${event.extendedProps?.order_number ? `<span class=\"order-number\" style=\"font-size:0.85em;color:#888;font-weight:500;\">#${event.extendedProps.order_number}</span>` : ''}
                     </div>
                 </div>
             `;
@@ -356,7 +351,7 @@ class CalendarWidget extends FullCalendarWidget
                                                 ->get()
                                                 ->mapWithKeys(fn(Order $order) => [
                                                     $order->id => view('filament.components.order-option', [
-                                                        'orderNumber' => $order->order_number,
+                                                        'orderNumber' => preg_replace('/^ORD-/', '', $order->order_number),
                                                         'customerName' => $order->location?->name,
                                                         'status' => $order->status,
                                                         'requestedDeliveryDate' => $order->requested_delivery_date?->format('M j'),
@@ -610,6 +605,7 @@ class CalendarWidget extends FullCalendarWidget
                         'orders' => $trip->orders->map(fn($order) => [
                             'id' => $order->id,
                             'title' => $order->location?->name ?? $order->order_number,
+                            'order_number' => preg_replace('/^ORD-/', '', $order->order_number),
                             'status' => Str::headline($order->status),
                             'requested_delivery_date' => $order->requested_delivery_date?->format('M j'),
                             'delivered_at' => $order->delivered_at?->format('M j, g:i A'),
@@ -709,6 +705,7 @@ class CalendarWidget extends FullCalendarWidget
                     'extendedProps' => [
                         'type' => 'order',
                         'uuid' => $order->uuid,
+                        'order_number' => preg_replace('/^ORD-/', '', $order->order_number),
                         'status' => Str::headline($order->status),
                         'location_line1' => $order->location?->address_line1,
                         'location_line2' => $order->location ? 
