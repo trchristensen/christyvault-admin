@@ -272,6 +272,28 @@ class CalendarWidget extends FullCalendarWidget
                 });
             });
         }
+
+        // Add group start label
+        if (event.extendedProps?.is_group_start) {
+            const groupStartLabel = document.createElement('div');
+            groupStartLabel.style.margin = '12px 0 6px 0';
+            groupStartLabel.style.padding = '0';
+            groupStartLabel.style.fontSize = '1em';
+            groupStartLabel.style.fontWeight = 'bold';
+            groupStartLabel.style.color = '#111';
+            groupStartLabel.style.background = 'none';
+            groupStartLabel.style.border = 'none';
+            groupStartLabel.style.letterSpacing = '0.5px';
+            groupStartLabel.style.textAlign = 'left';
+            const plantLocationMap = {
+                'colma_main': 'Colma',
+                'colma_locals': 'Locals',
+                'tulare_plant': 'Tulare',
+            };
+            const rawLoc = (event.extendedProps.plant_location || '').toLowerCase();
+            groupStartLabel.textContent = plantLocationMap[rawLoc] || (rawLoc ? rawLoc.charAt(0).toUpperCase() + rawLoc.slice(1) : '');
+            eventMainEl.insertBefore(groupStartLabel, eventMainEl.firstChild);
+        }
     }
     JS;
     }
@@ -688,36 +710,39 @@ class CalendarWidget extends FullCalendarWidget
                 return $priorityA <=> $priorityB;
             });
             
-            // Map each order to event format after sorting
+            // Add is_group_start flag
+            $lastPlantLocation = null;
             foreach ($dateOrders as $order) {
-                $displayDate = $order->assigned_delivery_date ?? 
-                              $order->requested_delivery_date ?? 
-                              $order->order_date;
-                           
+                $displayDate = $order->assigned_delivery_date ?? $order->requested_delivery_date ?? $order->order_date;
                 $priority = [
                     'colma_main' => 1,
                     'colma_locals' => 2,
                     'tulare_plant' => 3,
                 ];
                 $sortOrder = $priority[$order->plant_location] ?? 99;
-
+                $isGroupStart = $order->plant_location !== $lastPlantLocation;
+                $lastPlantLocation = $order->plant_location;
                 $orderEvents[] = [
                     'id' => 'order_' . $order->id,
                     'title' => $order->location?->name ?? $order->order_number,
                     'start' => $displayDate->format('Y-m-d'),
                     'allDay' => true,
-                    'backgroundColor' => $this->getEventColor($order),
-                    'borderColor' => $this->getEventColor($order),
+                    'backgroundColor' => 'transparent',
+                    'classNames' => ['order-event'],
+                    'borderColor' => 'transparent',
+                    // 'backgroundColor' => $this->getEventColor($order),
+                    // 'borderColor' => $this->getEventColor($order),
                     'textColor' => '#ffffff',
                     'plant_location' => $order->plant_location,
                     'sort_order' => $sortOrder,
+                    'is_group_start' => $isGroupStart,
                     'extendedProps' => [
                         'type' => 'order',
                         'uuid' => $order->uuid,
                         'order_number' => preg_replace('/^ORD-/', '', $order->order_number),
                         'status' => Str::headline($order->status),
                         'location_line1' => $order->location?->address_line1,
-                        'location_line2' => $order->location ? 
+                        'location_line2' => $order->location ?
                             "{$order->location->city}, {$order->location->state}" : '',
                         'contact_name' => $order->location?->preferredDeliveryContact?->name,
                         'contact_phone' => $order->location?->preferredDeliveryContact?->phone,
@@ -727,6 +752,7 @@ class CalendarWidget extends FullCalendarWidget
                         'start_time' => $order->start_time?->format('g:i A'),
                         'plant_location' => $order->plant_location,
                         'sort_order' => $sortOrder,
+                        'is_group_start' => $isGroupStart,
                     ],
                 ];
             }
