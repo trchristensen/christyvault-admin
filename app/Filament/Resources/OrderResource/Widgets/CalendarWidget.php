@@ -694,6 +694,13 @@ class CalendarWidget extends FullCalendarWidget
                               $order->requested_delivery_date ?? 
                               $order->order_date;
                            
+                $priority = [
+                    'colma_main' => 1,
+                    'colma_locals' => 2,
+                    'tulare_plant' => 3,
+                ];
+                $sortOrder = $priority[$order->plant_location] ?? 99;
+
                 $orderEvents[] = [
                     'id' => 'order_' . $order->id,
                     'title' => $order->location?->name ?? $order->order_number,
@@ -702,6 +709,8 @@ class CalendarWidget extends FullCalendarWidget
                     'backgroundColor' => $this->getEventColor($order),
                     'borderColor' => $this->getEventColor($order),
                     'textColor' => '#ffffff',
+                    'plant_location' => $order->plant_location,
+                    'sort_order' => $sortOrder,
                     'extendedProps' => [
                         'type' => 'order',
                         'uuid' => $order->uuid,
@@ -716,6 +725,8 @@ class CalendarWidget extends FullCalendarWidget
                         'delivered_at' => $order->delivered_at?->format('M j, g:i A'),
                         'order_date' => $order->order_date?->format('M j'),
                         'start_time' => $order->start_time?->format('g:i A'),
+                        'plant_location' => $order->plant_location,
+                        'sort_order' => $sortOrder,
                     ],
                 ];
             }
@@ -734,9 +745,9 @@ class CalendarWidget extends FullCalendarWidget
         // $endDate = $today->copy()->addMonths(2)->endOfMonth();
 
         return [
-            // 'initialView' => 'dayGridMonth',
             'weekends' => false,
-            'initialView' => 'dayGridMonth',
+            // 'initialView' => 'dayGridMonth',
+            'initialView' => 'dayGridWeek',
             // 'multiMonth' => [
             //     'months' => 3, // Show only 3 months at a time
             //     'startMonth' => $today->month,
@@ -755,7 +766,7 @@ class CalendarWidget extends FullCalendarWidget
                 'center' => 'title',
                 'right' => 'dayGridMonth,timeGridWeek,timeGridDay,multiMonthYear',
             ],
-
+            'eventOrder' => 'sort_order',
         ];
     }
 
