@@ -23,9 +23,9 @@
                             <div class="order-address">{{ $order->location->city }}, {{ $order->location->state }}</div>
                         @endif
                         <div class="order-status">
-                            <span>{{ ucfirst($order->status) }}</span>
+                            <span>{{ \App\Enums\OrderStatus::tryFrom($order->status)?->label() ?? ucfirst(str_replace('_', ' ', $order->status)) }}</span>
                             @if($order->order_number)
-                                <span>#{{ ltrim($order->order_number, 'ORD-') }}</span>
+                                <span class="order-number">#{{ ltrim($order->order_number, 'ORD-') }}</span>
                             @endif
                         </div>
                     </div>
@@ -77,12 +77,12 @@
                 const props = event.extendedProps;
                 const content = document.createElement('div');
                 content.innerHTML = `
-                    <div class="order-container status-${(props.status || '').toLowerCase()}">
+                    <div class="order-container status-${(props.status_raw || props.status || '').toLowerCase()}">
                         <div class="order-title">${event.title}</div>
                         ${props.location_line2 ? `<div class="order-address">${props.location_line2}</div>` : ''}
                         <div class="order-status">
-                            <span>${props.status ? props.status.charAt(0).toUpperCase() + props.status.slice(1) : ''}</span>
-                            ${props.order_number ? `<span>#${props.order_number.replace(/^ORD-/, '')}</span>` : ''}
+                            <span>${props.status || ''}</span>
+                            ${props.order_number ? `<span class="order-number">#${props.order_number.replace(/^ORD-/, '')}</span>` : ''}
                         </div>
                     </div>
                 `;
@@ -295,7 +295,7 @@
     // Helper function to create order element for sidebar
     function createOrderElement(order) {
         const orderDiv = document.createElement('div');
-        orderDiv.className = 'fc-draggable-order';
+        orderDiv.className = 'fc-draggable-order fc-event';
         orderDiv.setAttribute('data-order-id', order.id);
         orderDiv.setAttribute('draggable', 'true');
         orderDiv.style.marginBottom = '4px';
@@ -305,7 +305,7 @@
         };
 
         const containerDiv = document.createElement('div');
-        containerDiv.className = `order-container status-${order.status.toLowerCase()}`;
+        containerDiv.className = `order-container status-${(order.status_raw || order.status).toLowerCase()}`;
 
         const titleDiv = document.createElement('div');
         titleDiv.className = 'order-title';
@@ -320,7 +320,7 @@
         const statusDiv = document.createElement('div');
         statusDiv.className = 'order-status';
         statusDiv.innerHTML = `
-            <span>${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
+            <span>${order.status}</span>
             ${order.order_number ? `<span>#${order.order_number.replace(/^ORD-/, '')}</span>` : ''}
         `;
 

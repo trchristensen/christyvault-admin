@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Enums\OrderStatus;
 
 class OrderCalendarController extends Controller
 {
@@ -48,6 +49,10 @@ class OrderCalendarController extends Controller
                 $lastPlantLocation = $plantLocation;
                 $sortOrder++; // Increment for each order
 
+                // Get the proper status label from enum
+                $statusEnum = OrderStatus::tryFrom($order->status);
+                $statusLabel = $statusEnum ? $statusEnum->label() : ucfirst(str_replace('_', ' ', $order->status));
+
                 $events[] = [
                     'id'    => $order->id,
                     'title' => optional($order->location)->name ?? $order->order_number,
@@ -57,7 +62,8 @@ class OrderCalendarController extends Controller
                     'extendedProps' => [
                         'location_line1' => optional($order->location)->address_line1,
                         'location_line2' => optional($order->location) ? "{$order->location->city}, {$order->location->state}" : '',
-                        'status' => $order->status,
+                        'status' => $statusLabel,
+                        'status_raw' => $order->status, // Keep raw for CSS class
                         'order_number' => $order->order_number,
                         'requested_delivery_date' => $order->requested_delivery_date,
                         'delivered_at' => $order->delivered_at,
@@ -109,6 +115,10 @@ class OrderCalendarController extends Controller
             $lastPlantLocation = $dateOrder->plant_location ?? 'colma_main';
         }
 
+        // Get the proper status label from enum
+        $statusEnum = OrderStatus::tryFrom($order->status);
+        $statusLabel = $statusEnum ? $statusEnum->label() : ucfirst(str_replace('_', ' ', $order->status));
+
         // Return the event data for updating the calendar
         $event = [
             'id'    => $order->id,
@@ -119,7 +129,8 @@ class OrderCalendarController extends Controller
             'extendedProps' => [
                 'location_line1' => optional($order->location)->address_line1,
                 'location_line2' => optional($order->location) ? "{$order->location->city}, {$order->location->state}" : '',
-                'status' => $order->status,
+                'status' => $statusLabel,
+                'status_raw' => $order->status, // Keep raw for CSS class
                 'order_number' => $order->order_number,
                 'requested_delivery_date' => $order->requested_delivery_date,
                 'delivered_at' => $order->delivered_at,
@@ -139,11 +150,16 @@ class OrderCalendarController extends Controller
         $order->assigned_delivery_date = null;
         $order->save();
 
+        // Get the proper status label from enum
+        $statusEnum = OrderStatus::tryFrom($order->status);
+        $statusLabel = $statusEnum ? $statusEnum->label() : ucfirst(str_replace('_', ' ', $order->status));
+
         // Return the order data for recreating the sidebar element
         $orderData = [
             'id' => $order->id,
             'order_number' => $order->order_number,
-            'status' => $order->status,
+            'status' => $statusLabel,
+            'status_raw' => $order->status, // Keep raw for CSS class
             'location_name' => optional($order->location)->name,
             'location_city' => optional($order->location)->city,
             'location_state' => optional($order->location)->state,
