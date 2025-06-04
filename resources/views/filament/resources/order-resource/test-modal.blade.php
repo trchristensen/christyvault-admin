@@ -1,0 +1,1 @@
+<div>Hello from the modal! {{ $record?->id }}</div>

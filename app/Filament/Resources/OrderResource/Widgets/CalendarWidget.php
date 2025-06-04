@@ -821,4 +821,5 @@ class CalendarWidget extends FullCalendarWidget
         $this->record = Order::with(['location', 'orderProducts.product', 'location.preferredDeliveryContact'])->find($orderId);
         $this->mountAction('view');
     }
+
 }

@@ -235,7 +235,8 @@ trait HasOrderForm
                         ->columnSpan([
                             'sm' => 4,
                             'md' => 4,
-                        ]),
+                        ])
+                        ->default(fn() => $defaultDate),
                     Forms\Components\TimePicker::make('delivery_time')
                         ->label("Deliver By time")
                         ->nullable()

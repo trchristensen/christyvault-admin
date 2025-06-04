@@ -10,8 +10,9 @@
 .fc-event-title-container {
     display: none !important;
 }
+
 /* Show our custom content */
-.fc-event-main > div {
+.fc-event-main>div {
     display: block !important;
 }
 
@@ -47,7 +48,7 @@
 }
 
 /* Ensure events stack properly */
-.fc-daygrid-day-events > * {
+.fc-daygrid-day-events>* {
     position: static !important;
     transform: none !important;
 }
@@ -84,11 +85,11 @@
 
 /* Common container styles */
 .order-container,
-.fc-event-main > div {
+.fc-event-main>div {
     @apply lg:p-2 rounded-lg;
 }
 
-.fc-event-main > div {
+.fc-event-main>div {
     padding-top: 0;
     padding-bottom: 3px;
 }
@@ -106,7 +107,7 @@
     @apply text-xs text-gray-800 mb-2;
 }
 
-.order-address > div {
+.order-address>div {
     @apply line-clamp-1;
 }
 
@@ -134,16 +135,14 @@
 
 .trip-event {
     @apply p-2 bg-white;
-    background-image: linear-gradient(
-        45deg,
-        #f7f7f7 25%,
-        #ffffff 25%,
-        #ffffff 50%,
-        #f7f7f7 50%,
-        #f7f7f7 75%,
-        #ffffff 75%,
-        #ffffff 100%
-    );
+    background-image: linear-gradient(45deg,
+            #f7f7f7 25%,
+            #ffffff 25%,
+            #ffffff 50%,
+            #f7f7f7 50%,
+            #f7f7f7 75%,
+            #ffffff 75%,
+            #ffffff 100%);
     background-size: 45.25px 45.25px;
 }
 
@@ -165,6 +164,10 @@
     @apply font-medium;
 }
 
+.order-container {
+    @apply p-2;
+}
+
 /* Order container spacing */
 .order-container {
     @apply last:mb-0 p-2;
@@ -175,11 +178,13 @@
 
 /* Add padding to account for the icon */
 .order-status-wrapper {
-    @apply pt-2 border-t border-gray-300/50 pr-8; /* Added right padding */
+    @apply pt-2 border-t border-gray-300/50 pr-8;
+    /* Added right padding */
 }
 
 .order-status {
-    @apply text-xs font-medium text-gray-900 truncate; /* Added truncate */
+    @apply text-xs font-medium text-gray-900 truncate;
+    /* Added truncate */
 }
 
 /* Adjust icon positioning */
@@ -190,11 +195,13 @@
     right: 6px;
     content: "";
     display: inline-block;
-    width: 16px; /* Slightly smaller icon */
+    width: 16px;
+    /* Slightly smaller icon */
     height: 16px;
     background-size: contain;
     background-repeat: no-repeat;
-    flex-shrink: 0; /* Prevent icon from shrinking */
+    flex-shrink: 0;
+    /* Prevent icon from shrinking */
 }
 
 .product-item {
@@ -247,6 +254,7 @@
 .status-confirmed {
     @apply bg-blue-100 border border-blue-500/50;
 }
+
 .status-confirmed .order-title {
     @apply text-blue-900;
 }
@@ -321,8 +329,124 @@
     background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>');
 }
 
+.status-will_call {
+    @apply bg-gray-100 border border-gray-500/50;
+}
+
+.status-will_call .order-title {
+    @apply text-gray-900;
+}
+
+.status-will_call::before {
+    @apply text-gray-900;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>');
+}
+
+.status-picked_up {
+    @apply bg-gray-100 border border-gray-500/50;
+}
+
+.status-picked_up .order-title {
+    @apply text-gray-900;
+}
+
+.status-picked_up::before {
+    @apply text-gray-900;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>');
+}
+
+
+
 /* Remove the old date displays since they're now in status */
 .order-requested-delivery-date,
 .order-date {
     display: none;
+}
+
+.fc-event-main {
+    height: 100%;
+}
+
+.fc-event-main>div {
+    padding-top: 0;
+    padding-bottom: 3px;
+}
+
+.fc-event .order-container {
+    width: 100%;
+    height: 100%;
+    padding: 8px;
+    position: relative;
+    /* background-color: inherit; */
+    border-radius: 6px;
+    box-shadow: none;
+    /* Remove shadow as it's handled by fc-event */
+}
+
+/* Prevent visual drag artifacts */
+.fc-draggable-order.fc-event-dragging {
+    opacity: 0.5;
+}
+
+.fc-h-event {
+    background-color: transparent;
+}
+
+/* Ensure only the specific order element shows drag feedback */
+#unassigned-orders * {
+    pointer-events: none;
+}
+
+#unassigned-orders .fc-draggable-order {
+    pointer-events: auto;
+}
+
+/* Visual feedback for dragging */
+.fc-draggable-order:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+/* Drag cursor */
+.fc-draggable-order {
+    cursor: grab;
+}
+
+.fc-draggable-order:active {
+    cursor: grabbing;
+}
+
+/* Fix for calendar event content */
+.fc-event .order-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25;
+    /* color: currentColor; */
+    margin-bottom: 0.25rem;
+}
+
+.fc-event .order-address {
+    font-size: 0.75rem;
+    /* color: currentColor; */
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+}
+
+.fc-event .order-status {
+    font-size: 0.75rem;
+    font-weight: 500;
+    /* color: currentColor; */
+    opacity: 0.9;
+}
+
+#calendar .fc-list,
+#calendar .fc-view table,
+#calendar .fc-view:not(.fc-list) table th {
+    border-top-left-radius: .75rem;
+    border-top-right-radius: .75rem;
+}
+
+#calendar table {
+    background-color: #ffffff
 }

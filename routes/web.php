@@ -8,6 +8,7 @@ use App\Http\Controllers\KanbanCardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderCalendarController;
 use App\Models\KanbanCard;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/orders/calendar/print', [DeliveryCalendarPrintController::class, 'view'])->name('delivery-calendar.print');
 Route::get('/orders/{order}/print', [DeliveryTagController::class, 'view'])->name('orders.print');
 Route::get('/orders/{order}/print-formbg', [DeliveryTagController::class, 'viewWithFormBg'])->name('orders.print.formbg');
+
+
+Route::get('/calendar-events', [OrderCalendarController::class, 'events']);
+Route::post('/orders/assign-date', [OrderCalendarController::class, 'assignDate']);
+Route::post('/orders/unassign-date', [OrderCalendarController::class, 'unassignDate']);
 
 // routes/web.php
 Route::get('calendar/feed/{token}', [CalendarFeedController::class, 'download'])

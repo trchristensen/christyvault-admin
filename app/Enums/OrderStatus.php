@@ -18,6 +18,8 @@ enum OrderStatus: string
     case COMPLETED = 'completed';
     case TRANSFER = 'plant transfer';
     case TRANSFERRED = 'plant transferred';
+    case SHIPPED = 'shipped';
+
 
     public function label(): string
     {
@@ -36,6 +38,7 @@ enum OrderStatus: string
             self::COMPLETED => 'Completed',
             self::TRANSFER => "Plant Transfer",
             self::TRANSFERRED => "Transferred",
+            self::SHIPPED => 'Shipped via Carrier',
         };
     }
 
@@ -56,6 +59,7 @@ enum OrderStatus: string
             self::COMPLETED => '#2F855A',   // Dark Green
             self::TRANSFER => '#FFA500',   // Orange
             self::TRANSFERRED => '#FFA500',   // Orange
+            self::SHIPPED => '#805D3B',   // Brown
         };
     }
 
