@@ -81,7 +81,10 @@ class DeliveryCalendar extends Page
     public function getViewData(): array
     {
         return [
-            'unassignedOrders' => \App\Models\Order::whereNull('assigned_delivery_date')->get(),
+            'unassignedOrders' => \App\Models\Order::whereNull('assigned_delivery_date')
+                ->orderBy('created_at', 'desc')
+                ->limit(20)
+                ->get(),
         ];
     }
 
