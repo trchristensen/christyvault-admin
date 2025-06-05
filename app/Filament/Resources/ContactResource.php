@@ -51,15 +51,18 @@ class ContactResource extends Resource
                             ->preload()
                             ->native(false),
                         Forms\Components\Select::make('locations')
-                            ->relationship('locations', 'name')
+                            ->relationship(
+                                name: 'locations',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: fn($query) => $query->select(['locations.id', 'locations.name', 'locations.address_line1', 'locations.city', 'locations.state', 'locations.postal_code'])
+                            )
                             ->multiple()
                             ->preload()
                             ->getOptionLabelFromRecordUsing(fn($record) => "
                                     <div class='font-medium'>{$record->name}</div>
-                                    <div class='text-sm text-gray-500'>{$record->full_address}</div>
+                                    <div class='text-sm text-gray-500'>{$record->address_line1}, {$record->city}, {$record->state}</div>
                                 ")
-                            ->allowHtml()
-                            ->searchable(['name', 'address_line1', 'city', 'state', 'postal_code']),
+                            ->allowHtml(),
                         Forms\Components\Toggle::make('is_active')
                             ->default(true),
                     ])->columns(2),
