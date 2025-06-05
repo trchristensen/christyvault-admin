@@ -38,7 +38,7 @@ class Location extends Model
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
         'last_order_at' => 'datetime',
-        // 'common_order_items' => 'array',
+        'common_order_items' => 'array',
         'average_order_value' => 'decimal:2',
     ];
 
@@ -120,7 +120,7 @@ class Location extends Model
 
         // Update last order date
         $this->last_order_at = $orders->first()->order_date;
-        
+
         // Update total orders
         $this->total_orders = $orders->count();
 
@@ -172,9 +172,9 @@ class Location extends Model
         uasort($productCounts, function ($a, $b) {
             return $b['count'] <=> $a['count'];
         });
-        
+
         $this->common_order_items = array_slice($productCounts, 0, 5, true);
-        
+
         $this->save();
     }
 
@@ -185,7 +185,7 @@ class Location extends Model
         }
 
         $daysSinceLastOrder = now()->diffInDays($this->last_order_at);
-        
+
         if (!$this->average_order_frequency_days) {
             return 'New Customer';
         }
@@ -201,7 +201,7 @@ class Location extends Model
 
     public function getOrderStatusColorAttribute(): string
     {
-        return match($this->order_status) {
+        return match ($this->order_status) {
             'No Orders' => 'gray',
             'New Customer' => 'blue',
             'Overdue' => 'red',
