@@ -28,34 +28,25 @@ class OrderCalendarController extends Controller
         
         // Process each day's orders
         foreach ($groupedOrders as $date => $dateOrders) {
-            // Custom sort that groups special statuses separately from plant locations
+            // Simple sort by plant location (alphabetical will put colma_main before colma_locals)
             usort($dateOrders, function($a, $b) {
-                // Get grouping keys for each order
-                $groupA = $this->getGroupingKey($a);
-                $groupB = $this->getGroupingKey($b);
+                $locA = $a->plant_location ?? 'colma_main';
+                $locB = $b->plant_location ?? 'colma_main';
                 
-                // Define sort order for groups
-                $groupOrder = [
-                    'colma_main' => 1,
-                    'colma_locals' => 2, 
-                    'tulare_plant' => 3,
-                    'will_call' => 4,
-                    'shipped' => 5,
-                ];
+                // Custom sort to ensure colma_main comes before colma_locals
+                if ($locA === 'colma_main' && $locB === 'colma_locals') return -1;
+                if ($locA === 'colma_locals' && $locB === 'colma_main') return 1;
                 
-                $orderA = $groupOrder[$groupA] ?? 99;
-                $orderB = $groupOrder[$groupB] ?? 99;
-                
-                return $orderA <=> $orderB;
+                return strcmp($locA, $locB);
             });
             
-            // Track when group changes within the day
-            $lastGroup = null;
+            // Track when plant location changes within the day
+            $lastPlantLocation = null;
             $sortOrder = 0; // Add explicit sort order counter
             foreach ($dateOrders as $order) {
-                $currentGroup = $this->getGroupingKey($order);
-                $isGroupStart = ($lastGroup !== $currentGroup);
-                $lastGroup = $currentGroup;
+                $plantLocation = $order->plant_location ?? 'colma_main';
+                $isGroupStart = ($lastPlantLocation !== $plantLocation);
+                $lastPlantLocation = $plantLocation;
                 $sortOrder++; // Increment for each order
 
                 // Get the proper status label from enum
@@ -77,8 +68,7 @@ class OrderCalendarController extends Controller
                         'requested_delivery_date' => $order->requested_delivery_date,
                         'delivered_at' => $order->delivered_at,
                         'order_date' => $order->order_date,
-                        'plant_location' => $order->plant_location ?? 'colma_main',
-                        'grouping_key' => $currentGroup, // Add for frontend group labels
+                        'plant_location' => $plantLocation,
                         'is_group_start' => $isGroupStart,
                         'sort_order' => $sortOrder, // Also in extendedProps for debugging
                     ],
@@ -102,37 +92,27 @@ class OrderCalendarController extends Controller
             ->get();
 
         // Sort them the same way as in events()
-        $dateOrders = $dateOrders->sort(function($a, $b) {
-            $groupA = $this->getGroupingKey($a);
-            $groupB = $this->getGroupingKey($b);
-            
-            $groupOrder = [
-                'colma_main' => 1,
-                'colma_locals' => 2, 
-                'tulare_plant' => 3,
-                'will_call' => 4,
-                'shipped' => 5,
-            ];
-            
-            $orderA = $groupOrder[$groupA] ?? 99;
-            $orderB = $groupOrder[$groupB] ?? 99;
-            
-            return $orderA <=> $orderB;
+        $dateOrders = $dateOrders->sortBy(function($order) {
+            $loc = $order->plant_location ?? 'colma_main';
+            if ($loc === 'colma_main') return '1';
+            if ($loc === 'colma_locals') return '2';
+            if ($loc === 'tulare_plant') return '3';
+            return '4';
         })->values();
 
         // Find this order's position and determine is_group_start
         $sortOrder = 1;
         $isGroupStart = false;
-        $lastGroup = null;
+        $lastPlantLocation = null;
         
         foreach ($dateOrders as $index => $dateOrder) {
             if ($dateOrder->id === $order->id) {
-                $currentGroup = $this->getGroupingKey($dateOrder);
-                $isGroupStart = ($lastGroup !== $currentGroup);
+                $plantLocation = $dateOrder->plant_location ?? 'colma_main';
+                $isGroupStart = ($lastPlantLocation !== $plantLocation);
                 $sortOrder = $index + 1;
                 break;
             }
-            $lastGroup = $this->getGroupingKey($dateOrder);
+            $lastPlantLocation = $dateOrder->plant_location ?? 'colma_main';
         }
 
         // Get the proper status label from enum
@@ -186,13 +166,5 @@ class OrderCalendarController extends Controller
         ];
 
         return response()->json(['success' => true, 'order' => $orderData]);
-    }
-
-    private function getGroupingKey($order)
-    {
-        $status = $order->status;
-        if ($status === 'will_call') return 'will_call';
-        if ($status === 'shipped') return 'shipped';
-        return $order->plant_location ?? 'colma_main';
     }
 }
