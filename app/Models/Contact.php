@@ -31,6 +31,14 @@ class Contact extends Model
     public function locations(): BelongsToMany
     {
         return $this->belongsToMany(Location::class, 'contact_location')
+            ->select([
+                'locations.id',
+                'locations.name',
+                'locations.address_line1',
+                'locations.city',
+                'locations.state',
+                'locations.postal_code'
+            ])
             ->withPivot('is_primary')
             ->withTimestamps();
     }

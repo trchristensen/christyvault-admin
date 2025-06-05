@@ -76,8 +76,11 @@ class ContactResource extends Resource
             Tables\Columns\TextColumn::make('locations.name')
                 ->badge()
                 ->separator(',')
-                ->searchable()
-                ->sortable(),
+                ->searchable(query: function ($query, $search) {
+                    return $query->whereHas('locations', function ($query) use ($search) {
+                        $query->where('locations.name', 'like', "%{$search}%");
+                    });
+                }),
 
             Tables\Columns\TextColumn::make('phone')
                 ->searchable(),
@@ -100,9 +103,10 @@ class ContactResource extends Resource
             ->defaultSort('name')
             ->filters([
                 Tables\Filters\SelectFilter::make('locations')
-                    ->relationship('locations', 'name')
+                    ->relationship('locations', 'name', fn($query) => $query->select(['locations.id as id', 'locations.name as name'])->orderBy('locations.name'))
                     ->multiple()
-                    ->preload(),
+                    ->preload()
+                    ->searchable(),
 
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Active Status')
