@@ -28,6 +28,10 @@
                                 <span class="order-number">#{{ ltrim($order->order_number, 'ORD-') }}</span>
                             @endif
                         </div>
+                        <div class="order-status mt-2">Order Date: {{ $order->order_date->format('m/d') }}</div>
+                        {{-- requested date --}}
+                        <div class="order-status">Requested by: {{ $order->order_date->format('m/d') }}</div>
+                        
                     </div>
                 </div>
             @endforeach
