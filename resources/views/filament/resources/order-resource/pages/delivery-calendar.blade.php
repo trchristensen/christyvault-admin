@@ -58,6 +58,19 @@
         var calendarEl = document.getElementById('calendar');
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridWeek',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,dayGridWeek,dayGridDay'
+            },
+            views: {
+                dayGridMonth: {
+                    titleFormat: { year: 'numeric', month: 'long' }
+                },
+                dayGridWeek: {
+                    titleFormat: { year: 'numeric', month: 'short', day: 'numeric' }
+                }
+            },
             weekends: false,
             editable: true,
             droppable: true,
