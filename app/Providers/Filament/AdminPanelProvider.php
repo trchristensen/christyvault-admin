@@ -5,8 +5,9 @@ namespace App\Providers\Filament;
 use Althinect\FilamentSpatieRolesPermissions\FilamentSpatieRolesPermissionsPlugin;
 use App\Filament\Pages\TestCalendar;
 use App\Filament\Resources\OrderResource\Pages\DeliveryCalendar;
-use App\Filament\Widgets\OrderStatisticsWidget;
+// use App\Filament\Widgets\OrderStatisticsWidget; // Removed widget
 use App\Filament\Widgets\RecentOrdersWidget;
+use App\Filament\Widgets\TodaysWeatherWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -29,6 +30,7 @@ use App\Filament\Resources\OrderResource\Widgets\CalendarWidget;
 use App\Filament\Widgets\CalendarWidget as WidgetsCalendarWidget;
 use Filament\Support\Enums\MaxWidth;
 use Filament\Navigation\NavigationItem;
+
 
 
 class AdminPanelProvider extends PanelProvider
@@ -55,7 +57,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                // Pages\Dashboard::class, // Remove default dashboard to use our custom one
                 DeliveryCalendar::class,
                 \App\Filament\Pages\SystemAdmin::class,
             ])
@@ -105,12 +107,13 @@ class AdminPanelProvider extends PanelProvider
             ])
             // ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
+                TodaysWeatherWidget::class,
+                // OrderStatisticsWidget::class, // Removed - basic order counts aren't useful
                 // CalendarWidget::class,
                 // Widgets\AccountWidget::class,
                 // Widgets\FilamentInfoWidget::class,
                 // WidgetsCalendarWidget::class,
                 // RecentOrdersWidget::class,
-                OrderStatisticsWidget::class,
                 // SalesStatsWidget::class,
             ])
             ->middleware([
