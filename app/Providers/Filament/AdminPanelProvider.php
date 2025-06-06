@@ -107,7 +107,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             // ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                TodaysWeatherWidget::class,
+                // TodaysWeatherWidget::class,
                 // OrderStatisticsWidget::class, // Removed - basic order counts aren't useful
                 // CalendarWidget::class,
                 // Widgets\AccountWidget::class,

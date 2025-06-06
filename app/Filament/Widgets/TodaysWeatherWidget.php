@@ -178,31 +178,31 @@ class TodaysWeatherWidget extends Widget
         }
 
         logger()->warning("Falling back to mock data for {$city}, {$state}");
-        return $this->getMockWeatherData($city, $state);
+        // return $this->getMockWeatherData($city, $state);
     }
 
-    private function getMockWeatherData(string $city, string $state): array
-    {
-        // Mock data for demonstration when API key is not available
-        $mockConditions = [
-            ['temp' => 72, 'desc' => 'Partly Cloudy', 'icon' => '02d'],
-            ['temp' => 68, 'desc' => 'Sunny', 'icon' => '01d'],
-            ['temp' => 75, 'desc' => 'Overcast', 'icon' => '04d'],
-            ['temp' => 65, 'desc' => 'Light Rain', 'icon' => '10d'],
-        ];
+    // private function getMockWeatherData(string $city, string $state): array
+    // {
+    //     // Mock data for demonstration when API key is not available
+    //     $mockConditions = [
+    //         ['temp' => 72, 'desc' => 'Partly Cloudy', 'icon' => '02d'],
+    //         ['temp' => 68, 'desc' => 'Sunny', 'icon' => '01d'],
+    //         ['temp' => 75, 'desc' => 'Overcast', 'icon' => '04d'],
+    //         ['temp' => 65, 'desc' => 'Light Rain', 'icon' => '10d'],
+    //     ];
 
-        $condition = $mockConditions[array_rand($mockConditions)];
+    //     $condition = $mockConditions[array_rand($mockConditions)];
         
-        return [
-            'city' => $city,
-            'state' => $state,
-            'temperature' => $condition['temp'],
-            'feels_like' => $condition['temp'] + rand(-3, 3),
-            'description' => $condition['desc'],
-            'icon' => $condition['icon'],
-            'humidity' => rand(40, 80),
-            'wind_speed' => rand(5, 15),
-            'visibility' => rand(8, 10),
-        ];
-    }
+    //     return [
+    //         'city' => $city,
+    //         'state' => $state,
+    //         'temperature' => $condition['temp'],
+    //         'feels_like' => $condition['temp'] + rand(-3, 3),
+    //         'description' => $condition['desc'],
+    //         'icon' => $condition['icon'],
+    //         'humidity' => rand(40, 80),
+    //         'wind_speed' => rand(5, 15),
+    //         'visibility' => rand(8, 10),
+    //     ];
+    // }
 } 
