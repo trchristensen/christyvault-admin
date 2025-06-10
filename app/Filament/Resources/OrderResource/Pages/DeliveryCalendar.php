@@ -5,6 +5,7 @@ namespace App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource;
 use App\Filament\Resources\Traits\HasOrderForm;
 use App\Models\Order;
+use App\Enums\OrderStatus;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\Page;
@@ -82,6 +83,14 @@ class DeliveryCalendar extends Page
     {
         return [
             'unassignedOrders' => \App\Models\Order::whereNull('assigned_delivery_date')
+                ->whereIn('status', [
+                    OrderStatus::PENDING->value,
+                    OrderStatus::CONFIRMED->value,
+                    OrderStatus::WILL_CALL->value,
+                    OrderStatus::IN_PRODUCTION->value,
+                    OrderStatus::READY_FOR_DELIVERY->value,
+                    OrderStatus::TRANSFER->value,
+                ])
                 ->orderBy('created_at', 'desc')
                 ->limit(20)
                 ->get(),
