@@ -135,13 +135,8 @@
 </head>
 <body>
     <div class="container">
-        <div class="demo-notice">
-            <strong>DEMONSTRATION PAGE</strong><br>
-            This page demonstrates our employee SMS opt-in process for regulatory compliance review.
-        </div>
-
         <div class="header">
-            <div class="logo">🏛️ Christy Vault</div>
+            <img style="width: 220px;" src="{{ asset('images/logo.svg') }}" alt="Christy Vault Logo" class="logo">
             <div class="subtitle">Employee Work Notification System</div>
         </div>
 
