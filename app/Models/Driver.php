@@ -16,6 +16,12 @@ class Driver extends Model
         'sms_consent_at',
     ];
 
+    protected $casts = [
+        'sms_consent_given' => 'boolean',
+        'sms_consent_at' => 'datetime',
+        'license_expiration' => 'date',
+    ];
+
     public function employee()
     {
         return $this->belongsTo(Employee::class);

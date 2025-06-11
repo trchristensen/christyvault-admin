@@ -68,7 +68,7 @@ class SmsConsent extends Page implements HasForms
                         Placeholder::make('current_status')
                             ->label('Current Status')
                             ->content(fn () => $this->driver->sms_consent_given 
-                                ? '✅ SMS notifications are ENABLED (since ' . $this->driver->sms_consent_at?->format('M j, Y') . ')'
+                                ? '✅ SMS notifications are ENABLED' . ($this->driver->sms_consent_at ? ' (since ' . $this->driver->sms_consent_at->format('M j, Y') . ')' : '')
                                 : '❌ SMS notifications are DISABLED'
                             ),
                     ])

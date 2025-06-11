@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | PWA Application URL
+    |--------------------------------------------------------------------------
+    |
+    | This URL is used for generating links to the PWA (Progressive Web App)
+    | for driver delivery confirmations. Set this to your PWA's URL.
+    |
+    */
+
+    'pwa_url' => env('APP_PWA_URL', 'http://localhost:8080'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

@@ -41,7 +41,7 @@ Route::get('/generate-delivery-link/{order}', function (Order $order) {
     parse_str($completeParts['query'], $completeParams);
     
     // Build the PWA URL with order ID and both signatures
-    $pwaUrl = 'http://localhost:8080?' . http_build_query([
+    $pwaUrl = config('app.pwa_url') . '?' . http_build_query([
         'order' => $order->id,
         'show_expires' => $showParams['expires'],
         'show_signature' => $showParams['signature'],
@@ -85,7 +85,7 @@ Route::get('/test-delivery-links', function () {
         parse_str($completeParts['query'], $completeParams);
         
         // Build the PWA URL with order ID and both signatures
-        $pwaUrl = 'http://localhost:8080?' . http_build_query([
+        $pwaUrl = config('app.pwa_url') . '?' . http_build_query([
             'order' => $order->id,
             'show_expires' => $showParams['expires'],
             'show_signature' => $showParams['signature'],
@@ -129,7 +129,7 @@ Route::get('/delivery/{order}/{token}', function (Order $order, string $token) {
     parse_str($completeParts['query'], $completeParams);
     
     // Build the PWA URL with order ID and both signatures
-    $pwaUrl = config('app.pwa_url', 'http://localhost:8080') . '?' . http_build_query([
+    $pwaUrl = config('app.pwa_url') . '?' . http_build_query([
         'order' => $order->id,
         'show_expires' => $showParams['expires'],
         'show_signature' => $showParams['signature'],
@@ -237,3 +237,41 @@ Route::post('/driver-sms-consent/{driver}', function (Driver $driver, Request $r
         'message' => 'SMS consent recorded for ' . $driver->employee->name
     ]);
 })->name('driver.sms.consent.submit')->middleware('signed');
+
+// Public SMS consent demonstration page (for Telnyx verification)
+Route::get('/sms-opt-in', function () {
+    return view('sms-opt-in-demo');
+})->name('sms.opt.in.demo');
+
+// Handle demo form submission
+Route::post('/sms-opt-in', function (Request $request) {
+    $data = $request->validate([
+        'employee_name' => 'required|string|max:255',
+        'employee_id' => 'nullable|string|max:255',
+        'phone_number' => 'required|string|max:20',
+        'work_email' => 'required|email|max:255',
+    ]);
+    
+    // Save the demo submission
+    \App\Models\SmsConsentDemo::create([
+        'employee_name' => $data['employee_name'],
+        'employee_id' => $data['employee_id'],
+        'phone_number' => $data['phone_number'],
+        'work_email' => $data['work_email'],
+        'ip_address' => $request->ip(),
+        'user_agent' => $request->userAgent(),
+    ]);
+    
+    return response()->json([
+        'success' => true,
+        'message' => 'SMS consent recorded successfully',
+        'data' => $data,
+        'timestamp' => now()->toISOString(),
+    ]);
+})->name('sms.opt.in.demo.submit');
+
+// Admin view of demo submissions (for verification)
+Route::get('/sms-opt-in/submissions', function () {
+    $submissions = \App\Models\SmsConsentDemo::latest()->take(50)->get();
+    return view('sms-submissions', compact('submissions'));
+})->name('sms.submissions')->middleware(['auth']);
