@@ -187,7 +187,7 @@ class TripController extends Controller
 
             // Decode base64 and save to storage
             $signatureData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->signature));
-            Storage::disk('public')->put($path, $signatureData);
+            Storage::disk('r2')->put($path, $signatureData);
 
             $order = $trip->orders()
                 ->where('stop_number', $stopNumber)
@@ -199,7 +199,7 @@ class TripController extends Controller
 
             return response()->json([
                 'message' => 'Signature uploaded successfully',
-                'signature_path' => Storage::url($path)
+                'signature_path' => Storage::disk('r2')->url($path)
             ]);
         } catch (\Exception $e) {
             Log::error('Upload signature error:', [

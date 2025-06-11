@@ -63,7 +63,7 @@ class TripResource extends JsonResource
                     }),
                     'arrival_time' => $order->arrived_at,
                     'delivery_time' => $order->delivered_at,
-                    'signature' => $order->signature_path ? Storage::url($order->signature_path) : null,
+                    'signature' => $order->signature_path ? Storage::disk('r2')->url($order->signature_path) : null,
                     'delivery_notes' => $order->delivery_notes,
                     'special_instructions' => $order->special_instructions,
                 ];

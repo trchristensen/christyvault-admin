@@ -71,6 +71,10 @@ class OrderResource extends Resource
                     ->label('Assigned')
                     ->date('M j, Y')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('driver.name')
+                    ->label('Driver')
+                    ->sortable()
+                    ->default('Not assigned'),
                 Tables\Columns\TextColumn::make('order_date')
                     ->label('Order Date')
                     ->date('M j, Y')

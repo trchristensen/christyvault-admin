@@ -52,7 +52,8 @@
     .products-table-content {
         position: relative;
         min-width: 848px;
-        width: max-content;
+        /* width: max-content; */
+        width: 100%;
     }
 
     /* Product items and borders */
@@ -129,7 +130,8 @@
     .products-table-content {
         @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700;
         min-width: 848px;
-        width: max-content;
+        /* width: max-content; */
+        width: 100%;
     }
 
     /* Table header and content */
@@ -376,7 +378,7 @@
             @endif
         </div>
     </div>
-    <div class="grid grid-cols-4 gap-4">
+    <div class="grid grid-cols-4 gap-4 px-4">
         <!-- Delivery Info  -->
         <div class="flex flex-col items-start delivery-date">
             <p class="text-sm text-gray-600 dark:text-gray-400">Assigned Date</p>
@@ -401,5 +403,33 @@
             <h3 class="mb-2 font-medium">Instructions</h3>
             <p class="text-sm">{{ $record->special_instructions }}</p>
         </div>
+    @endif
+
+
+    @if ($record->status == 'delivered' || $record->status == 'completed' || $record->status == 'picked_up' || $record->status == 'invoiced')
+    <div class="grid grid-cols-2 gap-4 bg-gray-50 p-2 rounded-lg">
+
+        @if ($record->delivered_at)
+        <div class="p-4 mt-4 rounded-lg bg-yellow-50">
+            <h3 class="mb-2 font-medium">Delivered At</h3>
+            <p class="text-sm">{{ $record->delivered_at?->format('D m/d/Y g:i A') }}</p>
+        </div>
+        @endif
+
+        @if ($record->signature_path)
+        <div class="p-4 mt-4 rounded-lg bg-yellow-50">
+            <h3 class="mb-2 font-medium">Signature</h3>
+            <img src="{{ Storage::disk('r2')->url($record->signature_path) }}" alt="Signature" class="w-full h-auto">
+        </div>
+        @endif
+        
+        @if ($record->delivery_notes)
+        <div class="p-4 mt-4 rounded-lg bg-yellow-50">
+            <h3 class="mb-2 font-medium">Delivery Notes</h3>
+            <p class="text-sm">{{ $record->delivery_notes }}</p>
+        </div>
+        @endif
+
+    </div>
     @endif
 </div>

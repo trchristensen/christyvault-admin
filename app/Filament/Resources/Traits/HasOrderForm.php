@@ -237,6 +237,20 @@ trait HasOrderForm
                             'md' => 4,
                         ])
                         ->default(fn() => $defaultDate),
+                    Forms\Components\Select::make('driver_id')
+                        ->label('Driver')
+                        ->options(function () {
+                            return \App\Models\Employee::whereHas('positions', function ($q) {
+                                $q->where('name', 'driver');
+                            })->pluck('name', 'id');
+                        })
+                        ->nullable()
+                        ->searchable()
+                        ->columnSpan([
+                            'sm' => 4,
+                            'md' => 4,
+                        ])
+                        ->placeholder('Select a driver'),
                     Forms\Components\TimePicker::make('delivery_time')
                         ->label("Deliver By time")
                         ->nullable()

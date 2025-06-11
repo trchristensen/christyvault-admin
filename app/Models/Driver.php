@@ -12,6 +12,8 @@ class Driver extends Model
         'license_expiration',
         // 'vehicle_type',
         'notes',
+        'sms_consent_given',
+        'sms_consent_at',
     ];
 
     public function employee()

@@ -23,6 +23,13 @@ services:
       - DB_DATABASE=christyvault
       - DB_USERNAME=postgres
       - DB_PASSWORD=postgres
+      # SMS Configuration
+      - SMS_ENABLED=${SMS_ENABLED:-false}
+      - TELNYX_API_KEY=${TELNYX_API_KEY:-}
+      - TELNYX_FROM_NUMBER=${TELNYX_FROM_NUMBER:-}
+      - TELNYX_WEBHOOK_SECRET=${TELNYX_WEBHOOK_SECRET:-}
+      - SMS_DAILY_SCHEDULE_TIME=${SMS_DAILY_SCHEDULE_TIME:-08:00}
+      - APP_PWA_URL=${APP_PWA_URL:-http://localhost:8080}
       # Add any other env vars you need
 
   db:

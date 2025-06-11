@@ -11,6 +11,7 @@ use Livewire\Livewire;
 // use App\Livewire\NotificationsDropdown;
 use App\Models\PurchaseOrder;
 use App\Observers\PurchaseOrderObserver;
+use Illuminate\Database\Eloquent\Model;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -43,5 +44,6 @@ class AppServiceProvider extends ServiceProvider
         // Livewire::component('notifications-dropdown', NotificationsDropdown::class);
 
         PurchaseOrder::observe(PurchaseOrderObserver::class);
+        \App\Models\Order::observe(\App\Observers\OrderObserver::class);
     }
 }

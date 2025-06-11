@@ -43,6 +43,11 @@ class Employee extends Model
         return $this->hasOne(Driver::class);
     }
 
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'driver_id');
+    }
+
     public function positions()
     {
         return $this->belongsToMany(Position::class)->withTimestamps();

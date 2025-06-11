@@ -2,10 +2,13 @@
 
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\TripController;
+use App\Http\Controllers\DeliveryController;
+use App\Http\Controllers\SmsWebhookController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Log;
 
 
 Route::get('/test', function (Request $request) {
@@ -40,6 +43,32 @@ Route::post('/tokens/create', function (Request $request) {
     ]);
 });
 
+// Secure delivery routes with signed URL validation
+Route::name('delivery.')->group(function () {
+    // Handle CORS preflight requests
+    Route::options('/orders/{order}/delivery', function () {
+        return response('', 200)
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Accept');
+    });
+    
+    Route::options('/orders/{order}/complete', function () {
+        return response('', 200)
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Accept');
+    });
+    
+    Route::get('/orders/{order}/delivery', [DeliveryController::class, 'show'])
+        ->name('show')
+        ->middleware('signed');
+    
+    Route::post('/orders/{order}/complete', [DeliveryController::class, 'complete'])
+        ->name('complete')
+        ->middleware('signed');
+});
+
 // Protected routes
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
@@ -58,3 +87,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 
 });
+
+// SMS Webhook Routes (public, no auth required)
+Route::post('/sms/webhook', [SmsWebhookController::class, 'handleIncoming'])
+    ->name('sms.webhook');
+
+// Test SMS endpoint (debug only)
+Route::get('/sms/test', [SmsWebhookController::class, 'test'])
+    ->name('sms.test');
