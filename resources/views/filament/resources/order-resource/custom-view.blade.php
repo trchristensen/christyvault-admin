@@ -178,8 +178,23 @@
         <div class="grid justify-between w-full grid-cols-2 gap-4">
 
             <div class="flex flex-col items-start gap-1">
-                <p class="font-bold">{{ optional($record->location)->name ?? 'N/A' }}</p>
-                <p>{{ optional($record->location)->full_address ?? 'N/A' }}</p>
+                <p class="font-bold">{{ optional($record->location)->name }}</p>
+                @if(optional($record->location)->full_address)
+                    <div class="flex items-center gap-1">
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($record->location->full_address) }}" 
+                           target="_blank" 
+                           rel="noopener noreferrer" 
+                           class="text-primary-600 dark:text-primary-400 hover:underline">
+                            {{ $record->location->full_address }}
+                        </a>
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($record->location->full_address) }}" 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           class="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
+                            <x-heroicon-o-map-pin class="w-4 h-4" />
+                        </a>
+                    </div>
+                @endif
 
                 @if ($record->location && $record->location->preferredDeliveryContact)
                     <div class="flex items-center gap-2">
