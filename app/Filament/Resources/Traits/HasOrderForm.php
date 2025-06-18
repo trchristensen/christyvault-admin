@@ -400,7 +400,6 @@ trait HasOrderForm
                                         ->numeric()
                                         ->columnSpan(2)
                                         ->default(1)
-                                        ->required(fn(Forms\Get $get): bool => !$get('fill_load'))
                                         ->disabled(fn(Forms\Get $get): bool => $get('fill_load'))
                                         ->dehydrated(fn(Forms\Get $get): bool => !$get('fill_load'))
                                         ->live('blur'),
