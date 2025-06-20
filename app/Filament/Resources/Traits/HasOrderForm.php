@@ -281,6 +281,7 @@ trait HasOrderForm
                         ]),
                     Textarea::make('special_instructions')
                         ->columnSpan(12)
+                        ->label('Notes from Rose')
                         ->characterLimit(166),
                 ])
                 ->columns(12),

@@ -415,7 +415,7 @@
 
     @if ($record->special_instructions)
         <div class="p-4 mt-4 rounded-lg bg-yellow-50">
-            <h3 class="mb-2 font-medium">Instructions</h3>
+            <h3 class="mb-2 font-medium">Notes from Rose</h3>
             <p class="text-sm">{{ $record->special_instructions }}</p>
         </div>
     @endif
