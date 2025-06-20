@@ -415,7 +415,7 @@ elseif ($order->location->phone) {
                 @if ($order->status == 'will_call')
                     <strong style="margin-right:12px;text-decoration:underline">WILL CALL</strong>
                 @endif
-                {{ $order->special_instructions }}
+                 Notes from Rose: {{ $order->special_instructions }}
             </div>
         @endif
         <div class="cemetery-time">
