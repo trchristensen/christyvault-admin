@@ -11,6 +11,7 @@ enum OrderStatus: string
     case IN_PRODUCTION = 'in_production';
     case READY_FOR_DELIVERY = 'ready_for_delivery';
     case OUT_FOR_DELIVERY = 'out_for_delivery';
+    case PREBURY = 'prebury';
     case ARRIVED = 'arrived';
     case DELIVERED = 'delivered';
     case CANCELLED = 'cancelled';
@@ -30,6 +31,7 @@ enum OrderStatus: string
             self::IN_PRODUCTION => 'In Production',
             self::READY_FOR_DELIVERY => 'Ready for Delivery',
             self::OUT_FOR_DELIVERY => 'Out for Delivery',
+            self::PREBURY => 'Prebury',
             self::PICKED_UP => 'Picked Up',
             self::ARRIVED => 'Arrived',
             self::DELIVERED => 'Delivered',
@@ -50,6 +52,7 @@ enum OrderStatus: string
             self::PICKED_UP => '#FFA500',   // Orange
             self::CONFIRMED => '#4299E1',   // Blue
             self::IN_PRODUCTION => '#9F7AEA', // Purple
+            self::PREBURY => '#48BB78',   // Green
             self::READY_FOR_DELIVERY => '#48BB78',   // Green
             self::OUT_FOR_DELIVERY => '#48BB78',   // Green
             self::ARRIVED => '#48BB78',   // Green
