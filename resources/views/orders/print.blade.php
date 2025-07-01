@@ -406,6 +406,9 @@ elseif ($order->location->phone) {
                 @if ($order->status == 'will_call')
                     <strong style="margin-right:12px;text-decoration:underline">WILL CALL</strong>
                 @endif
+                @if ($order->status == 'prebury')
+                    <strong style="margin-right:12px;text-decoration:underline">PREBURY</strong>
+                @endif
                 Notes from Rose: {{ $order->special_instructions }}
             </div>
         @endif
