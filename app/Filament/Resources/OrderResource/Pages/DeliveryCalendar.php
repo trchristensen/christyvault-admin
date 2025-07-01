@@ -88,6 +88,7 @@ class DeliveryCalendar extends Page
                     OrderStatus::CONFIRMED->value,
                     OrderStatus::WILL_CALL->value,
                     OrderStatus::IN_PRODUCTION->value,
+                    OrderStatus::PREBURY->value,
                     OrderStatus::READY_FOR_DELIVERY->value,
                     OrderStatus::TRANSFER->value,
                 ])
