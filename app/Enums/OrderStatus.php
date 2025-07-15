@@ -20,6 +20,7 @@ enum OrderStatus: string
     case TRANSFER = 'plant transfer';
     case TRANSFERRED = 'plant transferred';
     case SHIPPED = 'shipped';
+    case PREBURY_DELIVERED = 'prebury_delivered';
 
 
     public function label(): string
@@ -41,6 +42,7 @@ enum OrderStatus: string
             self::TRANSFER => "Plant Transfer",
             self::TRANSFERRED => "Transferred",
             self::SHIPPED => 'Shipped via Carrier',
+            self::PREBURY_DELIVERED => 'Prebury Delivered',
         };
     }
 
@@ -63,6 +65,7 @@ enum OrderStatus: string
             self::TRANSFER => '#FFA500',   // Orange
             self::TRANSFERRED => '#FFA500',   // Orange
             self::SHIPPED => '#805D3B',   // Brown
+            self::PREBURY_DELIVERED => '#27AE60',   // Darker green
         };
     }
 
