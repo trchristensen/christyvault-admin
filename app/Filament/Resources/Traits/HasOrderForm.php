@@ -47,7 +47,7 @@ trait HasOrderForm
                         ->reactive()
                         ->afterStateUpdated(function ($state, Forms\Set $set) {
                             if (!$state) return;
-                            
+
                             $location = Location::find($state);
                             if ($location && strtolower($location->city) === 'colma') {
                                 $set('plant_location', \App\Enums\PlantLocation::COLMA_LOCALS->value);
@@ -354,10 +354,10 @@ trait HasOrderForm
                                                 ])
                                         )
                                         ->allowHtml()
-                                        ->required(fn (callable $get) => !$get('is_custom_product'))
+                                        ->required(fn(callable $get) => !$get('is_custom_product'))
                                         ->reactive()
                                         ->searchable()
-                                        ->visible(fn (callable $get) => !$get('is_custom_product'))
+                                        ->visible(fn(callable $get) => !$get('is_custom_product'))
                                         ->getSearchResultsUsing(function (string $search): array {
                                             return Product::query()
                                                 ->active()
@@ -382,10 +382,10 @@ trait HasOrderForm
                                         ->live('blur'),
                                     Forms\Components\TextInput::make('custom_description')
                                         ->label('Custom Product Description')
-                                        ->required(fn (callable $get) => $get('is_custom_product'))
-                                        ->visible(fn (callable $get) => $get('is_custom_product'))
-                                         ->columnSpan(6)
-                                         ->live('blur'),
+                                        ->required(fn(callable $get) => $get('is_custom_product'))
+                                        ->visible(fn(callable $get) => $get('is_custom_product'))
+                                        ->columnSpan(6)
+                                        ->live('blur'),
                                     Forms\Components\Toggle::make('fill_load')
                                         ->label('Fill load')
                                         ->columnSpan(2)
@@ -416,6 +416,7 @@ trait HasOrderForm
                                                 OrderStatus::COMPLETED->value,
                                                 OrderStatus::PICKED_UP->value,
                                                 OrderStatus::TRANSFERRED->value,
+                                                OrderStatus::PREBURY_DELIVERED->value,
                                             ]);
                                         }),
                                 ]),

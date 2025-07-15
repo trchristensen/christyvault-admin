@@ -7,20 +7,20 @@ enum OrderStatus: string
     case PENDING = 'pending';
     case CONFIRMED = 'confirmed';
     case WILL_CALL = 'will_call';
-    case PICKED_UP = 'picked_up';
     case IN_PRODUCTION = 'in_production';
     case READY_FOR_DELIVERY = 'ready_for_delivery';
     case OUT_FOR_DELIVERY = 'out_for_delivery';
     case PREBURY = 'prebury';
-    case ARRIVED = 'arrived';
-    case DELIVERED = 'delivered';
     case CANCELLED = 'cancelled';
     case INVOICED = 'invoiced';
     case COMPLETED = 'completed';
     case TRANSFER = 'plant transfer';
+    case ARRIVED = 'arrived';
+    case DELIVERED = 'delivered';
+    case PICKED_UP = 'picked_up';
     case TRANSFERRED = 'plant transferred';
-    case SHIPPED = 'shipped';
     case PREBURY_DELIVERED = 'prebury_delivered';
+    case SHIPPED = 'shipped';
 
 
     public function label(): string
@@ -33,13 +33,13 @@ enum OrderStatus: string
             self::READY_FOR_DELIVERY => 'Ready for Delivery',
             self::OUT_FOR_DELIVERY => 'Out for Delivery',
             self::PREBURY => 'Prebury',
+            self::TRANSFER => "Plant Transfer",
             self::PICKED_UP => 'Picked Up',
             self::ARRIVED => 'Arrived',
             self::DELIVERED => 'Delivered',
             self::CANCELLED => 'Cancelled',
-            self::INVOICED => 'Invoiced',
             self::COMPLETED => 'Completed',
-            self::TRANSFER => "Plant Transfer",
+            self::INVOICED => 'Invoiced',
             self::TRANSFERRED => "Transferred",
             self::SHIPPED => 'Shipped via Carrier',
             self::PREBURY_DELIVERED => 'Prebury Delivered',
