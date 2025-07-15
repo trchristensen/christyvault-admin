@@ -3,9 +3,15 @@
 namespace App\Filament\Pages;
 
 use Filament\Pages\Dashboard as BaseDashboard;
+use App\Filament\Resources\OrderResource;
 
 class Dashboard extends BaseDashboard
 {
+    public function mount(): void
+    {
+        redirect(OrderResource::getUrl('calendar'));
+    }
+
     public function getColumns(): int | string | array
     {
         return [
@@ -17,4 +23,4 @@ class Dashboard extends BaseDashboard
             '2xl' => 8,
         ];
     }
-} 
+}
