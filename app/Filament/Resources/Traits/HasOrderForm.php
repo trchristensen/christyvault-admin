@@ -49,7 +49,7 @@ trait HasOrderForm
                             if (!$state) return;
 
                             $location = Location::find($state);
-                            if ($location && strtolower($location->city) === 'colma') {
+                            if ($location && strtolower($location->city) === 'colma' || strtolower($location->city) === 'south san francisco') {
                                 $set('plant_location', \App\Enums\PlantLocation::COLMA_LOCALS->value);
                             } else {
                                 $set('plant_location', \App\Enums\PlantLocation::COLMA_MAIN->value);
