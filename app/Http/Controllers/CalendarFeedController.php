@@ -30,9 +30,8 @@ class CalendarFeedController extends Controller
                         ->uniqueIdentifier($order->id . '-' . time()) // Add timestamp to UID to force refresh
                         ->createdAt($order->created_at)
                         ->startsAt($order->assigned_delivery_date ?? $order->requested_delivery_date)
-                        ->endsAt(($order->assigned_delivery_date ?? $order->requested_delivery_date)->addHours(1))
+                        ->endsAt(($order->assigned_delivery_date ?? $order->requested_delivery_date)?->copy()->addHours(1))
                         ->fullDay()
-                        ->status($order->trashed() ? 'CANCELLED' : 'CONFIRMED')
                 );
             });
 
