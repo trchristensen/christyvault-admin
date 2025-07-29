@@ -149,14 +149,16 @@ Route::get('/orders/{order}/print', [DeliveryTagController::class, 'view'])->nam
 Route::get('/orders/{order}/print-formbg', [DeliveryTagController::class, 'viewWithFormBg'])->name('orders.print.formbg');
 
 
-Route::get('/calendar-events', [OrderCalendarController::class, 'events']);
-Route::post('/orders/assign-date', [OrderCalendarController::class, 'assignDate']);
-Route::post('/orders/unassign-date', [OrderCalendarController::class, 'unassignDate']);
+Route::get('/calendar-events', [OrderCalendarController::class, 'events'])
+    ->middleware('auth');
+Route::post('/orders/assign-date', [OrderCalendarController::class, 'assignDate'])
+    ->middleware('auth');
+Route::post('/orders/unassign-date', [OrderCalendarController::class, 'unassignDate'])
+    ->middleware('auth');
 
 // routes/web.php
 Route::get('calendar/feed/{token}', [CalendarFeedController::class, 'download'])
-    ->name('calendar.feed')
-    ->middleware('signed');
+    ->name('calendar.feed');
 
 
 Route::get('calendar', fn() => view('calendar', [
@@ -164,8 +166,7 @@ Route::get('calendar', fn() => view('calendar', [
 ]));
 
 Route::get('calendar/leave-feed/{token}', [LeaveCalendarFeedController::class, 'download'])
-    ->name('calendar.leave-feed')
-    ->middleware('signed');
+    ->name('calendar.leave-feed');
 
 Route::get('/kanban-cards/{kanbanCard}/qr-code', [KanbanCardController::class, 'downloadQrCode'])
     ->name('kanban-cards.qr-code');

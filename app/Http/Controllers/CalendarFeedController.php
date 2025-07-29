@@ -3,14 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\User;
 use App\Enums\OrderStatus;
 use Spatie\IcalendarGenerator\Components\Calendar;
 use Spatie\IcalendarGenerator\Components\Event;
 
 class CalendarFeedController extends Controller
 {
-    public function download()
+    public function download($token)
     {
+        // Validate the calendar token
+        $user = User::where('calendar_token', $token)->first();
+        
+        if (!$user) {
+            abort(404, 'Invalid calendar token');
+        }
+
         $calendar = Calendar::create('Christy Vault Deliveries')
             ->refreshInterval(1) // Set to 1 minute
             ->timezone('America/Los_Angeles')
