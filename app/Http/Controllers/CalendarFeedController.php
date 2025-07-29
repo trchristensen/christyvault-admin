@@ -52,7 +52,7 @@ class CalendarFeedController extends Controller
                         ->startsAt($deliveryDate)
                         ->endsAt($deliveryDate->copy()->addHours(1))
                         ->fullDay()
-                        ->status($order->trashed() ? EventStatus::CANCELLED : EventStatus::CONFIRMED)
+                        ->status($order->trashed() ? EventStatus::Cancelled : EventStatus::Confirmed)
                 );
             });
 
