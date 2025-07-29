@@ -9,7 +9,7 @@ use Spatie\IcalendarGenerator\Components\Event;
 
 class CalendarFeedController extends Controller
 {
-    public function download($token)
+    public function download()
     {
         $calendar = Calendar::create('Christy Vault Deliveries')
             ->refreshInterval(1) // Set to 1 minute
@@ -21,29 +21,18 @@ class CalendarFeedController extends Controller
             ->with(['location', 'orderProducts.product'])
             ->withoutTrashed()
             ->whereNotIn('status', [OrderStatus::CANCELLED])
-            ->where(function($query) {
-                $query->whereNotNull('assigned_delivery_date')
-                      ->orWhereNotNull('requested_delivery_date');
-            })
             ->get()
             ->each(function (Order $order) use ($calendar) {
-                $deliveryDate = $order->assigned_delivery_date ?? $order->requested_delivery_date;
-                
-                // Skip if we somehow still don't have a date
-                if (!$deliveryDate) {
-                    return;
-                }
-                
                 $calendar->event(
                     Event::create()
                         ->name($order->location?->name ?? $order->order_number)
                         ->description($this->generateDescription($order))
                         ->uniqueIdentifier($order->id . '-' . time()) // Add timestamp to UID to force refresh
                         ->createdAt($order->created_at)
-                        ->startsAt($deliveryDate)
-                        ->endsAt($deliveryDate->copy()->addHours(1))
+                        ->startsAt($order->assigned_delivery_date ?? $order->requested_delivery_date)
+                        ->endsAt(($order->assigned_delivery_date ?? $order->requested_delivery_date)->addHours(1))
                         ->fullDay()
-                        // Removed status line - was causing enum errors
+                        ->status($order->trashed() ? 'CANCELLED' : 'CONFIRMED')
                 );
             });
 
