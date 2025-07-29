@@ -29,16 +29,27 @@ class CalendarFeedController extends Controller
             ->with(['location', 'orderProducts.product'])
             ->withoutTrashed()
             ->whereNotIn('status', [OrderStatus::CANCELLED])
+            ->where(function($query) {
+                $query->whereNotNull('assigned_delivery_date')
+                      ->orWhereNotNull('requested_delivery_date');
+            })
             ->get()
             ->each(function (Order $order) use ($calendar) {
+                $deliveryDate = $order->assigned_delivery_date ?? $order->requested_delivery_date;
+                
+                // Skip if we somehow still don't have a date
+                if (!$deliveryDate) {
+                    return;
+                }
+                
                 $calendar->event(
                     Event::create()
                         ->name($order->location?->name ?? $order->order_number)
                         ->description($this->generateDescription($order))
                         ->uniqueIdentifier($order->id . '-' . time()) // Add timestamp to UID to force refresh
                         ->createdAt($order->created_at)
-                        ->startsAt($order->assigned_delivery_date ?? $order->requested_delivery_date)
-                        ->endsAt(($order->assigned_delivery_date ?? $order->requested_delivery_date)->addHours(1))
+                        ->startsAt($deliveryDate)
+                        ->endsAt($deliveryDate->copy()->addHours(1))
                         ->fullDay()
                         ->status($order->trashed() ? 'CANCELLED' : 'CONFIRMED')
                 );

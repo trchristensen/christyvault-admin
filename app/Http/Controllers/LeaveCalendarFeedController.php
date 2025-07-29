@@ -24,6 +24,8 @@ class LeaveCalendarFeedController extends Controller
 
         LeaveRequest::query()
             ->with(['employee'])
+            ->whereNotNull('start_date')
+            ->whereNotNull('end_date')
             ->get()
             ->each(function (LeaveRequest $leaveRequest) use ($calendar) {
                 $calendar->event(
