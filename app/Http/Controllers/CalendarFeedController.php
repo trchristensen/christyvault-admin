@@ -58,7 +58,12 @@ class CalendarFeedController extends Controller
         // Add products
         $description[] = "\nProducts:";
         foreach ($order->orderProducts as $orderProduct) {
-            $description[] = "{$orderProduct->quantity}x {$orderProduct->product->sku}";
+            if ($orderProduct->is_custom_product) {
+                $productName = $orderProduct->custom_description ?? 'Custom Product';
+            } else {
+                $productName = $orderProduct->product?->sku ?? 'Unknown Product';
+            }
+            $description[] = "{$orderProduct->quantity}x {$productName}";
         }
 
         if ($order->special_instructions) {
