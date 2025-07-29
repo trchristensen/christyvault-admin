@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Enums\OrderStatus;
 use Spatie\IcalendarGenerator\Components\Calendar;
 use Spatie\IcalendarGenerator\Components\Event;
-use Spatie\IcalendarGenerator\Enums\EventStatus;
 
 class CalendarFeedController extends Controller
 {
@@ -52,7 +51,6 @@ class CalendarFeedController extends Controller
                         ->startsAt($deliveryDate)
                         ->endsAt($deliveryDate->copy()->addHours(1))
                         ->fullDay()
-                        ->status($order->trashed() ? EventStatus::Cancelled : EventStatus::Confirmed)
                 );
             });
 
