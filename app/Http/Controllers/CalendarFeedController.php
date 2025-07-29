@@ -26,7 +26,7 @@ class CalendarFeedController extends Controller
                 $calendar->event(
                     Event::create()
                         ->name($order->location?->name ?? $order->order_number)
-                        // ->description($this->generateDescription($order))
+                        ->description($this->generateDescription($order))
                         ->uniqueIdentifier($order->id . '-' . time()) // Add timestamp to UID to force refresh
                         ->createdAt($order->created_at)
                         ->startsAt($order->assigned_delivery_date ?? $order->requested_delivery_date)

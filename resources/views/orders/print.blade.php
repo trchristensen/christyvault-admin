@@ -409,7 +409,7 @@ elseif ($order->location->phone) {
                 @if ($order->status == 'prebury')
                     <strong style="margin-right:12px;text-decoration:underline">PREBURY</strong>
                 @endif
-                Notes from Rose: {{ $order->special_instructions }}
+                Notes: {{ $order->special_instructions }}
             </div>
         @endif
         <div class="cemetery-time">

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ec2441f5ea23121f24acae437bbdee07",
+    "content-hash": "8f3d87073934ffb3737c2218c3243296",
     "packages": [
         {
             "name": "althinect/filament-spatie-roles-permissions",
@@ -6721,16 +6721,16 @@
         },
         {
             "name": "spatie/icalendar-generator",
-            "version": "2.9.1",
+            "version": "2.8.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/spatie/icalendar-generator.git",
-                "reference": "21b8d259156368812a6d55096499f289b265be4e"
+                "reference": "6cb8b9b9df72bbea25b302aabce680917739fdb6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/spatie/icalendar-generator/zipball/21b8d259156368812a6d55096499f289b265be4e",
-                "reference": "21b8d259156368812a6d55096499f289b265be4e",
+                "url": "https://api.github.com/repos/spatie/icalendar-generator/zipball/6cb8b9b9df72bbea25b302aabce680917739fdb6",
+                "reference": "6cb8b9b9df72bbea25b302aabce680917739fdb6",
                 "shasum": ""
             },
             "require": {
@@ -6743,7 +6743,8 @@
                 "larapack/dd": "^1.1",
                 "nesbot/carbon": "^3.5",
                 "pestphp/pest": "^2.34",
-                "spatie/pest-plugin-snapshots": "^2.1"
+                "spatie/pest-plugin-snapshots": "^2.1",
+                "vimeo/psalm": "^5.24"
             },
             "type": "library",
             "autoload": {
@@ -6774,9 +6775,9 @@
             ],
             "support": {
                 "issues": "https://github.com/spatie/icalendar-generator/issues",
-                "source": "https://github.com/spatie/icalendar-generator/tree/2.9.1"
+                "source": "https://github.com/spatie/icalendar-generator/tree/2.8.1"
             },
-            "time": "2025-01-31T13:50:13+00:00"
+            "time": "2024-06-17T11:23:50+00:00"
         },
         {
             "name": "spatie/invade",

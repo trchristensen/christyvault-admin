@@ -6,13 +6,12 @@
     overflow-y: scroll;
 } */
 
-
 .fc-event-title-container {
     display: none !important;
 }
 
 /* Show our custom content */
-.fc-event-main>div {
+.fc-event-main > div {
     display: block !important;
 }
 
@@ -48,7 +47,7 @@
 }
 
 /* Ensure events stack properly */
-.fc-daygrid-day-events>* {
+.fc-daygrid-day-events > * {
     position: static !important;
     transform: none !important;
 }
@@ -85,11 +84,11 @@
 
 /* Common container styles */
 .order-container,
-.fc-event-main>div {
+.fc-event-main > div {
     @apply lg:p-2 rounded-lg;
 }
 
-.fc-event-main>div {
+.fc-event-main > div {
     padding-top: 0;
     padding-bottom: 3px;
 }
@@ -107,7 +106,7 @@
     @apply text-xs text-gray-800 mb-2;
 }
 
-.order-address>div {
+.order-address > div {
     @apply line-clamp-1;
 }
 
@@ -135,14 +134,16 @@
 
 .trip-event {
     @apply p-2 bg-white;
-    background-image: linear-gradient(45deg,
-            #f7f7f7 25%,
-            #ffffff 25%,
-            #ffffff 50%,
-            #f7f7f7 50%,
-            #f7f7f7 75%,
-            #ffffff 75%,
-            #ffffff 100%);
+    background-image: linear-gradient(
+        45deg,
+        #f7f7f7 25%,
+        #ffffff 25%,
+        #ffffff 50%,
+        #f7f7f7 50%,
+        #f7f7f7 75%,
+        #ffffff 75%,
+        #ffffff 100%
+    );
     background-size: 45.25px 45.25px;
 }
 
@@ -381,6 +382,32 @@
     background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>');
 }
 
+.status-prebury {
+    @apply bg-lime-100 border border-lime-500/50;
+}
+
+.status-prebury .order-title {
+    @apply text-lime-900;
+}
+
+.status-prebury::before {
+    @apply text-lime-900;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>');
+}
+
+.status-prebury_delivered {
+    @apply bg-lime-200 border border-lime-500/50;
+}
+
+.status-prebury_delivered .order-title {
+    @apply text-lime-900;
+}
+
+.status-prebury_delivered::before {
+    @apply text-lime-900;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>');
+}
+
 /* Remove the old date displays since they're now in status */
 .order-requested-delivery-date,
 .order-date {
@@ -391,7 +418,7 @@
     height: 100%;
 }
 
-.fc-event-main>div {
+.fc-event-main > div {
     padding-top: 0;
     padding-bottom: 3px;
 }
@@ -478,10 +505,10 @@
 #calendar .fc-list,
 #calendar .fc-view table,
 #calendar .fc-view:not(.fc-list) table th {
-    border-top-left-radius: .75rem;
-    border-top-right-radius: .75rem;
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
 }
 
 #calendar table {
-    background-color: #ffffff
+    background-color: #ffffff;
 }
