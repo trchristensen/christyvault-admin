@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
-use App\Models\User;
 use App\Enums\OrderStatus;
 use Spatie\IcalendarGenerator\Components\Calendar;
 use Spatie\IcalendarGenerator\Components\Event;
@@ -12,13 +11,6 @@ class CalendarFeedController extends Controller
 {
     public function download($token)
     {
-        // Validate the calendar token
-        $user = User::where('calendar_token', $token)->first();
-        
-        if (!$user) {
-            abort(404, 'Invalid calendar token');
-        }
-
         $calendar = Calendar::create('Christy Vault Deliveries')
             ->refreshInterval(1) // Set to 1 minute
             ->timezone('America/Los_Angeles')
@@ -51,6 +43,7 @@ class CalendarFeedController extends Controller
                         ->startsAt($deliveryDate)
                         ->endsAt($deliveryDate->copy()->addHours(1))
                         ->fullDay()
+                        // Removed status line - was causing enum errors
                 );
             });
 

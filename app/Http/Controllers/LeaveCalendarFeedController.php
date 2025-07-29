@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\LeaveRequest;
-use App\Models\User;
 use Spatie\IcalendarGenerator\Components\Calendar;
 use Spatie\IcalendarGenerator\Components\Event;
 
@@ -11,12 +10,7 @@ class LeaveCalendarFeedController extends Controller
 {
     public function download($token)
     {
-        // Validate the calendar token
-        $user = User::where('calendar_token', $token)->first();
-        
-        if (!$user) {
-            abort(404, 'Invalid calendar token');
-        }
+        // Token validation handled by signed middleware
 
         $calendar = Calendar::create('Christy Vault Team Calendar')
             ->refreshInterval(5)

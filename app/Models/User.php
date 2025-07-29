@@ -12,7 +12,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Support\Str;
 
 
 class User extends Authenticatable implements FilamentUser
@@ -33,7 +32,6 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
-        'calendar_token',
     ];
 
     /**
@@ -44,7 +42,6 @@ class User extends Authenticatable implements FilamentUser
     protected $hidden = [
         'password',
         'remember_token',
-        'calendar_token',
     ];
 
     /**
@@ -70,38 +67,17 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasOneThrough(Driver::class, Employee::class);
     }
 
-    /**
-     * Generate a new calendar token for this user
-     */
-    public function generateCalendarToken(): string
-    {
-        $token = Str::random(64);
-        $this->update(['calendar_token' => $token]);
-        return $token;
-    }
-
-    /**
-     * Get the calendar token, generating one if it doesn't exist
-     */
-    public function getCalendarToken(): string
-    {
-        if (!$this->calendar_token) {
-            return $this->generateCalendarToken();
-        }
-        return $this->calendar_token;
-    }
-
     public function getCalendarFeedUrl(): string
     {
-        return route('calendar.feed', [
-            'token' => $this->getCalendarToken()
-        ]);
+        return url()->signedRoute('calendar.feed', [
+            'token' => $this->id
+        ], now()->addYears(10)); // Expire in 10 years instead of 24 hours
     }
 
     public function getLeaveCalendarFeedUrl(): string
     {
-        return route('calendar.leave-feed', [
-            'token' => $this->getCalendarToken()
-        ]);
+        return url()->signedRoute('calendar.leave-feed', [
+            'token' => $this->id
+        ], now()->addYears(10)); // Expire in 10 years instead of 24 hours
     }
 }

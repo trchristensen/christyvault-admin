@@ -158,7 +158,8 @@ Route::post('/orders/unassign-date', [OrderCalendarController::class, 'unassignD
 
 // routes/web.php
 Route::get('calendar/feed/{token}', [CalendarFeedController::class, 'download'])
-    ->name('calendar.feed');
+    ->name('calendar.feed')
+    ->middleware('signed');
 
 
 Route::get('calendar', fn() => view('calendar', [
@@ -166,7 +167,8 @@ Route::get('calendar', fn() => view('calendar', [
 ]));
 
 Route::get('calendar/leave-feed/{token}', [LeaveCalendarFeedController::class, 'download'])
-    ->name('calendar.leave-feed');
+    ->name('calendar.leave-feed')
+    ->middleware('signed');
 
 Route::get('/kanban-cards/{kanbanCard}/qr-code', [KanbanCardController::class, 'downloadQrCode'])
     ->name('kanban-cards.qr-code');
