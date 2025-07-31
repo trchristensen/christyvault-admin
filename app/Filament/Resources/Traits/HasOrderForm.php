@@ -291,7 +291,6 @@ trait HasOrderForm
                     Forms\Components\Repeater::make('orderProducts')
                         ->label(false)
                         ->addActionLabel('Add a Product')
-                        ->relationship()
                         ->schema([
                             Forms\Components\Grid::make(12)
                                 ->schema([

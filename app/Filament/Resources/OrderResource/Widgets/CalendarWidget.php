@@ -443,63 +443,13 @@ class CalendarWidget extends FullCalendarWidget
                             ->success()
                             ->send();
                     } else {
-                        // Get the mounted action data
-                        $mountedData = json_decode(request()->input('components.0.snapshot'), true);
-
-                        // Custom function to remove depth limitation
-                        $deepDecode = function ($data) use (&$deepDecode) {
-                            if (is_string($data) && str_contains($data, 'Over 9 levels deep')) {
-                                // This is a truncated value, get the original from the request
-                                return json_decode($data, true);
-                            }
-
-                            if (is_array($data)) {
-                                return array_map($deepDecode, $data);
-                            }
-
-                            return $data;
-                        };
-
-
-
-                        $formData = $mountedData['data']['mountedActionsData'][0][0][0] ?? [];
-
-
                         // Create the order
                         $order = Order::create(collect($data)->except(['type', 'orderProducts'])->toArray());
 
-                        // Handle order products
-                        if (isset($formData['orderProducts'][0])) {
-                            $products = $formData['orderProducts'][0];
-
-                            foreach ($products as $uuid => $product) {
-                                // Skip the state array
-                                if ($uuid === 's') {
-                                    continue;
-                                }
-
-                                // Get the first element which contains the actual product data
-                                $productData = $product[0];
-
-
-                                try {
-                                    $orderProduct = new \App\Models\OrderProduct([
-                                        'product_id' => $productData['product_id'],
-                                        'fill_load' => $productData['fill_load'] === true,
-                                        'quantity' => (int)$productData['quantity'],
-                                        'price' => (float)$productData['price'],
-                                        'location' => $productData['location'],
-                                        'notes' => $productData['notes'],
-                                    ]);
-
-                                    $order->orderProducts()->save($orderProduct);
-                                } catch (\Exception $e) {
-                                    Log::error('Failed to create order product:', [
-                                        'error' => $e->getMessage(),
-                                        'trace' => $e->getTraceAsString(),
-                                        'productData' => $productData
-                                    ]);
-                                }
+                        // Handle order products - use the same simple approach as DeliveryCalendar
+                        if (isset($data['orderProducts'])) {
+                            foreach ($data['orderProducts'] as $productData) {
+                                $order->orderProducts()->create($productData);
                             }
                         }
 
