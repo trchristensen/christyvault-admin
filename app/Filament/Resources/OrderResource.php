@@ -104,13 +104,13 @@ class OrderResource extends Resource
                         $products = [];
                         foreach ($record->orderProducts as $orderProduct) {
                             $isCustom = $orderProduct->is_custom_product;
-                            $key = ($isCustom ? 'custom-' . ($orderProduct->custom_description ?? $orderProduct->custom_name ?? $orderProduct->custom_sku ?? $orderProduct->id) : $orderProduct->product_id) . ($orderProduct->fill_load ? '-fill' : '');
+                            $key = ($isCustom ? 'custom-' . ($orderProduct->custom_description ?? $orderProduct->id) : $orderProduct->product_id) . ($orderProduct->fill_load ? '-fill' : '');
 
                             if (!isset($products[$key])) {
                                 if ($orderProduct->fill_load) {
-                                    $sku = $isCustom
-                                        ? ($orderProduct->custom_sku ?? $orderProduct->custom_name ?? 'Custom')
-                                        : ($orderProduct->product->sku ?? 'Unknown');
+                                                        $sku = $isCustom
+                        ? ($orderProduct->custom_description ?? 'Custom')
+                        : ($orderProduct->product->sku ?? 'Unknown');
                                     $products[$key] = "Fill Load x {$sku}";
                                 } else {
                                     $quantity = $record->orderProducts
@@ -118,7 +118,7 @@ class OrderResource extends Resource
                                         ->where('fill_load', false)
                                         ->sum('quantity');
                                     if ($isCustom) {
-                                        $desc = $orderProduct->custom_description ?? $orderProduct->custom_name ?? $orderProduct->custom_sku ?? 'Custom';
+                                        $desc = $orderProduct->custom_description ?? 'Custom';
                                         $products[$key] = "{$orderProduct->quantity} x {$desc}";
                                     } else {
                                         $sku = $orderProduct->product->sku ?? 'Unknown';

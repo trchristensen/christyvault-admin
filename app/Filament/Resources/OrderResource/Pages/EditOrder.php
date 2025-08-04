@@ -24,8 +24,6 @@ class EditOrder extends EditRecord
             return [
                 'product_id' => $orderProduct->product_id,
                 'is_custom_product' => $orderProduct->is_custom_product,
-                'custom_sku' => $orderProduct->custom_sku,
-                'custom_name' => $orderProduct->custom_name,
                 'custom_description' => $orderProduct->custom_description,
                 'quantity' => $orderProduct->quantity,
                 'fill_load' => $orderProduct->fill_load,

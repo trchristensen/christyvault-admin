@@ -18,8 +18,6 @@ class OrderProduct extends Pivot
     protected $fillable = [
         'order_id',
         'product_id',
-        'custom_sku',
-        'custom_name',
         'custom_description',
         'is_custom_product',
         'quantity',
@@ -48,12 +46,12 @@ class OrderProduct extends Pivot
 
     public function getDisplaySkuAttribute(): string
     {
-        return $this->is_custom_product ? $this->custom_sku : $this->product->sku;
+        return $this->is_custom_product ? 'CUSTOM' : $this->product->sku;
     }
 
     public function getDisplayNameAttribute(): string
     {
-        return $this->is_custom_product ? $this->custom_name : $this->product->name;
+        return $this->is_custom_product ? ($this->custom_description ?? 'Custom Product') : $this->product->name;
     }
 
     public function getDisplayDescriptionAttribute(): ?string
