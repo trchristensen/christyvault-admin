@@ -49,10 +49,18 @@ trait HasOrderForm
                             if (!$state) return;
 
                             $location = Location::find($state);
-                            if ($location && strtolower($location->city) === 'colma' || strtolower($location->city) === 'south san francisco') {
-                                $set('plant_location', \App\Enums\PlantLocation::COLMA_LOCALS->value);
-                            } else {
-                                $set('plant_location', \App\Enums\PlantLocation::COLMA_MAIN->value);
+                            if ($location) {
+                                // Set plant location based on city
+                                if (strtolower($location->city) === 'colma' || strtolower($location->city) === 'south san francisco') {
+                                    $set('plant_location', \App\Enums\PlantLocation::COLMA_LOCALS->value);
+                                } else {
+                                    $set('plant_location', \App\Enums\PlantLocation::COLMA_MAIN->value);
+                                }
+                                
+                                // Set ordered_by if preferred delivery contact exists
+                                if ($location->preferredDeliveryContact?->name) {
+                                    $set('ordered_by', $location->preferredDeliveryContact->name);
+                                }
                             }
                         })
                         ->suffixAction(function ($state) {
@@ -275,6 +283,12 @@ trait HasOrderForm
                             ]);
                         })
                         ->default(\App\Enums\PlantLocation::COLMA_MAIN->value)
+                        ->columnSpan([
+                            'sm' => 4,
+                            'md' => 4,
+                        ]),
+                    Forms\Components\TextInput::make('ordered_by')
+                        ->label('Ordered By')
                         ->columnSpan([
                             'sm' => 4,
                             'md' => 4,

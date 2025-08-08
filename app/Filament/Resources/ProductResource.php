@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Product;
+use App\Enums\UnitOfMeasure;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -30,6 +31,11 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
+                Forms\Components\Select::make('unit')
+                    ->label('Unit of Measure')
+                    ->options(UnitOfMeasure::getOptions())
+                    ->searchable()
+                    ->preload(),
                 Forms\Components\Select::make('product_type')
                     ->label('Product Type')
                     ->options([
@@ -75,6 +81,10 @@ class ProductResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('sku')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('unit')
+                    ->label('Unit')
+                    ->formatStateUsing(fn($state) => $state?->label() ?? 'N/A')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('product_type')
                     ->searchable()
                     ->sortable(),

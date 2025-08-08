@@ -39,6 +39,7 @@ class Order extends Model
         'delivery_notes',
         'signature_path',
         'plant_location',
+        'ordered_by',
     ];
 
     protected $casts = [

@@ -425,6 +425,7 @@ elseif ($order->location->phone) {
             <span>Arrive:</span>
             <span>Leave:</span>
             <span>Driver:</span>
+            <span>Ordered By: {{ $order->ordered_by ?? '' }}</span>
         </div>
 
 

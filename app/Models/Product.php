@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use App\Enums\UnitOfMeasure;
 
 class Product extends Model
 {
@@ -15,6 +16,7 @@ class Product extends Model
     protected $fillable = [
         'name',
         'sku',
+        'unit',
         'description',
         'price',
         'stock',
@@ -28,6 +30,7 @@ class Product extends Model
         'price' => 'decimal:2',
         'is_active' => 'boolean',
         'specifications' => 'array',
+        'unit' => UnitOfMeasure::class,
     ];
 
     public function scopeActive($query)
