@@ -257,6 +257,10 @@
                     <p class="text-sm text-gray-600 dark:text-gray-400">Date of Order</p>
                     <p class="font-medium">{{ $record->order_date?->format('M j, Y') }}</p>
                 </div>
+                 <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Ordered By</p>
+                    <p class="font-medium">{{ $record->ordered_by }}</p>
+                </div>
             </div>
 
         </div>
