@@ -32,7 +32,6 @@ use Filament\Support\Enums\MaxWidth;
 use Filament\Navigation\NavigationItem;
 
 
-
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel

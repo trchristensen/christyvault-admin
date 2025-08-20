@@ -84,7 +84,7 @@ class SupplierResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\InventoryItemsRelationManager::class,
+            // RelationManagers\InventoryItemsRelationManager::class,
         ];
     }
 

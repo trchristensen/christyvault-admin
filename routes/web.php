@@ -17,6 +17,11 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Http\Request;
 
 
+// Laravel auth middleware expects a route named 'login'
+Route::get('/auth/login', function () {
+    return redirect('/login');
+})->name('login');
+
 
 // Secure delivery link generator
 Route::get('/generate-delivery-link/{order}', function (Order $order) {
@@ -144,9 +149,9 @@ Route::get('/delivery/{order}/{token}', function (Order $order, string $token) {
 //     return view('welcome');
 // });
 
-Route::get('/orders/calendar/print', [DeliveryCalendarPrintController::class, 'view'])->name('delivery-calendar.print');
-Route::get('/orders/{order}/print', [DeliveryTagController::class, 'view'])->name('orders.print');
-Route::get('/orders/{order}/print-formbg', [DeliveryTagController::class, 'viewWithFormBg'])->name('orders.print.formbg');
+Route::get('/orders/calendar/print', [DeliveryCalendarPrintController::class, 'view'])->name('delivery-calendar.print')->middleware('auth');
+Route::get('/orders/{order}/print', [DeliveryTagController::class, 'view'])->name('orders.print')->middleware('auth');
+Route::get('/orders/{order}/print-formbg', [DeliveryTagController::class, 'viewWithFormBg'])->name('orders.print.formbg')->middleware('auth');
 
 
 Route::get('/calendar-events', [OrderCalendarController::class, 'events'])
