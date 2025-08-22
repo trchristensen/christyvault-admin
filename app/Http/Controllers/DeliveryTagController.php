@@ -33,7 +33,7 @@ class DeliveryTagController extends Controller
 
         return response($pdf->output())
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="order-' . $order->order_number . '.pdf"');
+            ->header('Content-Disposition', 'attachment; filename="order-' . $order->order_number . '.pdf"');
     }
 
     public function viewWithFormBg(Order $order)
