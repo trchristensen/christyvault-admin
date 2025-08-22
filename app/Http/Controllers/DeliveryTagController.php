@@ -13,6 +13,9 @@ class DeliveryTagController extends Controller
             abort(404, 'Form template not found');
         }
 
+        // Mark order as printed
+        $order->update(['is_printed' => true]);
+
         $pdf = SnappyPdf::loadView('orders.print', ['order' => $order])
             ->setOption('page-width', '8.5in')
             ->setOption('page-height', '7.625in')

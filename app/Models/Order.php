@@ -26,6 +26,7 @@ class Order extends Model
         'customer_id',
         'location_id',
         'status',
+        'is_printed',
         'order_date',
         'requested_delivery_date',
         'assigned_delivery_date',
@@ -48,6 +49,7 @@ class Order extends Model
         'assigned_delivery_date' => 'date',
         'service_date' => 'datetime',
         'is_active' => 'boolean',
+        'is_printed' => 'boolean',
         'arrived_at' => 'datetime',
         'delivered_at' => 'datetime',
     ];
