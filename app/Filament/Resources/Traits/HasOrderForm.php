@@ -297,6 +297,47 @@ trait HasOrderForm
                         ->columnSpan(12)
                         ->label('Notes')
                         ->characterLimit(166),
+                    Forms\Components\FileUpload::make('delivery_tag_url')
+                        ->label('Delivery Tag Attachment')
+                        ->disk('r2')
+                        ->directory('delivery-tags')
+                        ->visibility('private')
+                        ->downloadable()
+                        ->openable()
+                        ->acceptedFileTypes([
+                            'application/pdf',
+                            'image/png',
+                            'image/jpeg',
+                            'image/jpg',
+                            'image/gif',
+                            'image/webp',
+                        ])
+                        ->maxSize(5120) // 5MB limit
+                        ->columnSpan([
+                            'sm' => 12,
+                            'md' => 6,
+                        ])
+                        ->helperText('Upload delivery tag document or image (PDF, JPG, PNG, etc.)')
+                        ->getUploadedFileNameForStorageUsing(function ($file, $get) {
+                            $date = now()->format('Y-m-d');
+                            $locationId = $get('location_id');
+                            
+                            if ($locationId) {
+                                $location = Location::find($locationId);
+                                if ($location) {
+                                    // Clean the location name and city for filename
+                                    $locationName = preg_replace('/[^A-Za-z0-9\-_]/', '_', $location->name);
+                                    $city = preg_replace('/[^A-Za-z0-9\-_]/', '_', $location->city);
+                                    
+                                    $extension = $file->getClientOriginalExtension();
+                                    return "{$date}_{$locationName}_{$city}_delivery_tag.{$extension}";
+                                }
+                            }
+                            
+                            // Fallback if no location is selected
+                            $extension = $file->getClientOriginalExtension();
+                            return "{$date}_delivery_tag.{$extension}";
+                        }),
                 ])
                 ->columns(12),
             Forms\Components\Section::make('Products')

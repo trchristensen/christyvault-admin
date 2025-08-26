@@ -39,6 +39,7 @@ class Order extends Model
         'stop_number',
         'delivery_notes',
         'signature_path',
+        'delivery_tag_url',
         'plant_location',
         'ordered_by',
     ];

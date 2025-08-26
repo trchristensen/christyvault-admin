@@ -1,5 +1,6 @@
 @php
     use Propaganistas\LaravelPhone\PhoneNumber;
+    use Illuminate\Support\Facades\Storage;
 @endphp
 <!-- add css -->
 <style>
@@ -168,6 +169,20 @@
                 </span>
             @endif
             
+            {{-- Delivery Tag Attachment Status --}}
+            @if($record->delivery_tag_url)
+                <button 
+                    @click="$dispatch('toggle-delivery-tag')"
+                    class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full hover:bg-blue-200 transition-colors cursor-pointer dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
+                    title="Click to view delivery tag"
+                    x-data="{ showTag: false }"
+                    x-on:toggle-delivery-tag.window="showTag = !showTag"
+                >
+                    <x-heroicon-s-document-text class="w-3 h-3" />
+                    <span x-text="showTag ? 'Hide Tag' : 'View Tag'"></span>
+                </button>
+            @endif
+            
             <div class="px-2 py-1 text-sm font-medium text-gray-800 border rounded-full"
                 style="background-color: {{ $record->status_color['background'] }}; color: {{ $record->status_color['text'] }}; border-color: {{ $record->status_color['border'] }}">
                 {{-- get the status label (it's an enum) --}}
@@ -175,6 +190,80 @@
             </div>
         </div>
     </div>
+
+    {{-- Expandable Delivery Tag Preview --}}
+    @if($record->delivery_tag_url)
+        <div x-data="{ showTag: false }" 
+             x-on:toggle-delivery-tag.window="showTag = !showTag" 
+             class="mb-4">
+            <div x-show="showTag" 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 transform -translate-y-2"
+                 x-transition:enter-end="opacity-100 transform translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 transform translate-y-0"
+                 x-transition:leave-end="opacity-0 transform -translate-y-2"
+                 class="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+                 style="display: none;"
+            >
+                <div class="flex items-start justify-between mb-3">
+                    <h3 class="font-medium text-blue-900 dark:text-blue-100">Delivery Tag Attachment</h3>
+                    <div class="flex items-center gap-2">
+                        <a href="{{ Storage::disk('r2')->url($record->delivery_tag_url) }}" 
+                           target="_blank" 
+                           class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-800 bg-blue-200 rounded hover:bg-blue-300 transition-colors dark:bg-blue-800 dark:text-blue-200 dark:hover:bg-blue-700">
+                            <x-heroicon-o-arrow-top-right-on-square class="w-3 h-3" />
+                            Open Full Size
+                        </a>
+                        <button @click="showTag = false" 
+                                class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200">
+                            <x-heroicon-o-x-mark class="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+                
+                @php
+                    $fileExtension = strtolower(pathinfo($record->delivery_tag_url, PATHINFO_EXTENSION));
+                    $isImage = in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                @endphp
+                
+                @if($isImage)
+                    <div class="flex justify-center">
+                        <img src="{{ Storage::disk('r2')->url($record->delivery_tag_url) }}" 
+                             alt="Delivery Tag" 
+                             class="max-w-full h-auto max-h-96 rounded-lg shadow-sm border border-blue-200 dark:border-blue-700 cursor-pointer hover:shadow-md transition-shadow"
+                             onclick="window.open('{{ Storage::disk('r2')->url($record->delivery_tag_url) }}', '_blank')"
+                        />
+                    </div>
+                @elseif($fileExtension === 'pdf')
+                    <div class="w-full">
+                        <iframe src="{{ Storage::disk('r2')->url($record->delivery_tag_url) }}#toolbar=0&navpanes=0&scrollbar=0&view=FitH" 
+                                class="w-full h-96 rounded-lg border border-blue-200 dark:border-blue-700"
+                                title="Delivery Tag PDF Preview">
+                        </iframe>
+                        <p class="text-xs text-blue-600 dark:text-blue-400 mt-2 text-center">
+                            PDF preview - <a href="{{ Storage::disk('r2')->url($record->delivery_tag_url) }}" target="_blank" class="underline hover:no-underline">open in new tab</a> if not displaying properly
+                        </p>
+                    </div>
+                @else
+                    <div class="flex items-center justify-center p-8 bg-white dark:bg-gray-800 rounded-lg border-2 border-dashed border-blue-300 dark:border-blue-600">
+                        <div class="text-center">
+                            <x-heroicon-o-document-text class="w-12 h-12 mx-auto text-blue-500 mb-2" />
+                            <p class="text-sm text-blue-700 dark:text-blue-300 mb-2">
+                                {{ strtoupper($fileExtension) }} Document
+                            </p>
+                            <a href="{{ Storage::disk('r2')->url($record->delivery_tag_url) }}" 
+                               target="_blank" 
+                               class="inline-flex items-center gap-1 px-3 py-1 text-sm font-medium text-blue-800 bg-blue-200 rounded hover:bg-blue-300 transition-colors dark:bg-blue-800 dark:text-blue-200 dark:hover:bg-blue-700">
+                                <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
+                                Download/View
+                            </a>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
 
     <div class="relative flex p-4 mb-4 rounded-lg bg-gray-50 dark:bg-gray-800">
         <div class="flex flex-col items-center justify-center mr-4">
