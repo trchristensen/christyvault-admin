@@ -318,9 +318,10 @@ trait HasOrderForm
                             'md' => 6,
                         ])
                         ->helperText('Upload delivery tag document or image (PDF, JPG, PNG, etc.)')
-                        ->getUploadedFileNameForStorageUsing(function ($file, $get) {
+                        ->getUploadedFileNameForStorageUsing(function ($file, $get, $record) {
                             $date = now()->format('Y-m-d');
                             $locationId = $get('location_id');
+                            $extension = $file->getClientOriginalExtension();
                             
                             if ($locationId) {
                                 $location = Location::find($locationId);
@@ -329,14 +330,25 @@ trait HasOrderForm
                                     $locationName = preg_replace('/[^A-Za-z0-9\-_]/', '_', $location->name);
                                     $city = preg_replace('/[^A-Za-z0-9\-_]/', '_', $location->city);
                                     
-                                    $extension = $file->getClientOriginalExtension();
-                                    return "{$date}_{$locationName}_{$city}_delivery_tag.{$extension}";
+                                    // Include order number to prevent collisions (if record exists)
+                                    if ($record && $record->order_number) {
+                                        return "{$date}_{$locationName}_{$city}_{$record->order_number}_delivery_tag.{$extension}";
+                                    } else {
+                                        // For new orders, add timestamp to prevent collisions
+                                        $timestamp = now()->format('His'); // HHMMSS
+                                        return "{$date}_{$locationName}_{$city}_{$timestamp}_delivery_tag.{$extension}";
+                                    }
                                 }
                             }
                             
                             // Fallback if no location is selected
-                            $extension = $file->getClientOriginalExtension();
-                            return "{$date}_delivery_tag.{$extension}";
+                            if ($record && $record->order_number) {
+                                return "{$date}_{$record->order_number}_delivery_tag.{$extension}";
+                            } else {
+                                // For new orders without location, use timestamp
+                                $timestamp = now()->format('His');
+                                return "{$date}_{$timestamp}_delivery_tag.{$extension}";
+                            }
                         }),
                 ])
                 ->columns(12),

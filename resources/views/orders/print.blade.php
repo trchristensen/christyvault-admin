@@ -247,9 +247,9 @@
         }
          .order-number {
             position: absolute;
-            top : 80px;
-            right: 100px;
-            font-size: 14px;
+            top : 120px;
+            left: 100px;
+            font-size: 18px;
         }
     </style>
 </head>
