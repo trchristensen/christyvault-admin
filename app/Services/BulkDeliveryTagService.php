@@ -9,6 +9,7 @@ use Spatie\PdfToImage\Pdf;
 use thiagoalessio\TesseractOCR\TesseractOCR;
 use setasign\Fpdi\Fpdi;
 use Exception;
+use App\Enums\OrderStatus;
 
 class BulkDeliveryTagService
 {
@@ -163,7 +164,7 @@ class BulkDeliveryTagService
                     'location_name' => $order->location?->name,
                     'location_city' => $order->location?->city,
                     'requested_delivery_date' => $order->requested_delivery_date?->format('M j, Y'),
-                    'status' => $order->status->getLabel()
+                    'status' => $this->getOrderStatusLabel($order->status)
                 ] : null
             ];
 
@@ -382,5 +383,22 @@ class BulkDeliveryTagService
         ]);
 
         return null;
+    }
+
+    /**
+     * Get the label for an order status
+     * 
+     * @param string $status
+     * @return string
+     */
+    private function getOrderStatusLabel(string $status): string
+    {
+        try {
+            $orderStatus = OrderStatus::from($status);
+            return $orderStatus->label();
+        } catch (\ValueError $e) {
+            // If the status value doesn't match any enum case, return the raw value
+            return ucfirst(str_replace('_', ' ', $status));
+        }
     }
 }

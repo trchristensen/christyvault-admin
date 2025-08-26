@@ -140,13 +140,13 @@
                                                             </a>
                                                         @endif
                                                         
-                                                        @if(isset($matched['order_id']))
-                                                            <a href="{{ route('filament.admin.resources.orders.view', ['record' => $matched['order_id']]) }}" 
-                                                               class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-green-800 bg-green-100 rounded-md hover:bg-green-200 transition-colors dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800">
-                                                                <x-heroicon-o-eye class="w-4 h-4 mr-1" />
-                                                                View Order
-                                                            </a>
-                                                        @endif
+                                                                                                @if(isset($matched['order_id']))
+                                            <a href="{{ route('filament.admin.resources.orders.edit', ['record' => $matched['order_id']]) }}" 
+                                               class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-green-800 bg-green-100 rounded-md hover:bg-green-200 transition-colors dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800">
+                                                <x-heroicon-o-pencil-square class="w-4 h-4 mr-1" />
+                                                Edit Order
+                                            </a>
+                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
