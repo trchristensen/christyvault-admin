@@ -41,9 +41,16 @@ class BulkDeliveryTagService
             $pageCount = $pdf->getNumberOfPages();
             $results['total_pages'] = $pageCount;
 
-            // Process each page
+            // Process each page individually to avoid timeouts
             for ($pageNumber = 1; $pageNumber <= $pageCount; $pageNumber++) {
+                // Add a small delay between pages to prevent overwhelming the system
+                if ($pageNumber > 1) {
+                    usleep(500000); // 0.5 second delay
+                }
+                
                 try {
+                    \Log::info("Processing page {$pageNumber} of {$pageCount}");
+                    
                     $pageResult = $this->processPage($pdf, $pageNumber, $fullPath, $dryRun);
                     
                     if ($pageResult['success']) {
@@ -71,7 +78,12 @@ class BulkDeliveryTagService
                             'error' => $pageResult['error']
                         ];
                     }
+                    
+                    \Log::info("Completed page {$pageNumber}: " . 
+                              ($pageResult['success'] ? 'success' : 'failed'));
+                              
                 } catch (Exception $e) {
+                    \Log::error("Error processing page {$pageNumber}: " . $e->getMessage());
                     $results['errors'][] = [
                         'page' => $pageNumber,
                         'error' => $e->getMessage()
@@ -83,6 +95,7 @@ class BulkDeliveryTagService
             Storage::disk('local')->delete($tempPath);
 
         } catch (Exception $e) {
+            \Log::error('Bulk PDF processing failed: ' . $e->getMessage());
             $results['errors'][] = [
                 'page' => 'general',
                 'error' => $e->getMessage()

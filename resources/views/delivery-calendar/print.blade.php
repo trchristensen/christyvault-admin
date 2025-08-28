@@ -56,7 +56,7 @@
         }
 
         .date-header {
-            background: #f3f4f6;
+            background: #ccc;
             padding: 5px;
             font-weight: bold;
             margin: -10px -10px 10px -10px;
@@ -95,7 +95,7 @@
         .order-section-header {
             font-weight: bold;
             padding: 5px;
-            background: #f3f4f6;
+            background: #ccc;
             margin-bottom: 10px;
         }
 
@@ -157,7 +157,7 @@
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>{{ $order->location->address_line1 }}</div>
+                                                        {{-- <div>{{ $order->location->address_line1 }}</div> --}}
                                                         <div>{{ $order->location->city }}, {{ $order->location->state }}
                                                         </div>
                                                     @endif
@@ -201,7 +201,7 @@
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>{{ $order->location->address_line1 }}</div>
+                                                        {{-- <div>{{ $order->location->address_line1 }}</div> --}}
                                                         <div>{{ $order->location->city }},
                                                             {{ $order->location->state }}</div>
                                                     @endif
@@ -245,7 +245,7 @@
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>{{ $order->location->address_line1 }}</div>
+                                                        {{-- <div>{{ $order->location->address_line1 }}</div> --}}
                                                         <div>{{ $order->location->city }},
                                                             {{ $order->location->state }}</div>
                                                     @endif
@@ -328,7 +328,7 @@
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>{{ $order->location->address_line1 }}</div>
+                                                        {{-- <div>{{ $order->location->address_line1 }}</div> --}}
                                                         <div>{{ $order->location->city }},
                                                             {{ $order->location->state }}</div>
                                                     @endif
@@ -372,7 +372,7 @@
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>{{ $order->location->address_line1 }}</div>
+                                                        {{-- <div>{{ $order->location->address_line1 }}</div> --}}
                                                         <div>{{ $order->location->city }},
                                                             {{ $order->location->state }}</div>
                                                     @endif
@@ -416,7 +416,7 @@
                                                 </div>
                                                 <div class="order-details">
                                                     @if ($order->location)
-                                                        <div>{{ $order->location->address_line1 }}</div>
+                                                        {{-- <div>{{ $order->location->address_line1 }}</div> --}}
                                                         <div>{{ $order->location->city }},
                                                             {{ $order->location->state }}</div>
                                                     @endif
