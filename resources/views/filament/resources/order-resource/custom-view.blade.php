@@ -152,37 +152,36 @@
 
         </div>
         <div class="flex items-center gap-4">
-            {{-- get the fucking label, not the value --}}
+            {{-- get the label, not the value --}}
             <p class="text-sm font-bold text-gray-600 dark:text-gray-400">
                 {{ App\Enums\PlantLocation::from($record->plant_location)->getLabel() }}</p>
-            
+
             {{-- Delivery Tag Status --}}
-            @if($record->is_printed)
-                <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full dark:bg-green-900 dark:text-green-200">
+            @if ($record->is_printed)
+                <span
+                    class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full dark:bg-green-900 dark:text-green-200">
                     <x-heroicon-s-check-circle class="w-3 h-3" />
                     Printed
                 </span>
             @else
-                <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-800 bg-gray-100 rounded-full dark:bg-gray-700 dark:text-gray-200">
+                <span
+                    class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-800 bg-gray-100 rounded-full dark:bg-gray-700 dark:text-gray-200">
                     <x-heroicon-o-printer class="w-3 h-3" />
                     Not Printed
                 </span>
             @endif
-            
+
             {{-- Delivery Tag Attachment Status --}}
-            @if($record->delivery_tag_url)
-                <button 
-                    @click="$dispatch('toggle-delivery-tag')"
+            @if ($record->delivery_tag_url)
+                <button @click="$dispatch('toggle-delivery-tag')"
                     class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full hover:bg-blue-200 transition-colors cursor-pointer dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
-                    title="Click to view delivery tag"
-                    x-data="{ showTag: false }"
-                    x-on:toggle-delivery-tag.window="showTag = !showTag"
-                >
+                    title="Click to view delivery tag" x-data="{ showTag: false }"
+                    x-on:toggle-delivery-tag.window="showTag = !showTag">
                     <x-heroicon-s-document-text class="w-3 h-3" />
                     <span x-text="showTag ? 'Hide Tag' : 'View Tag'"></span>
                 </button>
             @endif
-            
+
             <div class="px-2 py-1 text-sm font-medium text-gray-800 border rounded-full"
                 style="background-color: {{ $record->status_color['background'] }}; color: {{ $record->status_color['text'] }}; border-color: {{ $record->status_color['border'] }}">
                 {{-- get the status label (it's an enum) --}}
@@ -192,69 +191,65 @@
     </div>
 
     {{-- Expandable Delivery Tag Preview --}}
-    @if($record->delivery_tag_url)
-        <div x-data="{ showTag: false }" 
-             x-on:toggle-delivery-tag.window="showTag = !showTag" 
-             class="mb-4">
-            <div x-show="showTag" 
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 transform -translate-y-2"
-                 x-transition:enter-end="opacity-100 transform translate-y-0"
-                 x-transition:leave="transition ease-in duration-150"
-                 x-transition:leave-start="opacity-100 transform translate-y-0"
-                 x-transition:leave-end="opacity-0 transform -translate-y-2"
-                 class="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
-                 style="display: none;"
-            >
+    @if ($record->delivery_tag_url)
+        <div x-data="{ showTag: false }" x-on:toggle-delivery-tag.window="showTag = !showTag" class="mb-4">
+            <div x-show="showTag" x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 transform -translate-y-2"
+                x-transition:enter-end="opacity-100 transform translate-y-0"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 transform translate-y-0"
+                x-transition:leave-end="opacity-0 transform -translate-y-2"
+                class="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+                style="display: none;">
                 <div class="flex items-start justify-between mb-3">
                     <h3 class="font-medium text-blue-900 dark:text-blue-100">Delivery Tag Attachment</h3>
                     <div class="flex items-center gap-2">
-                        <a href="{{ Storage::disk('r2')->url($record->delivery_tag_url) }}" 
-                           target="_blank" 
-                           class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-800 bg-blue-200 rounded hover:bg-blue-300 transition-colors dark:bg-blue-800 dark:text-blue-200 dark:hover:bg-blue-700">
+                        <a href="{{ Storage::disk('r2')->url($record->delivery_tag_url) }}" target="_blank"
+                            class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-800 bg-blue-200 rounded hover:bg-blue-300 transition-colors dark:bg-blue-800 dark:text-blue-200 dark:hover:bg-blue-700">
                             <x-heroicon-o-arrow-top-right-on-square class="w-3 h-3" />
                             Open Full Size
                         </a>
-                        <button @click="showTag = false" 
-                                class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200">
+                        <button @click="showTag = false"
+                            class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200">
                             <x-heroicon-o-x-mark class="w-4 h-4" />
                         </button>
                     </div>
                 </div>
-                
+
                 @php
                     $fileExtension = strtolower(pathinfo($record->delivery_tag_url, PATHINFO_EXTENSION));
                     $isImage = in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                 @endphp
-                
-                @if($isImage)
+
+                @if ($isImage)
                     <div class="flex justify-center">
-                        <img src="{{ Storage::disk('r2')->url($record->delivery_tag_url) }}" 
-                             alt="Delivery Tag" 
-                             class="max-w-full h-auto max-h-96 rounded-lg shadow-sm border border-blue-200 dark:border-blue-700 cursor-pointer hover:shadow-md transition-shadow"
-                             onclick="window.open('{{ Storage::disk('r2')->url($record->delivery_tag_url) }}', '_blank')"
-                        />
+                        <img src="{{ Storage::disk('r2')->url($record->delivery_tag_url) }}" alt="Delivery Tag"
+                            class="max-w-full h-auto max-h-96 rounded-lg shadow-sm border border-blue-200 dark:border-blue-700 cursor-pointer hover:shadow-md transition-shadow"
+                            onclick="window.open('{{ Storage::disk('r2')->url($record->delivery_tag_url) }}', '_blank')" />
                     </div>
                 @elseif($fileExtension === 'pdf')
                     <div class="w-full">
-                        <iframe src="{{ Storage::disk('r2')->url($record->delivery_tag_url) }}#toolbar=0&navpanes=0&scrollbar=0&view=FitH" 
-                                class="w-full h-96 rounded-lg border border-blue-200 dark:border-blue-700"
-                                title="Delivery Tag PDF Preview">
+                        <iframe
+                            src="{{ Storage::disk('r2')->url($record->delivery_tag_url) }}#toolbar=0&navpanes=0&scrollbar=0&view=FitH"
+                            class="w-full h-96 rounded-lg border border-blue-200 dark:border-blue-700"
+                            title="Delivery Tag PDF Preview">
                         </iframe>
                         <p class="text-xs text-blue-600 dark:text-blue-400 mt-2 text-center">
-                            PDF preview - <a href="{{ Storage::disk('r2')->url($record->delivery_tag_url) }}" target="_blank" class="underline hover:no-underline">open in new tab</a> if not displaying properly
+                            PDF preview - <a href="{{ Storage::disk('r2')->url($record->delivery_tag_url) }}"
+                                target="_blank" class="underline hover:no-underline">open in new tab</a> if not
+                            displaying properly
                         </p>
                     </div>
                 @else
-                    <div class="flex items-center justify-center p-8 bg-white dark:bg-gray-800 rounded-lg border-2 border-dashed border-blue-300 dark:border-blue-600">
+                    <div
+                        class="flex items-center justify-center p-8 bg-white dark:bg-gray-800 rounded-lg border-2 border-dashed border-blue-300 dark:border-blue-600">
                         <div class="text-center">
                             <x-heroicon-o-document-text class="w-12 h-12 mx-auto text-blue-500 mb-2" />
                             <p class="text-sm text-blue-700 dark:text-blue-300 mb-2">
                                 {{ strtoupper($fileExtension) }} Document
                             </p>
-                            <a href="{{ Storage::disk('r2')->url($record->delivery_tag_url) }}" 
-                               target="_blank" 
-                               class="inline-flex items-center gap-1 px-3 py-1 text-sm font-medium text-blue-800 bg-blue-200 rounded hover:bg-blue-300 transition-colors dark:bg-blue-800 dark:text-blue-200 dark:hover:bg-blue-700">
+                            <a href="{{ Storage::disk('r2')->url($record->delivery_tag_url) }}" target="_blank"
+                                class="inline-flex items-center gap-1 px-3 py-1 text-sm font-medium text-blue-800 bg-blue-200 rounded hover:bg-blue-300 transition-colors dark:bg-blue-800 dark:text-blue-200 dark:hover:bg-blue-700">
                                 <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
                                 Download/View
                             </a>
@@ -280,20 +275,33 @@
         </div>
         <div class="grid justify-between w-full grid-cols-2 gap-4">
 
+
+
             <div class="flex flex-col items-start gap-1">
-                <p class="font-bold">{{ optional($record->location)->name }}</p>
-                @if(optional($record->location)->full_address)
+                <div class="group inline-block">
+                    <p class="font-bold">
+                        {{ optional($record->location)->name }}
+                        @if ($record->location)
+                            <a target="_blank" href="/locations/{{ $record->location->id }}/edit"
+                                class="ml opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-in-out text-xs text-blue-500 underline">
+                                Edit
+                            </a>
+                        @endif
+                    </p>
+                </div>
+
+
+
+                @if (optional($record->location)->full_address)
                     <div class="flex items-center gap-1">
-                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($record->location->full_address) }}" 
-                           target="_blank" 
-                           rel="noopener noreferrer" 
-                           class="text-primary-600 dark:text-primary-400 hover:underline">
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($record->location->full_address) }}"
+                            target="_blank" rel="noopener noreferrer"
+                            class="text-primary-600 dark:text-primary-400 hover:underline">
                             {{ $record->location->full_address }}
                         </a>
-                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($record->location->full_address) }}" 
-                           target="_blank" 
-                           rel="noopener noreferrer"
-                           class="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($record->location->full_address) }}"
+                            target="_blank" rel="noopener noreferrer"
+                            class="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
                             <x-heroicon-o-map-pin class="w-4 h-4" />
                         </a>
                     </div>
@@ -304,17 +312,19 @@
                         <x-heroicon-o-phone class="w-4 h-4" />
                         @php
                             try {
-                                $formattedPhone = (new PhoneNumber(
+                                $contactPhoneObj = new PhoneNumber(
                                     $record->location->preferredDeliveryContact->phone,
                                     'US',
-                                ))->formatNational();
+                                );
+                                $contactFormattedPhone = $contactPhoneObj->formatNational();
                             } catch (\Exception $e) {
-                                $formattedPhone = $record->location->preferredDeliveryContact->phone;
+                                $contactFormattedPhone = $record->location->preferredDeliveryContact->phone;
                             }
                         @endphp
+
                         <p>Contact: {{ $record->location->preferredDeliveryContact->name }}
                             @if ($record->location->preferredDeliveryContact->phone)
-                                - {{ $formattedPhone }}
+                                - {{ $contactFormattedPhone }}
                                 @if ($record->location->preferredDeliveryContact->phone_extension)
                                     x{{ $record->location->preferredDeliveryContact->phone_extension }}
                                 @endif
@@ -326,26 +336,33 @@
                     </div>
                 @endif
 
+
                 @if ($record->location && $record->location->phone)
                     <div class="flex items-center gap-2">
                         <x-heroicon-o-phone class="w-4 h-4" />
                         @php
                             try {
-                                $formattedPhone = (new PhoneNumber($record->location->phone, 'US'))->formatNational();
+                                $locationPhoneObj = new PhoneNumber($record->location->phone, 'US');
+                                $locationFormattedPhone = $locationPhoneObj->formatNational();
                             } catch (\Exception $e) {
-                                $formattedPhone = $record->location->phone;
+                                $locationFormattedPhone = $record->location->phone;
                             }
                         @endphp
-                        <p>Location: {{ $formattedPhone }}
+
+                        <p>Location: {{ $locationFormattedPhone }}
                             @if ($record->location->phone_extension)
                                 x{{ $record->location->phone_extension }}
                             @endif
                         </p>
                     </div>
                 @endif
+
+
             </div>
+
+
             <div class="grid grid-cols-1 gap-4">
-                @if($record->customer_order_number)
+                @if ($record->customer_order_number)
                     <div>
                         <p class="text-sm text-gray-600 dark:text-gray-400">Customer Order #</p>
                         <p class="font-medium">{{ $record->customer_order_number }}</p>
@@ -360,7 +377,7 @@
                     <p class="text-sm text-gray-600 dark:text-gray-400">Date of Order</p>
                     <p class="font-medium">{{ $record->order_date?->format('M j, Y') }}</p>
                 </div>
-                 <div>
+                <div>
                     <p class="text-sm text-gray-600 dark:text-gray-400">Ordered By</p>
                     <p class="font-medium">{{ $record->ordered_by }}</p>
                 </div>
@@ -368,6 +385,17 @@
 
         </div>
     </div>
+
+    @if ($record->location?->notes)
+        <div class="mb-4">
+            <div class="relative flex p-4 mb-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+                <div class="grid w-full">
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Location Notes</p>
+                    {!! str($record->location?->notes)->markdown()->sanitizeHtml() !!}
+                </div>
+            </div>
+        </div>
+    @endif
 
 
 
@@ -528,30 +556,35 @@
     @endif
 
 
-    @if ($record->status == 'delivered' || $record->status == 'completed' || $record->status == 'picked_up' || $record->status == 'invoiced')
-    <div class="grid grid-cols-2 gap-4 bg-gray-50 p-2 rounded-lg">
+    @if (
+        $record->status == 'delivered' ||
+            $record->status == 'completed' ||
+            $record->status == 'picked_up' ||
+            $record->status == 'invoiced')
+        <div class="grid grid-cols-2 gap-4 bg-gray-50 p-2 rounded-lg">
 
-        @if ($record->delivered_at)
-        <div class="p-4 mt-4 rounded-lg bg-yellow-50">
-            <h3 class="mb-2 font-medium">Delivered At</h3>
-            <p class="text-sm">{{ $record->delivered_at?->format('D m/d/Y g:i A') }}</p>
-        </div>
-        @endif
+            @if ($record->delivered_at)
+                <div class="p-4 mt-4 rounded-lg bg-yellow-50">
+                    <h3 class="mb-2 font-medium">Delivered At</h3>
+                    <p class="text-sm">{{ $record->delivered_at?->format('D m/d/Y g:i A') }}</p>
+                </div>
+            @endif
 
-        @if ($record->signature_path)
-        <div class="p-4 mt-4 rounded-lg bg-yellow-50">
-            <h3 class="mb-2 font-medium">Signature</h3>
-            <img src="{{ Storage::disk('r2')->url($record->signature_path) }}" alt="Signature" class="w-full h-auto">
-        </div>
-        @endif
-        
-        @if ($record->delivery_notes)
-        <div class="p-4 mt-4 rounded-lg bg-yellow-50">
-            <h3 class="mb-2 font-medium">Delivery Notes</h3>
-            <p class="text-sm">{{ $record->delivery_notes }}</p>
-        </div>
-        @endif
+            @if ($record->signature_path)
+                <div class="p-4 mt-4 rounded-lg bg-yellow-50">
+                    <h3 class="mb-2 font-medium">Signature</h3>
+                    <img src="{{ Storage::disk('r2')->url($record->signature_path) }}" alt="Signature"
+                        class="w-full h-auto">
+                </div>
+            @endif
 
-    </div>
+            @if ($record->delivery_notes)
+                <div class="p-4 mt-4 rounded-lg bg-yellow-50">
+                    <h3 class="mb-2 font-medium">Delivery Notes</h3>
+                    <p class="text-sm">{{ $record->delivery_notes }}</p>
+                </div>
+            @endif
+
+        </div>
     @endif
 </div>

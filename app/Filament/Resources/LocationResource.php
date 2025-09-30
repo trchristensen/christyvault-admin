@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\RichEditor;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 
 class LocationResource extends Resource
@@ -192,6 +193,11 @@ class LocationResource extends Resource
                             ->maxLength(20),
                     ])->columns(2),
 
+                Forms\Components\Section::make('Notes')
+                    ->schema([
+                        Forms\Components\MarkdownEditor::make('notes')
+                    ])
+                    ->columns(1),
                 Forms\Components\Section::make('Coordinates')
                     ->schema([
                         Forms\Components\TextInput::make('latitude')
@@ -234,7 +240,7 @@ class LocationResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('order_status')
                     ->badge()
-                    ->color(fn (Location $record): string => $record->order_status_color),
+                    ->color(fn(Location $record): string => $record->order_status_color),
                 Tables\Columns\TextColumn::make('last_order_at')
                     ->label('Last order at')
                     ->formatStateUsing(function ($state) {
@@ -254,7 +260,7 @@ class LocationResource extends Resource
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('average_order_frequency_days')
                     ->label('Avg. Order Frequency')
-                    ->formatStateUsing(fn ($state) => $state ? "{$state} days" : 'N/A')
+                    ->formatStateUsing(fn($state) => $state ? "{$state} days" : 'N/A')
                     ->sortable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('total_orders')
