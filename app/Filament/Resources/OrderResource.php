@@ -189,17 +189,19 @@ class OrderResource extends Resource
                 Tables\Filters\Filter::make('product_location')
                     ->form([
                         Forms\Components\TextInput::make('location')
-                            ->label('Location')
-                            ->placeholder('Search in location...'),
+                            ->label('Product Location')
+                            ->placeholder('Search in Product location...'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
+
                         return $query->when(
                             $data['location'],
-                            fn(Builder $query, $notes): Builder => $query->whereHas('orderProducts', function ($query) use ($notes) {
-                                $query->where('location', 'like', "%{$notes}%");
+                            fn(Builder $query, $location): Builder => $query->whereHas('orderProducts', function ($query) use ($location) {
+                                $query->whereRaw('LOWER(location) LIKE ?', ['%' . strtolower($location) . '%']);
                             })
                         );
                     }),
+
                 Tables\Filters\Filter::make('requested_delivery_date')
                     ->form([
                         Forms\Components\DatePicker::make('from'),
@@ -229,7 +231,28 @@ class OrderResource extends Resource
                             }
                         }
                         return $query;
+                    }),
+                Tables\Filters\SelectFilter::make('city')
+                    ->label('City')
+                    ->multiple()
+                    ->options(function () {
+                        return DB::table('locations')
+                            ->join('orders', 'locations.id', '=', 'orders.location_id')
+                            ->select(DB::raw("CONCAT(locations.city, ', ', locations.state) AS city_state"))
+                            ->distinct()
+                            ->orderBy('city_state')
+                            ->pluck('city_state', 'city_state')
+                            ->toArray();
                     })
+                    ->query(function (Builder $query, array $data) {
+                        if (!empty($data['values'])) {
+                            $query->whereHas('location', function ($q) use ($data) {
+                                $q->whereRaw("CONCAT(city, ', ', state) IN (" . implode(',', array_fill(0, count($data['values']), '?')) . ")", $data['values']);
+                            });
+                        }
+                        return $query;
+                    })
+
             ])
             ->actions([
                 Action::make('view')
