@@ -108,9 +108,9 @@ class OrderResource extends Resource
 
                             if (!isset($products[$key])) {
                                 if ($orderProduct->fill_load) {
-                                                        $sku = $isCustom
-                        ? ($orderProduct->custom_description ?? 'Custom')
-                        : ($orderProduct->product->sku ?? 'Unknown');
+                                    $sku = $isCustom
+                                        ? ($orderProduct->custom_description ?? 'Custom')
+                                        : ($orderProduct->product->sku ?? 'Unknown');
                                     $products[$key] = "Fill Load x {$sku}";
                                 } else {
                                     $quantity = $record->orderProducts
@@ -161,10 +161,10 @@ class OrderResource extends Resource
                                 ELSE 2
                             END
                         ')
-                        ->orderByRaw('COALESCE(assigned_delivery_date, requested_delivery_date, order_date) ' . $direction);
+                            ->orderByRaw('COALESCE(assigned_delivery_date, requested_delivery_date, order_date) ' . $direction);
                     })
                     ->collapsible()
-                    
+
 
             ])
             ->filters([
@@ -181,12 +181,12 @@ class OrderResource extends Resource
                     ->query(function (Builder $query, array $data): Builder {
                         return $query->when(
                             $data['notes'],
-                            fn (Builder $query, $notes): Builder => $query->whereHas('orderProducts', function ($query) use ($notes) {
+                            fn(Builder $query, $notes): Builder => $query->whereHas('orderProducts', function ($query) use ($notes) {
                                 $query->where('notes', 'like', "%{$notes}%");
                             })
                         );
                     }),
-                    Tables\Filters\Filter::make('product_location')
+                Tables\Filters\Filter::make('product_location')
                     ->form([
                         Forms\Components\TextInput::make('location')
                             ->label('Location')
@@ -195,7 +195,7 @@ class OrderResource extends Resource
                     ->query(function (Builder $query, array $data): Builder {
                         return $query->when(
                             $data['location'],
-                            fn (Builder $query, $notes): Builder => $query->whereHas('orderProducts', function ($query) use ($notes) {
+                            fn(Builder $query, $notes): Builder => $query->whereHas('orderProducts', function ($query) use ($notes) {
                                 $query->where('location', 'like', "%{$notes}%");
                             })
                         );
@@ -216,6 +216,20 @@ class OrderResource extends Resource
                                 fn(Builder $query, $date): Builder => $query->whereDate('requested_delivery_date', '<=', $date),
                             );
                     }),
+                Tables\Filters\SelectFilter::make('product')
+                    ->label('Has product(s)')
+                    ->multiple()
+                    ->options(Product::pluck('sku', 'id')->toArray())
+                    ->query(function (Builder $query, array $data) {
+                        if (!empty($data['values'])) {
+                            foreach ($data['values'] as $productId) {
+                                $query->whereHas('orderProducts', function ($q) use ($productId) {
+                                    $q->where('product_id', $productId);
+                                });
+                            }
+                        }
+                        return $query;
+                    })
             ])
             ->actions([
                 Action::make('view')
@@ -237,11 +251,11 @@ class OrderResource extends Resource
                             ->requiresConfirmation()
                             ->visible(fn(Order $record) => $record->trashed()),
                         Action::make('duplicate')
-                        ->label('Duplicate Order')
-                        ->color(COLOR::Yellow)
-                        ->icon('heroicon-o-document-duplicate')
-                        ->url(fn(Order $record) => route('filament.admin.resources.orders.duplicate', ['record' => $record]))
-                        ->openUrlInNewTab(),
+                            ->label('Duplicate Order')
+                            ->color(COLOR::Yellow)
+                            ->icon('heroicon-o-document-duplicate')
+                            ->url(fn(Order $record) => route('filament.admin.resources.orders.duplicate', ['record' => $record]))
+                            ->openUrlInNewTab(),
                         Action::make('print')
                             ->label('Print Delivery Tag')
                             ->color(COLOR::Green)
@@ -267,14 +281,14 @@ class OrderResource extends Resource
                         ->label('Duplicate')
                         ->icon('heroicon-o-document-duplicate')
                         ->color('gray')
-                        ->url(fn (Order $record): string => route('filament.admin.resources.orders.duplicate', ['record' => $record]))
+                        ->url(fn(Order $record): string => route('filament.admin.resources.orders.duplicate', ['record' => $record]))
                         ->openUrlInNewTab(),
-                      Action::make('view-digital-tag')
-                            ->label('Preview Delivery Tag')
-                            ->color('gray')
-                            ->icon('heroicon-o-printer')
-                            ->url(fn(Order $record) => route('orders.print.formbg', ['order' => $record]))
-                            ->openUrlInNewTab(),
+                    Action::make('view-digital-tag')
+                        ->label('Preview Delivery Tag')
+                        ->color('gray')
+                        ->icon('heroicon-o-printer')
+                        ->url(fn(Order $record) => route('orders.print.formbg', ['order' => $record]))
+                        ->openUrlInNewTab(),
                     Tables\Actions\DeleteAction::make(),
                 ]),
             ])
