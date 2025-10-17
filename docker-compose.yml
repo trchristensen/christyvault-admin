@@ -26,7 +26,7 @@ services:
         container_name: christyvault-queue
         restart: unless-stopped
         working_dir: /var/www
-        command: php artisan queue:work --tries=3
+            command: sh -c "while [ ! -f /var/www/vendor/autoload.php ]; do sleep 1; done && php artisan queue:work"
         volumes:
             - .:/var/www
         depends_on:

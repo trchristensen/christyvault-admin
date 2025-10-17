@@ -6,23 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('calendar_token');
+            $table->string('calendar_token', 64)->nullable()->unique()->after('remember_token');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('calendar_token', 64)->nullable()->unique()->after('remember_token');
+            $table->dropColumn('calendar_token');
         });
     }
 };

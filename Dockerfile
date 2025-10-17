@@ -6,14 +6,12 @@ RUN apt-get update && apt-get install -y \
     git unzip curl xfonts-75dpi xfonts-base \
     libpq-dev libzip-dev libjpeg-dev libpng-dev libfreetype6-dev \
     libonig-dev libxml2-dev libmagickwand-dev ghostscript \
-    tesseract-ocr tesseract-ocr-eng imagemagick \
+    tesseract-ocr tesseract-ocr-eng imagemagick postgresql-client \
     && curl -L -o /tmp/wkhtmltox.deb https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bookworm_amd64.deb \
     && apt-get install -y /tmp/wkhtmltox.deb \
     && rm /tmp/wkhtmltox.deb \
     && docker-php-ext-install pdo pdo_pgsql mbstring xml zip gd bcmath intl \
     && apt-get clean
-
-
 
 
 # Install Composer
