@@ -20,13 +20,28 @@ services:
             - DB_DATABASE=christyvault
             - DB_USERNAME=postgres
             - DB_PASSWORD=postgres
+        networks:
+            - app-network
+
+    web:
+        image: nginx:latest
+        container_name: christyvault-web
+        ports:
+            - "80:80"
+        volumes:
+            - .:/var/www/html:ro
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+        depends_on:
+            - app
+        networks:
+            - app-network
 
     queue:
         image: christyvault-app
         container_name: christyvault-queue
         restart: unless-stopped
         working_dir: /var/www
-            command: sh -c "while [ ! -f /var/www/vendor/autoload.php ]; do sleep 1; done && php artisan queue:work"
+        command: sh -c "while [ ! -f /var/www/vendor/autoload.php ]; do sleep 1; done && php artisan queue:work"
         volumes:
             - .:/var/www
         depends_on:
@@ -39,6 +54,8 @@ services:
             - DB_DATABASE=christyvault
             - DB_USERNAME=postgres
             - DB_PASSWORD=postgres
+        networks:
+            - app-network
 
     db:
         image: postgres:17
@@ -53,6 +70,12 @@ services:
         volumes:
             - db_data:/var/lib/postgresql/data
             - ./docker/postgres/init-postgis.sh:/docker-entrypoint-initdb.d/init-postgis.sh
+        networks:
+            - app-network
 
 volumes:
     db_data:
+
+networks:
+    app-network:
+        driver: bridge
