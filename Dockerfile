@@ -53,4 +53,4 @@ RUN mkdir -p /var/www/storage/app/temp \
 # Expose port 8000 for Laravel dev server
 EXPOSE 8000
 # CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
-CMD ["php-fpm8.2", "-F"]
+CMD ["php-fpm8.2", "-F", "--fpm-config", "/etc/php/8.2/fpm/php-fpm.conf"]
