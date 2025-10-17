@@ -2,10 +2,10 @@ version: "3.8"
 
 services:
     app:
+        platform: linux/amd64 # Also declare at root
         build:
             context: .
             dockerfile: Dockerfile
-        platform: linux/amd64 # Also declare at root
         image: christyvault-app
         container_name: christyvault-app
         restart: unless-stopped
