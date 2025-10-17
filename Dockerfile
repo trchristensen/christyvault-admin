@@ -14,7 +14,6 @@ RUN apt-get update && \
     git unzip curl wkhtmltopdf \
     && apt-get clean
 
-
 RUN ln -s /usr/bin/wkhtmltopdf /usr/local/bin/wkhtmltopdf
 
 # Configure ImageMagick to allow PDF processing
@@ -47,6 +46,7 @@ RUN mkdir -p /var/www/storage/app/temp \
     && mkdir -p /var/www/storage/framework/sessions \
     && mkdir -p /var/www/storage/framework/views \
     && mkdir -p /var/www/storage/logs \
+    && mkdir -p /run/php \
     && chown -R www-data:www-data /var/www \
     && chmod -R 775 /var/www/storage
 
