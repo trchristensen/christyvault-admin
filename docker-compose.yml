@@ -5,6 +5,8 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
+            platform: linux/amd64 # Force x86_64
+        platform: linux/amd64 # Also declare at root
         image: christyvault-app
         container_name: christyvault-app
         restart: unless-stopped
@@ -12,7 +14,7 @@ services:
         volumes:
             - ./:/var/www
         expose:
-            - "9000"
+            - "8000"
         environment:
             - APP_ENV=production
             - DB_CONNECTION=pgsql
