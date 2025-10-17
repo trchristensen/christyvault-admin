@@ -1,4 +1,23 @@
 services:
+    init:
+        image: christyvault-app
+        container_name: christyvault-init
+        working_dir: /var/www
+        depends_on:
+            - db
+        command: sh -c "php artisan migrate --force"
+        volumes:
+            - ./storage:/var/www/storage
+            - ./.env:/var/www/.env
+        environment:
+            - APP_ENV=production
+            - DB_CONNECTION=pgsql
+            - DB_HOST=db
+            - DB_PORT=5432
+            - DB_DATABASE=christyvault
+            - DB_USERNAME=postgres
+            - DB_PASSWORD=postgres
+
     app:
         build:
             context: .
@@ -8,12 +27,14 @@ services:
         restart: unless-stopped
         working_dir: /var/www
         volumes:
-            # - ./:/var/www
             - ./storage:/var/www/storage
             - ./.env:/var/www/.env
-        command: sh -c "php artisan migrate --force && php-fpm"
+        command: php-fpm
         expose:
             - "8000"
+        depends_on:
+            - db
+            - init
         environment:
             - APP_ENV=production
             - DB_CONNECTION=pgsql
@@ -22,8 +43,27 @@ services:
             - DB_DATABASE=christyvault
             - DB_USERNAME=postgres
             - DB_PASSWORD=postgres
+
+    queue:
+        image: christyvault-app
+        container_name: christyvault-queue
+        restart: unless-stopped
+        working_dir: /var/www
+        command: php artisan queue:work --tries=3
+        volumes:
+            - ./storage:/var/www/storage
+            - ./.env:/var/www/.env
         depends_on:
             - db
+            - init
+        environment:
+            - APP_ENV=production
+            - DB_CONNECTION=pgsql
+            - DB_HOST=db
+            - DB_PORT=5432
+            - DB_DATABASE=christyvault
+            - DB_USERNAME=postgres
+            - DB_PASSWORD=postgres
 
     db:
         image: postgres:17
@@ -38,28 +78,6 @@ services:
         volumes:
             - db_data:/var/lib/postgresql/data
             - ./docker/postgres/init-postgis.sh:/docker-entrypoint-initdb.d/init-postgis.sh
-
-    queue:
-        image: christyvault-app
-        container_name: christyvault-queue
-        restart: unless-stopped
-        working_dir: /var/www
-        command: php artisan queue:work --tries=3
-        volumes:
-            # - ./:/var/www
-            - ./storage:/var/www/storage
-            - ./.env:/var/www/.env
-        depends_on:
-            - app
-            - db
-        environment:
-            - APP_ENV=production
-            - DB_CONNECTION=pgsql
-            - DB_HOST=db
-            - DB_PORT=5432
-            - DB_DATABASE=christyvault
-            - DB_USERNAME=postgres
-            - DB_PASSWORD=postgres
 
 volumes:
     db_data:
