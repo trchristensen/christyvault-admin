@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+php:8.2-fpm
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -33,7 +33,7 @@ WORKDIR /var/www
 COPY . /var/www
 
 # Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Install PHP dependencies
 RUN composer install
@@ -51,6 +51,6 @@ RUN mkdir -p /var/www/storage/app/temp \
     && chmod -R 775 /var/www/storage
 
 # Expose port 8000 for Laravel dev server
-EXPOSE 8000
+EXPOSE 9000
 # CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
-CMD ["php-fpm8.2", "-F", "--fpm-config", "/etc/php/8.2/fpm/php-fpm.conf"]
+CMD ["php-fpm8.2"]

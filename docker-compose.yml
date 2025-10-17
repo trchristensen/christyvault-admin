@@ -1,23 +1,4 @@
 services:
-    init:
-        image: christyvault-app
-        container_name: christyvault-init
-        working_dir: /var/www
-        depends_on:
-            - db
-        command: sh -c "php artisan migrate --force"
-        volumes:
-            - ./storage:/var/www/storage
-            - ./.env:/var/www/.env
-        environment:
-            - APP_ENV=production
-            - DB_CONNECTION=pgsql
-            - DB_HOST=db
-            - DB_PORT=5432
-            - DB_DATABASE=christyvault
-            - DB_USERNAME=postgres
-            - DB_PASSWORD=postgres
-
     app:
         build:
             context: .
@@ -27,14 +8,10 @@ services:
         restart: unless-stopped
         working_dir: /var/www
         volumes:
-            - ./storage:/var/www/storage
-            - ./.env:/var/www/.env
+            - .:/var/www
         command: php-fpm
-        expose:
-            - "8000"
-        depends_on:
-            - db
-            - init
+        ports:
+            - "9000:9000"
         environment:
             - APP_ENV=production
             - DB_CONNECTION=pgsql
@@ -51,11 +28,9 @@ services:
         working_dir: /var/www
         command: php artisan queue:work --tries=3
         volumes:
-            - ./storage:/var/www/storage
-            - ./.env:/var/www/.env
+            - .:/var/www
         depends_on:
             - db
-            - init
         environment:
             - APP_ENV=production
             - DB_CONNECTION=pgsql
