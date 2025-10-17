@@ -39,8 +39,7 @@ services:
             - ./docker/postgres/init-postgis.sh:/docker-entrypoint-initdb.d/init-postgis.sh
 
     queue:
-        build:
-            context: .
+        image: christyvault-app
         container_name: christyvault-queue
         restart: unless-stopped
         working_dir: /var/www
