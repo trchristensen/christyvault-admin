@@ -3,13 +3,18 @@ FROM php:8.2-fpm
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies
+# Install wkhtmltopdf manually
 RUN apt-get update && apt-get install -y \
-    git unzip curl wkhtmltopdf \
+    git unzip curl \
     libpq-dev libzip-dev libjpeg-dev libpng-dev libfreetype6-dev \
     libonig-dev libxml2-dev libmagickwand-dev ghostscript \
     tesseract-ocr tesseract-ocr-eng imagemagick \
+    && curl -L -o /tmp/wkhtmltopdf.deb https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.6/wkhtmltox_0.12.6-1.buster_amd64.deb \
+    && apt-get install -y /tmp/wkhtmltopdf.deb \
+    && rm /tmp/wkhtmltopdf.deb \
     && docker-php-ext-install pdo pdo_pgsql mbstring xml zip gd bcmath intl \
     && apt-get clean
+
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
