@@ -11,6 +11,7 @@ services:
             # - ./:/var/www
             - ./storage:/var/www/storage
             - ./.env:/var/www/.env
+        command: sh -c "php artisan migrate --force && php-fpm"
         expose:
             - "8000"
         environment:
@@ -50,6 +51,7 @@ services:
             - ./.env:/var/www/.env
         depends_on:
             - app
+            - db
         environment:
             - APP_ENV=production
             - DB_CONNECTION=pgsql
