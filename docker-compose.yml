@@ -8,7 +8,9 @@ services:
         restart: unless-stopped
         working_dir: /var/www
         volumes:
-            - ./:/var/www
+            # - ./:/var/www
+            - ./storage:/var/www/storage
+            - ./.env:/var/www/.env
         expose:
             - "8000"
         environment:
@@ -44,7 +46,9 @@ services:
         working_dir: /var/www
         command: php artisan queue:work --tries=3
         volumes:
-            - ./:/var/www
+            # - ./:/var/www
+            - ./storage:/var/www/storage
+            - ./.env:/var/www/.env
         depends_on:
             - app
         environment:
