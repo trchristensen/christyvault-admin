@@ -20,7 +20,15 @@ RUN apt-get update && apt-get install -y \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Configure ImageMagick to allow PDF processing
-RUN sed -i 's/<policy domain="coder" rights="none" pattern="PDF" \/>/<policy domain="coder" rights="read|write" pattern="PDF" \/>/g' /etc/ImageMagick-6/policy.xml
+# Update ImageMagick policy to allow PDF processing
+RUN POLICY_FILE=$(find /etc -type f -name policy.xml 2>/dev/null | head -n 1) \
+    && if [ -n "$POLICY_FILE" ]; then \
+        echo "Found policy file at $POLICY_FILE"; \
+        sed -i 's/<policy domain="coder" rights="none" pattern="PDF" \/>/<policy domain="coder" rights="read|write" pattern="PDF" \/>/' "$POLICY_FILE"; \
+    else \
+        echo "Warning: No ImageMagick policy.xml found. Skipping PDF rights patch."; \
+    fi
+
 
 # Configure PHP for large file uploads
 RUN echo "upload_max_filesize = 50M" > /usr/local/etc/php/conf.d/uploads.ini \
