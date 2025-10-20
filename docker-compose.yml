@@ -18,7 +18,7 @@ services:
             - DB_HOST=christyvault-db
             - DB_PORT=5432
             - DB_DATABASE=christyvault
-            - DB_USERNAME=christy
+            - DB_USERNAME=postgres
             - DB_PASSWORD=2dkl230JUR3T!%
         networks:
             - app-network
@@ -53,7 +53,7 @@ services:
             - DB_HOST=christyvault-db
             - DB_PORT=5432
             - DB_DATABASE=christyvault
-            - DB_USERNAME=christy
+            - DB_USERNAME=postgres
             - DB_PASSWORD=2dkl230JUR3T!%
         networks:
             - app-network
@@ -64,7 +64,7 @@ services:
         restart: unless-stopped
         environment:
             POSTGRES_DB: christyvault
-            POSTGRES_USER: christy
+            POSTGRES_USER: postgres
             POSTGRES_PASSWORD: 2dkl230JUR3T!%
         ports:
             - "5432:5432"
