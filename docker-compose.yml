@@ -9,6 +9,7 @@ services:
         working_dir: /var/www
         volumes:
             - .:/var/www
+            - ./.env:/var/www/.env # Mount .env file
         command: php-fpm
         ports:
             - "9000:9000"
@@ -45,6 +46,7 @@ services:
         command: sh -c "while [ ! -f /var/www/vendor/autoload.php ]; do sleep 1; done && php artisan queue:work"
         volumes:
             - .:/var/www
+            - ./.env:/var/www/.env # Mount .env file
         depends_on:
             - db
         environment:
@@ -79,7 +81,7 @@ services:
         container_name: christyvault-pgadmin
         restart: unless-stopped
         environment:
-            GADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+            PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
             PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
         ports:
             - "5050:80"
