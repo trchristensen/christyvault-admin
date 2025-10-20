@@ -16,6 +16,13 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
+echo "⏳ Waiting for database to be ready..."
+until php artisan migrate:status > /dev/null 2>&1; do
+    sleep 3
+    echo "Waiting for database..."
+done
+
+
 echo "🗄️ Running migrations and setting up DB tables..."
 php artisan migrate --force
 
