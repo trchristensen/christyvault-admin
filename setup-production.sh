@@ -16,7 +16,13 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
-# Laravel setup
+echo "🗄️ Running migrations and setting up DB tables..."
+php artisan migrate --force
+
+# Create cache and session tables if they don't exist (these commands generate migrations)
+php artisan cache:table
+php artisan session:table
+php artisan migrate --force
 php artisan config:clear
 php artisan cache:clear
 php artisan view:clear
