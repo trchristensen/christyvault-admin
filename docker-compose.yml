@@ -9,18 +9,17 @@ services:
         working_dir: /var/www
         volumes:
             - .:/var/www
-            - ./.env:/var/www/.env # Mount .env file
         command: php-fpm
         ports:
             - "9000:9000"
         environment:
-            - APP_ENV=${APP_ENV}
-            - DB_CONNECTION=${DB_CONNECTION}
-            - DB_HOST=${DB_HOST}
-            - DB_PORT=${DB_PORT}
-            - DB_DATABASE=${DB_DATABASE}
-            - DB_USERNAME=${DB_USERNAME}
-            - DB_PASSWORD=${DB_PASSWORD}
+            - APP_ENV=production
+            - DB_CONNECTION=pgsql
+            - DB_HOST=christyvault-db
+            - DB_PORT=5432
+            - DB_DATABASE=christyvault
+            - DB_USERNAME=christy
+            - DB_PASSWORD=2dkl230JUR3T!%
         networks:
             - app-network
         depends_on:
@@ -46,17 +45,16 @@ services:
         command: sh -c "while [ ! -f /var/www/vendor/autoload.php ]; do sleep 1; done && php artisan queue:work"
         volumes:
             - .:/var/www
-            - ./.env:/var/www/.env # Mount .env file
         depends_on:
             - db
         environment:
-            - APP_ENV=${APP_ENV}
-            - DB_CONNECTION=${DB_CONNECTION}
-            - DB_HOST=${DB_HOST}
-            - DB_PORT=${DB_PORT}
-            - DB_DATABASE=${DB_DATABASE}
-            - DB_USERNAME=${DB_USERNAME}
-            - DB_PASSWORD=${DB_PASSWORD}
+            - APP_ENV=production
+            - DB_CONNECTION=pgsql
+            - DB_HOST=christyvault-db
+            - DB_PORT=5432
+            - DB_DATABASE=christyvault
+            - DB_USERNAME=christy
+            - DB_PASSWORD=2dkl230JUR3T!%
         networks:
             - app-network
 
@@ -65,9 +63,9 @@ services:
         container_name: christyvault-db
         restart: unless-stopped
         environment:
-            POSTGRES_DB: ${DB_DATABASE}
-            POSTGRES_USER: ${DB_USERNAME}
-            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: christyvault
+            POSTGRES_USER: christy
+            POSTGRES_PASSWORD: 2dkl230JUR3T!%
         ports:
             - "5432:5432"
         volumes:
