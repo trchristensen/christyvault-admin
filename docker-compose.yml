@@ -13,13 +13,13 @@ services:
         ports:
             - "9000:9000"
         environment:
-            - APP_ENV=production
-            - DB_CONNECTION=pgsql
-            - DB_HOST=db
-            - DB_PORT=5432
-            - DB_DATABASE=christyvault
-            - DB_USERNAME=postgres
-            - DB_PASSWORD=postgres
+            - APP_ENV=${APP_ENV}
+            - DB_CONNECTION=${DB_CONNECTION}
+            - DB_HOST=${DB_HOST}
+            - DB_PORT=${DB_PORT}
+            - DB_DATABASE=${DB_DATABASE}
+            - DB_USERNAME=${DB_USERNAME}
+            - DB_PASSWORD=${DB_PASSWORD}
         networks:
             - app-network
         depends_on:
@@ -48,13 +48,13 @@ services:
         depends_on:
             - db
         environment:
-            - APP_ENV=production
-            - DB_CONNECTION=pgsql
-            - DB_HOST=db
-            - DB_PORT=5432
-            - DB_DATABASE=christyvault
-            - DB_USERNAME=postgres
-            - DB_PASSWORD=postgres
+            - APP_ENV=${APP_ENV}
+            - DB_CONNECTION=${DB_CONNECTION}
+            - DB_HOST=${DB_HOST}
+            - DB_PORT=${DB_PORT}
+            - DB_DATABASE=${DB_DATABASE}
+            - DB_USERNAME=${DB_USERNAME}
+            - DB_PASSWORD=${DB_PASSWORD}
         networks:
             - app-network
 
@@ -63,14 +63,28 @@ services:
         container_name: christyvault-db
         restart: unless-stopped
         environment:
-            POSTGRES_DB: christyvault
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: ${DB_DATABASE}
+            POSTGRES_USER: ${DB_USERNAME}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
         ports:
             - "5432:5432"
         volumes:
             - db_data:/var/lib/postgresql/data
             - ./docker/postgres/init-postgis.sh:/docker-entrypoint-initdb.d/init-postgis.sh
+        networks:
+            - app-network
+
+    pgadmin:
+        image: dpage/pgadmin4
+        container_name: christyvault-pgadmin
+        restart: unless-stopped
+        environment:
+        PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+        PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+        ports:
+            - "5050:80"
+        depends_on:
+            - db
         networks:
             - app-network
 

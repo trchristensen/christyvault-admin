@@ -45,15 +45,17 @@ RUN composer install --no-interaction --optimize-autoloader
 
 # Set permissions
 RUN mkdir -p /var/www/storage/app/temp \
-    && mkdir -p /var/www/storage/app/private \
-    && mkdir -p /var/www/storage/app/public \
-    && mkdir -p /var/www/storage/framework/cache \
-    && mkdir -p /var/www/storage/framework/sessions \
-    && mkdir -p /var/www/storage/framework/views \
-    && mkdir -p /var/www/storage/logs \
-    && chown -R www-data:www-data /var/www \
-    && chmod -R 775 /var/www/storage
+    /var/www/storage/app/private \
+    /var/www/storage/app/public \
+    /var/www/storage/framework/cache \
+    /var/www/storage/framework/sessions \
+    /var/www/storage/framework/views \
+    /var/www/storage/logs \
+    /var/www/bootstrap/cache \
+ && chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+ && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
 
 EXPOSE 9000
 
-CMD ["php-fpm"]
+ENTRYPOINT ["/usr/local/bin/setup-production.sh"]
