@@ -49,8 +49,8 @@
                     <button wire:click="selectDate('{{ $d['iso'] }}')" wire:key="date-{{ $d['iso'] }}"
                         class="date-item flex-shrink-0 flex flex-col items-center justify-center rounded-lg px-3 py-2 text-center border transition-colors"
                         :class="$wire.selectedDate === '{{ $d['iso'] }}' ?
-                            'bg-primary-600 text-white border-transparent selected' :
-                            'bg-white text-gray-700 border-gray-200'">
+                            'bg-primary-500 text-white dark:text-white border-transparent selected' :
+                            ''">
                         <div class="text-xs font-medium">{{ $d['label'] }}</div>
                         <div class="text-sm">{{ $d['weekday'] }} {{ $d['day'] }}</div>
                     </button>
@@ -59,29 +59,31 @@
         </div>
 
         <!-- orders for selected date -->
-        <div class="mt-4">
-            <h2 class="text-lg font-semibold mb-3">
+        <div class="mt-4" style="margin-top: 2em;">
+
+            <h2 class="text-lg font-semibold mb-4">
                 {{ \Carbon\Carbon::parse($selectedDate)->format('l, M j, Y') }}
             </h2>
+
 
             @if ($orders && $orders->count())
                 <ul class="space-y-2">
                     @foreach ($orders as $order)
-                        <li class="p-3 border rounded-lg bg-white">
+                        <li class="p-3 border rounded-lg">
                             <div class="flex justify-between items-start">
                                 <div>
                                     <div class="font-semibold">Order #{{ $order->id }}</div>
-                                    <div class="text-sm text-gray-600">
+                                    <div class="text-sm ">
                                         {{ $order->Location->name ?? 'Customer' }}
                                     </div>
 
 
-                                    <div class="text-sm text-gray-600">
+                                    <div class="text-sm ">
                                         {{ $order->location->full_address ?? '' }}
                                     </div>
 
                                 </div>
-                                <div class="text-sm text-gray-500">
+                                <div class="text-sm">
                                     {{ $order->scheduled_at ? \Carbon\Carbon::parse($order->scheduled_at)->format('g:i A') : '' }}
                                 </div>
 
@@ -103,7 +105,7 @@
                                                 @if ($orderProduct->fill_load)
                                                     <p
                                                         class="fill-load-text
-                                            text-xs text-gray-500">
+                                            text-xs">
                                                         └ FILL OUT LOAD
                                                     </p>
                                                 @endif
@@ -118,7 +120,7 @@
                 </ul>
             @else
                 <div class="text-sm
-                                                text-gray-500">No deliveries
+                                            ">No deliveries
                     scheduled for this day.
                 </div>
             @endif
