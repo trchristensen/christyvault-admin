@@ -12,6 +12,8 @@ class Schedule extends Page
 
     protected static string $view = 'filament.team.pages.schedule';
 
+    protected static ?string $title = 'Delivery Schedule';
+
     public array $dates = [];
     public string $selectedDate;
     public $orders;

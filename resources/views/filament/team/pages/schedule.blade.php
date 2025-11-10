@@ -71,15 +71,31 @@
                     @foreach ($orders as $order)
                         <li class="p-3 border rounded-lg">
                             <div class="flex justify-between items-start">
-                                <div>
-                                    <div class="font-semibold">Order #{{ $order->id }}</div>
-                                    <div class="text-sm ">
+                                <div class="w-full">
+                                    <div class="flex justify-between w-full">
+                                        <div class="font-semibold text-sm text-gray-500">Order
+                                            #{{ $order->id }}</div>
+                                        <div>
+                                            @if ($order->driver)
+                                                <span
+                                                    class="text-sm text-gray-500 font-semibold
+                                            ">
+                                                    {{ $order->driver->name }}</span>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <div class="text-md">
                                         {{ $order->Location->name ?? 'Customer' }}
                                     </div>
 
 
                                     <div class="text-sm ">
-                                        {{ $order->location->full_address ?? '' }}
+
+                                        <a href="geo:0,0?q={{ urlencode($order->location->full_address ?? '') }}">
+                                            {{ $order->location->full_address ?? '' }}
+                                        </a>
+
                                     </div>
 
                                 </div>
@@ -101,7 +117,8 @@
                                         <td class="product-details">
                                             <div class="flex flex-col w-full">
                                                 <span>{{ $orderProduct->product->sku }}</span>
-                                                <span>{{ $orderProduct->product->name }}</span>
+                                                <span
+                                                    class="text-gray-600 dark:text-gray-500">{{ $orderProduct->product->name }}</span>
                                                 @if ($orderProduct->fill_load)
                                                     <p
                                                         class="fill-load-text
