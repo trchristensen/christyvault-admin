@@ -67,9 +67,9 @@ class Schedule extends Page
     protected function loadOrdersFor(string $iso)
     {
         // NOTE: adjust 'requested_delivery_date' and 'scheduled_at' to your real column names if different
-        $this->orders = Order::whereDate('requested_delivery_date', $iso)
+        $this->orders = Order::whereDate('assigned_delivery_date', $iso)
             // ->orderBy('scheduled_at')
-            ->with('location')
+            ->with(['location', 'orderProducts.product', 'driver'])
             ->get();
     }
 }
