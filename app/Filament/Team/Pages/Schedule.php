@@ -70,6 +70,7 @@ class Schedule extends Page
         $this->orders = Order::whereDate('assigned_delivery_date', $iso)
             // ->orderBy('scheduled_at')
             ->with(['location', 'orderProducts.product', 'driver'])
+            ->orderBy('plant_location') // First by plant location
             ->get();
     }
 }
