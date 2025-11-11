@@ -85,6 +85,7 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarWidth('13rem')
             // ->collapsedSidebarWidth('5rem')
             ->plugins([
+                FilamentSpatieRolesPermissionsPlugin::make(),
                 BreezyCore::make()
                     ->myProfile(),
                 // FilamentSpatieRolesPermissionsPlugin::make(),
