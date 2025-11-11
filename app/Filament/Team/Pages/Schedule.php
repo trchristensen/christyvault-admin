@@ -70,15 +70,21 @@ class Schedule extends Page
             ->with(['location', 'orderProducts.product', 'driver'])
             ->get();
 
-        // Define the custom sort order
+        // Define the custom plant order
         $plantOrder = [
             'colma_main' => 1,
             'colma_locals' => 2,
             'tulare_plant' => 3,
         ];
 
-        // Group and sort orders
-        $this->orders = $orders->sortBy(fn($order) => $plantOrder[$order->plant_location] ?? 999)
-            ->groupBy('plant_location');
+        // Sort orders by plant order
+        $sorted = $orders->sortBy(fn($order) => $plantOrder[$order->plant_location] ?? 999);
+
+        // Group by plant_location safely for Blade
+        $this->orders = collect([
+            'colma_main' => $sorted->where('plant_location', 'colma_main'),
+            'colma_locals' => $sorted->where('plant_location', 'colma_locals'),
+            'tulare_plant' => $sorted->where('plant_location', 'tulare_plant'),
+        ])->filter(fn($group) => $group->isNotEmpty());
     }
 }

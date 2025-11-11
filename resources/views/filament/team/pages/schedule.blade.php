@@ -106,19 +106,18 @@
                                 <div class="flex justify-between items-start">
                                     <div class="w-full">
                                         <div class="flex justify-between w-full">
-                                            <div class="font-semibold text-sm text-gray-500">Order
-                                                #{{ $order->id }}</div>
+                                            <div class="font-semibold text-sm text-gray-500">Order #{{ $order->id }}
+                                            </div>
                                             <div>
                                                 @if ($order->driver)
-                                                    <span class="text-sm text-gray-500 font-semibold">
-                                                        {{ $order->driver->name }}
-                                                    </span>
+                                                    <span
+                                                        class="text-sm text-gray-500 font-semibold">{{ $order->driver->name }}</span>
                                                 @endif
                                             </div>
                                         </div>
 
                                         <div class="text-md">
-                                            {{ $order->Location->name ?? 'Customer' }}
+                                            {{ $order->location->name ?? 'Customer' }}
                                         </div>
 
                                         <div class="text-sm">
@@ -163,6 +162,7 @@
             @else
                 <div class="text-sm">No deliveries scheduled for this day.</div>
             @endif
+
 
         </div>
     </div>
