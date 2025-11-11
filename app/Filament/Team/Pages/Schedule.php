@@ -14,6 +14,13 @@ class Schedule extends Page
 
     protected static ?string $title = 'Delivery Schedule';
 
+    // don't display title on page
+    public function getTitle(): string
+    {
+        return '';
+    }
+
+
     public array $dates = [];
     public string $selectedDate;
     public $orders;
@@ -30,6 +37,7 @@ class Schedule extends Page
                 'label' => $this->labelFor($date, $today),
                 'weekday' => $date->format('D'),
                 'day' => $date->format('j'),
+                'month' => $date->format('F Y'),
             ];
         }
 
@@ -42,7 +50,12 @@ class Schedule extends Page
         if ($date->isToday()) return 'Today';
         if ($date->isTomorrow()) return 'Tomorrow';
         if ($date->isYesterday()) return 'Yesterday';
-        return $date->format('M j');
+        return '';
+    }
+
+    public function monthFor(Carbon $date): string
+    {
+        return $date->format('F Y');
     }
 
     public function selectDate(string $iso)

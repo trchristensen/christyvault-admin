@@ -1,11 +1,24 @@
 <x-filament-panels::page>
     <style>
-        .date-item {
-            min-width: 80px;
-            min-height: 80px;
-            margin-left: 2px;
-            margin-right: 2px;
+        .fi-main {
+            padding: 0 !important;
         }
+
+        .fi-page>section {
+            padding: 0;
+        }
+
+        .date-item {
+            min-width: 70px;
+            min-height: 70px;
+            margin: 0 2px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .date-item.selected {
+            transform: scale(1.04);
+        }
+
 
         .fill-load-text {
             margin-left: 1em;
@@ -42,21 +55,31 @@
     </style>
     <div class="p-4">
         <!-- horizontal date bar -->
-        <div class="overflow-x-auto -mx-4 px-4">
+        <div class="overflow-x-auto -mx-4 px-4 static top-8 z-10">
             <div class="flex space-x-2 py-2" x-data x-init="$nextTick(() => { const el = $el.querySelector('.date-item.selected'); if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'center' }); })"
                 @date-selected.window="$nextTick(()=>{ const el = $el.querySelector('.date-item.selected'); if(el) el.scrollIntoView({behavior:'smooth', inline:'center'}); })">
+
                 @foreach ($dates as $d)
                     <button wire:click="selectDate('{{ $d['iso'] }}')" wire:key="date-{{ $d['iso'] }}"
-                        class="date-item flex-shrink-0 flex flex-col items-center justify-center rounded-lg px-3 py-2 text-center border transition-colors"
+                        class="date-item flex-shrink-0 flex flex-col items-center justify-center rounded-md px-3 py-2 text-center border transition-colors"
                         :class="$wire.selectedDate === '{{ $d['iso'] }}' ?
-                            'bg-primary-500 text-white dark:text-white border-transparent selected' :
-                            ''">
-                        <div class="text-xs font-medium">{{ $d['label'] }}</div>
-                        <div class="text-sm">{{ $d['weekday'] }} {{ $d['day'] }}</div>
+                            'bg-primary-500 text-white border-transparent selected' :
+                            'hover:bg-gray-100 dark:hover:bg-gray-800'">
+
+                        @if ($d['label'])
+                            <div class="text-xs font-semibold">{{ $d['label'] }}</div>
+                        @else
+                            <div class="text-[10px] text-gray-400">{{ \Carbon\Carbon::parse($d['iso'])->format('M') }}
+                            </div>
+                        @endif
+                        <div class="text-sm font-semibold">{{ $d['weekday'] }}</div>
+                        <div class="text-base">{{ $d['day'] }}</div>
                     </button>
                 @endforeach
             </div>
         </div>
+
+
 
         <!-- orders for selected date -->
         <div class="mt-4" style="margin-top: 2em;">
