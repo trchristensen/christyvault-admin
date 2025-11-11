@@ -90,80 +90,80 @@
 
 
             @if ($orders && $orders->count())
-                <ul class="space-y-2">
-                    @foreach ($orders as $order)
-                        <li class="p-3 border rounded-lg">
-                            <div class="flex justify-between items-start">
-                                <div class="w-full">
-                                    <div class="flex justify-between w-full">
-                                        <div class="font-semibold text-sm text-gray-500">Order
-                                            #{{ $order->id }}</div>
-                                        <div>
-                                            @if ($order->driver)
-                                                <span
-                                                    class="text-sm text-gray-500 font-semibold
-                                            ">
-                                                    {{ $order->driver->name }}</span>
-                                            @endif
+                @foreach ($orders as $plant => $groupOrders)
+                    <h3 class="text-md font-bold mt-6 mb-2">
+                        {{ match ($plant) {
+                            'colma_main' => 'Colma',
+                            'colma_locals' => 'Locals (Colma)',
+                            'tulare_plant' => 'Tulare',
+                            default => ucfirst($plant),
+                        } }}
+                    </h3>
+
+                    <ul class="space-y-2">
+                        @foreach ($groupOrders as $order)
+                            <li class="p-3 border rounded-lg">
+                                <div class="flex justify-between items-start">
+                                    <div class="w-full">
+                                        <div class="flex justify-between w-full">
+                                            <div class="font-semibold text-sm text-gray-500">Order
+                                                #{{ $order->id }}</div>
+                                            <div>
+                                                @if ($order->driver)
+                                                    <span class="text-sm text-gray-500 font-semibold">
+                                                        {{ $order->driver->name }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <div class="text-md">
+                                            {{ $order->Location->name ?? 'Customer' }}
+                                        </div>
+
+                                        <div class="text-sm">
+                                            <a href="geo:0,0?q={{ urlencode($order->location->full_address ?? '') }}">
+                                                {{ $order->location->full_address ?? '' }}
+                                            </a>
                                         </div>
                                     </div>
 
-                                    <div class="text-md">
-                                        {{ $order->Location->name ?? 'Customer' }}
+                                    <div class="text-sm">
+                                        {{ $order->scheduled_at ? \Carbon\Carbon::parse($order->scheduled_at)->format('g:i A') : '' }}
                                     </div>
-
-
-                                    <div class="text-sm ">
-
-                                        <a href="geo:0,0?q={{ urlencode($order->location->full_address ?? '') }}">
-                                            {{ $order->location->full_address ?? '' }}
-                                        </a>
-
-                                    </div>
-
-                                </div>
-                                <div class="text-sm">
-                                    {{ $order->scheduled_at ? \Carbon\Carbon::parse($order->scheduled_at)->format('g:i A') : '' }}
                                 </div>
 
-                            </div>
-                            <table class="orderProducts text-sm" style="padding-left: 2em; margin-top: 1em;">
-                                @foreach ($order->orderProducts as $orderProduct)
-                                    <tr class="order-product">
-                                        <td class="qty">
-                                            @if ($orderProduct->fill_load)
-                                                <span class="fill-load-ast">*</span>
-                                            @else
-                                                <span>{{ $orderProduct->quantity }}</span>
-                                            @endif
-                                        </td>
-                                        <td class="product-details">
-                                            <div class="flex flex-col w-full">
-                                                <span>{{ $orderProduct->product->sku }}</span>
-                                                <span
-                                                    class="text-gray-600 dark:text-gray-500">{{ $orderProduct->product->name }}</span>
+                                <table class="orderProducts text-sm" style="padding-left: 2em; margin-top: 1em;">
+                                    @foreach ($order->orderProducts as $orderProduct)
+                                        <tr class="order-product">
+                                            <td class="qty">
                                                 @if ($orderProduct->fill_load)
-                                                    <p
-                                                        class="fill-load-text
-                                            text-xs">
-                                                        └ FILL OUT LOAD
-                                                    </p>
+                                                    <span class="fill-load-ast">*</span>
+                                                @else
+                                                    <span>{{ $orderProduct->quantity }}</span>
                                                 @endif
-                                            </div>
-                                        </td>
-
-                                    </tr>
-                                @endforeach
-                            </table>
-                        </li>
-                    @endforeach
-                </ul>
+                                            </td>
+                                            <td class="product-details">
+                                                <div class="flex flex-col w-full">
+                                                    <span>{{ $orderProduct->product->sku }}</span>
+                                                    <span
+                                                        class="text-gray-600 dark:text-gray-500">{{ $orderProduct->product->name }}</span>
+                                                    @if ($orderProduct->fill_load)
+                                                        <p class="fill-load-text text-xs">└ FILL OUT LOAD</p>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </table>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endforeach
             @else
-                <div class="text-sm
-                                            ">No deliveries
-                    scheduled for this day.
-                </div>
+                <div class="text-sm">No deliveries scheduled for this day.</div>
             @endif
+
         </div>
     </div>
 </x-filament-panels::page>

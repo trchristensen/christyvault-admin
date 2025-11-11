@@ -66,11 +66,19 @@ class Schedule extends Page
 
     protected function loadOrdersFor(string $iso)
     {
-        // NOTE: adjust 'requested_delivery_date' and 'scheduled_at' to your real column names if different
-        $this->orders = Order::whereDate('assigned_delivery_date', $iso)
-            // ->orderBy('scheduled_at')
+        $orders = Order::whereDate('assigned_delivery_date', $iso)
             ->with(['location', 'orderProducts.product', 'driver'])
-            ->orderBy('plant_location') // First by plant location
             ->get();
+
+        // Define the custom sort order
+        $plantOrder = [
+            'colma_main' => 1,
+            'colma_locals' => 2,
+            'tulare_plant' => 3,
+        ];
+
+        // Group and sort orders
+        $this->orders = $orders->sortBy(fn($order) => $plantOrder[$order->plant_location] ?? 999)
+            ->groupBy('plant_location');
     }
 }
