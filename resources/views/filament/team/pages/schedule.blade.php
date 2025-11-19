@@ -51,11 +51,12 @@
                 border-right: 1px solid #ccc;
                 text-align: right;
             }
+
         }
     </style>
     <div class="p-4">
         <!-- horizontal date bar -->
-        <div class="overflow-x-auto -mx-4 px-4 static top-8 z-10">
+        <div class="overflow-x-auto -mx-4 px-4 static z-10">
             <div class="flex space-x-2 py-2" x-data x-init="$nextTick(() => { const el = $el.querySelector('.date-item.selected'); if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'center' }); })"
                 @date-selected.window="$nextTick(()=>{ const el = $el.querySelector('.date-item.selected'); if(el) el.scrollIntoView({behavior:'smooth', inline:'center'}); })">
 
@@ -102,7 +103,7 @@
 
                     <ul class="space-y-2">
                         @foreach ($groupOrders as $order)
-                            <li class="p-3 border rounded-lg">
+                            <li class="p-3 border rounded-lg bg-white dark:bg-gray-800">
                                 <div class="flex justify-between items-start">
                                     <div class="w-full">
                                         <div class="flex justify-between w-full">

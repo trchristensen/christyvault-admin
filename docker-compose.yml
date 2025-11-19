@@ -1,52 +1,52 @@
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      platforms:
-        - linux/arm64/v8
-    image: christyvault-app
-    platform: linux/arm64/v8
-    container_name: christyvault-app
-    restart: unless-stopped
-    working_dir: /var/www
-    volumes:
-      - ./:/var/www
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-    environment:
-      - DB_CONNECTION=pgsql
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_DATABASE=christyvault
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=postgres
-      # SMS Configuration
-      - SMS_ENABLED=${SMS_ENABLED:-false}
-      - TELNYX_API_KEY=${TELNYX_API_KEY:-}
-      - TELNYX_FROM_NUMBER=${TELNYX_FROM_NUMBER:-}
-      - TELNYX_WEBHOOK_SECRET=${TELNYX_WEBHOOK_SECRET:-}
-      - SMS_DAILY_SCHEDULE_TIME=${SMS_DAILY_SCHEDULE_TIME:-08:00}
-      - APP_PWA_URL=${APP_PWA_URL:-http://localhost:8080}
-      # Add any other env vars you need
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            platforms:
+                - linux/arm64/v8
+        image: christyvault-app
+        platform: linux/arm64/v8
+        container_name: christyvault-app
+        restart: unless-stopped
+        working_dir: /var/www
+        volumes:
+            - ./:/var/www
+        ports:
+            - "8000:8000"
+        depends_on:
+            - db
+        environment:
+            - DB_CONNECTION=pgsql
+            - DB_HOST=db
+            - DB_PORT=5432
+            - DB_DATABASE=christyvault
+            - DB_USERNAME=postgres
+            - DB_PASSWORD=postgres
+            # SMS Configuration
+            - SMS_ENABLED=${SMS_ENABLED:-false}
+            - TELNYX_API_KEY=${TELNYX_API_KEY:-}
+            - TELNYX_FROM_NUMBER=${TELNYX_FROM_NUMBER:-}
+            - TELNYX_WEBHOOK_SECRET=${TELNYX_WEBHOOK_SECRET:-}
+            - SMS_DAILY_SCHEDULE_TIME=${SMS_DAILY_SCHEDULE_TIME:-08:00}
+            - APP_PWA_URL=${APP_PWA_URL:-http://localhost:8080}
+            # Add any other env vars you need
 
-  db:
-    image: postgres:17
-    platform: linux/arm64/v8
-    container_name: christyvault-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: christyvault
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_INITDB_ARGS: "--data-checksums"
-    ports:
-      - "5432:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
-      - ./docker/postgres/init-postgis.sh:/docker-entrypoint-initdb.d/init-postgis.sh
+    db:
+        image: postgres:17
+        platform: linux/arm64/v8
+        container_name: christyvault-db
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: christyvault
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_INITDB_ARGS: "--data-checksums"
+        ports:
+            - "5432:5432"
+        volumes:
+            - db_data:/var/lib/postgresql/data
+            - ./docker/postgres/init-postgis.sh:/docker-entrypoint-initdb.d/init-postgis.sh
 
 volumes:
-  db_data:
+    db_data:
