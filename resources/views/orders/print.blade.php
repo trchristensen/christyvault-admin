@@ -279,72 +279,7 @@
                 {{ optional($order->location)->full_address }}
             </span>
 
-            <div class="customer-phone">
-                @php
-                    $location = $order->location;
-                    $phoneOutput = '';
 
-                    if ($location && $location->preferredDeliveryContact) {
-                        $contact = $location->preferredDeliveryContact;
-                        $phone = $contact->phone;
-                        $mobile = $contact->mobile_phone;
-
-                        // Main phone
-                        $formattedPhone = null;
-                        if ($phone) {
-                            try {
-                                $formattedPhone = new \Propaganistas\LaravelPhone\PhoneNumber($phone, 'US')->format(
-                                    '(###) ###-####',
-                                );
-                            } catch (\Exception $e) {
-                                $formattedPhone = $phone;
-                            }
-                        }
-
-                        // Mobile
-                        $formattedMobile = null;
-                        if ($mobile) {
-                            try {
-                                $formattedMobile = new \Propaganistas\LaravelPhone\PhoneNumber($mobile, 'US')->format(
-                                    '(###) ###-####',
-                                );
-                            } catch (\Exception $e) {
-                                $formattedMobile = $mobile;
-                            }
-                        }
-
-                        $phoneOutput = "Contact: {$contact->name}";
-
-                        if ($formattedPhone) {
-                            $phoneOutput .= " - {$formattedPhone}";
-                            if ($contact->phone_extension) {
-                                $phoneOutput .= " x{$contact->phone_extension}";
-                            }
-                        }
-
-                        if ($formattedMobile) {
-                            $phoneOutput .= " • M: {$formattedMobile}";
-                        }
-                    } elseif ($location && $location->phone) {
-                        $formattedPhone = $location->phone;
-                        try {
-                            $formattedPhone = new \Propaganistas\LaravelPhone\PhoneNumber(
-                                $location->phone,
-                                'US',
-                            )->format('(###) ###-####');
-                        } catch (\Exception $e) {
-                            // keep raw value
-                        }
-
-                        $phoneOutput = $formattedPhone;
-                        if ($location->phone_extension) {
-                            $phoneOutput .= " x{$location->phone_extension}";
-                        }
-                    }
-                @endphp
-
-                {!! $phoneOutput !!}
-            </div>
         </div>
 
         {{-- Order Info Section --}}
