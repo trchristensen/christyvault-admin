@@ -271,7 +271,7 @@
         {{-- Customer Info Section --}}
         <div class="customer-info">
             <span class="customer-name">{{ $order->location->name }}</span>
-            <span class="customer-address">{{ $order->location->full_address }}</span>
+            <span class="customer-address">{{ $order->location?->full_address }}</span>
             <span class="customer-phone">
                 <?php
                 
