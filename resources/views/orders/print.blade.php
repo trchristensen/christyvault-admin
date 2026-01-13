@@ -271,11 +271,12 @@
         {{-- Customer Info Section --}}
         <div class="customer-info">
             <span class="customer-name">
-                {{ $order->location?->name }}
+                {{ optional($order->location)->name }}
             </span>
 
             <span class="customer-address">
-                {{ $order->location?->full_address }}
+
+                {{ optional($order->location)->full_address }}
             </span>
 
             <span class="customer-phone">
