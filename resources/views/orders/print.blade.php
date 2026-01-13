@@ -42,13 +42,17 @@
             width: 1000px;
         }
 
-         .order-info {
+        .order-info {
             position: absolute;
-            top: 210px;   /* Move further down */
-            right: 10px; /* Move further left */
-            width: 220px; /* Narrower to fit the form */
+            top: 210px;
+            /* Move further down */
+            right: 10px;
+            /* Move further left */
+            width: 220px;
+            /* Narrower to fit the form */
             height: 120px;
         }
+
         .invoice-date-field {
             position: absolute;
             top: 10px;
@@ -57,6 +61,7 @@
             height: 20px;
             font-size: 20px;
         }
+
         .customer-order-number-field {
             position: absolute;
             bottom: 48px;
@@ -65,6 +70,7 @@
             height: 20px;
             font-size: 20px;
         }
+
         .date-of-order-field {
             position: absolute;
             bottom: 0px;
@@ -245,9 +251,10 @@
             /* opacity: 1; */
             /* opacity: 0; */
         }
-         .order-number {
+
+        .order-number {
             position: absolute;
-            top : 100px;
+            top: 100px;
             left: 20px;
             font-size: 18px;
         }
@@ -258,7 +265,7 @@
     <!-- <img class="template" src="{{ public_path('images/form.jpeg') }}" style="width: 100%; object-fit: contain; object-position: top left;"> -->
     <!-- <div class="page-container"> -->
     <article>
-         <div class="order-number">
+        <div class="order-number">
             {{ $order->order_number }}
         </div>
         {{-- Customer Info Section --}}
@@ -277,7 +284,7 @@ if ($order->location->preferredDeliveryContact) {
 
     // Format main phone
     try {
-        $formattedPhone = (new PhoneNumber($phone, 'US'))->format('(###) ###-####');
+        $formattedPhone = new PhoneNumber($phone, 'US')->format('(###) ###-####');
     } catch (\Exception $e) {
         $formattedPhone = $phone;
     }
@@ -285,7 +292,7 @@ if ($order->location->preferredDeliveryContact) {
     // Format mobile phone
     try {
         $formattedMobile = $mobile
-            ? (new PhoneNumber($mobile, 'US'))->format('(###) ###-####')
+            ? new PhoneNumber($mobile, 'US')->format('(###) ###-####')
             : null;
     } catch (\Exception $e) {
         $formattedMobile = $mobile;
@@ -305,9 +312,7 @@ if ($order->location->preferredDeliveryContact) {
 // Format location phone as fallback
 elseif ($order->location->phone) {
     try {
-        $formattedPhone = (new PhoneNumber($order->location->phone, 'US'))->format(
-            '(###) ###-####',
-                            );
+        $formattedPhone = new PhoneNumber($order->location->phone, 'US')->format('(###) ###-####');
                         } catch (\Exception $e) {
                             $formattedPhone = $order->location->phone;
                         }
@@ -324,7 +329,7 @@ elseif ($order->location->phone) {
         {{-- Order Info Section --}}
         <div class="order-info">
             <div class="invoice-date" style="height:18px;"></div>
-            @if($order->customer_order_number)
+            @if ($order->customer_order_number)
                 <div class="customer-order-number-field">
                     {{ $order->customer_order_number }}
                 </div>
@@ -400,23 +405,24 @@ elseif ($order->location->phone) {
         </div>
 
         {{-- Instructions --}}
-        @if ($order->special_instructions)
-            <div class="instructions">
-                {{-- if status is will call, show "Will Call in bold with underline" --}}
-                @if ($order->status == 'will_call')
-                    <strong style="margin-right:12px;text-decoration:underline">WILL CALL</strong>
-                @endif
-                @if ($order->status == 'prebury')
-                    <strong style="margin-right:12px;text-decoration:underline">PREBURY</strong>
-                @endif
+        <div class="instructions">
+            {{-- if status is will call, show "Will Call in bold with underline" --}}
+            @if ($order->status == 'will_call')
+                <strong style="margin-right:12px;text-decoration:underline">WILL CALL</strong>
+            @endif
+            @if ($order->status == 'prebury')
+                <strong style="margin-right:12px;text-decoration:underline">PREBURY</strong>
+            @endif
+            @if ($order->special_instructions)
                 Notes: {{ $order->special_instructions }}
-            </div>
-        @endif
+            @endif
+        </div>
         <div class="cemetery-time">
-            <span>Arrive:</span>
-            <span>Leave:</span>
-            <span>Driver:</span>
-            <span>Ordered By: @if($order->ordered_by) {{ $order->ordered_by }} @endif</span>
+            <span style="margin-right: 400px;"><strong>INSPECTED &AMP; RECEIVED BY:</strong></span>
+            <span>Ordered By: @if ($order->ordered_by)
+                    {{ $order->ordered_by }}
+                @endif
+            </span>
         </div>
 
 
