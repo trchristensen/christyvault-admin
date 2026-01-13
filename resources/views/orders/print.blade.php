@@ -270,52 +270,60 @@
         </div>
         {{-- Customer Info Section --}}
         <div class="customer-info">
-            <span class="customer-name">{{ $order->location->name }}</span>
-            <span class="customer-address">{{ $order->location?->full_address }}</span>
+            <span class="customer-name">
+                {{ $order->location?->name }}
+            </span>
+
+            <span class="customer-address">
+                {{ $order->location?->full_address }}
+            </span>
+
             <span class="customer-phone">
                 <?php
+                $location = $order->location;
                 
-                if ($order->location->preferredDeliveryContact) {
-                    $contact = $order->location->preferredDeliveryContact;
+                if ($location && $location->preferredDeliveryContact) {
+                    $contact = $location->preferredDeliveryContact;
                     $phone = $contact->phone;
                     $mobile = $contact->mobile_phone;
                 
-                    // Format main phone
+                    // Main phone
                     try {
-                        $formattedPhone = new \Propaganistas\LaravelPhone\PhoneNumber($phone, 'US')->format('(###) ###-####');
+                        $formattedPhone = $phone ? new \Propaganistas\LaravelPhone\PhoneNumber($phone, 'US')->format('(###) ###-####') : null;
                     } catch (\Exception $e) {
                         $formattedPhone = $phone;
                     }
                 
-                    // Format mobile phone
+                    // Mobile phone
                     try {
-                        $formattedMobile = $mobile ? new PhoneNumber($mobile, 'US')->format('(###) ###-####') : null;
+                        $formattedMobile = $mobile ? new \Propaganistas\LaravelPhone\PhoneNumber($mobile, 'US')->format('(###) ###-####') : null;
                     } catch (\Exception $e) {
                         $formattedMobile = $mobile;
                     }
                 
                     echo "Contact: {$contact->name}";
+                
                     if ($formattedPhone) {
                         echo " - {$formattedPhone}";
                         if ($contact->phone_extension) {
                             echo " x{$contact->phone_extension}";
                         }
                     }
+                
                     if ($formattedMobile) {
                         echo " • M: {$formattedMobile}";
                     }
-                }
-                // Format location phone as fallback
-                elseif ($order->location->phone) {
+                } elseif ($location && $location->phone) {
                     try {
-                        $formattedPhone = new PhoneNumber($order->location->phone, 'US')->format('(###) ###-####');
+                        $formattedPhone = new \Propaganistas\LaravelPhone\PhoneNumber($location->phone, 'US')->format('(###) ###-####');
                     } catch (\Exception $e) {
-                        $formattedPhone = $order->location->phone;
+                        $formattedPhone = $location->phone;
                     }
                 
                     echo $formattedPhone;
-                    if ($order->location->phone_extension) {
-                        echo " x{$order->location->phone_extension}";
+                
+                    if ($location->phone_extension) {
+                        echo " x{$location->phone_extension}";
                     }
                 }
                 ?>
