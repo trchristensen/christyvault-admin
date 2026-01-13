@@ -273,56 +273,52 @@
             <span class="customer-name">{{ $order->location->name }}</span>
             <span class="customer-address">{{ $order->location->full_address }}</span>
             <span class="customer-phone">
-                @php
-
-                    if ($order->location->preferredDeliveryContact) {
-                        $contact = $order->location->preferredDeliveryContact;
-                        $phone = $contact->phone;
-                        $mobile = $contact->mobile_phone;
-
-                        // Format main phone
-                        try {
-                            $formattedPhone = new \Propaganistas\LaravelPhone\PhoneNumber($phone, 'US')->format(
-                                '(###) ###-####',
-                            );
-                        } catch (\Exception $e) {
-                            $formattedPhone = $phone;
-                        }
-
-                        // Format mobile phone
-                        try {
-                            $formattedMobile = $mobile
-                                ? new PhoneNumber($mobile, 'US')->format('(###) ###-####')
-                                : null;
-                        } catch (\Exception $e) {
-                            $formattedMobile = $mobile;
-                        }
-
-                        echo "Contact: {$contact->name}";
-                        if ($formattedPhone) {
-                            echo " - {$formattedPhone}";
-                            if ($contact->phone_extension) {
-                                echo " x{$contact->phone_extension}";
-                            }
-                        }
-                        if ($formattedMobile) {
-                            echo " • M: {$formattedMobile}";
+                <?php
+                
+                if ($order->location->preferredDeliveryContact) {
+                    $contact = $order->location->preferredDeliveryContact;
+                    $phone = $contact->phone;
+                    $mobile = $contact->mobile_phone;
+                
+                    // Format main phone
+                    try {
+                        $formattedPhone = new \Propaganistas\LaravelPhone\PhoneNumber($phone, 'US')->format('(###) ###-####');
+                    } catch (\Exception $e) {
+                        $formattedPhone = $phone;
+                    }
+                
+                    // Format mobile phone
+                    try {
+                        $formattedMobile = $mobile ? new PhoneNumber($mobile, 'US')->format('(###) ###-####') : null;
+                    } catch (\Exception $e) {
+                        $formattedMobile = $mobile;
+                    }
+                
+                    echo "Contact: {$contact->name}";
+                    if ($formattedPhone) {
+                        echo " - {$formattedPhone}";
+                        if ($contact->phone_extension) {
+                            echo " x{$contact->phone_extension}";
                         }
                     }
-                    // Format location phone as fallback
-                    elseif ($order->location->phone) {
-                        try {
-                            $formattedPhone = new PhoneNumber($order->location->phone, 'US')->format('(###) ###-####');
-                        } catch (\Exception $e) {
-                            $formattedPhone = $order->location->phone;
-                        }
-
-                        echo $formattedPhone;
-                        if ($order->location->phone_extension) {
-                            echo " x{$order->location->phone_extension}";
-                        }
+                    if ($formattedMobile) {
+                        echo " • M: {$formattedMobile}";
                     }
-                @endphp
+                }
+                // Format location phone as fallback
+                elseif ($order->location->phone) {
+                    try {
+                        $formattedPhone = new PhoneNumber($order->location->phone, 'US')->format('(###) ###-####');
+                    } catch (\Exception $e) {
+                        $formattedPhone = $order->location->phone;
+                    }
+                
+                    echo $formattedPhone;
+                    if ($order->location->phone_extension) {
+                        echo " x{$order->location->phone_extension}";
+                    }
+                }
+                ?>
             </span>
         </div>
 
