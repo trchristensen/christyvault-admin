@@ -278,25 +278,30 @@
         </div>
         {{-- Customer Info Section --}}
         <div class="customer-info">
-            <span class="customer-name">{{ $order->location->name }}</span>
-            <span class="customer-address">{{ $order->location->full_address }}</span>
+            <span class="customer-name">
+                {{ optional($order->location)->name }}
+            </span>
 
-            <div class="date-of-order-field">
-                {{ $order->order_date?->format('m/d/Y') ?? $order->created_at->format('m/d/Y') }}
+            <span class="customer-address">
+
+                {{ optional($order->location)->full_address }}
+            </span>
+
+            <div class="customer-phone">
+                {{ $order->location?->formatted_preferred_phone ?? '' }}
             </div>
         </div>
 
         <div class="order-info">
-            <div class="invoice-date-field">
-                {{-- If you have an invoice date, show it here --}}
-                {{-- {{ $order->invoice_date?->format('m/d/Y') ?? '' }} --}}
-            </div>
+            <div class="invoice-date" style="height:18px;"></div>
             @if ($order->customer_order_number)
                 <div class="customer-order-number-field">
                     {{ $order->customer_order_number }}
                 </div>
             @endif
-
+            <div class="date-of-order-field">
+                {{ $order->order_date?->format('m/d/Y') ?? $order->created_at->format('m/d/Y') }}
+            </div>
         </div>
 
 

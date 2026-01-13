@@ -279,7 +279,9 @@
                 {{ optional($order->location)->full_address }}
             </span>
 
-
+            <div class="customer-phone">
+                {{ $order->location?->formatted_preferred_phone ?? '' }}
+            </div>
         </div>
 
         {{-- Order Info Section --}}

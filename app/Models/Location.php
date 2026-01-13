@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Propaganistas\LaravelPhone\PhoneNumber;
 
 class Location extends Model
 {
@@ -106,6 +107,62 @@ class Location extends Model
     {
         return $this->hasMany(Order::class);
     }
+
+
+    public function getFormattedPreferredPhoneAttribute(): string
+    {
+        if ($this->preferredDeliveryContact) {
+            $contact = $this->preferredDeliveryContact;
+
+            $main = $this->formatPhone($contact->phone);
+            $mobile = $this->formatPhone($contact->mobile_phone);
+
+            $parts = ["Contact: {$contact->name}"];
+
+            if ($main) {
+                $part = "- {$main}";
+                if ($contact->phone_extension) {
+                    $part .= " x{$contact->phone_extension}";
+                }
+                $parts[] = $part;
+            }
+
+            if ($mobile) {
+                $parts[] = "• M: {$mobile}";
+            }
+
+            return implode(' ', $parts);
+        }
+
+        // Fallback to location's own phone
+        if ($this->phone) {
+            $phone = $this->formatPhone($this->phone);
+            if ($this->phone_extension) {
+                $phone .= " x{$this->phone_extension}";
+            }
+            return $phone;
+        }
+
+        return '';
+    }
+
+    private function formatPhone(?string $number): ?string
+    {
+        if (!$number) {
+            return null;
+        }
+
+        try {
+            return PhoneNumber::make($number, 'US')
+                ->format('(###) ###-####');
+        } catch (\Exception) {
+            return $number; // fallback to raw
+        }
+    }
+
+
+
+    // junk, below this.
 
     public function updateOrderAnalytics(): void
     {
