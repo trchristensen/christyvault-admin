@@ -22,15 +22,16 @@ class OrderController extends Controller
         $newOrder->order_date = now();
         $newOrder->created_at = now();
         $newOrder->save();
-        
+
+
         // Duplicate order products
         foreach ($record->orderProducts as $product) {
             $newProduct = $product->replicate();
             $newProduct->order_id = $newOrder->id;
             $newProduct->save();
         }
-        
+
         // Redirect to the Filament admin panel edit page
         return redirect(route('filament.admin.resources.orders.edit', $newOrder));
     }
-} 
+}
