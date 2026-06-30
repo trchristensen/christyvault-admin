@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\PlantLocation;
 use App\Filament\Resources\LocationResource\Pages;
 use App\Filament\Resources\LocationResource\RelationManagers;
 use App\Models\Location;
@@ -39,6 +40,18 @@ class LocationResource extends Resource
                                 'cemetery' => 'Cemetery',
                                 'other' => 'Other',
                             ])
+                            ->required()
+                            ->native(false),
+                        Forms\Components\Select::make('default_plant_location')
+                            ->label('Default Delivery Type')
+                            ->options(
+                                collect(PlantLocation::cases())
+                                    ->mapWithKeys(fn(PlantLocation $location) => [
+                                        $location->value => $location->getLabel(),
+                                    ])
+                                    ->toArray()
+                            )
+                            ->default(PlantLocation::COLMA_MAIN->value)
                             ->required()
                             ->native(false),
                         PhoneInput::make('phone')
@@ -233,6 +246,18 @@ class LocationResource extends Resource
                     })
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('default_plant_location')
+                    ->label('Default Delivery Type')
+                    ->badge()
+                    ->formatStateUsing(function ($state): string {
+                        if ($state instanceof PlantLocation) {
+                            return $state->getLabel();
+                        }
+
+                        return PlantLocation::tryFrom((string) $state)?->getLabel() ?? 'Colma';
+                    })
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('city')
                     ->searchable()
                     ->sortable(),

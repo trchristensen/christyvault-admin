@@ -24,6 +24,7 @@ class Location extends Model
         'latitude',
         'longitude',
         'location_type',
+        'default_plant_location',
         'notes',
         'preferred_delivery_contact_id',
         'phone',
@@ -41,6 +42,7 @@ class Location extends Model
         'last_order_at' => 'datetime',
         'common_order_items' => 'array',
         'average_order_value' => 'decimal:2',
+        'default_plant_location' => \App\Enums\PlantLocation::class,
     ];
 
     public function getCoordinatesAttribute(): ?string

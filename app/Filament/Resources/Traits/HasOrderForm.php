@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Traits;
 
 use App\Enums\OrderStatus;
+use App\Enums\PlantLocation;
 use App\Models\Location;
 use App\Models\Product;
 use Filament\Forms;
@@ -50,11 +51,13 @@ trait HasOrderForm
 
                             $location = Location::find($state);
                             if ($location) {
-                                // Set plant location based on city
-                                if (strtolower($location->city) === 'colma' || strtolower($location->city) === 'south san francisco') {
-                                    $set('plant_location', \App\Enums\PlantLocation::COLMA_LOCALS->value);
+                                // Prefer the location's saved default, with the previous city-based rule as a fallback.
+                                if ($location->default_plant_location) {
+                                    $set('plant_location', $location->default_plant_location->value);
+                                } elseif (strtolower($location->city) === 'colma' || strtolower($location->city) === 'south san francisco') {
+                                    $set('plant_location', PlantLocation::COLMA_LOCALS->value);
                                 } else {
-                                    $set('plant_location', \App\Enums\PlantLocation::COLMA_MAIN->value);
+                                    $set('plant_location', PlantLocation::COLMA_MAIN->value);
                                 }
                                 
                                 // Set ordered_by if preferred delivery contact exists
@@ -99,6 +102,13 @@ trait HasOrderForm
                                             'cemetery' => 'Cemetery',
                                             'other' => 'Other',
                                         ])
+                                        ->required(),
+                                    Forms\Components\Select::make('default_plant_location')
+                                        ->label('Default Delivery Type')
+                                        ->options(collect(PlantLocation::cases())->mapWithKeys(fn(PlantLocation $location) => [
+                                            $location->value => $location->getLabel(),
+                                        ]))
+                                        ->default(PlantLocation::COLMA_MAIN->value)
                                         ->required(),
                                 ])
                                 ->fillForm(fn() => Location::find($state)->toArray())
@@ -159,6 +169,13 @@ trait HasOrderForm
                                     'other' => 'Other',
                                 ])
                                 ->required(),
+                            Forms\Components\Select::make('default_plant_location')
+                                ->label('Default Delivery Type')
+                                ->options(collect(PlantLocation::cases())->mapWithKeys(fn(PlantLocation $location) => [
+                                    $location->value => $location->getLabel(),
+                                ]))
+                                ->default(PlantLocation::COLMA_MAIN->value)
+                                ->required(),
                             PhoneInput::make('phone')
                                 ->defaultCountry('US'),
 
@@ -184,6 +201,7 @@ trait HasOrderForm
                                 'postal_code' => $data['postal_code'],
                                 'phone' => $data['phone'],
                                 'location_type' => $data['location_type'],
+                                'default_plant_location' => $data['default_plant_location'] ?? PlantLocation::COLMA_MAIN->value,
                             ]);
 
                             if (isset($data['contact'])) {
@@ -278,11 +296,11 @@ trait HasOrderForm
                     Forms\Components\Select::make('plant_location')
                         ->label('Delivery Type')
                         ->options(function () {
-                            return collect(\App\Enums\PlantLocation::cases())->mapWithKeys(fn($location) => [
+                            return collect(PlantLocation::cases())->mapWithKeys(fn($location) => [
                                 $location->value => $location->getLabel(),
                             ]);
                         })
-                        ->default(\App\Enums\PlantLocation::COLMA_MAIN->value)
+                        ->default(PlantLocation::COLMA_MAIN->value)
                         ->columnSpan([
                             'sm' => 4,
                             'md' => 4,
