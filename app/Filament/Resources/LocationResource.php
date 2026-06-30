@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\LocationResource\Pages;
+use App\Filament\Resources\LocationResource\RelationManagers;
 use App\Models\Location;
 use App\Models\Contact;
 use Filament\Forms;
@@ -325,7 +326,7 @@ class LocationResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\OrderedProductsRelationManager::class,
         ];
     }
 
