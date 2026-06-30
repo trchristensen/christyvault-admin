@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\OrderStatus;
+use App\Enums\PlantLocation;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Models\Employee;
 use App\Models\Order;
@@ -171,6 +172,16 @@ class OrderResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
                 Tables\Filters\SelectFilter::make('status')
                     ->options(OrderStatus::class)
+                    ->multiple(),
+                Tables\Filters\SelectFilter::make('plant_location')
+                    ->label('Delivery Type')
+                    ->options(
+                        collect(PlantLocation::cases())
+                            ->mapWithKeys(fn(PlantLocation $location) => [
+                                $location->value => $location->getLabel(),
+                            ])
+                            ->toArray()
+                    )
                     ->multiple(),
                 Tables\Filters\Filter::make('product_notes')
                     ->form([
