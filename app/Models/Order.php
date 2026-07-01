@@ -60,6 +60,13 @@ class Order extends Model
         parent::boot();
 
         static::creating(function ($model) {
+            if ($model->assigned_delivery_date) {
+                app(\App\Services\DeliveryCalendarAvailability::class)->validateDate(
+                    $model->assigned_delivery_date,
+                    'assigned_delivery_date'
+                );
+            }
+
             // Generate UUID
             $model->uuid = (string) Str::uuid();
 
@@ -92,6 +99,15 @@ class Order extends Model
                         'notes' => $product['notes'] ?? null,
                     ]);
                 }
+            }
+        });
+
+        static::updating(function ($model) {
+            if ($model->isDirty('assigned_delivery_date') && $model->assigned_delivery_date) {
+                app(\App\Services\DeliveryCalendarAvailability::class)->validateDate(
+                    $model->assigned_delivery_date,
+                    'assigned_delivery_date'
+                );
             }
         });
     }

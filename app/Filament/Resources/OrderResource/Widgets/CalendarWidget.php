@@ -36,6 +36,7 @@ use Filament\Notifications\Notification;
 use Filament\Facades\Filament;
 use Filament\Facades\Filament\MaxWidth;
 use App\Models\Location;
+use App\Services\DeliveryCalendarAvailability;
 
 class CalendarWidget extends FullCalendarWidget
 {
@@ -95,6 +96,12 @@ class CalendarWidget extends FullCalendarWidget
 
     public function onEventClick(array $event): void
     {
+        $type = $event['extendedProps']['type'] ?? null;
+
+        if (in_array($type, ['calendar_day', 'calendar_block'], true)) {
+            return;
+        }
+
         if (isset($event['jsEvent']['target']['dataset']['orderId'])) {
             $orderId = $event['jsEvent']['target']['dataset']['orderId'];
             $this->record = Order::with(['location', 'orderProducts.product', 'location.preferredDeliveryContact'])->find($orderId);
@@ -102,8 +109,11 @@ class CalendarWidget extends FullCalendarWidget
             return;
         }
 
-        $uuid = $event['extendedProps']['uuid'];
-        $type = $event['extendedProps']['type'];
+        $uuid = $event['extendedProps']['uuid'] ?? null;
+
+        if (! $uuid) {
+            return;
+        }
 
         if ($type === 'trip') {
             $this->record = Trip::with(['orders.location', 'driver'])->where('uuid', $uuid)->first();
@@ -132,11 +142,24 @@ class CalendarWidget extends FullCalendarWidget
 
             try {
                 $newDate = Carbon::parse($event['start'])->toDateString();
+                app(DeliveryCalendarAvailability::class)->validateDate(
+                    $newDate,
+                    'assigned_delivery_date'
+                );
+
                 $order->update([
                     'assigned_delivery_date' => $newDate,
                 ]);
                 $this->refreshRecords();
                 return true;
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                Notification::make()
+                    ->title('Date blocked')
+                    ->body(collect($e->errors())->flatten()->first())
+                    ->warning()
+                    ->send();
+
+                return false;
             } catch (\Exception $e) {
                 return false;
             }
@@ -151,12 +174,25 @@ class CalendarWidget extends FullCalendarWidget
 
             try {
                 $newDate = Carbon::parse($event['start'])->toDateString();
+                app(DeliveryCalendarAvailability::class)->validateDate(
+                    $newDate,
+                    'scheduled_date'
+                );
+
                 $trip->update([
                     'scheduled_date' => $newDate,
                 ]);
                 $this->refreshRecords();
 
                 return true;
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                Notification::make()
+                    ->title('Date blocked')
+                    ->body(collect($e->errors())->flatten()->first())
+                    ->warning()
+                    ->send();
+
+                return false;
             } catch (\Exception $e) {
                 return false;
             }
@@ -170,6 +206,27 @@ class CalendarWidget extends FullCalendarWidget
         return <<<'JS'
     function({ event, el }) {
         const eventMainEl = el.querySelector('.fc-event-main');
+
+        if (!eventMainEl) {
+            return;
+        }
+
+        if (event.extendedProps.type === 'calendar_day') {
+            const content = document.createElement('div');
+            const label = event.extendedProps.type_label || 'Calendar Day';
+            content.innerHTML = `
+                <div style="padding:4px 6px;font-size:0.78rem;font-weight:700;line-height:1.15;">
+                    <div>${event.title}</div>
+                    <div style="font-size:0.68rem;font-weight:600;opacity:0.9;">${label}</div>
+                </div>
+            `;
+            eventMainEl.replaceChildren(content);
+            return;
+        }
+
+        if (event.extendedProps.type === 'calendar_block') {
+            return;
+        }
 
         const chevronSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="transition-transform duration-200 transform size-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -410,6 +467,11 @@ class CalendarWidget extends FullCalendarWidget
                 ])
                 ->action(function (array $data) {
                     if ($data['type'] === 'trip') {
+                        app(DeliveryCalendarAvailability::class)->validateDate(
+                            $data['scheduled_date'] ?? null,
+                            'scheduled_date'
+                        );
+
                         // Create the trip first
                         $trip = Trip::create([
                             'scheduled_date' => $data['scheduled_date'],
@@ -443,6 +505,11 @@ class CalendarWidget extends FullCalendarWidget
                             ->success()
                             ->send();
                     } else {
+                        app(DeliveryCalendarAvailability::class)->validateDate(
+                            $data['assigned_delivery_date'] ?? null,
+                            'assigned_delivery_date'
+                        );
+
                         // Create the order
                         $order = Order::create(collect($data)->except(['type', 'orderProducts'])->toArray());
 
@@ -532,6 +599,16 @@ class CalendarWidget extends FullCalendarWidget
 
     public function onDateSelect(string $start, string|null $end, bool $allDay, array|null $view, array|null $resource): void
     {
+        if (app(DeliveryCalendarAvailability::class)->isBlocked($start)) {
+            Notification::make()
+                ->title('Date blocked')
+                ->body(app(DeliveryCalendarAvailability::class)->blockingReason($start) ?? 'This day is blocked for delivery.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
         $this->selectedDate = $start;
         $this->dispatch('date-selected');
     }
@@ -556,6 +633,9 @@ class CalendarWidget extends FullCalendarWidget
 
     public function fetchEvents(array $fetchInfo): array
     {
+        $calendarDayEvents = app(DeliveryCalendarAvailability::class)
+            ->eventsForRange($fetchInfo['start'], $fetchInfo['end']);
+
         // Fetch Trips
         $tripEvents = Trip::with(['orders.location', 'orders.orderProducts.product', 'orders.location.preferredDeliveryContact', 'driver'])
             ->whereDate('scheduled_date', '>=', $fetchInfo['start'])
@@ -708,7 +788,7 @@ class CalendarWidget extends FullCalendarWidget
             }
         }
 
-        return [...$tripEvents, ...$orderEvents];
+        return [...$calendarDayEvents, ...$tripEvents, ...$orderEvents];
     }
 
 
@@ -721,7 +801,7 @@ class CalendarWidget extends FullCalendarWidget
         // $endDate = $today->copy()->addMonths(2)->endOfMonth();
 
         return [
-            'weekends' => false,
+            'weekends' => true,
             // 'initialView' => 'dayGridMonth',
             'initialView' => 'dayGridWeek',
             // 'multiMonth' => [
@@ -758,6 +838,18 @@ class CalendarWidget extends FullCalendarWidget
                 ->stickyModalFooter()
                 ->form(fn() => $this->getFormSchema())
                 ->action(function (array $data) {
+                    if ($this->event instanceof Trip) {
+                        app(DeliveryCalendarAvailability::class)->validateDate(
+                            $data['scheduled_date'] ?? null,
+                            'scheduled_date'
+                        );
+                    } else {
+                        app(DeliveryCalendarAvailability::class)->validateDate(
+                            $data['assigned_delivery_date'] ?? null,
+                            'assigned_delivery_date'
+                        );
+                    }
+
                     $this->event->update($data);
                     $this->refreshRecords();
                 }),

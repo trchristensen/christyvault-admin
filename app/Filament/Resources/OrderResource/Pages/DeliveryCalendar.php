@@ -14,6 +14,7 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Saade\FilamentFullCalendar\Components\FullCalendarComponent;
 use Illuminate\Http\Request;
+use App\Services\DeliveryCalendarAvailability;
 
 class DeliveryCalendar extends Page
 {
@@ -51,6 +52,11 @@ class DeliveryCalendar extends Page
                 ->model(Order::class)
                 ->form(fn(Form $form) => $form->schema(static::getOrderFormSchema($this->selectedDate)))
                 ->action(function (array $data) {
+                    app(DeliveryCalendarAvailability::class)->validateDate(
+                        $data['assigned_delivery_date'] ?? null,
+                        'assigned_delivery_date'
+                    );
+
                     $order = Order::create($data);
                     
                     // Handle order products
@@ -106,6 +112,16 @@ class DeliveryCalendar extends Page
 
     public function openCreateOrderModal($date)
     {
+        if (app(DeliveryCalendarAvailability::class)->isBlocked($date)) {
+            Notification::make()
+                ->title('Date blocked')
+                ->body(app(DeliveryCalendarAvailability::class)->blockingReason($date) ?? 'This day is blocked for delivery.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
         $this->selectedDate = $date;
         
         // Mount the createOrder action from header actions

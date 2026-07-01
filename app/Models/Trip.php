@@ -37,10 +37,24 @@ class Trip extends Model
         parent::boot();
 
         static::creating(function ($trip) {
+            if ($trip->scheduled_date) {
+                app(\App\Services\DeliveryCalendarAvailability::class)->validateDate(
+                    $trip->scheduled_date,
+                    'scheduled_date'
+                );
+            }
+
             $trip->uuid = $trip->uuid ?? Str::uuid();
             $trip->trip_number = $trip->trip_number ?? static::generateTripNumber();
         });
         static::updating(function ($trip) {
+            if ($trip->isDirty('scheduled_date') && $trip->scheduled_date) {
+                app(\App\Services\DeliveryCalendarAvailability::class)->validateDate(
+                    $trip->scheduled_date,
+                    'scheduled_date'
+                );
+            }
+
             $trip->uuid = (string) str()->uuid();
         });
 

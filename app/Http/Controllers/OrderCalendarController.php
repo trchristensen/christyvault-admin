@@ -6,10 +6,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Enums\OrderStatus;
+use App\Services\DeliveryCalendarAvailability;
 
 class OrderCalendarController extends Controller
 {
-    public function events(Request $request)
+    public function events(Request $request, DeliveryCalendarAvailability $availability)
     {
         // Eager load 'location' relationship
         $orders = Order::with('location')->whereNotNull('assigned_delivery_date')->get();
@@ -76,12 +77,27 @@ class OrderCalendarController extends Controller
             }
         }
 
-        return response()->json($events);
+        $start = $request->query('start', now()->startOfMonth()->toDateString());
+        $end = $request->query('end', now()->endOfMonth()->toDateString());
+
+        return response()->json([
+            ...$availability->eventsForRange($start, $end),
+            ...$events,
+        ]);
     }
 
-    public function assignDate(Request $request)
+    public function assignDate(Request $request, DeliveryCalendarAvailability $availability)
     {
         $order = Order::with('location')->findOrFail($request->order_id);
+
+        if ($availability->isBlocked($request->assigned_delivery_date)) {
+            return response()->json([
+                'success' => false,
+                'message' => $availability->blockingReason($request->assigned_delivery_date)
+                    ?? 'This day is blocked for delivery.',
+            ]);
+        }
+
         $order->assigned_delivery_date = $request->assigned_delivery_date;
         $order->save();
 

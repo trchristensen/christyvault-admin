@@ -71,7 +71,7 @@
                     titleFormat: { year: 'numeric', month: 'short', day: 'numeric' }
                 }
             },
-            weekends: false,
+            weekends: true,
             editable: true,
             droppable: true,
             events: '/calendar-events',
@@ -89,6 +89,28 @@
                 const event = info.event;
                 const el = info.el;
                 const eventMainEl = el.querySelector('.fc-event-main');
+
+                if (!eventMainEl) {
+                    return;
+                }
+
+                if (event.extendedProps?.type === 'calendar_day') {
+                    const props = event.extendedProps;
+                    const content = document.createElement('div');
+
+                    content.innerHTML = `
+                        <div style="padding:4px 6px;font-size:0.78rem;font-weight:700;line-height:1.15;">
+                            <div>${event.title}</div>
+                            <div style="font-size:0.68rem;font-weight:600;opacity:0.9;">${props.type_label || 'Calendar Day'}</div>
+                        </div>
+                    `;
+                    eventMainEl.replaceChildren(content);
+                    return;
+                }
+
+                if (event.extendedProps?.type === 'calendar_block') {
+                    return;
+                }
                 
                 // Build the order content
                 const props = event.extendedProps;
@@ -300,7 +322,7 @@
                 }, 100);
             } else {
                 info.revert();
-                alert('Failed to assign order!');
+                alert(data.message || 'Failed to assign order!');
             }
         })
         .catch(() => {
@@ -359,6 +381,14 @@
     }
 
     function handleEventClick(info) {
+        if (['calendar_day', 'calendar_block'].includes(info.event.extendedProps?.type)) {
+            return;
+        }
+
+        if (!/^\d+$/.test(String(info.event.id))) {
+            return;
+        }
+
         // info.event.id is the order ID
         console.log('Calendar event clicked, order ID:', info.event.id);
         @this.call('openOrderModal', info.event.id);
