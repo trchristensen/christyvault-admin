@@ -801,7 +801,7 @@ class CalendarWidget extends FullCalendarWidget
         // $endDate = $today->copy()->addMonths(2)->endOfMonth();
 
         return [
-            'weekends' => true,
+            'weekends' => false,
             // 'initialView' => 'dayGridMonth',
             'initialView' => 'dayGridWeek',
             // 'multiMonth' => [

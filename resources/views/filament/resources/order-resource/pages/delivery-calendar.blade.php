@@ -71,7 +71,7 @@
                     titleFormat: { year: 'numeric', month: 'short', day: 'numeric' }
                 }
             },
-            weekends: true,
+            weekends: false,
             editable: true,
             droppable: true,
             events: '/calendar-events',
