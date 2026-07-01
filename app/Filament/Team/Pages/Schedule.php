@@ -38,6 +38,13 @@ class Schedule extends Page
             ->orderBy('name')
             ->get()
             ->groupBy(fn(CalendarDay $calendarDay): string => $calendarDay->date->toDateString());
+        $deliveryCounts = Order::query()
+            ->selectRaw('assigned_delivery_date, COUNT(*) as total')
+            ->whereDate('assigned_delivery_date', '>=', $start->toDateString())
+            ->whereDate('assigned_delivery_date', '<=', $end->toDateString())
+            ->whereNotNull('assigned_delivery_date')
+            ->groupBy('assigned_delivery_date')
+            ->pluck('total', 'assigned_delivery_date');
 
         for ($i = 0; $i <= 28; $i++) {
             $date = $start->copy()->addDays($i);
@@ -66,6 +73,7 @@ class Schedule extends Page
                 'month' => $date->format('F Y'),
                 'calendar_days' => $dateCalendarDays,
                 'blocks_delivery' => collect($dateCalendarDays)->contains('blocks_delivery', true),
+                'delivery_count' => (int) ($deliveryCounts[$date->toDateString()] ?? 0),
             ];
         }
 

@@ -62,7 +62,7 @@
 
                 @foreach ($dates as $d)
                     <button wire:click="selectDate('{{ $d['iso'] }}')" wire:key="date-{{ $d['iso'] }}"
-                        class="date-item flex-shrink-0 flex flex-col items-center justify-center rounded-md px-3 py-2 text-center border transition-colors {{ $d['blocks_delivery'] && $selectedDate !== $d['iso'] ? 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20' : '' }}"
+                        class="date-item relative flex-shrink-0 flex flex-col items-center justify-center rounded-md px-3 pt-2 pb-4 text-center border transition-colors {{ $d['blocks_delivery'] && $selectedDate !== $d['iso'] ? 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20' : '' }}"
                         :class="$wire.selectedDate === '{{ $d['iso'] }}' ?
                             'bg-primary-500 text-white border-transparent selected' :
                             'hover:bg-gray-100 dark:hover:bg-gray-800'">
@@ -82,6 +82,14 @@
                             <div
                                 class="mt-1 max-w-[58px] truncate rounded px-1.5 py-0.5 text-[10px] font-semibold {{ $calendarDay['blocks_delivery'] ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200' }}">
                                 {{ \Illuminate\Support\Str::limit($calendarDay['name'], 12) }}
+                            </div>
+                        @endif
+
+                        @if ($d['delivery_count'] > 0)
+                            <div
+                                class="absolute bottom-1 left-1/2 flex h-3.5 min-w-3.5 -translate-x-1/2 items-center justify-center rounded-full bg-emerald-500 px-1 text-[9px] font-bold leading-none text-white ring-2 ring-white dark:ring-gray-900"
+                                title="{{ $d['delivery_count'] }} {{ \Illuminate\Support\Str::plural('delivery', $d['delivery_count']) }}">
+                                {{ $d['delivery_count'] > 1 ? $d['delivery_count'] : '' }}
                             </div>
                         @endif
                     </button>
