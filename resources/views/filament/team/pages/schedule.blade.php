@@ -285,6 +285,12 @@
                                                             {{ $orderProduct->notes }}
                                                         </span>
                                                     @endif
+                                                    @if ($orderProduct->quantity_delivered !== null && $orderProduct->quantity_delivered !== '')
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                            <span class="font-semibold">Shipped:</span>
+                                                            {{ $orderProduct->quantity_delivered }}
+                                                        </span>
+                                                    @endif
                                                 </div>
                                             </td>
                                         </tr>
