@@ -58,6 +58,47 @@
             font-weight: bold;
         }
 
+        .order-status-badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 9999px;
+            border: 1px solid #d1d5db;
+            padding: 1px 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            line-height: 1.25rem;
+            color: #374151;
+            background: #f9fafb;
+        }
+
+        .order-status-will_call,
+        .order-status-picked_up {
+            border-color: #f59e0b;
+            color: #92400e;
+            background: #fef3c7;
+        }
+
+        .order-status-cancelled {
+            border-color: #fca5a5;
+            color: #991b1b;
+            background: #fee2e2;
+        }
+
+        .order-status-delivered,
+        .order-status-completed {
+            border-color: #86efac;
+            color: #166534;
+            background: #dcfce7;
+        }
+
+        .order-status-confirmed,
+        .order-status-ready_for_delivery,
+        .order-status-out_for_delivery {
+            border-color: #93c5fd;
+            color: #1e40af;
+            background: #dbeafe;
+        }
+
         table.orderProducts {
 
 
@@ -167,11 +208,20 @@
 
                     <ul class="space-y-2">
                         @foreach ($groupOrders as $order)
+                            @php
+                                $statusEnum = \App\Enums\OrderStatus::tryFrom($order->status);
+                                $statusLabel = $statusEnum?->label() ?? \Illuminate\Support\Str::headline((string) $order->status);
+                                $statusClass = preg_replace('/[^a-z0-9]+/', '_', strtolower((string) $order->status));
+                            @endphp
                             <li class="p-3 border rounded-lg bg-white dark:bg-gray-800">
                                 <div class="flex justify-between items-start">
                                     <div class="w-full">
                                         <div class="flex justify-between w-full">
-                                            <div class="font-semibold text-sm text-gray-500">Order #{{ $order->id }}
+                                            <div class="flex flex-wrap items-center gap-2 font-semibold text-sm text-gray-500">
+                                                <span>Order #{{ $order->id }}</span>
+                                                <span class="order-status-badge order-status-{{ $statusClass }}">
+                                                    {{ $statusLabel }}
+                                                </span>
                                             </div>
                                             <div>
                                                 @if ($order->driver)
@@ -199,6 +249,14 @@
 
                                 <table class="orderProducts text-sm" style="padding-left: 2em; margin-top: 1em;">
                                     @foreach ($order->orderProducts as $orderProduct)
+                                        @php
+                                            $productSku = $orderProduct->is_custom_product
+                                                ? 'CUSTOM'
+                                                : ($orderProduct->product?->sku ?? 'Unknown');
+                                            $productName = $orderProduct->is_custom_product
+                                                ? ($orderProduct->custom_description ?? 'Custom Product')
+                                                : ($orderProduct->product?->name ?? 'Unknown product');
+                                        @endphp
                                         <tr class="order-product">
                                             <td class="qty">
                                                 @if ($orderProduct->fill_load)
@@ -209,11 +267,23 @@
                                             </td>
                                             <td class="product-details">
                                                 <div class="flex flex-col w-full">
-                                                    <span>{{ $orderProduct->product->sku }}</span>
+                                                    <span>{{ $productSku }}</span>
                                                     <span
-                                                        class="text-gray-600 dark:text-gray-500">{{ $orderProduct->product->name }}</span>
+                                                        class="text-gray-600 dark:text-gray-500">{{ $productName }}</span>
                                                     @if ($orderProduct->fill_load)
                                                         <p class="fill-load-text text-xs">└ FILL OUT LOAD</p>
+                                                    @endif
+                                                    @if ($orderProduct->location)
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                            <span class="font-semibold">Location:</span>
+                                                            {{ $orderProduct->location }}
+                                                        </span>
+                                                    @endif
+                                                    @if ($orderProduct->notes)
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                            <span class="font-semibold">Notes:</span>
+                                                            {{ $orderProduct->notes }}
+                                                        </span>
                                                     @endif
                                                 </div>
                                             </td>
