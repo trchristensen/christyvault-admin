@@ -10,7 +10,7 @@
 
         .date-item {
             min-width: 70px;
-            min-height: 70px;
+            min-height: 82px;
             margin: 0 2px;
             transition: all 0.2s ease-in-out;
         }
@@ -62,7 +62,7 @@
 
                 @foreach ($dates as $d)
                     <button wire:click="selectDate('{{ $d['iso'] }}')" wire:key="date-{{ $d['iso'] }}"
-                        class="date-item flex-shrink-0 flex flex-col items-center justify-center rounded-md px-3 py-2 text-center border transition-colors"
+                        class="date-item flex-shrink-0 flex flex-col items-center justify-center rounded-md px-3 py-2 text-center border transition-colors {{ $d['blocks_delivery'] && $selectedDate !== $d['iso'] ? 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20' : '' }}"
                         :class="$wire.selectedDate === '{{ $d['iso'] }}' ?
                             'bg-primary-500 text-white border-transparent selected' :
                             'hover:bg-gray-100 dark:hover:bg-gray-800'">
@@ -75,6 +75,15 @@
                         @endif
                         <div class="text-sm font-semibold">{{ $d['weekday'] }}</div>
                         <div class="text-base">{{ $d['day'] }}</div>
+                        @if (!empty($d['calendar_days']))
+                            @php
+                                $calendarDay = $d['calendar_days'][0];
+                            @endphp
+                            <div
+                                class="mt-1 max-w-[58px] truncate rounded px-1.5 py-0.5 text-[10px] font-semibold {{ $calendarDay['blocks_delivery'] ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200' }}">
+                                {{ \Illuminate\Support\Str::limit($calendarDay['name'], 12) }}
+                            </div>
+                        @endif
                     </button>
                 @endforeach
             </div>
@@ -88,6 +97,23 @@
             <h2 class="text-lg font-semibold mb-4">
                 {{ \Carbon\Carbon::parse($selectedDate)->format('l, M j, Y') }}
             </h2>
+
+            @if (!empty($selectedCalendarDays))
+                <div class="mb-4 space-y-2">
+                    @foreach ($selectedCalendarDays as $calendarDay)
+                        <div
+                            class="rounded-md border px-3 py-2 text-sm {{ $calendarDay['blocks_delivery'] ? 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/20 dark:text-red-200' : 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200' }}">
+                            <div class="font-semibold">
+                                {{ $calendarDay['name'] }}
+                                <span class="font-normal opacity-75">({{ $calendarDay['type_label'] }})</span>
+                            </div>
+                            @if (!empty($calendarDay['notes']))
+                                <div class="mt-1 opacity-80">{{ $calendarDay['notes'] }}</div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            @endif
 
 
             @if ($orders && $orders->count())
