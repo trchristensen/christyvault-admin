@@ -2,6 +2,7 @@
 
 namespace App\Filament\Team\Pages;
 
+use App\Enums\PlantLocation;
 use Carbon\Carbon;
 use Filament\Pages\Page;
 use App\Models\CalendarDay;
@@ -31,7 +32,8 @@ class Schedule extends Page
     {
         $today = Carbon::today();
         $start = $today->copy()->subDays(14);
-        $end = $start->copy()->addDays(28);
+        $end = $today->copy()->addDays($this->scheduleDaysAhead());
+        $allowedDeliveryTypes = $this->allowedDeliveryTypes();
         $calendarDays = CalendarDay::query()
             ->whereDate('date', '>=', $start->toDateString())
             ->whereDate('date', '<=', $end->toDateString())
@@ -43,14 +45,13 @@ class Schedule extends Page
             ->whereDate('assigned_delivery_date', '>=', $start->toDateString())
             ->whereDate('assigned_delivery_date', '<=', $end->toDateString())
             ->whereNotNull('assigned_delivery_date')
+            ->when($allowedDeliveryTypes !== [], fn($query) => $query->whereIn('plant_location', $allowedDeliveryTypes))
             ->groupBy('assigned_delivery_date', 'plant_location')
             ->get()
             ->groupBy(fn($row): string => Carbon::parse($row->assigned_delivery_date)->toDateString())
             ->map(fn($rows) => $rows->pluck('total', 'plant_location'));
 
-        for ($i = 0; $i <= 28; $i++) {
-            $date = $start->copy()->addDays($i);
-
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
             if ($date->isWeekend()) {
                 continue;
             }
@@ -107,7 +108,7 @@ class Schedule extends Page
         $initialDate = $today->copy();
 
         while ($initialDate->isWeekend()) {
-            $initialDate->addDay();
+            $initialDate->subDay();
         }
 
         $this->selectedDate = $initialDate->toDateString();
@@ -133,6 +134,27 @@ class Schedule extends Page
         $this->loadOrdersFor($iso);
     }
 
+    protected function allowedDeliveryTypes(): array
+    {
+        $types = auth()->user()?->team_schedule_delivery_types ?? [];
+
+        return collect($types)
+            ->filter(fn($type): bool => PlantLocation::tryFrom((string) $type) !== null)
+            ->values()
+            ->toArray();
+    }
+
+    protected function scheduleDaysAhead(): int
+    {
+        $daysAhead = auth()->user()?->team_schedule_days_ahead;
+
+        if ($daysAhead === null || $daysAhead === '') {
+            return 14;
+        }
+
+        return max(0, min(90, (int) $daysAhead));
+    }
+
     protected function loadOrdersFor(string $iso)
     {
         $this->selectedCalendarDays = CalendarDay::query()
@@ -151,7 +173,10 @@ class Schedule extends Page
             ->values()
             ->toArray();
 
+        $allowedDeliveryTypes = $this->allowedDeliveryTypes();
+
         $orders = Order::whereDate('assigned_delivery_date', $iso)
+            ->when($allowedDeliveryTypes !== [], fn($query) => $query->whereIn('plant_location', $allowedDeliveryTypes))
             ->with(['location', 'orderProducts.product', 'driver'])
             ->get();
 

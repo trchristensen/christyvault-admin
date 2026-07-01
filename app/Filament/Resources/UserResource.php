@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\PlantLocation;
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
@@ -37,6 +38,29 @@ class UserResource extends Resource
                             ->dehydrated(fn($state) => filled($state))
                             ->required(fn(string $context): bool => $context === 'create'),
                     ])->columns(2),
+
+                Forms\Components\Section::make('Team Schedule Access')
+                    ->schema([
+                        Forms\Components\CheckboxList::make('team_schedule_delivery_types')
+                            ->label('Visible Delivery Types')
+                            ->options(
+                                collect(PlantLocation::cases())
+                                    ->mapWithKeys(fn(PlantLocation $location) => [
+                                        $location->value => $location->getLabel(),
+                                    ])
+                                    ->toArray()
+                            )
+                            ->helperText('Leave blank to show all delivery types.')
+                            ->columns(3),
+                        Forms\Components\TextInput::make('team_schedule_days_ahead')
+                            ->label('Days Ahead')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(90)
+                            ->placeholder('14')
+                            ->helperText('Leave blank to use 14 days.'),
+                    ])
+                    ->columns(2),
 
                 Forms\Components\Section::make('Roles & Relationships')
                     ->schema([

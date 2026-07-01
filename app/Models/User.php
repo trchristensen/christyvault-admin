@@ -43,6 +43,8 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
+        'team_schedule_delivery_types',
+        'team_schedule_days_ahead',
     ];
 
     /**
@@ -65,6 +67,8 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'team_schedule_delivery_types' => 'array',
+            'team_schedule_days_ahead' => 'integer',
         ];
     }
 
