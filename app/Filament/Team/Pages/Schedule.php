@@ -32,7 +32,7 @@ class Schedule extends Page
     {
         $today = Carbon::today();
         $start = $today->copy()->subDays(14);
-        $end = $today->copy()->addDays($this->scheduleDaysAhead());
+        $end = $this->scheduleEndDate($today, $this->scheduleDaysAhead());
         $allowedDeliveryTypes = $this->allowedDeliveryTypes();
         $calendarDays = CalendarDay::query()
             ->whereDate('date', '>=', $start->toDateString())
@@ -153,6 +153,24 @@ class Schedule extends Page
         }
 
         return max(0, min(90, (int) $daysAhead));
+    }
+
+    protected function scheduleEndDate(Carbon $startDate, int $visibleWeekdaysAhead): Carbon
+    {
+        $date = $startDate->copy();
+        $weekdaysFound = 0;
+
+        while ($weekdaysFound < $visibleWeekdaysAhead) {
+            $date->addDay();
+
+            if ($date->isWeekend()) {
+                continue;
+            }
+
+            $weekdaysFound++;
+        }
+
+        return $date;
     }
 
     protected function loadOrdersFor(string $iso)
