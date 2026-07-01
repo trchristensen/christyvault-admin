@@ -19,6 +19,19 @@
             transform: scale(1.04);
         }
 
+        .delivery-marker {
+            position: absolute;
+            left: 50%;
+            bottom: 5px;
+            width: 5px;
+            height: 5px;
+            transform: translateX(-50%);
+            border-radius: 9999px;
+            background: #059669;
+            opacity: 0.9;
+            pointer-events: none;
+        }
+
 
         .fill-load-text {
             margin-left: 1em;
@@ -86,11 +99,8 @@
                         @endif
 
                         @if ($d['delivery_count'] > 0)
-                            <div
-                                class="absolute bottom-1 left-1/2 flex h-3.5 min-w-3.5 -translate-x-1/2 items-center justify-center rounded-full bg-emerald-500 px-1 text-[9px] font-bold leading-none text-white ring-2 ring-white dark:ring-gray-900"
-                                title="{{ $d['delivery_count'] }} {{ \Illuminate\Support\Str::plural('delivery', $d['delivery_count']) }}">
-                                {{ $d['delivery_count'] > 1 ? $d['delivery_count'] : '' }}
-                            </div>
+                            <span class="delivery-marker"
+                                title="{{ $d['delivery_count'] }} {{ \Illuminate\Support\Str::plural('delivery', $d['delivery_count']) }}"></span>
                         @endif
                     </button>
                 @endforeach
