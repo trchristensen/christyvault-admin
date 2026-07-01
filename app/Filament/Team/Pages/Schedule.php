@@ -39,12 +39,14 @@ class Schedule extends Page
             ->get()
             ->groupBy(fn(CalendarDay $calendarDay): string => $calendarDay->date->toDateString());
         $deliveryCounts = Order::query()
-            ->selectRaw('assigned_delivery_date, COUNT(*) as total')
+            ->selectRaw('assigned_delivery_date, plant_location, COUNT(*) as total')
             ->whereDate('assigned_delivery_date', '>=', $start->toDateString())
             ->whereDate('assigned_delivery_date', '<=', $end->toDateString())
             ->whereNotNull('assigned_delivery_date')
-            ->groupBy('assigned_delivery_date')
-            ->pluck('total', 'assigned_delivery_date');
+            ->groupBy('assigned_delivery_date', 'plant_location')
+            ->get()
+            ->groupBy(fn($row): string => Carbon::parse($row->assigned_delivery_date)->toDateString())
+            ->map(fn($rows) => $rows->pluck('total', 'plant_location'));
 
         for ($i = 0; $i <= 28; $i++) {
             $date = $start->copy()->addDays($i);
@@ -64,16 +66,41 @@ class Schedule extends Page
                 ])
                 ->values()
                 ->toArray();
+            $dateString = $date->toDateString();
+            $dateDeliveryCounts = $deliveryCounts->get($dateString, collect());
+            $deliveryMarkers = collect([
+                [
+                    'key' => 'colma_main',
+                    'label' => 'Colma',
+                    'count' => (int) ($dateDeliveryCounts['colma_main'] ?? 0),
+                    'class' => 'delivery-marker-colma',
+                ],
+                [
+                    'key' => 'colma_locals',
+                    'label' => 'Locals',
+                    'count' => (int) ($dateDeliveryCounts['colma_locals'] ?? 0),
+                    'class' => 'delivery-marker-locals',
+                ],
+                [
+                    'key' => 'tulare_plant',
+                    'label' => 'Tulare',
+                    'count' => (int) ($dateDeliveryCounts['tulare_plant'] ?? 0),
+                    'class' => 'delivery-marker-tulare',
+                ],
+            ])
+                ->filter(fn(array $marker): bool => $marker['count'] > 0)
+                ->values()
+                ->toArray();
 
             $this->dates[] = [
-                'iso' => $date->toDateString(),
+                'iso' => $dateString,
                 'label' => $this->labelFor($date, $today),
                 'weekday' => $date->format('D'),
                 'day' => $date->format('j'),
                 'month' => $date->format('F Y'),
                 'calendar_days' => $dateCalendarDays,
                 'blocks_delivery' => collect($dateCalendarDays)->contains('blocks_delivery', true),
-                'delivery_count' => (int) ($deliveryCounts[$date->toDateString()] ?? 0),
+                'delivery_markers' => $deliveryMarkers,
             ];
         }
 

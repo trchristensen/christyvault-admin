@@ -19,17 +19,33 @@
             transform: scale(1.04);
         }
 
-        .delivery-marker {
+        .delivery-markers {
             position: absolute;
             left: 50%;
             bottom: 5px;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 4px;
+            pointer-events: none;
+        }
+
+        .delivery-marker {
             width: 5px;
             height: 5px;
-            transform: translateX(-50%);
             border-radius: 9999px;
+            opacity: 0.95;
+        }
+
+        .delivery-marker-colma {
+            background: #2563eb;
+        }
+
+        .delivery-marker-locals {
             background: #059669;
-            opacity: 0.9;
-            pointer-events: none;
+        }
+
+        .delivery-marker-tulare {
+            background: #d97706;
         }
 
 
@@ -98,9 +114,13 @@
                             </div>
                         @endif
 
-                        @if ($d['delivery_count'] > 0)
-                            <span class="delivery-marker"
-                                title="{{ $d['delivery_count'] }} {{ \Illuminate\Support\Str::plural('delivery', $d['delivery_count']) }}"></span>
+                        @if (!empty($d['delivery_markers']))
+                            <span class="delivery-markers">
+                                @foreach ($d['delivery_markers'] as $marker)
+                                    <span class="delivery-marker {{ $marker['class'] }}"
+                                        title="{{ $marker['label'] }}: {{ $marker['count'] }} {{ \Illuminate\Support\Str::plural('delivery', $marker['count']) }}"></span>
+                                @endforeach
+                            </span>
                         @endif
                     </button>
                 @endforeach
