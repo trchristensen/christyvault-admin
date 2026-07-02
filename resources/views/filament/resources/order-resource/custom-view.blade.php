@@ -309,7 +309,7 @@
 
                 @if ($record->location?->plant_drive_distance_summary)
                     <div class="text-xs text-gray-400 dark:text-gray-500">
-                        Drive from plant: {{ $record->location->plant_drive_distance_summary }}
+                        {{ $record->location->plant_drive_distance_summary }}
                     </div>
                 @endif
 
