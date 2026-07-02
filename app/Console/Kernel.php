@@ -21,12 +21,6 @@ class Kernel extends ConsoleKernel
             ->dailyAt('02:00')
             ->timezone(config('app.timezone', 'America/Los_Angeles'));
 
-        $schedule->command('locations:update-plant-distances --limit=10')
-            ->hourly()
-            ->timezone(config('app.timezone', 'America/Los_Angeles'))
-            ->withoutOverlapping()
-            ->when(fn(): bool => filled(config('services.openrouteservice.api_key')));
-
         // Send daily SMS schedules to drivers
         // $schedule->command('sms:daily-schedule')
         //     ->dailyAt(config('sms.daily_schedule.time', '08:00'))
