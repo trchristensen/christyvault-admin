@@ -24,6 +24,11 @@ class Location extends Model
         'postal_code',
         'latitude',
         'longitude',
+        'geocoding_provider',
+        'geocoding_matched_address',
+        'geocoded_at',
+        'geocoding_failed_at',
+        'geocoding_failure_reason',
         'plant_drive_distance_origin_location_id',
         'plant_drive_distance_miles',
         'plant_drive_duration_minutes',
@@ -45,6 +50,8 @@ class Location extends Model
     protected $casts = [
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
+        'geocoded_at' => 'datetime',
+        'geocoding_failed_at' => 'datetime',
         'plant_drive_distance_miles' => 'decimal:2',
         'plant_drive_distance_calculated_at' => 'datetime',
         'last_order_at' => 'datetime',
@@ -64,6 +71,24 @@ class Location extends Model
     public function hasCoordinates(): bool
     {
         return !is_null($this->latitude) && !is_null($this->longitude);
+    }
+
+    public function hasAddressForGeocoding(): bool
+    {
+        return filled($this->address_line1)
+            && filled($this->city)
+            && filled($this->state);
+    }
+
+    public function addressFieldsChanged(): bool
+    {
+        return $this->isDirty([
+            'address_line1',
+            'address_line2',
+            'city',
+            'state',
+            'postal_code',
+        ]);
     }
 
     public function trips(): MorphToMany

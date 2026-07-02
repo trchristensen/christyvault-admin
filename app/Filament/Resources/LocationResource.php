@@ -7,14 +7,17 @@ use App\Filament\Resources\LocationResource\Pages;
 use App\Filament\Resources\LocationResource\RelationManagers;
 use App\Models\Location;
 use App\Models\Contact;
+use App\Services\LocationGeocodingService;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\RichEditor;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
+use Throwable;
 
 class LocationResource extends Resource
 {
@@ -224,6 +227,24 @@ class LocationResource extends Resource
                             ->rules(['nullable', 'numeric', 'between:-180,180'])
                             ->step(0.000000000001)
                             ->placeholder('e.g. -121.290780'),
+                        Forms\Components\Placeholder::make('geocoded_at_display')
+                            ->label('Geocoded')
+                            ->content(fn(?Location $record): string => $record?->geocoded_at
+                                ? $record->geocoded_at->format('M j, Y g:i A')
+                                : 'Not geocoded'),
+                        Forms\Components\Placeholder::make('geocoding_provider_display')
+                            ->label('Provider')
+                            ->content(fn(?Location $record): string => $record?->geocoding_provider ?? 'N/A'),
+                        Forms\Components\Placeholder::make('geocoding_matched_address_display')
+                            ->label('Matched Address')
+                            ->content(fn(?Location $record): string => $record?->geocoding_matched_address ?? 'N/A')
+                            ->columnSpanFull(),
+                        Forms\Components\Placeholder::make('geocoding_failure_display')
+                            ->label('Last Geocoding Failure')
+                            ->content(fn(?Location $record): string => $record?->geocoding_failure_reason
+                                ? "{$record->geocoding_failure_reason} ({$record->geocoding_failed_at?->format('M j, Y g:i A')})"
+                                : 'None')
+                            ->columnSpanFull(),
                     ])->columns(2),
                 Forms\Components\Section::make('Default Plant Drive Distance')
                     ->schema([
@@ -376,6 +397,71 @@ class LocationResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('geocode')
+                    ->label('Geocode')
+                    ->icon('heroicon-o-map-pin')
+                    ->requiresConfirmation()
+                    ->action(function (Location $record): void {
+                        if (! $record->hasAddressForGeocoding()) {
+                            Notification::make()
+                                ->title('Address is incomplete')
+                                ->body('Address line 1, city, and state are required before geocoding.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        try {
+                            $result = app(LocationGeocodingService::class)->geocodeLocation($record);
+                        } catch (Throwable $exception) {
+                            $record->forceFill([
+                                'geocoding_failed_at' => now(),
+                                'geocoding_failure_reason' => str($exception->getMessage())->limit(255)->toString(),
+                            ])->saveQuietly();
+
+                            Notification::make()
+                                ->title('Geocoding failed')
+                                ->body($exception->getMessage())
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        if (! $result) {
+                            $record->forceFill([
+                                'geocoding_failed_at' => now(),
+                                'geocoding_failure_reason' => 'No Census geocoder match found.',
+                            ])->saveQuietly();
+
+                            Notification::make()
+                                ->title('No geocoding match found')
+                                ->body('Check the address and try again.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        $record->clearPlantDriveDistance();
+
+                        $record->forceFill([
+                            'latitude' => $result['latitude'],
+                            'longitude' => $result['longitude'],
+                            'geocoding_provider' => $result['provider'],
+                            'geocoding_matched_address' => $result['matched_address'],
+                            'geocoded_at' => now(),
+                            'geocoding_failed_at' => null,
+                            'geocoding_failure_reason' => null,
+                        ])->saveQuietly();
+
+                        Notification::make()
+                            ->title('Location geocoded')
+                            ->body($result['matched_address'] ?? "{$result['latitude']}, {$result['longitude']}")
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

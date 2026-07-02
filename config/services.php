@@ -45,6 +45,12 @@ return [
         'throttle_ms' => env('OPENROUTESERVICE_THROTTLE_MS', 1000),
     ],
 
+    'census_geocoder' => [
+        'base_url' => env('CENSUS_GEOCODER_BASE_URL', 'https://geocoding.geo.census.gov/geocoder'),
+        'benchmark' => env('CENSUS_GEOCODER_BENCHMARK', 'Public_AR_Current'),
+        'user_agent' => env('CENSUS_GEOCODER_USER_AGENT', env('APP_NAME', 'Christy Vault Admin') . ' location geocoder'),
+    ],
+
     'plant_locations' => [
         'colma_location_id' => env('COLMA_PLANT_LOCATION_ID'),
         'tulare_location_id' => env('TULARE_PLANT_LOCATION_ID'),

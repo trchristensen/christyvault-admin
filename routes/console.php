@@ -19,8 +19,13 @@ Schedule::command('backup:run')->daily()->at('01:30')
         Log::info('Backup successful');
     });
 
+Schedule::command('locations:geocode --limit=10')
+    ->hourlyAt(5)
+    ->timezone(config('app.timezone', 'America/Los_Angeles'))
+    ->withoutOverlapping();
+
 Schedule::command('locations:update-plant-distances --limit=10')
-    ->hourly()
+    ->hourlyAt(10)
     ->timezone(config('app.timezone', 'America/Los_Angeles'))
     ->withoutOverlapping()
     ->when(fn(): bool => filled(config('services.openrouteservice.api_key')));
