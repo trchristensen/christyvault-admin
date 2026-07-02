@@ -23,6 +23,11 @@ class Location extends Model
         'postal_code',
         'latitude',
         'longitude',
+        'plant_drive_distance_origin_location_id',
+        'plant_drive_distance_miles',
+        'plant_drive_duration_minutes',
+        'plant_drive_distance_provider',
+        'plant_drive_distance_calculated_at',
         'location_type',
         'default_plant_location',
         'notes',
@@ -39,6 +44,8 @@ class Location extends Model
     protected $casts = [
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
+        'plant_drive_distance_miles' => 'decimal:2',
+        'plant_drive_distance_calculated_at' => 'datetime',
         'last_order_at' => 'datetime',
         'common_order_items' => 'array',
         'average_order_value' => 'decimal:2',
@@ -88,6 +95,36 @@ class Location extends Model
     public function preferredDeliveryContact(): BelongsTo
     {
         return $this->belongsTo(Contact::class, 'preferred_delivery_contact_id');
+    }
+
+    public function plantDriveDistanceOrigin(): BelongsTo
+    {
+        return $this->belongsTo(Location::class, 'plant_drive_distance_origin_location_id');
+    }
+
+    public function clearPlantDriveDistance(): void
+    {
+        $this->plant_drive_distance_origin_location_id = null;
+        $this->plant_drive_distance_miles = null;
+        $this->plant_drive_duration_minutes = null;
+        $this->plant_drive_distance_provider = null;
+        $this->plant_drive_distance_calculated_at = null;
+    }
+
+    public function getPlantDriveDistanceSummaryAttribute(): ?string
+    {
+        if ($this->plant_drive_distance_miles === null || $this->plant_drive_duration_minutes === null) {
+            return null;
+        }
+
+        $distance = number_format((float) $this->plant_drive_distance_miles, 1);
+        $originName = $this->plantDriveDistanceOrigin?->name;
+
+        return collect([
+            "{$distance} mi",
+            "{$this->plant_drive_duration_minutes} min",
+            $originName ? "from {$originName}" : null,
+        ])->filter()->join(' • ');
     }
 
     public function getFullAddressAttribute(): string

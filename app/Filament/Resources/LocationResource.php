@@ -225,6 +225,29 @@ class LocationResource extends Resource
                             ->step(0.000000000001)
                             ->placeholder('e.g. -121.290780'),
                     ])->columns(2),
+                Forms\Components\Section::make('Default Plant Drive Distance')
+                    ->schema([
+                        Forms\Components\Placeholder::make('plant_drive_distance_origin')
+                            ->label('Plant')
+                            ->content(fn(?Location $record): string => $record?->plantDriveDistanceOrigin?->name ?? 'Not calculated'),
+                        Forms\Components\Placeholder::make('plant_drive_distance_miles_display')
+                            ->label('Drive Distance')
+                            ->content(fn(?Location $record): string => $record?->plant_drive_distance_miles !== null
+                                ? number_format((float) $record->plant_drive_distance_miles, 1) . ' mi'
+                                : 'Not calculated'),
+                        Forms\Components\Placeholder::make('plant_drive_duration_display')
+                            ->label('Drive Time')
+                            ->content(fn(?Location $record): string => $record?->plant_drive_duration_minutes !== null
+                                ? "{$record->plant_drive_duration_minutes} min"
+                                : 'Not calculated'),
+                        Forms\Components\Placeholder::make('plant_drive_distance_calculated_at_display')
+                            ->label('Calculated')
+                            ->content(fn(?Location $record): string => $record?->plant_drive_distance_calculated_at
+                                ? $record->plant_drive_distance_calculated_at->format('M j, Y g:i A')
+                                : 'Not calculated'),
+                    ])
+                    ->columns(4)
+                    ->visible(fn(?Location $record): bool => $record !== null),
             ]);
     }
 
@@ -293,6 +316,11 @@ class LocationResource extends Resource
                     ->label('Total Orders')
                     ->sortable()
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('plant_drive_distance_miles')
+                    ->label('Plant Drive Miles')
+                    ->formatStateUsing(fn($state): string => $state !== null ? number_format((float) $state, 1) . ' mi' : 'N/A')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('common_order_items')
                     ->label('Common Items')
                     ->formatStateUsing(function ($state) {

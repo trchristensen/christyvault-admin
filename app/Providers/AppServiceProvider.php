@@ -10,7 +10,9 @@ use Opcodes\LogViewer\Facades\LogViewer;
 use Livewire\Livewire;
 // use App\Livewire\NotificationsDropdown;
 use App\Models\PurchaseOrder;
+use App\Models\Location;
 use App\Observers\PurchaseOrderObserver;
+use App\Observers\LocationObserver;
 use Illuminate\Database\Eloquent\Model;
 
 class AppServiceProvider extends ServiceProvider
@@ -44,6 +46,7 @@ class AppServiceProvider extends ServiceProvider
         // Livewire::component('notifications-dropdown', NotificationsDropdown::class);
 
         PurchaseOrder::observe(PurchaseOrderObserver::class);
+        Location::observe(LocationObserver::class);
         \App\Models\Order::observe(\App\Observers\OrderObserver::class);
     }
 }

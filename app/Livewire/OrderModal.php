@@ -15,7 +15,7 @@ class OrderModal extends Component
     public function showOrderModal($orderId)
     {
         logger('OrderModal: showOrderModal called with ID: ' . $orderId);
-        $this->order = Order::with('location')->find($orderId);
+        $this->order = Order::with(['location.plantDriveDistanceOrigin'])->find($orderId);
         logger('OrderModal: loaded order: ' . ($this->order ? $this->order->order_number : 'null'));
         $this->showModal = true;
     }

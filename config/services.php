@@ -39,4 +39,15 @@ return [
         'api_key' => env('OPENWEATHER_API_KEY'),
     ],
 
+    'openrouteservice' => [
+        'api_key' => env('OPENROUTESERVICE_API_KEY'),
+        'base_url' => env('OPENROUTESERVICE_BASE_URL', 'https://api.openrouteservice.org'),
+        'throttle_ms' => env('OPENROUTESERVICE_THROTTLE_MS', 1000),
+    ],
+
+    'plant_locations' => [
+        'colma_location_id' => env('COLMA_PLANT_LOCATION_ID'),
+        'tulare_location_id' => env('TULARE_PLANT_LOCATION_ID'),
+    ],
+
 ];
