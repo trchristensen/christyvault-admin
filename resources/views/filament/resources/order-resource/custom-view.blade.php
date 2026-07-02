@@ -279,12 +279,14 @@
 
             <div class="flex flex-col items-start gap-1">
                 <div class="group inline-block">
+
                     <p class="font-bold">
                         {{ optional($record->location)->name }}
                         @if ($record->location)
-                            <a target="_blank" href="/locations/{{ $record->location->id }}/edit"
+                            <a target="_blank"
+                                href="{{ \App\Filament\Resources\LocationResource::getUrl('view', ['record' => $record->location]) }}"
                                 class="ml opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-in-out text-xs text-blue-500 underline">
-                                Edit
+                                View
                             </a>
                         @endif
                     </p>
