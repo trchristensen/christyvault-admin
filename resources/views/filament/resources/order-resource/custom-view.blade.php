@@ -313,6 +313,12 @@
                     </div>
                 @endif
 
+                @if ($record->location?->current_delivery_rate_summary)
+                    <div class="text-xs text-gray-400 dark:text-gray-500">
+                        {{ $record->location->current_delivery_rate_summary }}
+                    </div>
+                @endif
+
                 @if ($record->location && $record->location->preferredDeliveryContact)
                     <div class="flex items-center gap-2">
                         <x-heroicon-o-phone class="w-4 h-4" />

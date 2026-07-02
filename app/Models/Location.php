@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Services\DeliveryRateService;
 use Propaganistas\LaravelPhone\PhoneNumber;
 
 class Location extends Model
@@ -125,6 +126,24 @@ class Location extends Model
             "{$this->plant_drive_duration_minutes} min",
             $originName ? "from {$originName}" : null,
         ])->filter()->join(' • ');
+    }
+
+    public function getCurrentDeliveryRateAttribute(): ?DeliveryRate
+    {
+        return app(DeliveryRateService::class)->rateForMiles(
+            $this->plant_drive_distance_miles !== null ? (float) $this->plant_drive_distance_miles : null
+        );
+    }
+
+    public function getCurrentDeliveryRateSummaryAttribute(): ?string
+    {
+        $rate = $this->current_delivery_rate;
+
+        if (! $rate) {
+            return null;
+        }
+
+        return "Zone {$rate->zone} • {$rate->price_label}";
     }
 
     public function getFullAddressAttribute(): string

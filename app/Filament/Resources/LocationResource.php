@@ -240,13 +240,16 @@ class LocationResource extends Resource
                             ->content(fn(?Location $record): string => $record?->plant_drive_duration_minutes !== null
                                 ? "{$record->plant_drive_duration_minutes} min"
                                 : 'Not calculated'),
+                        Forms\Components\Placeholder::make('current_delivery_rate_display')
+                            ->label('Delivery Rate')
+                            ->content(fn(?Location $record): string => $record?->current_delivery_rate_summary ?? 'Not calculated'),
                         Forms\Components\Placeholder::make('plant_drive_distance_calculated_at_display')
                             ->label('Calculated')
                             ->content(fn(?Location $record): string => $record?->plant_drive_distance_calculated_at
                                 ? $record->plant_drive_distance_calculated_at->format('M j, Y g:i A')
                                 : 'Not calculated'),
                     ])
-                    ->columns(4)
+                    ->columns(5)
                     ->visible(fn(?Location $record): bool => $record !== null),
             ]);
     }
@@ -320,6 +323,11 @@ class LocationResource extends Resource
                     ->label('Plant Drive Miles')
                     ->formatStateUsing(fn($state): string => $state !== null ? number_format((float) $state, 1) . ' mi' : 'N/A')
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('current_delivery_rate_summary')
+                    ->label('Delivery Rate')
+                    ->badge()
+                    ->placeholder('N/A')
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('common_order_items')
                     ->label('Common Items')
