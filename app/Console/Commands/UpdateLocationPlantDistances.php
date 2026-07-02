@@ -10,6 +10,7 @@ use Throwable;
 class UpdateLocationPlantDistances extends Command
 {
     protected $signature = 'locations:update-plant-distances
+        {--location= : Update a specific location ID}
         {--limit=10 : Maximum locations to update}
         {--stale-days=90 : Recalculate distances older than this many days}
         {--force : Recalculate even when cached values exist}
@@ -19,9 +20,10 @@ class UpdateLocationPlantDistances extends Command
 
     public function handle(PlantDriveDistanceService $distanceService): int
     {
+        $locationId = $this->option('location');
         $limit = max(1, (int) $this->option('limit'));
         $staleDays = max(1, (int) $this->option('stale-days'));
-        $force = (bool) $this->option('force');
+        $force = (bool) $this->option('force') || filled($locationId);
         $dryRun = (bool) $this->option('dry-run');
 
         if (! $dryRun && ! $distanceService->isConfigured()) {
@@ -29,10 +31,14 @@ class UpdateLocationPlantDistances extends Command
             return self::FAILURE;
         }
 
-        $query = Location::query()
-            ->whereNotNull('latitude')
-            ->whereNotNull('longitude')
-            ->orderBy('id');
+        $query = Location::query()->orderBy('id');
+
+        if ($locationId) {
+            $query->whereKey($locationId);
+        } else {
+            $query->whereNotNull('latitude')
+                ->whereNotNull('longitude');
+        }
 
         if (! $force) {
             $query->where(function ($query) use ($staleDays) {
@@ -56,6 +62,12 @@ class UpdateLocationPlantDistances extends Command
         $throttleMs = max(0, (int) config('services.openrouteservice.throttle_ms', 1000));
 
         foreach ($locations as $location) {
+            if (! $location->hasCoordinates()) {
+                $this->warn("Skipping {$location->id} {$location->name}: missing coordinates.");
+                $skipped++;
+                continue;
+            }
+
             $origin = $distanceService->originFor($location);
 
             if (! $origin?->hasCoordinates()) {
@@ -65,7 +77,12 @@ class UpdateLocationPlantDistances extends Command
             }
 
             if ($dryRun) {
+                $currentDistance = $location->plant_drive_distance_miles !== null
+                    ? "{$location->plant_drive_distance_miles} mi"
+                    : 'not calculated';
+
                 $this->line("Would update {$location->id} {$location->name} from {$origin->name}.");
+                $this->line("  Coordinates: {$location->latitude}, {$location->longitude}. Current cached distance: {$currentDistance}.");
                 $skipped++;
                 continue;
             }
