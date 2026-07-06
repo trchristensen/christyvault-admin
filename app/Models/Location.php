@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\OrderStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -250,30 +251,34 @@ class Location extends Model
     public function updateOrderAnalytics(): void
     {
         $orders = $this->orders()
-            ->where('status', '!=', 'cancelled')
+            ->with('orderProducts.product')
+            ->where('status', '!=', OrderStatus::CANCELLED->value)
+            ->whereNotNull('order_date')
             ->orderBy('order_date', 'desc')
             ->get();
 
         if ($orders->isEmpty()) {
+            $this->forceFill([
+                'last_order_at' => null,
+                'average_order_frequency_days' => null,
+                'common_order_items' => null,
+                'total_orders' => 0,
+                'average_order_value' => null,
+            ])->saveQuietly();
+
             return;
         }
 
-        // Update last order date
-        $this->last_order_at = $orders->first()->order_date;
-
-        // Update total orders
-        $this->total_orders = $orders->count();
-
-        // Calculate average order value
-        $this->average_order_value = $orders->avg(function ($order) {
+        $averageOrderValue = $orders->avg(function ($order) {
             return $order->orderProducts->sum(function ($product) {
-                return $product->quantity * $product->price;
+                return (float) ($product->quantity ?? 0) * (float) ($product->price ?? 0);
             });
         });
 
-        // Calculate average order frequency
+        $averageOrderFrequencyDays = null;
+
         if ($orders->count() > 1) {
-            $orderDates = $orders->pluck('order_date')->sort();
+            $orderDates = $orders->pluck('order_date')->filter()->sort()->values();
             $totalDays = 0;
             $count = 0;
 
@@ -285,18 +290,25 @@ class Location extends Model
                 }
             }
 
-            $this->average_order_frequency_days = $count > 0 ? round($totalDays / $count) : null;
+            $averageOrderFrequencyDays = $count > 0 ? round($totalDays / $count) : null;
         }
 
-        // Calculate common order items
         $productCounts = [];
+
         foreach ($orders as $order) {
             foreach ($order->orderProducts as $product) {
-                $sku = $product->product->sku ?? 'Unknown SKU';
-                if ($sku === 'Unknown SKU') {
-                    continue; // Skip unknown SKUs
+                if ($product->is_custom_product) {
+                    continue;
                 }
+
+                $sku = $product->product->sku ?? null;
+
+                if (! $sku) {
+                    continue;
+                }
+
                 $productId = $product->product_id;
+
                 if (!isset($productCounts[$productId])) {
                     $productCounts[$productId] = [
                         'count' => 0,
@@ -308,14 +320,17 @@ class Location extends Model
             }
         }
 
-        // Sort by count and take top 5
         uasort($productCounts, function ($a, $b) {
             return $b['count'] <=> $a['count'];
         });
 
-        $this->common_order_items = array_slice($productCounts, 0, 5, true);
-
-        $this->save();
+        $this->forceFill([
+            'last_order_at' => $orders->first()->order_date,
+            'average_order_frequency_days' => $averageOrderFrequencyDays,
+            'common_order_items' => array_slice($productCounts, 0, 5, true),
+            'total_orders' => $orders->count(),
+            'average_order_value' => $averageOrderValue,
+        ])->saveQuietly();
     }
 
     public function getOrderStatusAttribute(): string

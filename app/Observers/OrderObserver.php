@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\Location;
 use App\Models\Order;
 use App\Services\SmsService;
 use Illuminate\Support\Facades\Log;
@@ -17,7 +18,7 @@ class OrderObserver
      */
     public function created(Order $order): void
     {
-        //
+        $this->refreshLocationAnalytics($order);
     }
 
     /**
@@ -34,6 +35,14 @@ class OrderObserver
         if ($order->wasChanged('status')) {
             $this->handleStatusChange($order);
         }
+
+        if ($order->wasChanged([
+            'location_id',
+            'status',
+            'order_date',
+        ])) {
+            $this->refreshLocationAnalytics($order);
+        }
     }
 
     /**
@@ -41,7 +50,7 @@ class OrderObserver
      */
     public function deleted(Order $order): void
     {
-        //
+        $this->refreshLocationAnalytics($order);
     }
 
     /**
@@ -49,7 +58,7 @@ class OrderObserver
      */
     public function restored(Order $order): void
     {
-        //
+        $this->refreshLocationAnalytics($order);
     }
 
     /**
@@ -57,7 +66,24 @@ class OrderObserver
      */
     public function forceDeleted(Order $order): void
     {
-        //
+        $this->refreshLocationAnalytics($order);
+    }
+
+    private function refreshLocationAnalytics(Order $order): void
+    {
+        $locationIds = collect([
+            $order->location_id,
+            $order->getOriginal('location_id'),
+        ])->filter()->unique()->values();
+
+        if ($locationIds->isEmpty()) {
+            return;
+        }
+
+        Location::query()
+            ->whereKey($locationIds)
+            ->get()
+            ->each(fn(Location $location) => $location->updateOrderAnalytics());
     }
 
     /**

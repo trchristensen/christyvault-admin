@@ -19,6 +19,11 @@ Schedule::command('backup:run')->daily()->at('01:30')
         Log::info('Backup successful');
     });
 
+Schedule::command('locations:update-analytics')
+    ->dailyAt('02:00')
+    ->timezone(config('app.timezone', 'America/Los_Angeles'))
+    ->withoutOverlapping();
+
 Schedule::command('locations:geocode --limit=10')
     ->hourlyAt(5)
     ->timezone(config('app.timezone', 'America/Los_Angeles'))

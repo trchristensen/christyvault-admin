@@ -53,6 +53,8 @@ class EditOrder extends EditRecord
             }
         }
 
+        $record->location?->updateOrderAnalytics();
+
         return $record;
     }
 }

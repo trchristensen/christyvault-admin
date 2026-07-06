@@ -520,6 +520,8 @@ class CalendarWidget extends FullCalendarWidget
                             }
                         }
 
+                        $order->location?->updateOrderAnalytics();
+
                         $this->refreshCalendar();
                         return $order;
                     }

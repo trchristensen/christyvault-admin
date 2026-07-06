@@ -65,6 +65,8 @@ class DeliveryCalendar extends Page
                             $order->orderProducts()->create($productData);
                         }
                     }
+
+                    $order->location?->updateOrderAnalytics();
                     
                     Notification::make()
                         ->title('Order created successfully')
