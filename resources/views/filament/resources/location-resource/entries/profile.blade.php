@@ -560,7 +560,7 @@
                             .replaceAll("<", "&lt;")
                             .replaceAll(">", "&gt;")
                             .replaceAll("\"", "&quot;")
-                            .replaceAll("'", "&#039;");
+                            .replaceAll(String.fromCharCode(39), "&#039;");
 
                         const pinIcon = (label, className) => L.divIcon({
                             className: "",
