@@ -1,6 +1,7 @@
 @php
     use App\Enums\PlantLocation;
     use App\Filament\Resources\LocationResource;
+    use App\Filament\Resources\OrderResource;
 
     $record = $getRecord();
     $hasCoordinates = $record?->hasCoordinates();
@@ -15,6 +16,7 @@
         ? 'https://www.google.com/maps/search/?api=1&query=' . urlencode($record->full_address)
         : null;
     $editUrl = LocationResource::getUrl('edit', ['record' => $record]);
+    $createOrderUrl = OrderResource::getUrl('create', ['location_id' => $record->getKey()]);
     $driveSummary = $record->plant_drive_distance_miles !== null && $record->plant_drive_duration_minutes !== null
         ? number_format((float) $record->plant_drive_distance_miles, 1) . ' mi • ' . $record->plant_drive_duration_minutes . ' min'
         : 'Not calculated';
@@ -235,6 +237,16 @@
         background: rgb(30 58 138);
     }
 
+    .location-profile-create-order-link {
+        border-color: rgb(22 163 74);
+        background: rgb(22 163 74);
+        color: rgb(255 255 255);
+    }
+
+    .location-profile-create-order-link:hover {
+        background: rgb(21 128 61);
+    }
+
     .dark .location-profile-map-link {
         border-color: rgb(75 85 99);
         background: rgb(17 24 39);
@@ -244,6 +256,12 @@
     .dark .location-profile-edit-link {
         border-color: rgb(59 130 246);
         background: rgb(37 99 235);
+        color: rgb(255 255 255);
+    }
+
+    .dark .location-profile-create-order-link {
+        border-color: rgb(34 197 94);
+        background: rgb(22 163 74);
         color: rgb(255 255 255);
     }
 
@@ -559,6 +577,11 @@
             </div>
 
             <div class="location-profile-actions">
+                <a href="{{ $createOrderUrl }}" class="location-profile-map-link location-profile-create-order-link">
+                    <x-heroicon-o-plus-circle style="width: 1rem; height: 1rem;" />
+                    Create Order
+                </a>
+
                 <a href="{{ $editUrl }}" class="location-profile-map-link location-profile-edit-link">
                     <x-heroicon-o-pencil-square style="width: 1rem; height: 1rem;" />
                     Edit
