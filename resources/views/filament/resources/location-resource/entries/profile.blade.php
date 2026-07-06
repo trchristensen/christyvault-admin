@@ -638,37 +638,6 @@
         <div class="location-profile-content">
             <div class="location-profile-column">
                 <div class="location-profile-panel">
-                    <div class="location-profile-panel-title">Delivery</div>
-                    <div class="location-profile-rows">
-                        <div class="location-profile-row">
-                            <div class="location-profile-label">Default Type</div>
-                            <div>
-                                <div class="location-profile-value">{{ $deliveryType }}</div>
-                                <div class="location-profile-subvalue">Used when new orders are created for this location.</div>
-                            </div>
-                        </div>
-
-                        <div class="location-profile-row">
-                            <div class="location-profile-label">Route From Plant</div>
-                            <div>
-                                <div class="location-profile-value">{{ $driveSummary }}</div>
-                                <div class="location-profile-subvalue">{{ $record->plantDriveDistanceOrigin?->name ?? 'Plant has not been matched yet.' }}</div>
-                            </div>
-                        </div>
-
-                        <div class="location-profile-row">
-                            <div class="location-profile-label">Delivery Rate</div>
-                            <div>
-                                <div class="location-profile-value">{{ $rateSummary }}</div>
-                                <div class="location-profile-subvalue">
-                                    {{ $record->plant_drive_distance_calculated_at ? 'Distance updated ' . $record->plant_drive_distance_calculated_at->format('M j, Y g:i A') : 'Distance has not been calculated yet.' }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="location-profile-panel">
                     <div class="location-profile-panel-title">Contact</div>
                     <div class="location-profile-rows">
                         <div class="location-profile-row">
