@@ -474,6 +474,7 @@ class LocationResource extends Resource
     {
         return [
             RelationManagers\OrderedProductsRelationManager::class,
+            RelationManagers\OrdersRelationManager::class,
             RelationManagers\NearbyLocationsRelationManager::class,
         ];
     }
