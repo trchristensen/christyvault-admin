@@ -91,8 +91,8 @@
         content: "";
         pointer-events: none;
         background:
-            linear-gradient(to bottom, rgba(255, 255, 255, 0) 35%, rgba(255, 255, 255, 0.92) 100%),
-            linear-gradient(to right, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.08));
+            linear-gradient(to bottom, rgba(255, 255, 255, 0) 48%, rgba(255, 255, 255, 0.74) 100%),
+            linear-gradient(to right, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0));
     }
 
     .dark .location-profile-cover::after {
@@ -488,9 +488,8 @@
                             attributionControl: true,
                         }).setView([latitude, longitude], 13);
 
-                        L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", {
-                            attribution: "&copy; <a href=\"http://www.openstreetmap.org/copyright\">OpenStreetMap</a>, &copy; <a href=\"https://carto.com/attributions\">CARTO</a>",
-                            subdomains: "abcd",
+                        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                            attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
                             maxZoom: 20,
                             minZoom: 0
                         }).addTo(map);
