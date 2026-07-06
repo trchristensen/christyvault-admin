@@ -29,6 +29,18 @@
         'residential' => 'residential',
         default => 'other',
     };
+    $mapData = [
+        'latitude' => (float) $record->latitude,
+        'longitude' => (float) $record->longitude,
+        'originLatitude' => $hasPlantCoordinates ? (float) $plantLocation->latitude : null,
+        'originLongitude' => $hasPlantCoordinates ? (float) $plantLocation->longitude : null,
+        'originName' => $hasPlantCoordinates ? $plantLocation->name : null,
+        'name' => $record->name,
+        'address' => $record->full_address,
+        'typeLabel' => $typeLabel,
+        'typeClass' => $locationTypeClass,
+        'routeGeometry' => $routeGeometry,
+    ];
     $driveSummary = $record->plant_drive_distance_miles !== null && $record->plant_drive_duration_minutes !== null
         ? number_format((float) $record->plant_drive_distance_miles, 1) . ' mi • ' . $record->plant_drive_duration_minutes . ' min'
         : 'Not calculated';
@@ -98,12 +110,7 @@
         z-index: 2 !important;
     }
 
-    .location-profile-map-pin {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: max-content;
+    .location-profile-cover .leaflet-tooltip.location-profile-map-label {
         border: 2px solid rgb(255 255 255);
         border-radius: 9999px;
         padding: 0.32rem 0.62rem;
@@ -115,17 +122,52 @@
         box-shadow: 0 8px 18px rgba(15, 23, 42, 0.28);
     }
 
-    .location-profile-map-pin::after {
-        position: absolute;
-        left: 50%;
-        bottom: -0.44rem;
-        width: 0.7rem;
-        height: 0.7rem;
-        content: "";
-        background: inherit;
-        border-right: 2px solid rgb(255 255 255);
-        border-bottom: 2px solid rgb(255 255 255);
-        transform: translateX(-50%) rotate(45deg);
+    .location-profile-cover .leaflet-tooltip.location-profile-map-label::before {
+        display: none;
+    }
+
+    .location-profile-map-label-plant {
+        background: rgb(30 64 175);
+    }
+
+    .location-profile-map-label-cemetery {
+        background: rgb(22 101 52);
+    }
+
+    .location-profile-map-label-funeral-home {
+        background: rgb(126 34 206);
+    }
+
+    .location-profile-map-label-business {
+        background: rgb(14 116 144);
+    }
+
+    .location-profile-map-label-residential {
+        background: rgb(194 65 12);
+    }
+
+    .location-profile-map-label-other {
+        background: rgb(75 85 99);
+    }
+
+    .location-profile-map-error {
+        display: grid;
+        height: 100%;
+        min-height: inherit;
+        place-items: center;
+        padding: 2rem;
+        color: rgb(107 114 128);
+        font-size: 0.92rem;
+        font-weight: 650;
+        text-align: center;
+    }
+
+    .location-profile-map-pin {
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid rgb(255 255 255);
+        border-radius: 9999px;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.28);
     }
 
     .location-profile-map-pin-plant {
@@ -531,133 +573,197 @@
     }
 </style>
 
+<script>
+    window.locationProfileMapInstances = window.locationProfileMapInstances || {};
+
+    window.initLocationProfileMap = function (mapId) {
+        const container = document.getElementById(mapId);
+        const dataElement = document.getElementById(`${mapId}-data`);
+
+        if (!container || !dataElement) {
+            return;
+        }
+
+        const showMapError = () => {
+            container.innerHTML = '<div class="location-profile-map-error">Map could not load.</div>';
+        };
+
+        const loadLeaflet = (callback) => {
+            if (!document.getElementById('leaflet-css')) {
+                const link = document.createElement('link');
+                link.id = 'leaflet-css';
+                link.rel = 'stylesheet';
+                link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                document.head.appendChild(link);
+            }
+
+            if (window.L) {
+                callback();
+                return;
+            }
+
+            let script = document.getElementById('leaflet-js');
+
+            if (!script) {
+                script = document.createElement('script');
+                script.id = 'leaflet-js';
+                script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+                script.onload = callback;
+                script.onerror = showMapError;
+                document.head.appendChild(script);
+
+                return;
+            }
+
+            script.addEventListener('load', callback, { once: true });
+            script.addEventListener('error', showMapError, { once: true });
+        };
+
+        const escapeHtml = (value) => String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll(String.fromCharCode(39), '&#039;');
+
+        const init = () => {
+            let data;
+
+            try {
+                data = JSON.parse(dataElement.textContent || '{}');
+            } catch (error) {
+                showMapError();
+                return;
+            }
+
+            const destination = [Number(data.latitude), Number(data.longitude)];
+
+            if (!Number.isFinite(destination[0]) || !Number.isFinite(destination[1])) {
+                showMapError();
+                return;
+            }
+
+            if (window.locationProfileMapInstances[mapId]) {
+                window.locationProfileMapInstances[mapId].remove();
+            }
+
+            container.innerHTML = '';
+
+            const map = L.map(container, {
+                zoomControl: false,
+                dragging: true,
+                scrollWheelZoom: false,
+                attributionControl: true,
+            }).setView(destination, 13);
+
+            window.locationProfileMapInstances[mapId] = map;
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 20,
+                minZoom: 0,
+            }).addTo(map);
+
+            const colors = {
+                plant: '#1e40af',
+                cemetery: '#166534',
+                'funeral-home': '#7e22ce',
+                business: '#0e7490',
+                residential: '#c2410c',
+                other: '#4b5563',
+            };
+
+            const addPoint = (coordinates, label, className, color) => {
+                L.circleMarker(coordinates, {
+                    radius: 8,
+                    color: '#ffffff',
+                    weight: 2,
+                    fillColor: color,
+                    fillOpacity: 1,
+                })
+                    .addTo(map)
+                    .bindTooltip(escapeHtml(label), {
+                        permanent: true,
+                        direction: 'top',
+                        offset: [0, -10],
+                        className: `location-profile-map-label ${className}`,
+                    });
+            };
+
+            const bounds = L.latLngBounds([destination]);
+            const origin = Number.isFinite(Number(data.originLatitude)) && Number.isFinite(Number(data.originLongitude))
+                ? [Number(data.originLatitude), Number(data.originLongitude)]
+                : null;
+
+            if (origin) {
+                addPoint(origin, 'Plant', 'location-profile-map-label-plant', colors.plant);
+                bounds.extend(origin);
+
+                const routeGeometry = Array.isArray(data.routeGeometry)
+                    ? data.routeGeometry
+                        .map((point) => [Number(point[0]), Number(point[1])])
+                        .filter((point) => Number.isFinite(point[0]) && Number.isFinite(point[1]))
+                    : [];
+
+                if (routeGeometry.length > 1) {
+                    const route = L.polyline(routeGeometry, {
+                        color: '#1d4ed8',
+                        weight: 5,
+                        opacity: 0.8,
+                        lineCap: 'round',
+                        lineJoin: 'round',
+                    }).addTo(map);
+
+                    bounds.extend(route.getBounds());
+                } else {
+                    L.polyline([origin, destination], {
+                        color: '#1d4ed8',
+                        weight: 4,
+                        opacity: 0.7,
+                        dashArray: '8 8',
+                    }).addTo(map);
+                }
+            }
+
+            const typeClass = data.typeClass || 'other';
+            const destinationClass = `location-profile-map-label-${typeClass}`;
+            const destinationColor = colors[typeClass] || colors.other;
+
+            addPoint(destination, data.typeLabel || 'Location', destinationClass, destinationColor);
+
+            L.popup()
+                .setLatLng(destination)
+                .setContent(`<strong>${escapeHtml(data.name)}</strong><br>${escapeHtml(data.address)}`);
+
+            setTimeout(() => {
+                map.invalidateSize();
+
+                if (origin && bounds.isValid()) {
+                    map.fitBounds(bounds.pad(0.2), {
+                        maxZoom: 13,
+                        animate: false,
+                    });
+                } else {
+                    map.setView(destination, 13);
+                }
+            }, 100);
+        };
+
+        loadLeaflet(init);
+    };
+</script>
+
 <div class="location-profile">
     <div class="location-profile-cover">
         @if ($hasCoordinates)
             <div
                 wire:ignore
-                x-data="{
-                    map: null,
-                    latitude: @js((float) $record->latitude),
-                    longitude: @js((float) $record->longitude),
-                    originLatitude: @js($hasPlantCoordinates ? (float) $plantLocation->latitude : null),
-                    originLongitude: @js($hasPlantCoordinates ? (float) $plantLocation->longitude : null),
-                    originName: @js($hasPlantCoordinates ? $plantLocation->name : null),
-                    name: @js($record->name),
-                    address: @js($record->full_address),
-                    typeLabel: @js($typeLabel),
-                    typeClass: @js($locationTypeClass),
-                    routeGeometry: @js($routeGeometry),
-                }"
-                x-init='
-                    const initializeLocationProfileMap = () => {
-                        if (map) {
-                            map.remove();
-                        }
-
-                        const escapeHtml = (value) => String(value ?? "")
-                            .replaceAll("&", "&amp;")
-                            .replaceAll("<", "&lt;")
-                            .replaceAll(">", "&gt;")
-                            .replaceAll("\"", "&quot;")
-                            .replaceAll(String.fromCharCode(39), "&#039;");
-
-                        const pinIcon = (label, className) => L.divIcon({
-                            className: "",
-                            html: `<div class="location-profile-map-pin ${className}">${escapeHtml(label)}</div>`,
-                            iconSize: null,
-                            iconAnchor: [28, 34],
-                            popupAnchor: [0, -34],
-                        });
-
-                        map = L.map($refs.map, {
-                            zoomControl: false,
-                            dragging: true,
-                            scrollWheelZoom: false,
-                            attributionControl: true,
-                        }).setView([latitude, longitude], 13);
-
-                        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                            attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
-                            maxZoom: 20,
-                            minZoom: 0
-                        }).addTo(map);
-
-                        const destination = [latitude, longitude];
-                        const bounds = L.latLngBounds([destination]);
-
-                        if (originLatitude !== null && originLongitude !== null) {
-                            const origin = [originLatitude, originLongitude];
-
-                            L.marker(origin, {
-                                icon: pinIcon("Plant", "location-profile-map-pin-plant")
-                            })
-                                .addTo(map)
-                                .bindPopup(`<strong>${escapeHtml(originName)}</strong>`);
-
-                            bounds.extend(origin);
-
-                            if (Array.isArray(routeGeometry) && routeGeometry.length > 1) {
-                                const route = L.polyline(routeGeometry, {
-                                    color: "#1d4ed8",
-                                    weight: 5,
-                                    opacity: 0.8,
-                                    lineCap: "round",
-                                    lineJoin: "round",
-                                }).addTo(map);
-
-                                bounds.extend(route.getBounds());
-                            } else {
-                                L.polyline([origin, destination], {
-                                    color: "#1d4ed8",
-                                    weight: 4,
-                                    opacity: 0.7,
-                                    dashArray: "8 8",
-                                }).addTo(map);
-                            }
-                        }
-
-                        L.marker(destination, {
-                            icon: pinIcon(typeLabel, `location-profile-map-pin-${typeClass}`)
-                        })
-                            .addTo(map)
-                            .bindPopup(`<strong>${escapeHtml(name)}</strong><br>${escapeHtml(address)}`);
-
-                        setTimeout(() => {
-                            map.invalidateSize();
-                            map.fitBounds(bounds.pad(0.2), {
-                                maxZoom: 13,
-                                animate: false,
-                            });
-                        }, 100);
-                    };
-
-                    if (!document.getElementById("leaflet-css")) {
-                        const link = document.createElement("link");
-                        link.id = "leaflet-css";
-                        link.rel = "stylesheet";
-                        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-                        document.head.appendChild(link);
-                    }
-
-                    if (typeof L === "undefined") {
-                        let script = document.getElementById("leaflet-js");
-
-                        if (!script) {
-                            script = document.createElement("script");
-                            script.id = "leaflet-js";
-                            script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-                            script.onload = initializeLocationProfileMap;
-                            document.head.appendChild(script);
-                        } else {
-                            script.addEventListener("load", initializeLocationProfileMap, { once: true });
-                        }
-                    } else {
-                        initializeLocationProfileMap();
-                    }
-                '
+                x-data="{}"
+                x-init="$nextTick(() => window.initLocationProfileMap($el.dataset.mapId))"
+                data-map-id="{{ $mapId }}"
             >
-                <div x-ref="map" id="{{ $mapId }}" class="location-profile-map"></div>
+                <script type="application/json" id="{{ $mapId }}-data">{!! json_encode($mapData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!}</script>
+                <div id="{{ $mapId }}" class="location-profile-map"></div>
             </div>
         @else
             <div class="location-profile-empty-map">
