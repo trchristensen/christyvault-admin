@@ -208,7 +208,7 @@
                             });
                         });
 
-                        setTimeout(() => {
+                        const fitMapToMarkers = () => {
                             map.invalidateSize();
 
                             if (bounds.isValid()) {
@@ -217,7 +217,16 @@
                                     animate: false,
                                 });
                             }
-                        }, 100);
+                        };
+
+                        [100, 350, 800].forEach((delay) => {
+                            setTimeout(fitMapToMarkers, delay);
+                        });
+
+                        if (typeof ResizeObserver !== "undefined") {
+                            const resizeObserver = new ResizeObserver(fitMapToMarkers);
+                            resizeObserver.observe($refs.map);
+                        }
                     };
 
                     if (!document.getElementById("leaflet-css")) {

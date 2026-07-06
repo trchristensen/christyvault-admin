@@ -53,7 +53,7 @@ class NearbyLocationsRelationManager extends RelationManager
 
         return $this->nearbyLocationsQuery($owner)
             ->orderBy('distance_miles')
-            ->limit(50)
+            ->limit(10)
             ->get();
     }
 
