@@ -22,6 +22,15 @@
         : 'Not calculated';
     $rateSummary = $record->current_delivery_rate_summary ?? 'Not calculated';
     $lastOrder = $record->last_order_at?->format('M j, Y') ?? 'No orders yet';
+    $daysSinceLastOrder = $record->last_order_at
+        ? (int) $record->last_order_at->copy()->startOfDay()->diffInDays(now()->startOfDay())
+        : null;
+    $lastOrderAge = match ($daysSinceLastOrder) {
+        null => null,
+        0 => 'Today',
+        1 => '1 day ago',
+        default => "{$daysSinceLastOrder} days ago",
+    };
     $totalOrders = number_format((int) ($record->total_orders ?? 0));
     $averageFrequency = $record->average_order_frequency_days
         ? "{$record->average_order_frequency_days} days"
@@ -615,6 +624,9 @@
             <div class="location-profile-metric">
                 <div class="location-profile-label">Last Order</div>
                 <div class="location-profile-value">{{ $lastOrder }}</div>
+                @if ($lastOrderAge)
+                    <div class="location-profile-subvalue">{{ $lastOrderAge }}</div>
+                @endif
             </div>
 
             <div class="location-profile-metric">
@@ -692,7 +704,12 @@
                     <div class="location-profile-rows">
                         <div class="location-profile-row">
                             <div class="location-profile-label">Last Order</div>
-                            <div class="location-profile-value">{{ $lastOrder }}</div>
+                            <div>
+                                <div class="location-profile-value">{{ $lastOrder }}</div>
+                                @if ($lastOrderAge)
+                                    <div class="location-profile-subvalue">{{ $lastOrderAge }}</div>
+                                @endif
+                            </div>
                         </div>
 
                         <div class="location-profile-row">
