@@ -44,6 +44,7 @@ class UpdateLocationPlantDistances extends Command
             $query->where(function ($query) use ($staleDays) {
                 $query->whereNull('plant_drive_distance_miles')
                     ->orWhereNull('plant_drive_duration_minutes')
+                    ->orWhereNull('plant_drive_route_geometry')
                     ->orWhereNull('plant_drive_distance_calculated_at')
                     ->orWhere('plant_drive_distance_calculated_at', '<', now()->subDays($staleDays));
             });
@@ -101,6 +102,7 @@ class UpdateLocationPlantDistances extends Command
                     'plant_drive_distance_miles' => $distance['distance_miles'],
                     'plant_drive_duration_minutes' => $distance['duration_minutes'],
                     'plant_drive_distance_provider' => $distance['provider'],
+                    'plant_drive_route_geometry' => $distance['route_geometry'] ?? null,
                     'plant_drive_distance_calculated_at' => now(),
                 ])->save();
 

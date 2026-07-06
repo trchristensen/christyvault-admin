@@ -34,6 +34,7 @@ class Location extends Model
         'plant_drive_distance_miles',
         'plant_drive_duration_minutes',
         'plant_drive_distance_provider',
+        'plant_drive_route_geometry',
         'plant_drive_distance_calculated_at',
         'location_type',
         'default_plant_location',
@@ -54,6 +55,7 @@ class Location extends Model
         'geocoded_at' => 'datetime',
         'geocoding_failed_at' => 'datetime',
         'plant_drive_distance_miles' => 'decimal:2',
+        'plant_drive_route_geometry' => 'array',
         'plant_drive_distance_calculated_at' => 'datetime',
         'last_order_at' => 'datetime',
         'common_order_items' => 'array',
@@ -135,6 +137,7 @@ class Location extends Model
         $this->plant_drive_distance_miles = null;
         $this->plant_drive_duration_minutes = null;
         $this->plant_drive_distance_provider = null;
+        $this->plant_drive_route_geometry = null;
         $this->plant_drive_distance_calculated_at = null;
     }
 

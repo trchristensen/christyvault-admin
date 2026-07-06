@@ -15,6 +15,20 @@
         ? 'https://www.google.com/maps/search/?api=1&query=' . urlencode($record->full_address)
         : null;
     $editUrl = LocationResource::getUrl('edit', ['record' => $record]);
+    $plantLocation = $record->plantDriveDistanceOrigin;
+    $hasPlantCoordinates = $plantLocation?->hasCoordinates() && ! $plantLocation->is($record);
+    $routeGeometry = collect($record->plant_drive_route_geometry ?? [])
+        ->filter(fn($point): bool => is_array($point) && isset($point[0], $point[1]))
+        ->map(fn(array $point): array => [(float) $point[0], (float) $point[1]])
+        ->values()
+        ->all();
+    $locationTypeClass = match ((string) $record->location_type) {
+        'cemetery' => 'cemetery',
+        'funeral_home' => 'funeral-home',
+        'business' => 'business',
+        'residential' => 'residential',
+        default => 'other',
+    };
     $driveSummary = $record->plant_drive_distance_miles !== null && $record->plant_drive_duration_minutes !== null
         ? number_format((float) $record->plant_drive_distance_miles, 1) . ' mi • ' . $record->plant_drive_duration_minutes . ' min'
         : 'Not calculated';
@@ -82,6 +96,60 @@
 
     .location-profile-cover .leaflet-control {
         z-index: 2 !important;
+    }
+
+    .location-profile-map-pin {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: max-content;
+        border: 2px solid rgb(255 255 255);
+        border-radius: 9999px;
+        padding: 0.32rem 0.62rem;
+        color: rgb(255 255 255);
+        font-size: 0.72rem;
+        font-weight: 800;
+        line-height: 1;
+        white-space: nowrap;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.28);
+    }
+
+    .location-profile-map-pin::after {
+        position: absolute;
+        left: 50%;
+        bottom: -0.44rem;
+        width: 0.7rem;
+        height: 0.7rem;
+        content: "";
+        background: inherit;
+        border-right: 2px solid rgb(255 255 255);
+        border-bottom: 2px solid rgb(255 255 255);
+        transform: translateX(-50%) rotate(45deg);
+    }
+
+    .location-profile-map-pin-plant {
+        background: rgb(30 64 175);
+    }
+
+    .location-profile-map-pin-cemetery {
+        background: rgb(22 101 52);
+    }
+
+    .location-profile-map-pin-funeral-home {
+        background: rgb(126 34 206);
+    }
+
+    .location-profile-map-pin-business {
+        background: rgb(14 116 144);
+    }
+
+    .location-profile-map-pin-residential {
+        background: rgb(194 65 12);
+    }
+
+    .location-profile-map-pin-other {
+        background: rgb(75 85 99);
     }
 
     .location-profile-cover::after {
@@ -472,14 +540,35 @@
                     map: null,
                     latitude: @js((float) $record->latitude),
                     longitude: @js((float) $record->longitude),
+                    originLatitude: @js($hasPlantCoordinates ? (float) $plantLocation->latitude : null),
+                    originLongitude: @js($hasPlantCoordinates ? (float) $plantLocation->longitude : null),
+                    originName: @js($hasPlantCoordinates ? $plantLocation->name : null),
                     name: @js($record->name),
                     address: @js($record->full_address),
+                    typeLabel: @js($typeLabel),
+                    typeClass: @js($locationTypeClass),
+                    routeGeometry: @js($routeGeometry),
                 }"
                 x-init='
                     const initializeLocationProfileMap = () => {
                         if (map) {
                             map.remove();
                         }
+
+                        const escapeHtml = (value) => String(value ?? "")
+                            .replaceAll("&", "&amp;")
+                            .replaceAll("<", "&lt;")
+                            .replaceAll(">", "&gt;")
+                            .replaceAll("\"", "&quot;")
+                            .replaceAll("'", "&#039;");
+
+                        const pinIcon = (label, className) => L.divIcon({
+                            className: "",
+                            html: `<div class="location-profile-map-pin ${className}">${escapeHtml(label)}</div>`,
+                            iconSize: null,
+                            iconAnchor: [28, 34],
+                            popupAnchor: [0, -34],
+                        });
 
                         map = L.map($refs.map, {
                             zoomControl: false,
@@ -494,11 +583,53 @@
                             minZoom: 0
                         }).addTo(map);
 
-                        L.marker([latitude, longitude])
-                            .addTo(map)
-                            .bindPopup(`<strong>${name}</strong><br>${address}`);
+                        const destination = [latitude, longitude];
+                        const bounds = L.latLngBounds([destination]);
 
-                        setTimeout(() => map.invalidateSize(), 100);
+                        if (originLatitude !== null && originLongitude !== null) {
+                            const origin = [originLatitude, originLongitude];
+
+                            L.marker(origin, {
+                                icon: pinIcon("Plant", "location-profile-map-pin-plant")
+                            })
+                                .addTo(map)
+                                .bindPopup(`<strong>${escapeHtml(originName)}</strong>`);
+
+                            bounds.extend(origin);
+
+                            if (Array.isArray(routeGeometry) && routeGeometry.length > 1) {
+                                const route = L.polyline(routeGeometry, {
+                                    color: "#1d4ed8",
+                                    weight: 5,
+                                    opacity: 0.8,
+                                    lineCap: "round",
+                                    lineJoin: "round",
+                                }).addTo(map);
+
+                                bounds.extend(route.getBounds());
+                            } else {
+                                L.polyline([origin, destination], {
+                                    color: "#1d4ed8",
+                                    weight: 4,
+                                    opacity: 0.7,
+                                    dashArray: "8 8",
+                                }).addTo(map);
+                            }
+                        }
+
+                        L.marker(destination, {
+                            icon: pinIcon(typeLabel, `location-profile-map-pin-${typeClass}`)
+                        })
+                            .addTo(map)
+                            .bindPopup(`<strong>${escapeHtml(name)}</strong><br>${escapeHtml(address)}`);
+
+                        setTimeout(() => {
+                            map.invalidateSize();
+                            map.fitBounds(bounds.pad(0.2), {
+                                maxZoom: 13,
+                                animate: false,
+                            });
+                        }, 100);
                     };
 
                     if (!document.getElementById("leaflet-css")) {

@@ -32,6 +32,9 @@ class PlantDriveDistanceService
                 'distance_miles' => 0.0,
                 'duration_minutes' => 0,
                 'provider' => 'local',
+                'route_geometry' => [
+                    [(float) $location->latitude, (float) $location->longitude],
+                ],
             ];
         }
 
@@ -47,6 +50,7 @@ class PlantDriveDistanceService
             'distance_miles' => round($route['distance_meters'] / 1609.344, 2),
             'duration_minutes' => (int) ceil($route['duration_seconds'] / 60),
             'provider' => 'openrouteservice',
+            'route_geometry' => $route['route_geometry'],
         ];
     }
 
@@ -126,11 +130,12 @@ class PlantDriveDistanceService
         ])
             ->timeout(20)
             ->retry(2, 500)
-            ->post("{$baseUrl}/v2/directions/driving-car", [
+            ->post("{$baseUrl}/v2/directions/driving-car/geojson", [
                 'coordinates' => [
                     [$originLongitude, $originLatitude],
                     [$destinationLongitude, $destinationLatitude],
                 ],
+                'radiuses' => [2500, 2500],
                 'instructions' => false,
             ]);
 
@@ -138,15 +143,25 @@ class PlantDriveDistanceService
             throw new RuntimeException("openrouteservice route request failed with HTTP {$response->status()}.");
         }
 
-        $summary = $response->json('routes.0.summary');
+        $summary = $response->json('features.0.properties.summary');
 
         if (! is_array($summary) || ! isset($summary['distance'], $summary['duration'])) {
             throw new RuntimeException('openrouteservice did not return a route summary.');
         }
 
+        $coordinates = $response->json('features.0.geometry.coordinates');
+
         return [
             'distance_meters' => (float) $summary['distance'],
             'duration_seconds' => (float) $summary['duration'],
+            'route_geometry' => collect(is_array($coordinates) ? $coordinates : [])
+                ->filter(fn($coordinate): bool => is_array($coordinate) && isset($coordinate[0], $coordinate[1]))
+                ->map(fn(array $coordinate): array => [
+                    (float) $coordinate[1],
+                    (float) $coordinate[0],
+                ])
+                ->values()
+                ->all(),
         ];
     }
 }
