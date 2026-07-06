@@ -283,7 +283,7 @@ class Location extends Model
             $count = 0;
 
             for ($i = 1; $i < $orderDates->count(); $i++) {
-                $days = $orderDates[$i]->diffInDays($orderDates[$i - 1]);
+                $days = $orderDates[$i]->diffInDays($orderDates[$i - 1], true);
                 if ($days > 0) { // Only count if there's a gap
                     $totalDays += $days;
                     $count++;
@@ -339,7 +339,7 @@ class Location extends Model
             return 'No Orders';
         }
 
-        $daysSinceLastOrder = now()->diffInDays($this->last_order_at);
+        $daysSinceLastOrder = now()->diffInDays($this->last_order_at, true);
 
         if (!$this->average_order_frequency_days) {
             return 'New Customer';

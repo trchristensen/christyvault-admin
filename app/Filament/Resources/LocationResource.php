@@ -320,7 +320,7 @@ class LocationResource extends Resource
                         if (!$state) return 'N/A';
                         try {
                             $date = \Carbon\Carbon::parse($state);
-                            $daysAgo = intval($date->diffInDays());
+                            $daysAgo = intval($date->diffInDays(now(), true));
                             $dateString = $date->format('n/j');
                             return $daysAgo === 1
                                 ? "1 day ago ({$dateString})"
