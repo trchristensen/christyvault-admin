@@ -10,6 +10,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Collection;
 
 class NearbyLocationsRelationManager extends RelationManager
 {
@@ -22,6 +23,11 @@ class NearbyLocationsRelationManager extends RelationManager
         /** @var Location $owner */
         $owner = $this->getOwnerRecord();
 
+        return $this->nearbyLocationsQuery($owner);
+    }
+
+    protected function nearbyLocationsQuery(Location $owner): Builder
+    {
         if (! $owner->hasCoordinates()) {
             return Location::query()->whereRaw('1 = 0');
         }
@@ -40,9 +46,24 @@ class NearbyLocationsRelationManager extends RelationManager
             ->whereNotNull('longitude');
     }
 
+    protected function nearbyLocationsForMap(): Collection
+    {
+        /** @var Location $owner */
+        $owner = $this->getOwnerRecord();
+
+        return $this->nearbyLocationsQuery($owner)
+            ->orderBy('distance_miles')
+            ->limit(50)
+            ->get();
+    }
+
     public function table(Table $table): Table
     {
         return $table
+            ->header(fn() => view('filament.resources.location-resource.relation-managers.nearby-locations-map', [
+                'owner' => $this->getOwnerRecord(),
+                'locations' => $this->nearbyLocationsForMap(),
+            ]))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
