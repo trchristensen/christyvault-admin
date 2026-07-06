@@ -1,5 +1,6 @@
 @php
     use App\Enums\PlantLocation;
+    use App\Filament\Resources\LocationResource;
 
     $record = $getRecord();
     $hasCoordinates = $record?->hasCoordinates();
@@ -13,6 +14,7 @@
     $googleMapsUrl = $record->full_address
         ? 'https://www.google.com/maps/search/?api=1&query=' . urlencode($record->full_address)
         : null;
+    $editUrl = LocationResource::getUrl('edit', ['record' => $record]);
     $driveSummary = $record->plant_drive_distance_miles !== null && $record->plant_drive_duration_minutes !== null
         ? number_format((float) $record->plant_drive_distance_miles, 1) . ' mi • ' . $record->plant_drive_duration_minutes . ' min'
         : 'Not calculated';
@@ -223,10 +225,26 @@
         background: rgb(249 250 251);
     }
 
+    .location-profile-edit-link {
+        border-color: rgb(30 64 175);
+        background: rgb(30 64 175);
+        color: rgb(255 255 255);
+    }
+
+    .location-profile-edit-link:hover {
+        background: rgb(30 58 138);
+    }
+
     .dark .location-profile-map-link {
         border-color: rgb(75 85 99);
         background: rgb(17 24 39);
         color: rgb(229 231 235);
+    }
+
+    .dark .location-profile-edit-link {
+        border-color: rgb(59 130 246);
+        background: rgb(37 99 235);
+        color: rgb(255 255 255);
     }
 
     .location-profile-metrics {
@@ -542,6 +560,11 @@
             </div>
 
             <div class="location-profile-actions">
+                <a href="{{ $editUrl }}" class="location-profile-map-link location-profile-edit-link">
+                    <x-heroicon-o-pencil-square style="width: 1rem; height: 1rem;" />
+                    Edit
+                </a>
+
                 @if ($googleMapsUrl)
                     <a href="{{ $googleMapsUrl }}" target="_blank" rel="noopener noreferrer" class="location-profile-map-link">
                         <x-heroicon-o-arrow-top-right-on-square style="width: 1rem; height: 1rem;" />
