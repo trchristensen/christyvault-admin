@@ -6,7 +6,6 @@
     <style>
         html,
         body {
-            height: 257mm;
             margin: 0;
             padding: 0;
         }
@@ -23,16 +22,16 @@
         }
 
         .page {
-            page-break-after: always;
+            box-sizing: border-box;
             padding: 20px;
-            height: 220mm;
-            display: block;
-            page-orientation: upright;
-            transform-origin: center;
+
+            break-after: page;
+            page-break-after: always;
         }
 
         .page:last-child {
-            page-break-after: avoid;
+            break-after: auto;
+            page-break-after: auto;
         }
 
         .page-header {
@@ -44,7 +43,6 @@
         .week-grid {
             width: 100%;
             border-collapse: collapse;
-            height: 222mm;
         }
 
         .day-column {
@@ -52,7 +50,6 @@
             vertical-align: top;
             border: 1px solid #ddd;
             padding: 10px;
-            height: 100%;
         }
 
         .date-header {
@@ -133,8 +130,8 @@
         </div>
 
         <table class="week-grid">
-            <tbody style="height: 100%">
-                <tr style="height: 100%">
+            <tbody>
+                <tr>
                     @foreach ($firstWeek as $date)
                         <td class="day-column">
                             <div class="date-header">
