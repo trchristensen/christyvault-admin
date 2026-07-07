@@ -176,26 +176,7 @@
                                                         </div>
                                                     @endif
                                                     <div>
-                                                        @php
-                                                            if (
-                                                                $order->location &&
-                                                                $order->location->preferredDeliveryContact
-                                                            ) {
-                                                                try {
-                                                                    $formattedPhone = new PhoneNumber(
-                                                                        $order->location->preferredDeliveryContact->phone,
-                                                                        'US',
-                                                                    )->formatNational();
-                                                                } catch (\Exception $e) {
-                                                                    $formattedPhone =
-                                                                        $order->location->preferredDeliveryContact
-                                                                            ->phone;
-                                                                }
-                                                                echo $formattedPhone;
-                                                            } else {
-                                                                echo '';
-                                                            }
-                                                        @endphp
+                                                        {{ $formatPhone($order->location?->preferredDeliveryContact?->phone) }}
                                                     </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
@@ -225,26 +206,7 @@
                                                             {{ $order->location->state }}</div>
                                                     @endif
                                                     <div>
-                                                        @php
-                                                            if (
-                                                                $order->location &&
-                                                                $order->location->preferredDeliveryContact
-                                                            ) {
-                                                                try {
-                                                                    $formattedPhone = new PhoneNumber(
-                                                                        $order->location->preferredDeliveryContact->phone,
-                                                                        'US',
-                                                                    )->formatNational();
-                                                                } catch (\Exception $e) {
-                                                                    $formattedPhone =
-                                                                        $order->location->preferredDeliveryContact
-                                                                            ->phone;
-                                                                }
-                                                                echo $formattedPhone;
-                                                            } else {
-                                                                echo '';
-                                                            }
-                                                        @endphp
+                                                        {{ $formatPhone($order->location?->preferredDeliveryContact?->phone) }}
                                                     </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
@@ -274,26 +236,7 @@
                                                             {{ $order->location->state }}</div>
                                                     @endif
                                                     <div>
-                                                        @php
-                                                            if (
-                                                                $order->location &&
-                                                                $order->location->preferredDeliveryContact
-                                                            ) {
-                                                                try {
-                                                                    $formattedPhone = new PhoneNumber(
-                                                                        $order->location->preferredDeliveryContact->phone,
-                                                                        'US',
-                                                                    )->formatNational();
-                                                                } catch (\Exception $e) {
-                                                                    $formattedPhone =
-                                                                        $order->location->preferredDeliveryContact
-                                                                            ->phone;
-                                                                }
-                                                                echo $formattedPhone;
-                                                            } else {
-                                                                echo '';
-                                                            }
-                                                        @endphp
+                                                        {{ $formatPhone($order->location?->preferredDeliveryContact?->phone) }}
                                                     </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
@@ -411,26 +354,7 @@
                                                             {{ $order->location->state }}</div>
                                                     @endif
                                                     <div>
-                                                        @php
-                                                            if (
-                                                                $order->location &&
-                                                                $order->location->preferredDeliveryContact
-                                                            ) {
-                                                                try {
-                                                                    $formattedPhone = new PhoneNumber(
-                                                                        $order->location->preferredDeliveryContact->phone,
-                                                                        'US',
-                                                                    )->formatNational();
-                                                                } catch (\Exception $e) {
-                                                                    $formattedPhone =
-                                                                        $order->location->preferredDeliveryContact
-                                                                            ->phone;
-                                                                }
-                                                                echo $formattedPhone;
-                                                            } else {
-                                                                echo '';
-                                                            }
-                                                        @endphp
+                                                        {{ $formatPhone($order->location?->preferredDeliveryContact?->phone) }}
                                                     </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
@@ -460,26 +384,7 @@
                                                             {{ $order->location->state }}</div>
                                                     @endif
                                                     <div>
-                                                        @php
-                                                            if (
-                                                                $order->location &&
-                                                                $order->location->preferredDeliveryContact
-                                                            ) {
-                                                                try {
-                                                                    $formattedPhone = new PhoneNumber(
-                                                                        $order->location->preferredDeliveryContact->phone,
-                                                                        'US',
-                                                                    )->formatNational();
-                                                                } catch (\Exception $e) {
-                                                                    $formattedPhone =
-                                                                        $order->location->preferredDeliveryContact
-                                                                            ->phone;
-                                                                }
-                                                                echo $formattedPhone;
-                                                            } else {
-                                                                echo '';
-                                                            }
-                                                        @endphp
+                                                        {{ $formatPhone($order->location?->preferredDeliveryContact?->phone) }}
                                                     </div>
                                                     {{-- @if ($order->special_instructions)
                                                         <div>Notes: {{ $order->special_instructions }}</div>
