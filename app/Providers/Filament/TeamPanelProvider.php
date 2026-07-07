@@ -30,9 +30,12 @@ class TeamPanelProvider extends PanelProvider
             ->id('team')
             ->login()
             ->path('team')
+            ->viteTheme('resources/css/filament/team/theme.css')
             ->colors([
                 'primary' => Color::Blue,
             ])
+            ->brandLogo(fn() => view('filament.logo'))
+            ->brandLogoHeight('60px')
             ->discoverResources(in: app_path('Filament/Team/Resources'), for: 'App\\Filament\\Team\\Resources')
             ->discoverPages(in: app_path('Filament/Team/Pages'), for: 'App\\Filament\\Team\\Pages')
             ->pages([

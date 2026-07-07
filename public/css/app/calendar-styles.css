@@ -11,7 +11,7 @@
 }
 
 /* Show our custom content */
-.fc-event-main > div {
+.fc-event-main>div {
     display: block !important;
 }
 
@@ -47,7 +47,7 @@
 }
 
 /* Ensure events stack properly */
-.fc-daygrid-day-events > * {
+.fc-daygrid-day-events>* {
     position: static !important;
     transform: none !important;
 }
@@ -75,7 +75,7 @@
 
 /* Event spacing */
 .fc-event {
-    @apply border-0 mb-2 rounded-lg !important;
+    @apply border-0 mb-2 rounded-lg;
 }
 
 .fc-event-main {
@@ -84,11 +84,11 @@
 
 /* Common container styles */
 .order-container,
-.fc-event-main > div {
+.fc-event-main>div {
     @apply lg:p-2 rounded-lg;
 }
 
-.fc-event-main > div {
+.fc-event-main>div {
     padding-top: 0;
     padding-bottom: 3px;
 }
@@ -106,7 +106,7 @@
     @apply text-xs text-gray-800 mb-2;
 }
 
-.order-address > div {
+.order-address>div {
     @apply line-clamp-1;
 }
 
@@ -134,16 +134,14 @@
 
 .trip-event {
     @apply p-2 bg-white;
-    background-image: linear-gradient(
-        45deg,
-        #f7f7f7 25%,
-        #ffffff 25%,
-        #ffffff 50%,
-        #f7f7f7 50%,
-        #f7f7f7 75%,
-        #ffffff 75%,
-        #ffffff 100%
-    );
+    background-image: linear-gradient(45deg,
+            #f7f7f7 25%,
+            #ffffff 25%,
+            #ffffff 50%,
+            #f7f7f7 50%,
+            #f7f7f7 75%,
+            #ffffff 75%,
+            #ffffff 100%);
     background-size: 45.25px 45.25px;
 }
 
@@ -418,7 +416,7 @@
     height: 100%;
 }
 
-.fc-event-main > div {
+.fc-event-main>div {
     padding-top: 0;
     padding-bottom: 3px;
 }

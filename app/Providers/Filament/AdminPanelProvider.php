@@ -49,7 +49,8 @@ class AdminPanelProvider extends PanelProvider
             ->profile()
             // ->spa()
             ->colors([
-                'primary' => '#1c3366',
+                // 'primary' => '#1c3366',
+                'primary' => Color::generateV3Palette('#1c3366'),
             ])
             ->maxContentWidth(Width::Full)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')

@@ -53,6 +53,7 @@ class LocationResource extends Resource
         return $schema
             ->components([
                 Section::make('Basic Information')
+                    ->columnSpanFull()
                     ->schema([
                         TextInput::make('name')
                             ->required()
@@ -372,30 +373,30 @@ class LocationResource extends Resource
                     ->badge()
                     ->placeholder('N/A')
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('common_order_items')
-                    ->label('Common Items')
-                    ->formatStateUsing(function ($state) {
-                        // Always decode as JSON, no matter what
-                        $array = json_decode($state, true);
-                        if (!is_array($array) || empty($array)) return 'N/A';
+                // TextColumn::make('common_order_items')
+                //     ->label('Common Items')
+                //     ->formatStateUsing(function ($state) {
+                //         // Always decode as JSON, no matter what
+                //         $array = json_decode($state, true);
+                //         if (!is_array($array) || empty($array)) return 'N/A';
 
-                        // Convert associative arrays (product_id as key) to indexed arrays
-                        $array = array_values($array);
+                //         // Convert associative arrays (product_id as key) to indexed arrays
+                //         $array = array_values($array);
 
-                        return collect($array)
-                            ->take(3)
-                            ->map(function ($item) {
-                                if (is_array($item) && isset($item['sku'], $item['count'])) {
-                                    return "{$item['count']} x {$item['sku']}";
-                                }
-                                return '';
-                            })
-                            ->filter()
-                            ->join("<br>"); // Each item on its own line, no commas
-                    })
-                    ->html()
-                    ->wrap()
-                    ->toggleable(),
+                //         return collect($array)
+                //             ->take(3)
+                //             ->map(function ($item) {
+                //                 if (is_array($item) && isset($item['sku'], $item['count'])) {
+                //                     return "{$item['count']} x {$item['sku']}";
+                //                 }
+                //                 return '';
+                //             })
+                //             ->filter()
+                //             ->join("<br>"); // Each item on its own line, no commas
+                //     })
+                //     ->html()
+                //     ->wrap()
+                //     ->toggleable(),
             ])
             ->defaultSort('last_order_at', 'desc')
             ->filters([
