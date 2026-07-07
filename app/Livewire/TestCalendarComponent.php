@@ -2,6 +2,11 @@
 
 namespace App\Livewire;
 
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Exception;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
 use App\Models\Order;
 use App\Enums\OrderStatus;
 use Illuminate\Support\Str;
@@ -10,9 +15,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Support\Contracts\TranslatableContentDriver;
 use App\Filament\Resources\Traits\HasOrderForm;
-use Filament\Forms\Form;
 use Illuminate\Support\Facades\DB;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Toggle;
@@ -26,8 +29,9 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TimePicker;
 use App\Models\Trip;
 
-class TestCalendarComponent extends Component implements HasForms
+class TestCalendarComponent extends Component implements HasForms, HasActions
 {
+    use InteractsWithActions;
     use InteractsWithForms;
 
     public ?Order $editing = null;
@@ -119,16 +123,16 @@ class TestCalendarComponent extends Component implements HasForms
             $this->creating = null;
             $this->data = [];
             $this->dispatch('calendar-updated');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema($this->getCreateOrderFormSchema())
+        return $schema
+            ->components($this->getCreateOrderFormSchema())
             ->model($this->editing ?? $this->creating ?? new Order())
             ->statePath('data');
     }
@@ -236,7 +240,7 @@ class TestCalendarComponent extends Component implements HasForms
 
                 // Return true to indicate success
                 return true;
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Return false to indicate failure
                 return false;
             }

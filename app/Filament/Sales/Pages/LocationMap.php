@@ -2,12 +2,12 @@
 
 namespace App\Filament\Sales\Pages;
 
+use Filament\Schemas\Schema;
 use App\Models\Location;
 use App\Models\Order;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Illuminate\Support\Carbon;
 
@@ -15,11 +15,11 @@ class LocationMap extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-map';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-map';
     protected static ?string $navigationLabel = 'Location Map';
     protected static ?string $title = 'Location Map';
-    protected static ?string $navigationGroup = 'Reports';
-    protected static string $view = 'filament.sales.pages.location-map';
+    protected static string | \UnitEnum | null $navigationGroup = 'Reports';
+    protected string $view = 'filament.sales.pages.location-map';
 
     public ?string $timeframe = 'last_year';
     public array $mapData = [];
@@ -33,9 +33,9 @@ class LocationMap extends Page implements HasForms
         $this->loadMapData();
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->components([
             Select::make('timeframe')
                 ->label('Time Period')
                 ->options([

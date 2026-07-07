@@ -2,16 +2,16 @@
 
 namespace App\Filament\Team\Pages;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Actions\Action;
 use App\Models\Driver;
 use App\Models\Employee;
-use Filament\Forms\Components\Card;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
@@ -20,10 +20,10 @@ class SmsConsent extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-ellipsis';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-chat-bubble-left-ellipsis';
     protected static ?string $navigationLabel = 'SMS Notifications';
     protected static ?string $title = 'SMS Delivery Notifications';
-    protected static string $view = 'filament.team.pages.sms-consent';
+    protected string $view = 'filament.team.pages.sms-consent';
 
     public ?array $data = [];
     public Driver $driver;
@@ -44,11 +44,11 @@ class SmsConsent extends Page implements HasForms
         ]);
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Card::make()
+        return $schema
+            ->components([
+                Section::make()
                     ->schema([
                         Placeholder::make('info')
                             ->content('Set up SMS notifications to receive your daily delivery assignments directly on your phone.')
@@ -74,7 +74,7 @@ class SmsConsent extends Page implements HasForms
                     ])
                     ->columnSpan('full'),
 
-                Card::make()
+                Section::make()
                     ->schema([
                         Placeholder::make('what_youll_receive')
                             ->label('📱 What You\'ll Receive')

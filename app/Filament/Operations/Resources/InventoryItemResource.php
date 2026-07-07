@@ -2,16 +2,35 @@
 
 namespace App\Filament\Operations\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\Action;
+use App\Console\Commands\SyncSageInventory;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Operations\Resources\InventoryItemResource\RelationManagers\SuppliersRelationManager;
+use App\Filament\Operations\Resources\InventoryItemResource\Pages\ListInventoryItems;
+use App\Filament\Operations\Resources\InventoryItemResource\Pages\CreateInventoryItem;
+use App\Filament\Operations\Resources\InventoryItemResource\Pages\EditInventoryItem;
 use App\Enums\ItemCategory;
 use App\Filament\Operations\Resources\InventoryItemResource\Pages;
 use App\Filament\Operations\Resources\InventoryItemResource\RelationManagers;
 use App\Models\InventoryItem;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Tables\Actions\Action;
 use App\Filament\Operations\Resources\PurchaseOrderResource;
 use Filament\Notifications\Notification;
 use App\Models\PurchaseOrder;
@@ -24,26 +43,26 @@ use Filament\Tables\Columns\ImageColumn;
 class InventoryItemResource extends Resource
 {
     protected static ?string $model = InventoryItem::class;
-    protected static ?string $navigationIcon = 'heroicon-o-cube';
-    protected static ?string $navigationGroup = 'Inventory Management';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cube';
+    protected static string | \UnitEnum | null $navigationGroup = 'Inventory Management';
     protected static ?int $navigationSort = 2;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make()
+        return $schema
+            ->components([
+                Section::make()
                     ->schema([
-                        Forms\Components\TextInput::make('sku')
+                        TextInput::make('sku')
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\Textarea::make('description')
+                        Textarea::make('description')
                             ->rows(3),
-                        Forms\Components\Select::make('category')
+                        Select::make('category')
                             ->required()
                             ->options([
 
@@ -72,9 +91,9 @@ class InventoryItemResource extends Resource
                             ])
                             ->searchable()
                             ->preload(),
-                        Forms\Components\TextInput::make('unit_of_measure')
+                        TextInput::make('unit_of_measure')
                             ->required(),
-                        Forms\Components\FileUpload::make('image')
+                        FileUpload::make('image')
                             ->disk('r2')
                             ->visibility('public')
                             ->directory('inventory-images')
@@ -83,29 +102,29 @@ class InventoryItemResource extends Resource
                             ->maxFiles(1)
                     ])->columns(2),
 
-                Forms\Components\Section::make('Stock Information')
+                Section::make('Stock Information')
                     ->schema([
-                        Forms\Components\TextInput::make('minimum_stock')
+                        TextInput::make('minimum_stock')
                             ->required()
                             ->numeric()
                             ->default(0),
-                        Forms\Components\TextInput::make('current_stock')
+                        TextInput::make('current_stock')
                             ->numeric()
                             ->default(0),
-                        Forms\Components\Select::make('department')
+                        Select::make('department')
                             ->options(Department::getOptions())
                             ->nullable()
                             ->searchable(),
-                        Forms\Components\TextInput::make('storage_location')
+                        TextInput::make('storage_location')
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('bin_number')
+                        TextInput::make('bin_number')
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('sage_item_code')
+                        TextInput::make('sage_item_code')
                             ->maxLength(255)
                             ->helperText('The item code used in Sage 100'),
                     ])->columns(2),
 
-                Forms\Components\Toggle::make('active')
+                Toggle::make('active')
                     ->default(true)
                     ->dehydrateStateUsing(fn($state): string => $state ? 'true' : 'false'),
                     
@@ -122,15 +141,15 @@ class InventoryItemResource extends Resource
                     ->size(40)
                     ->defaultImageUrl(url('https://r2.bytoddchristensen.com/inventory-images/image-placeholder-base.png'))
                     ->extraImgAttributes(['loading' => 'lazy']),
-                Tables\Columns\TextColumn::make('sku')
+                TextColumn::make('sku')
                     ->label('Item #')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('category')
+                TextColumn::make('category')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('department')
+                TextColumn::make('department')
                     ->formatStateUsing(
                         fn($state) =>
                         $state instanceof Department
@@ -139,7 +158,7 @@ class InventoryItemResource extends Resource
                     )
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('current_stock')
+                TextColumn::make('current_stock')
                     ->sortable()
                     ->color(
                         fn(InventoryItem $record): string =>
@@ -147,28 +166,28 @@ class InventoryItemResource extends Resource
                             ? 'danger'
                             : 'success'
                     ),
-                Tables\Columns\TextColumn::make('minimum_stock'),
-                Tables\Columns\TextColumn::make('sage_item_code')
+                TextColumn::make('minimum_stock'),
+                TextColumn::make('sage_item_code')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\IconColumn::make('active')
+                IconColumn::make('active')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('active'),
-                Tables\Filters\SelectFilter::make('category'),
+                TernaryFilter::make('active'),
+                SelectFilter::make('category'),
             ])
             ->headerActions([
-                Tables\Actions\Action::make('syncAllWithSage')
+                Action::make('syncAllWithSage')
                     ->label('Sync All with Sage 100')
                     ->icon('heroicon-m-arrow-path')
                     ->color('success')
                     ->action(function () {
-                        $command = new \App\Console\Commands\SyncSageInventory();
+                        $command = new SyncSageInventory();
                         $result = $command->handle(app(Sage100Service::class));
 
                         $notification = Notification::make()
@@ -189,10 +208,10 @@ class InventoryItemResource extends Resource
                     ->modalDescription('This will update the inventory levels from Sage 100. This operation is read-only and will not modify Sage 100 data.')
                     ->modalSubmitActionLabel('Yes, sync now'),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\Action::make('syncWithSage')
+            ->recordActions([
+                ActionGroup::make([
+                    EditAction::make(),
+                    Action::make('syncWithSage')
                         ->label('Sync with Sage 100')
                         ->icon('heroicon-o-arrow-path')
                         ->action(function (InventoryItem $record) {
@@ -206,9 +225,9 @@ class InventoryItemResource extends Resource
                         ->visible(fn(InventoryItem $record) => $record->sage_item_code !== null),
                 ])
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -216,16 +235,16 @@ class InventoryItemResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\SuppliersRelationManager::class,
+            SuppliersRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListInventoryItems::route('/'),
-            'create' => Pages\CreateInventoryItem::route('/create'),
-            'edit' => Pages\EditInventoryItem::route('/{record}/edit'),
+            'index' => ListInventoryItems::route('/'),
+            'create' => CreateInventoryItem::route('/create'),
+            'edit' => EditInventoryItem::route('/{record}/edit'),
         ];
     }
 }

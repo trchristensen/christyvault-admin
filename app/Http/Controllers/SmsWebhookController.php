@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
+use Illuminate\Http\JsonResponse;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -42,7 +44,7 @@ class SmsWebhookController extends Controller
             Log::info('Unhandled webhook event type', ['event_type' => $eventType]);
             return response()->json(['message' => 'Event processed']);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('SMS webhook error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -56,7 +58,7 @@ class SmsWebhookController extends Controller
     /**
      * Handle incoming SMS message
      */
-    private function handleIncomingMessage(array $payload): \Illuminate\Http\JsonResponse
+    private function handleIncomingMessage(array $payload): JsonResponse
     {
         $from = $payload['from']['phone_number'] ?? null;
         $message = $payload['text'] ?? null;
@@ -92,7 +94,7 @@ class SmsWebhookController extends Controller
     /**
      * Handle message status updates
      */
-    private function handleMessageStatus(array $payload): \Illuminate\Http\JsonResponse
+    private function handleMessageStatus(array $payload): JsonResponse
     {
         $messageId = $payload['id'] ?? null;
         $status = $payload['status'] ?? null;

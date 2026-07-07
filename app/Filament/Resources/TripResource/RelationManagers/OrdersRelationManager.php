@@ -2,8 +2,14 @@
 
 namespace App\Filament\Resources\TripResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
+use Exception;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,18 +23,18 @@ class OrdersRelationManager extends RelationManager
     protected static ?string $recordTitleAttribute = 'order_number';
     protected static ?string $title = 'Trip Orders';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('order_number')
+        return $schema
+            ->components([
+                TextInput::make('order_number')
                     ->label('Order')
                     ->disabled()
                     ->dehydrated(false),
-                Forms\Components\TextInput::make('stop_number')
+                TextInput::make('stop_number')
                     ->numeric()
                     ->required(),
-                Forms\Components\TextInput::make('delivery_notes')
+                TextInput::make('delivery_notes')
                     ->nullable(),
             ]);
     }
@@ -37,7 +43,7 @@ class OrdersRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('order_details')
+                TextColumn::make('order_details')
                     ->label('Order Details')
                     ->html()
                     ->alignLeft()
@@ -87,15 +93,15 @@ class OrdersRelationManager extends RelationManager
             ])
             ->defaultSort('stop_number')
             ->reorderable('stop_number')
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('remove')
+            ->recordActions([
+                EditAction::make(),
+                Action::make('remove')
                     ->action(fn(Order $record) => $record->update(['trip_id' => null]))
                     ->requiresConfirmation(),
             ])
             ->headerActions([
-                Tables\Actions\Action::make('add_order')
-                    ->form(function () {
+                Action::make('add_order')
+                    ->schema(function () {
                         $nextStopNumber = $this->getOwnerRecord()
                             ->orders()
                             ->max('stop_number') ?? 0;
@@ -103,7 +109,7 @@ class OrdersRelationManager extends RelationManager
                         $tripDate = $this->getOwnerRecord()->scheduled_date;
 
                         return [
-                            Forms\Components\Select::make('order_id')
+                            Select::make('order_id')
                                 ->label('Order')
                                 ->options(
                                     Order::query()
@@ -162,11 +168,11 @@ class OrdersRelationManager extends RelationManager
                                 ->required()
                                 ->preload()
                                 ->allowHtml(),
-                            Forms\Components\TextInput::make('stop_number')
+                            TextInput::make('stop_number')
                                 ->numeric()
                                 ->required()
                                 ->default($nextStopNumber + 1),
-                            Forms\Components\TextInput::make('delivery_notes')
+                            TextInput::make('delivery_notes')
                                 ->nullable(),
                         ];
                     })
@@ -187,7 +193,7 @@ class OrdersRelationManager extends RelationManager
                                 ->title('Order added to trip')
                                 ->success()
                                 ->send();
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             Notification::make()
                                 ->title('Error adding order')
                                 ->danger()
@@ -201,9 +207,9 @@ class OrdersRelationManager extends RelationManager
     public function getTableColumns(): array
     {
         return [
-            Tables\Columns\TextColumn::make('order_number')
+            TextColumn::make('order_number')
                 ->searchable(),
-            Tables\Columns\TextColumn::make('location.name')
+            TextColumn::make('location.name')
                 ->searchable(),
             // ... other columns ...
         ];

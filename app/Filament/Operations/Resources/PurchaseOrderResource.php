@@ -2,15 +2,38 @@
 
 namespace App\Filament\Operations\Resources;
 
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Grouping\Group;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\BulkAction;
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\FileUpload;
+use App\Filament\Operations\Resources\PurchaseOrderResource\RelationManagers\InventoryItemsRelationManager;
+use App\Filament\Operations\Resources\PurchaseOrderResource\Pages\ListPurchaseOrders;
+use App\Filament\Operations\Resources\PurchaseOrderResource\Pages\CreatePurchaseOrder;
+use App\Filament\Operations\Resources\PurchaseOrderResource\Pages\EditPurchaseOrder;
 use App\Filament\Operations\Resources\PurchaseOrderResource\Pages;
 use App\Filament\Operations\Resources\PurchaseOrderResource\RelationManagers;
 use App\Models\PurchaseOrder;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Forms\Get;
 use Illuminate\Support\Facades\Auth;
 use App\Models\InventoryItem;
 use App\Models\Supplier;
@@ -32,17 +55,17 @@ class PurchaseOrderResource extends Resource
 {
     protected static ?string $model = PurchaseOrder::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('supplier.name')
+                TextColumn::make('supplier.name')
                     ->sortable()
                     ->searchable(),
 
-                Tables\Columns\BadgeColumn::make('status')
+                BadgeColumn::make('status')
                     ->formatStateUsing(fn(string $state): string => match ($state) {
                         'draft' => 'Draft',
                         'submitted' => 'Submitted',
@@ -62,23 +85,23 @@ class PurchaseOrderResource extends Resource
                     ])
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('order_date')
+                TextColumn::make('order_date')
                     ->date()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('expected_delivery_date')
+                TextColumn::make('expected_delivery_date')
                     ->date()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('received_date')
+                TextColumn::make('received_date')
                     ->date()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('total_amount')
+                TextColumn::make('total_amount')
                     ->money('USD')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('items.name')
+                TextColumn::make('items.name')
                     ->label('Items')
                     ->listWithLineBreaks()
                     ->limitList(3)
@@ -86,7 +109,7 @@ class PurchaseOrderResource extends Resource
                     ->searchable()
                     ->toggleable(),
 
-                Tables\Columns\IconColumn::make('is_liner_load')
+                IconColumn::make('is_liner_load')
                     ->label('Liner Load')
                     ->boolean()
                     ->visible(fn (?Model $record): bool => 
@@ -95,18 +118,18 @@ class PurchaseOrderResource extends Resource
 
               
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->groups([
-                Tables\Grouping\Group::make('status')
+                Group::make('status')
                     ->label('Status')
                     ->getTitleFromRecordUsing(fn ($record): string => match ($record->status) {
                         'draft' => 'Draft',
@@ -136,7 +159,7 @@ class PurchaseOrderResource extends Resource
                 ");
             })
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->multiple()
                     ->options([
                         'draft' => 'Draft',
@@ -147,8 +170,8 @@ class PurchaseOrderResource extends Resource
                         'completed' => 'Completed',
                     ])
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->url(null)
                     ->modalContent(fn (PurchaseOrder $record) => view('livewire.view-purchase-order', [
                         'record' => $record,
@@ -157,20 +180,20 @@ class PurchaseOrderResource extends Resource
                     ->modalCancelAction(false)
                     ->modalHeading('Purchase Order Details')
                     ->modalFooterActions([
-                        Tables\Actions\EditAction::make()
+                        EditAction::make()
                             ->url(fn (PurchaseOrder $record): string => 
                                 static::getUrl('edit', ['record' => $record])
                             ),
-                        Tables\Actions\DeleteAction::make(),
+                        DeleteAction::make(),
                     ])
                     ->stickyModalHeader()
                     ->stickyModalFooter(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('merge')
+                EditAction::make(),
+                Action::make('merge')
                     ->icon('heroicon-o-arrow-path-rounded-square')
                     ->label('Merge')
-                    ->form([
-                        Forms\Components\Select::make('merge_with')
+                    ->schema([
+                        Select::make('merge_with')
                             ->label('Merge With')
                             ->options(function (Model $record) {
                                 // Get other draft POs from same supplier
@@ -278,10 +301,10 @@ class PurchaseOrderResource extends Resource
             ])
             ->recordAction('view')
             ->recordUrl(null)
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\BulkAction::make('mergeBulk')
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    BulkAction::make('mergeBulk')
                         ->label('Merge Selected')
                         ->icon('heroicon-o-arrow-path-rounded-square')
                         ->action(function (Collection $records): void {
@@ -379,18 +402,18 @@ class PurchaseOrderResource extends Resource
             ->recordAction('view');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('supplier_id')
+        return $schema
+            ->components([
+                Select::make('supplier_id')
                     ->relationship('supplier', 'name')
                     ->required()
                     ->searchable()
                     ->preload()
                     ->live(),
 
-                Forms\Components\Toggle::make('is_liner_load')
+                Toggle::make('is_liner_load')
                     ->live()
                     ->label('Liner Load')
                     ->dehydrateStateUsing(fn($state): string => $state ? 'true' : 'false')
@@ -400,7 +423,7 @@ class PurchaseOrderResource extends Resource
                     )
                     ->default(false),
 
-                Forms\Components\Select::make('status')
+                Select::make('status')
                     ->options([
                         'draft' => 'Draft',
                         'submitted' => 'Submitted',
@@ -412,43 +435,43 @@ class PurchaseOrderResource extends Resource
                     ->default('draft')
                     ->required(),
 
-                Forms\Components\DatePicker::make('order_date')
+                DatePicker::make('order_date')
                     ->label(fn (Get $get) => $get('is_liner_load') ? 'Order Deadline' : 'Order Date')
                     ->live()
                     ->default(now())
                     ->required(),
 
-                Forms\Components\DatePicker::make('expected_delivery_date'),
+                DatePicker::make('expected_delivery_date'),
 
-                Forms\Components\DatePicker::make('received_date'),
+                DatePicker::make('received_date'),
 
-                Forms\Components\TextInput::make('total_amount')
+                TextInput::make('total_amount')
                     ->required()
                     ->numeric()
                     ->prefix('$')
                     ->minValue(0)
                     ->default(0),
 
-                Forms\Components\Textarea::make('notes')
+                Textarea::make('notes')
                     ->columnSpanFull(),
 
-                Forms\Components\Hidden::make('created_by_user_id')
+                Hidden::make('created_by_user_id')
                     ->default(fn() => Auth::id())
                     ->dehydrated(fn($state) => filled($state)),
 
-                Forms\Components\Section::make('Documents')
+                \Filament\Schemas\Components\Section::make('Documents')
                     ->schema([
-                        Forms\Components\Repeater::make('documents')
+                        Repeater::make('documents')
                             ->relationship()
                             ->schema([
-                                Forms\Components\Select::make('type')
+                                Select::make('type')
                                     ->options(PurchaseOrderDocument::getTypes())
                                     ->required(),
-                                Forms\Components\TextInput::make('document_number')
+                                TextInput::make('document_number')
                                     ->label('Document Number')
                                     ->helperText('e.g. Invoice number, BOL number, Quote number')
                                     ->maxLength(255),
-                                Forms\Components\FileUpload::make('file_path')
+                                FileUpload::make('file_path')
                                     ->label('Document File')
                                     ->disk('r2')
                                     ->directory('purchase-order-documents')
@@ -463,7 +486,7 @@ class PurchaseOrderResource extends Resource
                                         'image/gif',
                                         'image/webp',
                                     ]),
-                                Forms\Components\Textarea::make('notes')
+                                Textarea::make('notes')
                                     ->rows(2),
                             ])
                             ->itemLabel(fn (array $state): ?string => 
@@ -472,10 +495,10 @@ class PurchaseOrderResource extends Resource
                             )
                             ->collapsible()
                             ->collapseAllAction(
-                                fn (Forms\Components\Actions\Action $action) => $action->label('Collapse all')
+                                fn (Action $action) => $action->label('Collapse all')
                             )
                             ->expandAllAction(
-                                fn (Forms\Components\Actions\Action $action) => $action->label('Expand all')
+                                fn (Action $action) => $action->label('Expand all')
                             ),
                     ])
                     ->collapsible(),
@@ -485,16 +508,16 @@ class PurchaseOrderResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\InventoryItemsRelationManager::class,
+            InventoryItemsRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPurchaseOrders::route('/'),
-            'create' => Pages\CreatePurchaseOrder::route('/create'),
-            'edit' => Pages\EditPurchaseOrder::route('/{record}/edit'),
+            'index' => ListPurchaseOrders::route('/'),
+            'create' => CreatePurchaseOrder::route('/create'),
+            'edit' => EditPurchaseOrder::route('/{record}/edit'),
         ];
     }
 
@@ -516,7 +539,7 @@ class PurchaseOrderResource extends Resource
                 ->required()
                 ->searchable(),
 
-            Forms\Components\Select::make('status')
+            Select::make('status')
                 ->options([
                     'draft' => 'Draft',
                     'submitted' => 'Submitted',
@@ -524,14 +547,14 @@ class PurchaseOrderResource extends Resource
                 ->default('draft')
                 ->required(),
 
-            Forms\Components\DatePicker::make('order_date')
+            DatePicker::make('order_date')
                 ->default(now())
                 ->required(),
 
-            Forms\Components\DatePicker::make('expected_delivery_date')
+            DatePicker::make('expected_delivery_date')
                 ->after('order_date'),
 
-            Forms\Components\Textarea::make('notes')
+            Textarea::make('notes')
                 ->columnSpanFull(),
 
         ];

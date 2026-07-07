@@ -2,18 +2,35 @@
 
 namespace App\Filament\Operations\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Grouping\Group;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\BulkAction;
+use App\Filament\Operations\Resources\KanbanCardResource\Pages\ListKanbanCards;
+use App\Filament\Operations\Resources\KanbanCardResource\Pages\CreateKanbanCard;
+use App\Filament\Operations\Resources\KanbanCardResource\Pages\EditKanbanCard;
 use App\Filament\Operations\Resources\KanbanCardResource\Pages;
 use App\Filament\Operations\Resources\KanbanCardResource\RelationManagers;
 use App\Models\KanbanCard;
 use App\Models\InventoryItem;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
-use Filament\Tables\Actions\Action;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Columns\ImageColumn;
@@ -21,15 +38,15 @@ use Filament\Tables\Columns\ImageColumn;
 class KanbanCardResource extends Resource
 {
     protected static ?string $model = KanbanCard::class;
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $navigationGroup = 'Inventory Management';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \UnitEnum | null $navigationGroup = 'Inventory Management';
     protected static ?int $navigationSort = 3;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('inventory_item_id')
+        return $schema
+            ->components([
+                Select::make('inventory_item_id')
                     ->relationship('inventoryItem', 'name')
                     // show the inventory item sku in the dropdown
                     ->options(fn(Get $get): Collection => InventoryItem::query()
@@ -39,7 +56,7 @@ class KanbanCardResource extends Resource
                     ->preload()
                     ->required()
                     ->live()
-                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                    ->afterStateUpdated(function ($state, Set $set) {
                         if (!$state) return;
 
                         $inventoryItem = InventoryItem::find($state);
@@ -49,21 +66,21 @@ class KanbanCardResource extends Resource
                         $set('reorder_point', $inventoryItem->minimum_stock);
                         $set('unit_of_measure', $inventoryItem->unit_of_measure);
                     }),
-                Forms\Components\Textarea::make('description')
+                Textarea::make('description')
                     ->maxLength(255)
                     ->columnSpanFull(),
 
-                Forms\Components\TextInput::make('reorder_point')
+                TextInput::make('reorder_point')
                     ->numeric()
                     ->required()
-                    ->default(function (Forms\Get $get) {
+                    ->default(function (Get $get) {
                         $inventoryItem = InventoryItem::find($get('inventory_item_id'));
                         return $inventoryItem?->minimum_stock ?? 0;
                     }),
 
-                Forms\Components\TextInput::make('unit_of_measure')
+                TextInput::make('unit_of_measure')
                     ->required()
-                    ->afterStateHydrated(function ($component, $state, Forms\Set $set) {
+                    ->afterStateHydrated(function ($component, $state, Set $set) {
                         if ($state) return; // If there's already a value, don't override it
 
                         $record = $component->getRecord();
@@ -72,7 +89,7 @@ class KanbanCardResource extends Resource
                         $set('unit_of_measure', $record->inventoryItem->unit_of_measure);
                     }),
 
-                Forms\Components\Select::make('status')
+                Select::make('status')
                     ->options([
                         KanbanCard::STATUS_ACTIVE => 'Active',
                         KanbanCard::STATUS_PENDING_ORDER => 'Pending Order',
@@ -94,21 +111,21 @@ class KanbanCardResource extends Resource
                     ->defaultImageUrl(url('https://r2.bytoddchristensen.com/inventory-images/image-placeholder-base.png'))
                     ->size(40)
                     ->extraImgAttributes(['loading' => 'lazy']),
-                     Tables\Columns\TextColumn::make('inventoryItem.sku')
+                     TextColumn::make('inventoryItem.sku')
                     ->searchable()
                     ->label('Item #')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('inventoryItem.name')
+                TextColumn::make('inventoryItem.name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->limit(30)
                     ->searchable(),
-                Tables\Columns\TextColumn::make('reorder_point')
+                TextColumn::make('reorder_point')
                     ->numeric(),
-                Tables\Columns\TextColumn::make('unit_of_measure')
+                TextColumn::make('unit_of_measure')
                     ->label('Unit of Measure'),
-                Tables\Columns\BadgeColumn::make('status')
+                BadgeColumn::make('status')
                     ->colors([
                         'success' => KanbanCard::STATUS_ACTIVE,
                         'warning' => KanbanCard::STATUS_PENDING_ORDER,
@@ -120,7 +137,7 @@ class KanbanCardResource extends Resource
                         KanbanCard::STATUS_ORDERED => 'Ordered',
                         default => $state,
                     }),
-                Tables\Columns\TextColumn::make('last_scanned_at')
+                TextColumn::make('last_scanned_at')
                     ->label('Last Scanned')
                     ->dateTime()
                     ->sortable(),
@@ -144,7 +161,7 @@ class KanbanCardResource extends Resource
                 ");
             })
             ->groups([
-                Tables\Grouping\Group::make('status')
+                Group::make('status')
                     ->label('Status')
                     ->orderQueryUsing(fn (Builder $query, string $direction) => $query->orderByRaw("
                         CASE 
@@ -158,33 +175,33 @@ class KanbanCardResource extends Resource
             ])
        
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options([
                         KanbanCard::STATUS_ACTIVE => 'Active',
                         KanbanCard::STATUS_PENDING_ORDER => 'Pending Order',
                         KanbanCard::STATUS_ORDERED => 'Ordered',
                     ]),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\Action::make('scan')
+            ->recordActions([
+                ActionGroup::make([
+                    EditAction::make(),
+                    Action::make('scan')
                         ->icon('heroicon-o-qr-code')
                         ->action(fn(KanbanCard $record) => $record->markAsScanned())
                         ->requiresConfirmation()
                         ->visible(fn(KanbanCard $record) => $record->canBeScanned()),
-                    Tables\Actions\Action::make('setActive')
+                    Action::make('setActive')
                         ->label('Set Active')
                         ->icon('heroicon-o-check-circle')
                         ->action(fn(KanbanCard $record) => $record->update(['status' => KanbanCard::STATUS_ACTIVE]))
                         ->requiresConfirmation()
                         ->visible(fn(KanbanCard $record) => $record->status !== KanbanCard::STATUS_ACTIVE)
                         ->successNotification(
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('Kanban card status set to active')
                                 ->success()
                         ),
-                    Tables\Actions\Action::make('printKanban')
+                    Action::make('printKanban')
                         ->label('Print Kanban')
                         ->icon('heroicon-o-printer')
                         ->url(fn(KanbanCard $record): string => 
@@ -194,7 +211,7 @@ class KanbanCardResource extends Resource
                                 'type' => request('type', 'storage')
                             ]))
                         ->openUrlInNewTab(),
-                    Tables\Actions\Action::make('printLabel')
+                    Action::make('printLabel')
                         ->label('Print Label')
                         ->icon('heroicon-o-tag')
                         ->url(fn(KanbanCard $record): string => 
@@ -202,11 +219,11 @@ class KanbanCardResource extends Resource
                         ->openUrlInNewTab(),
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
                         ->requiresConfirmation(),
-                    Tables\Actions\BulkAction::make('printLabels')
+                    BulkAction::make('printLabels')
                         ->label('Print Labels')
                         ->icon('heroicon-o-printer')
                         ->action(function (Collection $records) {
@@ -231,9 +248,9 @@ class KanbanCardResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListKanbanCards::route('/'),
-            'create' => Pages\CreateKanbanCard::route('/create'),
-            'edit' => Pages\EditKanbanCard::route('/{record}/edit'),
+            'index' => ListKanbanCards::route('/'),
+            'create' => CreateKanbanCard::route('/create'),
+            'edit' => EditKanbanCard::route('/{record}/edit'),
         ];
     }
 }

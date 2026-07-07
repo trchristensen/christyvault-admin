@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\OrderResource\Pages;
 
+use Filament\Support\Enums\Width;
+use Filament\Schemas\Schema;
 use App\Filament\Resources\OrderResource;
 use App\Filament\Resources\Traits\HasOrderForm;
 use App\Models\Order;
@@ -9,8 +11,6 @@ use App\Enums\OrderStatus;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\Page;
-use Filament\Support\Enums\MaxWidth;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Saade\FilamentFullCalendar\Components\FullCalendarComponent;
 use Illuminate\Http\Request;
@@ -22,13 +22,13 @@ class DeliveryCalendar extends Page
 
     protected static string $resource = OrderResource::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static ?string $navigationGroup = 'Delivery Management';
+    protected static string | \UnitEnum | null $navigationGroup = 'Delivery Management';
     protected static ?string $navigationLabel = 'Delivery Calendar';
     // protected static ?int $navigationSort = ; // Adjust this number to change the order in the sidebar
     protected static ?string $slug = 'delivery-calendar';
-    protected static string $view = 'filament.resources.order-resource.pages.delivery-calendar';
+    protected string $view = 'filament.resources.order-resource.pages.delivery-calendar';
     
     protected $listeners = ['openOrderModal'];
     
@@ -39,9 +39,9 @@ class DeliveryCalendar extends Page
         return 'Delivery Calendar';
     }
 
-    public function getMaxContentWidth(): MaxWidth
+    public function getMaxContentWidth(): Width
     {
-        return MaxWidth::Full;
+        return Width::Full;
     }
 
     protected function getHeaderActions(): array
@@ -50,7 +50,7 @@ class DeliveryCalendar extends Page
             CreateAction::make('createOrder')
                 ->label('Create Order')
                 ->model(Order::class)
-                ->form(fn(Form $form) => $form->schema(static::getOrderFormSchema($this->selectedDate)))
+                ->schema(fn(Schema $schema) => $schema->components(static::getOrderFormSchema($this->selectedDate)))
                 ->action(function (array $data) {
                     app(DeliveryCalendarAvailability::class)->validateDate(
                         $data['assigned_delivery_date'] ?? null,
@@ -90,7 +90,7 @@ class DeliveryCalendar extends Page
     public function getViewData(): array
     {
         return [
-            'unassignedOrders' => \App\Models\Order::whereNull('assigned_delivery_date')
+            'unassignedOrders' => Order::whereNull('assigned_delivery_date')
                 ->whereIn('status', [
                     OrderStatus::PENDING->value,
                     OrderStatus::CONFIRMED->value,

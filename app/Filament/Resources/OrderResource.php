@@ -2,15 +2,32 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Grouping\Group;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DatePicker;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use App\Filament\Resources\OrderResource\Pages\ListOrders;
+use App\Filament\Resources\OrderResource\Pages\CreateOrder;
+use App\Filament\Resources\OrderResource\Pages\EditOrder;
+use App\Filament\Resources\OrderResource\Pages\DeliveryCalendar;
 use App\Enums\OrderStatus;
 use App\Enums\PlantLocation;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Models\Employee;
 use App\Models\Order;
 use App\Models\Product;
-use Filament\Tables\Actions\Action;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -35,14 +52,14 @@ class OrderResource extends Resource
 
     protected static ?string $model = Order::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
-    protected static ?string $navigationGroup = 'Delivery Management';
+    protected static string | \UnitEnum | null $navigationGroup = 'Delivery Management';
 
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema(static::getOrderFormSchema());
+        return $schema->components(static::getOrderFormSchema());
     }
 
 
@@ -50,37 +67,37 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('order_number')
+                TextColumn::make('order_number')
                     ->label('Order #')
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->where('order_number', 'like', "%{$search}%");
                     })
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('location.name')
+                TextColumn::make('location.name')
                     ->searchable()
                     ->sortable()
                     ->description(fn(Order $record): string => $record->location->full_address ?? ''),
 
 
-                Tables\Columns\TextColumn::make('requested_delivery_date')
+                TextColumn::make('requested_delivery_date')
                     ->label('Requested')
                     ->date('M j, Y')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('assigned_delivery_date')
+                TextColumn::make('assigned_delivery_date')
                     ->label('Assigned')
                     ->date('M j, Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('driver.name')
+                TextColumn::make('driver.name')
                     ->label('Driver')
                     ->sortable()
                     ->default('Not assigned'),
-                Tables\Columns\TextColumn::make('order_date')
+                TextColumn::make('order_date')
                     ->label('Order Date')
                     ->date('M j, Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->sortable()
                     ->formatStateUsing(fn($state): string => ucfirst(str_replace('_', ' ', (string) $state)))
@@ -99,7 +116,7 @@ class OrderResource extends Resource
                 //     ->label('Trip')
                 //     ->default('Unassigned'),
 
-                Tables\Columns\TextColumn::make('orderProducts')
+                TextColumn::make('orderProducts')
                     ->label('Products')
                     ->formatStateUsing(function ($state, $record) {
                         $products = [];
@@ -135,45 +152,138 @@ class OrderResource extends Resource
             ])
             ->defaultGroup('delivery_group')
             ->groups([
-                Tables\Grouping\Group::make('delivery_group')
+                Group::make('delivery_group')
                     ->label('Delivery Schedule')
-                    ->getTitleFromRecordUsing(function ($record) {
-                        // Use assigned_delivery_date, then requested_delivery_date, then order_date
-                        $date = $record->assigned_delivery_date ?? $record->requested_delivery_date ?? $record->order_date;
-                        if (!$date) {
+
+                    ->getKeyFromRecordUsing(function (Order $record): string {
+                        $date = $record->assigned_delivery_date
+                            ?? $record->requested_delivery_date
+                            ?? $record->order_date;
+
+                        if (! $date) {
+                            return 'unscheduled';
+                        }
+
+                        $date = $date->copy()->startOfDay();
+                        $today = now()->startOfDay();
+
+                        if ($date->lt($today)) {
+                            return 'past';
+                        }
+
+                        if ($date->lte($today->copy()->addWeeks(3))) {
+                            return 'date:' . $date->format('Y-m-d');
+                        }
+
+                        return 'future';
+                    })
+
+                    ->getTitleFromRecordUsing(function (Order $record): string {
+                        $date = $record->assigned_delivery_date
+                            ?? $record->requested_delivery_date
+                            ?? $record->order_date;
+
+                        if (! $date) {
                             return 'Unscheduled Orders';
                         }
+
+                        $date = $date->copy()->startOfDay();
                         $today = now()->startOfDay();
-                        $dateValue = $date->startOfDay();
-                        if ($dateValue->lt($today)) {
+
+                        if ($date->lt($today)) {
                             return 'Past Orders';
                         }
-                        if ($dateValue->lte($today->copy()->addWeeks(3))) {
-                            return $dateValue->format('l, M j, Y');
+
+                        if ($date->lte($today->copy()->addWeeks(3))) {
+                            return $date->format('l, M j, Y');
                         }
+
                         return 'Future Orders (> 3 weeks)';
                     })
-                    ->orderQueryUsing(function (Builder $query, string $direction) {
-                        // Prioritize upcoming/future orders, put past orders last
-                        return $query->orderByRaw('
-                            CASE
-                                WHEN COALESCE(assigned_delivery_date, requested_delivery_date, order_date) >= CURRENT_DATE THEN 0
-                                WHEN COALESCE(assigned_delivery_date, requested_delivery_date, order_date) < CURRENT_DATE THEN 1
-                                ELSE 2
-                            END
-                        ')
-                            ->orderByRaw('COALESCE(assigned_delivery_date, requested_delivery_date, order_date) ' . $direction);
+
+                    ->scopeQueryByKeyUsing(function (
+                        Builder $query,
+                        string $key,
+                    ): Builder {
+                        $dateExpression = '
+                COALESCE(
+                    assigned_delivery_date,
+                    requested_delivery_date,
+                    order_date
+                )
+            ';
+
+                        if ($key === 'unscheduled') {
+                            return $query->whereRaw(
+                                "{$dateExpression} IS NULL"
+                            );
+                        }
+
+                        if ($key === 'past') {
+                            return $query->whereRaw(
+                                "{$dateExpression} < CURRENT_DATE"
+                            );
+                        }
+
+                        if ($key === 'future') {
+                            return $query->whereRaw(
+                                "{$dateExpression} > CURRENT_DATE + INTERVAL '3 weeks'"
+                            );
+                        }
+
+                        if (str_starts_with($key, 'date:')) {
+                            $date = substr($key, 5);
+
+                            return $query->whereRaw(
+                                "DATE({$dateExpression}) = ?",
+                                [$date],
+                            );
+                        }
+
+                        return $query->whereRaw('1 = 0');
                     })
-                    ->collapsible()
+
+                    ->orderQueryUsing(function (
+                        Builder $query,
+                        string $direction,
+                    ): Builder {
+                        return $query
+                            ->orderByRaw('
+                    CASE
+                        WHEN COALESCE(
+                            assigned_delivery_date,
+                            requested_delivery_date,
+                            order_date
+                        ) >= CURRENT_DATE THEN 0
+
+                        WHEN COALESCE(
+                            assigned_delivery_date,
+                            requested_delivery_date,
+                            order_date
+                        ) < CURRENT_DATE THEN 1
+
+                        ELSE 2
+                    END
+                ')
+                            ->orderByRaw(
+                                'COALESCE(
+                        assigned_delivery_date,
+                        requested_delivery_date,
+                        order_date
+                    ) ' . $direction
+                            );
+                    })
+
+                    ->collapsible(),
 
 
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
-                Tables\Filters\SelectFilter::make('status')
+                TrashedFilter::make(),
+                SelectFilter::make('status')
                     ->options(OrderStatus::class)
                     ->multiple(),
-                Tables\Filters\SelectFilter::make('plant_location')
+                SelectFilter::make('plant_location')
                     ->label('Delivery Type')
                     ->options(
                         collect(PlantLocation::cases())
@@ -183,9 +293,9 @@ class OrderResource extends Resource
                             ->toArray()
                     )
                     ->multiple(),
-                Tables\Filters\Filter::make('product_notes')
-                    ->form([
-                        Forms\Components\TextInput::make('notes')
+                Filter::make('product_notes')
+                    ->schema([
+                        TextInput::make('notes')
                             ->label('Product Notes')
                             ->placeholder('Search in product notes...'),
                     ])
@@ -197,9 +307,9 @@ class OrderResource extends Resource
                             })
                         );
                     }),
-                Tables\Filters\Filter::make('product_location')
-                    ->form([
-                        Forms\Components\TextInput::make('location')
+                Filter::make('product_location')
+                    ->schema([
+                        TextInput::make('location')
                             ->label('Product Location')
                             ->placeholder('Search in Product location...'),
                     ])
@@ -213,10 +323,10 @@ class OrderResource extends Resource
                         );
                     }),
 
-                Tables\Filters\Filter::make('requested_delivery_date')
-                    ->form([
-                        Forms\Components\DatePicker::make('from'),
-                        Forms\Components\DatePicker::make('until'),
+                Filter::make('requested_delivery_date')
+                    ->schema([
+                        DatePicker::make('from'),
+                        DatePicker::make('until'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -229,7 +339,7 @@ class OrderResource extends Resource
                                 fn(Builder $query, $date): Builder => $query->whereDate('requested_delivery_date', '<=', $date),
                             );
                     }),
-                Tables\Filters\SelectFilter::make('product')
+                SelectFilter::make('product')
                     ->label('Has product(s)')
                     ->multiple()
                     ->options(Product::pluck('sku', 'id')->toArray())
@@ -243,7 +353,7 @@ class OrderResource extends Resource
                         }
                         return $query;
                     }),
-                Tables\Filters\SelectFilter::make('city')
+                SelectFilter::make('city')
                     ->label('City')
                     ->multiple()
                     ->options(function () {
@@ -263,7 +373,7 @@ class OrderResource extends Resource
                         }
                         return $query;
                     }),
-                Tables\Filters\SelectFilter::make('state')
+                SelectFilter::make('state')
                     ->label('State')
                     ->multiple()
                     ->options(function () {
@@ -287,14 +397,14 @@ class OrderResource extends Resource
                     })
 
             ])
-            ->actions([
+            ->recordActions([
                 Action::make('view')
                     ->stickyModalFooter()
                     ->modalContent(fn($record) => view(
                         'filament.resources.order-resource.custom-view',
                         ['record' => $record]
                     ))
-                    ->form([])
+                    ->schema([])
                     ->modalFooterActions([
                         Action::make('edit')
                             ->modalWidth('7xl')
@@ -324,15 +434,15 @@ class OrderResource extends Resource
                             ->icon('heroicon-o-printer')
                             ->url(fn(Order $record) => route('orders.print.formbg', ['order' => $record]))
                             ->openUrlInNewTab(),
-                        Tables\Actions\DeleteAction::make(),
+                        DeleteAction::make(),
                     ]),
-                Tables\Actions\ActionGroup::make([
+                ActionGroup::make([
                     Action::make('Print Delivery Tag')
                         ->label('Print Delivery Tag')
                         ->icon('heroicon-o-printer')
                         ->url(fn(Order $record): string => route('orders.print', $record))
                         ->openUrlInNewTab(),
-                    Tables\Actions\EditAction::make(),
+                    EditAction::make(),
                     Action::make('duplicate')
                         ->label('Duplicate')
                         ->icon('heroicon-o-document-duplicate')
@@ -345,13 +455,13 @@ class OrderResource extends Resource
                         ->icon('heroicon-o-printer')
                         ->url(fn(Order $record) => route('orders.print.formbg', ['order' => $record]))
                         ->openUrlInNewTab(),
-                    Tables\Actions\DeleteAction::make(),
+                    DeleteAction::make(),
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -366,10 +476,10 @@ class OrderResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListOrders::route('/'),
-            'create' => Pages\CreateOrder::route('/create'),
-            'edit' => Pages\EditOrder::route('/{record}/edit'),
-            'calendar' => Pages\DeliveryCalendar::route('/calendar'),
+            'index' => ListOrders::route('/'),
+            'create' => CreateOrder::route('/create'),
+            'edit' => EditOrder::route('/{record}/edit'),
+            'calendar' => DeliveryCalendar::route('/calendar'),
         ];
     }
 

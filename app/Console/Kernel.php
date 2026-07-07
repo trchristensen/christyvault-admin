@@ -2,15 +2,18 @@
 
 namespace App\Console;
 
+use App\Console\Commands\GeocodeLocations;
+use App\Console\Commands\UpdateLocationOrderAnalytics;
+use App\Console\Commands\UpdateLocationPlantDistances;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {
     protected $commands = [
-        Commands\GeocodeLocations::class,
-        Commands\UpdateLocationOrderAnalytics::class,
-        Commands\UpdateLocationPlantDistances::class,
+        GeocodeLocations::class,
+        UpdateLocationOrderAnalytics::class,
+        UpdateLocationPlantDistances::class,
     ];
 
     protected function schedule(Schedule $schedule): void

@@ -2,32 +2,40 @@
 
 namespace App\Filament\Pages;
 
+use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Toggle;
+use Log;
+use Illuminate\Http\UploadedFile;
+use Exception;
+use Filament\Actions\Action;
 use App\Services\BulkDeliveryTagService;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Concerns\InteractsWithFormActions;
 use Filament\Pages\Page;
 use Filament\Support\Exceptions\Halt;
 use Illuminate\Support\HtmlString;
 
-class BulkDeliveryTagProcessor extends Page implements Forms\Contracts\HasForms
+class BulkDeliveryTagProcessor extends Page implements HasForms
 {
-    use Forms\Concerns\InteractsWithForms;
+    use InteractsWithForms;
     use InteractsWithFormActions;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-duplicate';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-duplicate';
 
-    protected static string $view = 'filament.pages.bulk-delivery-tag-processor';
+    protected string $view = 'filament.pages.bulk-delivery-tag-processor';
 
     protected static ?string $title = 'Bulk Delivery Tag Processor';
 
     protected static ?string $navigationLabel = 'Bulk Tag Processor';
 
-    protected static ?string $navigationGroup = 'Delivery Management';
+    protected static string | \UnitEnum | null $navigationGroup = 'Delivery Management';
 
     protected static ?int $navigationSort = 10;
 
@@ -40,14 +48,14 @@ class BulkDeliveryTagProcessor extends Page implements Forms\Contracts\HasForms
         $this->form->fill();
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Section::make('Upload Bulk Delivery Tags')
                     ->description('Upload a multi-page PDF containing delivery tags. The system will automatically split them into individual pages, extract order numbers using OCR, and attach them to the corresponding orders.')
                     ->schema([
-                        Forms\Components\Placeholder::make('instructions')
+                        Placeholder::make('instructions')
                             ->content(new HtmlString('
                                 <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
                                     <h4 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">How it works:</h4>
@@ -76,13 +84,13 @@ class BulkDeliveryTagProcessor extends Page implements Forms\Contracts\HasForms
 
                 Section::make('Processing Options')
                     ->schema([
-                        Forms\Components\Toggle::make('dry_run')
+                        Toggle::make('dry_run')
                             ->label('Dry Run Mode')
                             ->helperText('Test the processing without actually attaching tags to orders')
                             ->default(false)
                             ->inline(false),
 
-                        Forms\Components\Toggle::make('high_quality_ocr')
+                        Toggle::make('high_quality_ocr')
                             ->label('High Quality OCR')
                             ->helperText('Use higher resolution for better OCR accuracy (slower processing)')
                             ->default(true)
@@ -106,7 +114,7 @@ class BulkDeliveryTagProcessor extends Page implements Forms\Contracts\HasForms
             $filePath = $data['bulk_pdf'];
             
             // Debug: Log what we're getting
-            \Log::info('Bulk PDF Upload Debug', [
+            Log::info('Bulk PDF Upload Debug', [
                 'raw_data' => $data['bulk_pdf'],
                 'is_array' => is_array($filePath),
                 'file_path' => $filePath
@@ -120,7 +128,7 @@ class BulkDeliveryTagProcessor extends Page implements Forms\Contracts\HasForms
             // Filament stores files in private directory by default
             $fullPath = storage_path('app/private/' . $filePath);
             
-            \Log::info('File Path Debug', [
+            Log::info('File Path Debug', [
                 'relative_path' => $filePath,
                 'full_path' => $fullPath,
                 'file_exists' => file_exists($fullPath)
@@ -131,7 +139,7 @@ class BulkDeliveryTagProcessor extends Page implements Forms\Contracts\HasForms
                 throw new Halt("The uploaded file could not be found at: {$fullPath}. Please try uploading again.");
             }
             
-            $file = new \Illuminate\Http\UploadedFile(
+            $file = new UploadedFile(
                 $fullPath,
                 'bulk_delivery_tags.pdf',
                 'application/pdf',
@@ -167,7 +175,7 @@ class BulkDeliveryTagProcessor extends Page implements Forms\Contracts\HasForms
 
         } catch (Halt $exception) {
             throw $exception;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Notification::make()
                 ->title('Processing Failed')
                 ->body('Error: ' . $e->getMessage())
@@ -186,7 +194,7 @@ class BulkDeliveryTagProcessor extends Page implements Forms\Contracts\HasForms
     protected function getFormActions(): array
     {
         return [
-            Actions\Action::make('process')
+            Action::make('process')
                 ->label('Process Delivery Tags')
                 ->icon('heroicon-o-cog-6-tooth')
                 ->color('primary')
@@ -197,7 +205,7 @@ class BulkDeliveryTagProcessor extends Page implements Forms\Contracts\HasForms
                 ->modalDescription('This will split the PDF, extract order numbers, and attach tags to orders. Are you sure you want to continue?')
                 ->modalSubmitActionLabel('Yes, Process Tags'),
 
-            Actions\Action::make('reset')
+            Action::make('reset')
                 ->label('Reset Form')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')

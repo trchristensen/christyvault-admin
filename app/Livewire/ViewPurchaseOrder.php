@@ -2,20 +2,23 @@
 
 namespace App\Livewire;
 
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
 use App\Models\PurchaseOrder;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Infolists\Concerns\InteractsWithInfolists;
 use Filament\Infolists\Contracts\HasInfolists;
-use Filament\Infolists\Infolist;
-use Filament\Infolists\Components\Section;
-use Filament\Infolists\Components\Grid;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\IconEntry;
 use Livewire\Component;
 
-class ViewPurchaseOrder extends Component implements HasForms, HasInfolists
+class ViewPurchaseOrder extends Component implements HasForms, HasInfolists, HasActions
 {
+    use InteractsWithActions;
     use InteractsWithForms;
     use InteractsWithInfolists;
 
@@ -26,11 +29,11 @@ class ViewPurchaseOrder extends Component implements HasForms, HasInfolists
         $this->record = $record;
     }
 
-    protected function getInfolist(): Infolist
+    protected function getInfolist(): Schema
     {
-        return Infolist::make()
+        return Schema::make()
             ->record($this->record)
-            ->schema([
+            ->components([
                 Section::make('Order Details')
                     ->schema([
                         Grid::make(3)

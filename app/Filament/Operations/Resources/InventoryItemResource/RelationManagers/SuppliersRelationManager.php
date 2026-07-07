@@ -2,8 +2,19 @@
 
 namespace App\Filament\Operations\Resources\InventoryItemResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Actions\AttachAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DetachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachBulkAction;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -15,26 +26,26 @@ class SuppliersRelationManager extends RelationManager
     protected static ?string $title = 'Suppliers';
     protected static ?string $recordTitleAttribute = 'name';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('supplier_sku')
+        return $schema
+            ->components([
+                TextInput::make('supplier_sku')
                     ->label('Supplier SKU')
                     ->maxLength(255),
-                Forms\Components\TextInput::make('minimum_order_quantity')
+                TextInput::make('minimum_order_quantity')
                     ->label('Minimum Order Quantity')
                     ->numeric()
                     ->default(1)
                     ->required(),
-                Forms\Components\TextInput::make('lead_time_days')
+                TextInput::make('lead_time_days')
                     ->label('Lead Time (Days)')
                     ->numeric()
                     ->required(),
-                Forms\Components\Toggle::make('is_preferred')
+                Toggle::make('is_preferred')
                     ->dehydrateStateUsing(fn($state) => (bool) $state)
                     ->label('Preferred Supplier'),
-                Forms\Components\Textarea::make('notes')
+                Textarea::make('notes')
                     ->rows(3),
             ]);
     }
@@ -43,45 +54,45 @@ class SuppliersRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('supplier_sku')
+                TextColumn::make('supplier_sku')
                     ->label('Supplier SKU')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('minimum_order_quantity')
+                TextColumn::make('minimum_order_quantity')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('lead_time_days')
+                TextColumn::make('lead_time_days')
                     ->label('Lead Time')
                     ->suffix(' days'),
-                Tables\Columns\IconColumn::make('is_preferred')
+                IconColumn::make('is_preferred')
                     ->boolean()
                     ->label('Preferred'),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_preferred')
+                TernaryFilter::make('is_preferred')
                     ->label('Preferred Suppliers Only'),
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->preloadRecordSelect()
-                    ->form(fn(Tables\Actions\AttachAction $action): array => [
+                    ->form(fn(AttachAction $action): array => [
                         $action->getRecordSelect(),
-                        Forms\Components\TextInput::make('supplier_sku')
+                        TextInput::make('supplier_sku')
                             ->label('Supplier SKU'),
-                        Forms\Components\TextInput::make('minimum_order_quantity')
+                        TextInput::make('minimum_order_quantity')
                             ->label('Minimum Order Quantity')
                             ->numeric()
                             ->default(1),
-                        Forms\Components\TextInput::make('lead_time_days')
+                        TextInput::make('lead_time_days')
                             ->label('Lead Time (Days)')
                             ->numeric(),
-                        Forms\Components\Toggle::make('is_preferred')
+                        Toggle::make('is_preferred')
                             ->label('Preferred Supplier'),
                     ])
                     ->mutateFormDataUsing(function (array $data): array {
@@ -89,13 +100,13 @@ class SuppliersRelationManager extends RelationManager
                         return $data;
                     }),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DetachAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DetachAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make(),
                 ]),
             ]);
     }

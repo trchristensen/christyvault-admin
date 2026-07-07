@@ -10,9 +10,9 @@ use App\Models\Order;
 
 class Schedule extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static string $view = 'filament.team.pages.schedule';
+    protected string $view = 'filament.team.pages.schedule';
 
     protected static ?string $title = 'Delivery Schedule';
 

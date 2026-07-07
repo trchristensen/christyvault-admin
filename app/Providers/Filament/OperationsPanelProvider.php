@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use Filament\Support\Enums\Width;
+use Filament\Pages\Dashboard;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -20,7 +22,6 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Navigation\NavigationItem;
 use App\Filament\Operations\Pages\Notifications;
 use App\Livewire\NotificationsDropdown;
-use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\Facades\Blade;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Livewire\Livewire;
@@ -44,7 +45,7 @@ class OperationsPanelProvider extends PanelProvider
             ])
             ->brandLogo(fn() => view('filament.logo'))
             ->brandLogoHeight('60px')
-            ->maxContentWidth(MaxWidth::Full)
+            ->maxContentWidth(Width::Full)
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('13rem')
             // ->collapsedSidebarWidth('5rem')
@@ -65,7 +66,7 @@ class OperationsPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Operations/Resources'), for: 'App\\Filament\\Operations\\Resources')
             ->discoverPages(in: app_path('Filament/Operations/Pages'), for: 'App\\Filament\\Operations\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                Dashboard::class,
                 // Notifications::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Operations/Widgets'), for: 'App\\Filament\\Operations\\Widgets')

@@ -2,6 +2,10 @@
 
 namespace App\Filament\Resources\LocationResource\RelationManagers;
 
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\Action;
 use App\Enums\OrderStatus;
 use App\Enums\PlantLocation;
 use App\Filament\Resources\OrderResource;
@@ -29,7 +33,7 @@ class OrdersRelationManager extends RelationManager
                 ])
                 ->withCount('orderProducts'))
             ->columns([
-                Tables\Columns\TextColumn::make('order_number')
+                TextColumn::make('order_number')
                     ->label('Order #')
                     ->searchable()
                     ->sortable()
@@ -37,7 +41,7 @@ class OrdersRelationManager extends RelationManager
                         ? "Customer # {$record->customer_order_number}"
                         : null),
 
-                Tables\Columns\TextColumn::make('assigned_delivery_date')
+                TextColumn::make('assigned_delivery_date')
                     ->label('Assigned')
                     ->date('M j, Y')
                     ->sortable()
@@ -45,19 +49,19 @@ class OrdersRelationManager extends RelationManager
                         ? 'Requested ' . $record->requested_delivery_date->format('M j, Y')
                         : null),
 
-                Tables\Columns\TextColumn::make('order_date')
+                TextColumn::make('order_date')
                     ->label('Ordered')
                     ->date('M j, Y')
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('plant_location')
+                TextColumn::make('plant_location')
                     ->label('Delivery Type')
                     ->badge()
                     ->formatStateUsing(fn($state): string => PlantLocation::tryFrom((string) $state)?->getLabel() ?? 'N/A')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->formatStateUsing(fn($state): string => OrderStatus::tryFrom((string) $state)?->label() ?? str((string) $state)->replace('_', ' ')->title())
                     ->color(fn($state): string => match ((string) $state) {
@@ -81,20 +85,20 @@ class OrdersRelationManager extends RelationManager
                     })
                     ->sortable(),
 
-                Tables\Columns\IconColumn::make('is_printed')
+                IconColumn::make('is_printed')
                     ->label('Printed')
                     ->boolean()
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('order_products_count')
+                TextColumn::make('order_products_count')
                     ->label('Lines')
                     ->numeric()
                     ->sortable()
                     ->alignCenter()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('orderProducts')
+                TextColumn::make('orderProducts')
                     ->label('Products')
                     ->formatStateUsing(fn($state, Order $record): string => self::summarizeOrderProducts($record))
                     ->html()
@@ -102,11 +106,11 @@ class OrdersRelationManager extends RelationManager
                     ->toggleable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(OrderStatus::toArray())
                     ->multiple(),
 
-                Tables\Filters\SelectFilter::make('plant_location')
+                SelectFilter::make('plant_location')
                     ->label('Delivery Type')
                     ->options(
                         collect(PlantLocation::cases())
@@ -120,8 +124,8 @@ class OrdersRelationManager extends RelationManager
             ->defaultSort('order_date', 'desc')
             ->emptyStateHeading('No orders yet')
             ->emptyStateDescription('Orders for this location will show up here.')
-            ->actions([
-                Tables\Actions\Action::make('view')
+            ->recordActions([
+                Action::make('view')
                     ->label('View')
                     ->icon('heroicon-o-eye')
                     ->modalWidth('7xl')
@@ -139,18 +143,18 @@ class OrdersRelationManager extends RelationManager
                         ]
                     )),
 
-                Tables\Actions\Action::make('edit')
+                Action::make('edit')
                     ->label('Edit')
                     ->icon('heroicon-o-pencil-square')
                     ->url(fn(Order $record): string => OrderResource::getUrl('edit', ['record' => $record])),
 
-                Tables\Actions\Action::make('print')
+                Action::make('print')
                     ->label('Print Tag')
                     ->icon('heroicon-o-printer')
                     ->url(fn(Order $record): string => route('orders.print', ['order' => $record]))
                     ->openUrlInNewTab(),
             ])
-            ->bulkActions([]);
+            ->toolbarActions([]);
     }
 
     private static function summarizeOrderProducts(Order $record): string

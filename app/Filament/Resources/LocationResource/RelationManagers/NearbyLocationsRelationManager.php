@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\LocationResource\RelationManagers;
 
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\Action;
 use App\Enums\PlantLocation;
 use App\Filament\Resources\LocationResource;
 use App\Models\Location;
@@ -69,18 +71,18 @@ class NearbyLocationsRelationManager extends RelationManager
                 'locations' => $this->nearbyLocationsForMap(),
             ]))
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable()
                     ->wrap(),
-                Tables\Columns\TextColumn::make('city')
+                TextColumn::make('city')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('state')
+                TextColumn::make('state')
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('default_plant_location')
+                TextColumn::make('default_plant_location')
                     ->label('Default Delivery Type')
                     ->badge()
                     ->formatStateUsing(function ($state): string {
@@ -92,15 +94,15 @@ class NearbyLocationsRelationManager extends RelationManager
                     })
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('distance_miles')
+                TextColumn::make('distance_miles')
                     ->label('Miles Away')
                     ->formatStateUsing(fn($state): string => number_format((float) $state, 1) . ' mi')
                     ->sortable(query: fn(Builder $query, string $direction): Builder => $query->orderBy('distance_miles', $direction)),
-                Tables\Columns\TextColumn::make('full_address')
+                TextColumn::make('full_address')
                     ->label('Address')
                     ->wrap()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('last_order_at')
+                TextColumn::make('last_order_at')
                     ->label('Last Ordered')
                     ->date('M j, Y')
                     ->sortable()
@@ -110,8 +112,8 @@ class NearbyLocationsRelationManager extends RelationManager
             ->paginated([10, 25, 50])
             ->emptyStateHeading('No nearby locations')
             ->emptyStateDescription('Add coordinates to this location and other locations to calculate nearby delivery stops.')
-            ->actions([
-                Tables\Actions\Action::make('open_location')
+            ->recordActions([
+                Action::make('open_location')
                     ->label('Open Location')
                     ->icon('heroicon-o-arrow-top-right-on-square')
                     ->url(fn(Location $record): string => LocationResource::getUrl('view', ['record' => $record])),

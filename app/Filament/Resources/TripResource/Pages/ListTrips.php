@@ -2,10 +2,11 @@
 
 namespace App\Filament\Resources\TripResource\Pages;
 
+use Filament\Actions\CreateAction;
+use Filament\Schemas\Components\Tabs\Tab;
 use App\Enums\TripStatus;
 use App\Filament\Resources\TripResource;
 use Filament\Actions;
-use Filament\Resources\Components\Tab;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Resources\Pages\ListRecords;
 
@@ -16,7 +17,7 @@ class ListTrips extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 

@@ -3,6 +3,8 @@
 namespace App\Providers\Filament;
 
 
+use Filament\Pages\Dashboard;
+use Filament\Support\Enums\Width;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -19,7 +21,6 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Navigation\NavigationItem;
-use Filament\Support\Enums\MaxWidth;
 
 class SalesPanelProvider extends PanelProvider
 {
@@ -43,7 +44,7 @@ class SalesPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Sales/Resources'), for: 'App\\Filament\\Sales\\Resources')
             ->discoverPages(in: app_path('Filament/Sales/Pages'), for: 'App\\Filament\\Sales\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Sales/Widgets'), for: 'App\\Filament\\Sales\\Widgets')
             ->widgets([
@@ -61,7 +62,7 @@ class SalesPanelProvider extends PanelProvider
                     ->visible(fn(): bool => auth()->user()?->email === 'tchristensen@christyvault.com'),
 
             ])
-            ->maxContentWidth(MaxWidth::Full)
+            ->maxContentWidth(Width::Full)
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('13rem')
             ->middleware([

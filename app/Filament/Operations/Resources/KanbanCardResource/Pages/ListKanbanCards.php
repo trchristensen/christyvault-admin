@@ -2,6 +2,7 @@
 
 namespace App\Filament\Operations\Resources\KanbanCardResource\Pages;
 
+use Filament\Actions\CreateAction;
 use App\Filament\Operations\Resources\KanbanCardResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
@@ -13,7 +14,7 @@ class ListKanbanCards extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use App\Models\Employee;
 use App\Services\SmsService;
 use Illuminate\Console\Command;
@@ -84,10 +85,10 @@ class SendDailySmsToDrivers extends Command
                     $this->error("  ✗ Failed to send SMS");
                     $failed++;
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->error("  ✗ Error: {$e->getMessage()}");
                 $failed++;
-                
+
                 Log::error('Daily SMS command error', [
                     'driver_id' => $driver->id,
                     'error' => $e->getMessage()

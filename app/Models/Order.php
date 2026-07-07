@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\DeliveryCalendarAvailability;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -61,7 +62,7 @@ class Order extends Model
 
         static::creating(function ($model) {
             if ($model->assigned_delivery_date) {
-                app(\App\Services\DeliveryCalendarAvailability::class)->validateDate(
+                app(DeliveryCalendarAvailability::class)->validateDate(
                     $model->assigned_delivery_date,
                     'assigned_delivery_date'
                 );
@@ -104,7 +105,7 @@ class Order extends Model
 
         static::updating(function ($model) {
             if ($model->isDirty('assigned_delivery_date') && $model->assigned_delivery_date) {
-                app(\App\Services\DeliveryCalendarAvailability::class)->validateDate(
+                app(DeliveryCalendarAvailability::class)->validateDate(
                     $model->assigned_delivery_date,
                     'assigned_delivery_date'
                 );

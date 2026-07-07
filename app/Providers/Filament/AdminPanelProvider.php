@@ -2,6 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use Filament\Support\Enums\Width;
+use App\Filament\Pages\Dashboard;
+use App\Filament\Pages\SystemAdmin;
 use Althinect\FilamentSpatieRolesPermissions\FilamentSpatieRolesPermissionsPlugin;
 use App\Filament\Pages\TestCalendar;
 use App\Filament\Resources\OrderResource\Pages\DeliveryCalendar;
@@ -28,7 +31,6 @@ use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 use App\Filament\Resources\OrderResource\Widgets\CalendarWidget;
 use App\Filament\Widgets\CalendarWidget as WidgetsCalendarWidget;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Navigation\NavigationItem;
 
 
@@ -49,16 +51,13 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => '#1c3366',
             ])
-            ->maxContentWidth(MaxWidth::Full)
-            ->resources([
-                config('filament-logger.activity_resource')
-            ])
+            ->maxContentWidth(Width::Full)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                \App\Filament\Pages\Dashboard::class,
+                Dashboard::class,
                 DeliveryCalendar::class,
-                \App\Filament\Pages\SystemAdmin::class,
+                SystemAdmin::class,
             ])
             ->navigationGroups([
                 // NavigationGroup::make()

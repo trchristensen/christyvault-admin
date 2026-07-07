@@ -2,6 +2,7 @@
 
 namespace App\Filament\Sales\Resources\SalesVisitResource\Pages;
 
+use Filament\Actions\EditAction;
 use App\Filament\Sales\Resources\SalesVisitResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
@@ -13,7 +14,7 @@ class ViewSalesVisit extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            EditAction::make(),
         ];
     }
 }

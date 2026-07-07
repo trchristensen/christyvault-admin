@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources\LocationResource\RelationManagers;
 
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\Action;
+use App\Filament\Resources\ProductResource;
 use App\Models\Product;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
@@ -47,28 +50,28 @@ class OrderedProductsRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('sku')
+                TextColumn::make('sku')
                     ->label('SKU')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable()
                     ->wrap(),
-                Tables\Columns\TextColumn::make('product_type')
+                TextColumn::make('product_type')
                     ->label('Type')
                     ->badge()
                     ->placeholder('Other')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('total_quantity')
+                TextColumn::make('total_quantity')
                     ->label('Total Qty')
                     ->numeric()
                     ->sortable(query: fn(Builder $query, string $direction): Builder => $query->orderBy('total_quantity', $direction)),
-                Tables\Columns\TextColumn::make('order_count')
+                TextColumn::make('order_count')
                     ->label('Orders')
                     ->numeric()
                     ->sortable(query: fn(Builder $query, string $direction): Builder => $query->orderBy('order_count', $direction)),
-                Tables\Columns\TextColumn::make('last_ordered_at')
+                TextColumn::make('last_ordered_at')
                     ->label('Last Ordered')
                     ->date('M j, Y')
                     ->sortable(query: fn(Builder $query, string $direction): Builder => $query->orderBy('last_ordered_at', $direction)),
@@ -76,11 +79,11 @@ class OrderedProductsRelationManager extends RelationManager
             ->defaultSort(fn(Builder $query): Builder => $query->orderByDesc('total_quantity'))
             ->emptyStateHeading('No products ordered')
             ->emptyStateDescription('This location does not have any product history yet.')
-            ->actions([
-                Tables\Actions\Action::make('open_product')
+            ->recordActions([
+                Action::make('open_product')
                     ->label('Open Product')
                     ->icon('heroicon-o-arrow-top-right-on-square')
-                    ->url(fn(Product $record): string => \App\Filament\Resources\ProductResource::getUrl('edit', ['record' => $record])),
+                    ->url(fn(Product $record): string => ProductResource::getUrl('edit', ['record' => $record])),
             ]);
     }
 }

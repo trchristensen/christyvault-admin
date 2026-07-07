@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use App\Models\InventoryItem;
 use App\Services\Sage100Service;
 use Illuminate\Console\Command;
@@ -58,7 +59,7 @@ class SyncSageInventory extends Command
                         $errorCount++;
                         $messages[] = "Failed to sync {$item->name}: {$result['message']}";
                     }
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $errorCount++;
                     $messages[] = "Error syncing {$item->name}: {$e->getMessage()}";
                 }
@@ -69,7 +70,7 @@ class SyncSageInventory extends Command
                 'message' => "Sync completed: {$successCount} succeeded, {$errorCount} failed",
                 'details' => $messages
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [
                 'status' => 'error',
                 'message' => 'Sync failed: ' . $e->getMessage(),

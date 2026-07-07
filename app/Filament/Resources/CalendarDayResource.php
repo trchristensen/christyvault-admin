@@ -2,10 +2,28 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\CalendarDayResource\Pages\ListCalendarDays;
+use App\Filament\Resources\CalendarDayResource\Pages\CreateCalendarDay;
+use App\Filament\Resources\CalendarDayResource\Pages\EditCalendarDay;
 use App\Filament\Resources\CalendarDayResource\Pages;
 use App\Models\CalendarDay;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -14,33 +32,33 @@ class CalendarDayResource extends Resource
 {
     protected static ?string $model = CalendarDay::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static ?string $navigationGroup = 'Delivery Management';
+    protected static string | \UnitEnum | null $navigationGroup = 'Delivery Management';
 
     protected static ?string $navigationLabel = 'Calendar Days';
 
     protected static ?int $navigationSort = 20;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Calendar Day')
+        return $schema
+            ->components([
+                Section::make('Calendar Day')
                     ->schema([
-                        Forms\Components\DatePicker::make('date')
+                        DatePicker::make('date')
                             ->required()
                             ->native(false),
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\Select::make('type')
+                        Select::make('type')
                             ->options(CalendarDay::typeOptions())
                             ->default(CalendarDay::TYPE_HOLIDAY)
                             ->required()
                             ->native(false)
                             ->live()
-                            ->afterStateUpdated(function (?string $state, Forms\Set $set): void {
+                            ->afterStateUpdated(function (?string $state, Set $set): void {
                                 if ($state === CalendarDay::TYPE_SPECIAL_OPEN_DAY) {
                                     $set('blocks_delivery', false);
                                     $set('opens_delivery', true);
@@ -58,14 +76,14 @@ class CalendarDayResource extends Resource
                                 $set('blocks_delivery', true);
                                 $set('opens_delivery', false);
                             }),
-                        Forms\Components\Toggle::make('blocks_delivery')
+                        Toggle::make('blocks_delivery')
                             ->label('Blocks delivery')
                             ->default(true)
                             ->helperText('Prevents orders and trips from being scheduled on this date.'),
-                        Forms\Components\Toggle::make('opens_delivery')
+                        Toggle::make('opens_delivery')
                             ->label('Opens delivery')
                             ->helperText('Overrides the default weekend block for this date.'),
-                        Forms\Components\Textarea::make('notes')
+                        Textarea::make('notes')
                             ->columnSpanFull()
                             ->maxLength(65535),
                     ])
@@ -77,41 +95,41 @@ class CalendarDayResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('date')
+                TextColumn::make('date')
                     ->date('M j, Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('type_label')
+                TextColumn::make('type_label')
                     ->label('Type')
                     ->badge()
                     ->sortable(query: fn($query, string $direction) => $query->orderBy('type', $direction)),
-                Tables\Columns\IconColumn::make('blocks_delivery')
+                IconColumn::make('blocks_delivery')
                     ->label('Blocks')
                     ->boolean()
                     ->sortable(),
-                Tables\Columns\IconColumn::make('opens_delivery')
+                IconColumn::make('opens_delivery')
                     ->label('Opens')
                     ->boolean()
                     ->sortable(),
             ])
             ->defaultSort('date')
             ->filters([
-                Tables\Filters\SelectFilter::make('type')
+                SelectFilter::make('type')
                     ->options(CalendarDay::typeOptions()),
-                Tables\Filters\TernaryFilter::make('blocks_delivery')
+                TernaryFilter::make('blocks_delivery')
                     ->label('Blocks delivery'),
-                Tables\Filters\TernaryFilter::make('opens_delivery')
+                TernaryFilter::make('opens_delivery')
                     ->label('Opens delivery'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -119,9 +137,9 @@ class CalendarDayResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCalendarDays::route('/'),
-            'create' => Pages\CreateCalendarDay::route('/create'),
-            'edit' => Pages\EditCalendarDay::route('/{record}/edit'),
+            'index' => ListCalendarDays::route('/'),
+            'create' => CreateCalendarDay::route('/create'),
+            'edit' => EditCalendarDay::route('/{record}/edit'),
         ];
     }
 }

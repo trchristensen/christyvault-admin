@@ -9,5 +9,5 @@ class SmsManagement extends Page
 {
     protected static string $resource = FalseResource::class;
 
-    protected static string $view = 'filament.resources.false-resource.pages.sms-management';
+    protected string $view = 'filament.resources.false-resource.pages.sms-management';
 }

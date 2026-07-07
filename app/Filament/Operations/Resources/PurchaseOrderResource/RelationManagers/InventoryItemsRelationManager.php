@@ -2,6 +2,15 @@
 
 namespace App\Filament\Operations\Resources\PurchaseOrderResource\RelationManagers;
 
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\AttachAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Exception;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DetachAction;
+use Filament\Actions\DetachBulkAction;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -34,41 +43,41 @@ class InventoryItemsRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Item Name')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('sku')
+                TextColumn::make('sku')
                     ->label('SKU')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('pivot.supplier_sku')
+                TextColumn::make('pivot.supplier_sku')
                     ->label('Supplier SKU')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('pivot.quantity')
+                TextColumn::make('pivot.quantity')
                     ->label('Quantity')
                     ->numeric()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('pivot.unit_price')
+                TextColumn::make('pivot.unit_price')
                     ->label('Unit Price')
                     ->money('USD')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('pivot.total_price')
+                TextColumn::make('pivot.total_price')
                     ->label('Total')
                     ->money('USD')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('pivot.received_quantity')
+                TextColumn::make('pivot.received_quantity')
                     ->label('Received')
                     ->numeric()
                     ->sortable(),
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->preloadRecordSelect()
                     ->beforeFormFilled(function (array $data) {
                         Log::info('Before Form Filled', ['data' => $data]);
@@ -102,8 +111,8 @@ class InventoryItemsRelationManager extends RelationManager
                                 ->toArray()
                         ]);
                     })
-                    ->form(fn(Tables\Actions\AttachAction $action): array => [
-                        Forms\Components\Select::make('recordId')
+                    ->form(fn(AttachAction $action): array => [
+                        Select::make('recordId')
                             ->label('Inventory Item')
                             ->options(fn(): Collection => InventoryItem::query()
                                 ->with(['suppliers' => function($query) {
@@ -144,14 +153,14 @@ class InventoryItemsRelationManager extends RelationManager
                             ->searchable()
                             ->preload()
                             ->allowHtml(),
-                        Forms\Components\TextInput::make('supplier_sku')
+                        TextInput::make('supplier_sku')
                             ->label('Supplier SKU')
                             ->default(function () {
                                 $firstItem = $this->getOwnerRecord()->items->first();
                                 return $firstItem?->sku ?? null;
                             })
                             ->nullable(),
-                        Forms\Components\TextInput::make('quantity')
+                        TextInput::make('quantity')
                             ->label(function () {
                                 $firstItem = $this->getOwnerRecord()->items->first();
                                 return 'Quantity' . ($firstItem ? ' (' . $firstItem->unit_of_measure . ')' : '');
@@ -160,13 +169,13 @@ class InventoryItemsRelationManager extends RelationManager
                             ->required()
                             ->default(1)
                             ->minValue(0),
-                        Forms\Components\TextInput::make('unit_price')
+                        TextInput::make('unit_price')
                             ->numeric()
                             ->prefix('$')
                             ->required()
                             ->default(0)
                             ->minValue(0),
-                        Forms\Components\TextInput::make('received_quantity')
+                        TextInput::make('received_quantity')
                             ->numeric()
                             ->default(0)
                             ->minValue(0),
@@ -212,7 +221,7 @@ class InventoryItemsRelationManager extends RelationManager
                                 'total_price' => $totalPrice,
                                 'received_quantity' => $data['received_quantity'] ?? 0,
                             ];
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             DB::rollBack();
                             Log::error('Failed to attach item:', [
                                 'error' => $e->getMessage(),
@@ -222,46 +231,46 @@ class InventoryItemsRelationManager extends RelationManager
                         }
                     }),
 
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('New inventory item')
                     ->model(InventoryItem::class)
-                    ->form([
-                        Forms\Components\TextInput::make('name')
+                    ->schema([
+                        TextInput::make('name')
                             ->required(),
-                        Forms\Components\TextInput::make('sku')
+                        TextInput::make('sku')
                             ->required()
                             ->unique(ignoreRecord: true),
-                        Forms\Components\TextInput::make('description')
+                        TextInput::make('description')
                             ->nullable(),
-                        Forms\Components\TextInput::make('minimum_stock')
+                        TextInput::make('minimum_stock')
                             ->numeric()
                             ->default(0),
-                        Forms\Components\TextInput::make('current_stock')
+                        TextInput::make('current_stock')
                             ->numeric()
                             ->default(0),
                     ]),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
-                    ->form(fn(Tables\Actions\EditAction $action): array => [
-                        Forms\Components\TextInput::make('supplier_sku')
+            ->recordActions([
+                EditAction::make()
+                    ->schema(fn(EditAction $action): array => [
+                        TextInput::make('supplier_sku')
                             ->label('Supplier SKU'),
-                        Forms\Components\TextInput::make('quantity')
+                        TextInput::make('quantity')
                             ->required()
                             ->numeric(),
-                        Forms\Components\TextInput::make('unit_price')
+                        TextInput::make('unit_price')
                             ->required()
                             ->numeric()
                             ->prefix('$'),
-                        Forms\Components\TextInput::make('received_quantity')
+                        TextInput::make('received_quantity')
                             ->numeric()
                             ->visible(fn($livewire) =>
                             $livewire->ownerRecord->status === 'received'),
                     ]),
-                Tables\Actions\DetachAction::make(),
+                DetachAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DetachBulkAction::make(),
+            ->toolbarActions([
+                DetachBulkAction::make(),
             ]);
     }
 }

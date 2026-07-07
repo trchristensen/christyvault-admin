@@ -2,11 +2,12 @@
 
 namespace App\Filament\Resources\Traits;
 
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Section;
 use App\Models\Employee;
 use App\Models\Order;
 
@@ -16,11 +17,12 @@ trait HasTripForm
     {
         return [
             Section::make('Trip Information')
+                ->columnSpanFull()
                 ->schema([
                     TextInput::make('trip_number')
                         ->disabled()
                         ->dehydrated(false),
-                     Select::make('driver_id')
+                    Select::make('driver_id')
                         ->relationship('driver', 'name')
                         ->options(function () {
                             return Employee::whereHas('positions', function ($query) {
@@ -45,8 +47,9 @@ trait HasTripForm
                 ])->columns(2),
 
             Section::make('Orders')
+                ->columnSpanFull()
                 ->schema([
-                    \Filament\Forms\Components\Repeater::make('orders')
+                    Repeater::make('orders')
                         ->relationship()
                         ->schema([
                             Select::make('id')
@@ -91,6 +94,7 @@ trait HasTripForm
                                 ->nullable(),
                         ])
                         ->columns(2)
+                        ->columnSpanFull()
                         ->reorderable()
                         ->reorderableWithButtons()
                         ->defaultItems(0)

@@ -2,12 +2,14 @@
 
 namespace App\Filament\Widgets;
 
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
-use Filament\Tables\Actions\Action;
 use Illuminate\Database\Eloquent\Model;
 
 class RecentOrdersWidget extends BaseWidget
@@ -28,27 +30,27 @@ class RecentOrdersWidget extends BaseWidget
                 Order::query()->latest()
             )
             ->columns([
-                Tables\Columns\TextColumn::make('order_number')
+                TextColumn::make('order_number')
                     ->label('Order #')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('location.name')
+                TextColumn::make('location.name')
                     ->searchable()
                     ->sortable()
                     ->description(fn(Order $record): string => $record->location->full_address ?? ''),
 
-                Tables\Columns\TextColumn::make('requested_delivery_date')
+                TextColumn::make('requested_delivery_date')
                     ->label('Requested')
                     ->date('M j, Y')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('assigned_delivery_date')
+                TextColumn::make('assigned_delivery_date')
                     ->label('Assigned')
                     ->date('M j, Y')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->sortable()
                     ->formatStateUsing(fn($state): string => ucfirst(str_replace('_', ' ', (string) $state)))
@@ -63,11 +65,11 @@ class RecentOrdersWidget extends BaseWidget
                         default => 'gray',
                     }),
 
-                Tables\Columns\TextColumn::make('trip.trip_number')
+                TextColumn::make('trip.trip_number')
                     ->label('Trip')
                     ->default('Unassigned'),
 
-                Tables\Columns\TextColumn::make('orderProducts')
+                TextColumn::make('orderProducts')
                     ->label('Products')
                     ->formatStateUsing(function ($state, $record) {
                         $products = [];
@@ -93,7 +95,7 @@ class RecentOrdersWidget extends BaseWidget
                     ->html(),
             ])
 
-            ->actions([
+            ->recordActions([
                 Action::make('view')
                     ->stickyModalFooter()
                     ->modalContent(fn($record) => view(
@@ -101,7 +103,7 @@ class RecentOrdersWidget extends BaseWidget
                         ['record' => $record]
                     ))
                     // ->modalHeading(fn($record) => $record->order_number)
-                    ->form([])
+                    ->schema([])
                     ->modalFooterActions([
                         Action::make('edit')
                             ->modalWidth('7xl')
@@ -124,7 +126,7 @@ class RecentOrdersWidget extends BaseWidget
                     ->icon('heroicon-o-printer')
                     ->url(fn(Order $record): string => route('orders.print', $record))
                     ->openUrlInNewTab(),
-                Tables\Actions\EditAction::make(),
+                EditAction::make(),
             ]);
     }
 }

@@ -2,10 +2,11 @@
 
 namespace App\Filament\Resources\LocationResource\Pages;
 
+use Filament\Actions\EditAction;
+use Filament\Schemas\Schema;
 use App\Filament\Resources\LocationResource;
 use Filament\Actions;
 use Filament\Infolists\Components\ViewEntry;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Contracts\Support\Htmlable;
 
@@ -26,11 +27,11 @@ class ViewLocation extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            EditAction::make(),
         ];
     }
 
-    public function infolist(Infolist $infolist): Infolist
+    public function infolist(Schema $schema): Schema
     {
         return $infolist
             ->schema([

@@ -2,11 +2,25 @@
 
 namespace App\Filament\Sales\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Sales\Resources\SalesVisitResource\Pages\ListSalesVisits;
+use App\Filament\Sales\Resources\SalesVisitResource\Pages\CreateSalesVisit;
+use App\Filament\Sales\Resources\SalesVisitResource\Pages\EditSalesVisit;
 use App\Enums\SalesVisitStatus;
 use App\Filament\Sales\Resources\SalesVisitResource\Pages;
 use App\Models\SalesVisit;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -15,28 +29,28 @@ use App\Models\Contact;
 class SalesVisitResource extends Resource
 {
     protected static ?string $model = SalesVisit::class;
-    protected static ?string $navigationIcon = 'heroicon-o-map-pin';
-    protected static ?string $navigationGroup = 'Sales';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-map-pin';
+    protected static string | \UnitEnum | null $navigationGroup = 'Sales';
     protected static ?int $navigationSort = 1;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\Select::make('location_id')
+        return $schema->components([
+            Select::make('location_id')
                 ->relationship('location', 'name')
                 ->required()
                 ->searchable()
                 ->preload()
                 ->live()
-                ->afterStateUpdated(fn($state, Forms\Set $set) =>
+                ->afterStateUpdated(fn($state, Set $set) =>
                 $set('contact_id', null)),
 
-            Forms\Components\Select::make('contact_id')
+            Select::make('contact_id')
                 ->relationship(
                     name: 'contact',
                     titleAttribute: 'name'
                 )
-                ->options(function (Forms\Get $get) {
+                ->options(function (Get $get) {
                     if (!$get('location_id')) {
                         return [];
                     }
@@ -58,27 +72,27 @@ class SalesVisitResource extends Resource
                 ->searchable()
                 ->preload()
                 ->createOptionForm([
-                    Forms\Components\TextInput::make('name')->required(),
-                    Forms\Components\TextInput::make('email')->required()->email(),
-                    Forms\Components\TextInput::make('phone'),
-                    Forms\Components\TextInput::make('title'),
+                    TextInput::make('name')->required(),
+                    TextInput::make('email')->required()->email(),
+                    TextInput::make('phone'),
+                    TextInput::make('title'),
                 ])
-                ->visible(fn(Forms\Get $get) => filled($get('location_id'))),
+                ->visible(fn(Get $get) => filled($get('location_id'))),
 
-            Forms\Components\Select::make('employee_id')
+            Select::make('employee_id')
                 ->relationship('employee', 'name')
                 ->required()
                 ->searchable()
                 ->preload(),
 
-            Forms\Components\DateTimePicker::make('planned_at')
+            DateTimePicker::make('planned_at')
                 ->required()
                 ->native(false),
 
-            Forms\Components\DateTimePicker::make('completed_at')
+            DateTimePicker::make('completed_at')
                 ->native(false),
 
-            Forms\Components\Select::make('status')
+            Select::make('status')
                 ->options(collect(SalesVisitStatus::cases())->mapWithKeys(
                     fn($status) =>
                     [$status->value => $status->getLabel()]
@@ -86,11 +100,11 @@ class SalesVisitResource extends Resource
                 ->default(SalesVisitStatus::PLANNED->value)
                 ->required(),
 
-            Forms\Components\Textarea::make('visit_notes')
+            Textarea::make('visit_notes')
                 ->label('Internal Notes')
                 ->columnSpanFull(),
 
-            Forms\Components\Textarea::make('followup_summary')
+            Textarea::make('followup_summary')
                 ->label('Follow-up Summary (will be sent in email)')
                 ->columnSpanFull(),
         ]);
@@ -99,53 +113,53 @@ class SalesVisitResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
-            Tables\Columns\TextColumn::make('location.name')
+            TextColumn::make('location.name')
                 ->searchable()
                 ->sortable(),
 
-            Tables\Columns\TextColumn::make('contact.name')
+            TextColumn::make('contact.name')
                 ->searchable()
                 ->sortable(),
 
-            Tables\Columns\TextColumn::make('employee.name')
+            TextColumn::make('employee.name')
                 ->searchable()
                 ->sortable(),
 
-            Tables\Columns\TextColumn::make('planned_at')
+            TextColumn::make('planned_at')
                 ->dateTime()
                 ->sortable(),
 
-            Tables\Columns\TextColumn::make('status')
+            TextColumn::make('status')
                 ->badge()
                 ->color(fn(SalesVisit $record) => $record->status->getColor()),
 
-            Tables\Columns\TextColumn::make('created_at')
+            TextColumn::make('created_at')
                 ->dateTime()
                 ->sortable()
                 ->toggleable(isToggledHiddenByDefault: true),
         ])
             ->defaultSort('planned_at')
             ->filters([
-                Tables\Filters\SelectFilter::make('location')
+                SelectFilter::make('location')
                     ->relationship('location', 'name')
                     ->searchable()
                     ->preload(),
 
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(collect(SalesVisitStatus::cases())->mapWithKeys(
                         fn($status) =>
                         [$status->value => $status->getLabel()]
                     )),
 
-                Tables\Filters\SelectFilter::make('employee')
+                SelectFilter::make('employee')
                     ->relationship('employee', 'name'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -153,9 +167,9 @@ class SalesVisitResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListSalesVisits::route('/'),
-            'create' => Pages\CreateSalesVisit::route('/create'),
-            'edit' => Pages\EditSalesVisit::route('/{record}/edit'),
+            'index' => ListSalesVisits::route('/'),
+            'create' => CreateSalesVisit::route('/create'),
+            'edit' => EditSalesVisit::route('/{record}/edit'),
         ];
     }
 }

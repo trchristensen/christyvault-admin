@@ -13,7 +13,7 @@ use Illuminate\Support\Carbon;
 
 class LocationSalesChart extends ChartWidget
 {
-    protected static ?string $heading = 'Location Performance';
+    protected ?string $heading = 'Location Performance';
 
     public ?string $filter = 'year';
     public ?int $locationId = null;

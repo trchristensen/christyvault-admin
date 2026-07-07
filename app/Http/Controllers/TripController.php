@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Enums\OrderStatus;
 use App\Enums\TripStatus;
 use App\Models\Trip;
@@ -32,7 +33,7 @@ class TripController extends Controller
                 ->get();
 
             return TripResource::collection($trips);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Trip fetch error:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -55,7 +56,7 @@ class TripController extends Controller
             ]);
 
             return new TripResource($trip);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Trip fetch error:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -106,7 +107,7 @@ class TripController extends Controller
                 'start_time' => $trip->start_time,
                 'end_time' => $trip->end_time
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Trip status update error:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -134,7 +135,7 @@ class TripController extends Controller
                 'message' => 'Stop arrival marked successfully',
                 'arrived_at' => $order->arrived_at
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Mark stop arrival error:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -162,7 +163,7 @@ class TripController extends Controller
                 'message' => 'Stop completed successfully',
                 'delivered_at' => $order->delivered_at
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Complete stop error:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -201,7 +202,7 @@ class TripController extends Controller
                 'message' => 'Signature uploaded successfully',
                 'signature_path' => Storage::disk('r2')->url($path)
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Upload signature error:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -239,7 +240,7 @@ class TripController extends Controller
                 'message' => 'Delivery quantities updated successfully',
                 'order' => $order->load('orderProducts.product')
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Update delivered quantities error:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()

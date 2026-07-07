@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\EmployeeResource\Pages;
 
+use Log;
+use Filament\Actions\DeleteAction;
 use App\Filament\Resources\EmployeeResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -26,14 +28,14 @@ class EditEmployee extends EditRecord
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
         // Debug incoming data
-        \Log::info('Update Employee - Incoming Data:', [
+        Log::info('Update Employee - Incoming Data:', [
             'record_id' => $record->id,
             'data' => $data,
         ]);
 
         return DB::transaction(function () use ($record, $data) {
             // Debug positions before update
-            \Log::info('Current Positions:', [
+            Log::info('Current Positions:', [
                 'employee_id' => $record->id,
                 'positions' => $record->positions()->pluck('name')->toArray(),
             ]);
@@ -41,7 +43,7 @@ class EditEmployee extends EditRecord
             $wasDriver = $record->positions()->where('name', 'driver')->exists();
             $isDriver = in_array('driver', $data['positions'] ?? []);
 
-            \Log::info('Driver Status:', [
+            Log::info('Driver Status:', [
                 'wasDriver' => $wasDriver,
                 'isDriver' => $isDriver,
                 'positions_in_data' => $data['positions'] ?? 'no positions in data',
@@ -50,7 +52,7 @@ class EditEmployee extends EditRecord
             $record->update($data);
 
             // Debug after main record update
-            \Log::info('After Record Update:', [
+            Log::info('After Record Update:', [
                 'updated_data' => $record->fresh()->toArray(),
             ]);
 
@@ -58,18 +60,18 @@ class EditEmployee extends EditRecord
             $record->positions()->sync($data['positions'] ?? []);
 
             // Debug after position sync
-            \Log::info('After Position Sync:', [
+            Log::info('After Position Sync:', [
                 'new_positions' => $record->fresh()->positions()->pluck('name')->toArray(),
             ]);
 
             // Handle driver record
             if ($isDriver) {
-                \Log::info('Creating/Updating Driver Record:', [
+                Log::info('Creating/Updating Driver Record:', [
                     'driver_data' => $data['driver'] ?? [],
                 ]);
                 $this->updateOrCreateDriverRecord($record, $data['driver'] ?? []);
             } elseif ($wasDriver && !$isDriver) {
-                \Log::info('Deleting Driver Record');
+                Log::info('Deleting Driver Record');
                 $record->driver?->delete();
             }
 
@@ -81,7 +83,7 @@ class EditEmployee extends EditRecord
     {
         $driverData['employee_id'] = $employee->id;
 
-        \Log::info('Driver Record Creation/Update:', [
+        Log::info('Driver Record Creation/Update:', [
             'employee_id' => $employee->id,
             'driver_data' => $driverData,
         ]);
@@ -95,7 +97,7 @@ class EditEmployee extends EditRecord
     protected function getActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

@@ -2,10 +2,10 @@
 
 namespace App\Filament\Operations\Pages;
 
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Pages\Page;
 use Filament\Tables\Table;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Database\Eloquent\Collection;
@@ -16,12 +16,12 @@ class Notifications extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static ?string $navigationIcon = 'heroicon-o-bell';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-bell';
     protected static ?string $navigationLabel = 'Notifications';
     protected static ?string $title = 'Notifications';
     protected static ?string $slug = 'notifications';
 
-    protected static string $view = 'filament.operations.pages.notifications';
+    protected string $view = 'filament.operations.pages.notifications';
 
 
 
@@ -50,7 +50,7 @@ class Notifications extends Page implements HasTable
                     ->color(fn($record) => $record->read_at ? 'success' : 'warning')
                     ->formatStateUsing(fn($record) => $record->read_at ? 'Read' : 'Unread'),
             ])
-            ->actions([
+            ->recordActions([
                 Action::make('view')
                     ->icon('heroicon-m-eye')
                     ->url(fn($record) => $record->data['link'] ?? '#')
@@ -77,7 +77,7 @@ class Notifications extends Page implements HasTable
                             ->send();
                     }),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkAction::make('mark_as_read')
                     ->label('Mark as Read')
                     ->icon('heroicon-m-check')

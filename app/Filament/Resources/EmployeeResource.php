@@ -2,15 +2,36 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Grouping\Group;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use App\Filament\Resources\EmployeeResource\Pages\ListEmployees;
+use App\Filament\Resources\EmployeeResource\Pages\CreateEmployee;
+use App\Filament\Resources\EmployeeResource\Pages\EditEmployee;
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
 use App\Models\Driver;
 use App\Models\Employee;
 use App\Models\User;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Navigation\NavigationGroup;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -28,18 +49,18 @@ class EmployeeResource extends Resource
 {
     protected static ?string $model = Employee::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
 
-    protected static ?string $navigationGroup = 'Directories';
+    protected static string | \UnitEnum | null $navigationGroup = 'Directories';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('User Association')
+        return $schema
+            ->components([
+                Section::make('User Association')
                     ->description('Select an existing user account to link to this employee')
                     ->schema([
-                        Forms\Components\Select::make('user_id')
+                        Select::make('user_id')
                             ->label('Associated User Account')
                             ->relationship('user', 'name')
                             ->preload()
@@ -62,18 +83,18 @@ class EmployeeResource extends Resource
                             }),
                     ])->columnSpanFull(),
 
-                Forms\Components\Section::make('Employee Details')
+                Section::make('Employee Details')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->required()
                             ->readOnly(fn(Get $get): bool => (bool) $get('user_id')),
-                        Forms\Components\TextInput::make('email')
+                        TextInput::make('email')
                             ->email()
                             ->required()
                             ->readOnly(fn(Get $get): bool => (bool) $get('user_id')),
                         PhoneInput::make('phone')->defaultCountry('US'),
-                        Forms\Components\TextInput::make('address'),
-                        Forms\Components\Select::make('positions')
+                        TextInput::make('address'),
+                        Select::make('positions')
                             ->relationship(
                                 name: 'positions',
                                 titleAttribute: 'display_name',
@@ -86,30 +107,30 @@ class EmployeeResource extends Resource
                             ->dehydrated(true),
 
 
-                        Forms\Components\Select::make('christy_location')
+                        Select::make('christy_location')
                             ->options([
                                 'colma' => 'Colma',
                                 'tulare' => 'Tulare',
                             ])
                             ->required(),
-                        Forms\Components\DatePicker::make('hire_date')
+                        DatePicker::make('hire_date')
                             ->required(),
-                        Forms\Components\DatePicker::make('birth_date')
+                        DatePicker::make('birth_date')
                             ->label('Birthdate')
                             ->required(),
-                        Forms\Components\Checkbox::make('is_active')
+                        Checkbox::make('is_active')
                             ->default('TRUE')
                             ->label('Active')
                             ->dehydrateStateUsing(fn($state) => $state ? 'TRUE' : 'FALSE'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Driver Details')
+                Section::make('Driver Details')
                     ->schema([
-                        Forms\Components\TextInput::make('driver.license_number')
+                        TextInput::make('driver.license_number')
                             ->label('License Number'),
-                        Forms\Components\DatePicker::make('driver.license_expiration')
+                        DatePicker::make('driver.license_expiration')
                             ->label('License Expiration'),
-                        Forms\Components\Textarea::make('driver.notes')
+                        Textarea::make('driver.notes')
                             ->label('Notes'),
                     ])
                     ->visible(function (Get $get): bool {
@@ -127,60 +148,60 @@ class EmployeeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('email')
+                TextColumn::make('email')
                     ->searchable(),
                 PhoneColumn::make('phone')
                     ->displayFormat(PhoneInputNumberType::INTERNATIONAL),
-                Tables\Columns\TextColumn::make('positions.display_name')
+                TextColumn::make('positions.display_name')
                     ->badge()
                     ->separator(',')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('christy_location')
+                TextColumn::make('christy_location')
                     ->label('Location')
                     ->formatStateUsing(fn(string $state): string => ucfirst($state))
                     ->badge(),
-                Tables\Columns\IconColumn::make('is_active')
+                IconColumn::make('is_active')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('deleted_at')
+                TextColumn::make('deleted_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->groups([
-                Tables\Grouping\Group::make('christy_location')
+                Group::make('christy_location')
                     ->label('Location')
                     ->getTitleFromRecordUsing(fn(Employee $record): string => ucfirst($record->christy_location))
                     ->collapsible(),
-                Tables\Grouping\Group::make('positions.name')
+                Group::make('positions.name')
                     ->label('Position')
                     ->getTitleFromRecordUsing(fn(Employee $record): string => $record->positions->pluck('display_name')->join(', '))
                     ->collapsible(),
             ])
             ->defaultGroup('christy_location')
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\ForceDeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
+                ForceDeleteAction::make(),
+                RestoreAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -195,9 +216,9 @@ class EmployeeResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListEmployees::route('/'),
-            'create' => Pages\CreateEmployee::route('/create'),
-            'edit' => Pages\EditEmployee::route('/{record}/edit'),
+            'index' => ListEmployees::route('/'),
+            'create' => CreateEmployee::route('/create'),
+            'edit' => EditEmployee::route('/{record}/edit'),
         ];
     }
 

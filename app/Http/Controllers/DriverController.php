@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -36,7 +37,7 @@ class DriverController extends Controller
                 'longitude' => (float)$location->longitude,
                 'radius_feet' => $location->radius_feet
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Location fetch error:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()

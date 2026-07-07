@@ -2,8 +2,19 @@
 
 namespace App\Filament\Resources\TripResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\AttachAction;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DetachAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachBulkAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -14,17 +25,17 @@ class LocationsRelationManager extends RelationManager
     protected static ?string $title = 'Trip Locations';
     protected static ?string $recordTitleAttribute = 'name';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('type')
+        return $schema
+            ->components([
+                Select::make('type')
                     ->options([
                         'start_location' => 'Start Location',
                         'delivery' => 'Delivery Location',
                     ])
                     ->required(),
-                Forms\Components\TextInput::make('sequence')
+                TextInput::make('sequence')
                     ->numeric()
                     ->default(0)
                     ->required(),
@@ -36,9 +47,9 @@ class LocationsRelationManager extends RelationManager
         return $table
             ->reorderable()
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('location_type')
+                TextColumn::make('location_type')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'cemetery' => 'danger',
@@ -46,46 +57,46 @@ class LocationsRelationManager extends RelationManager
                         'funeral_home' => 'info',
                         'other' => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('full_address')
+                TextColumn::make('full_address')
                     ->label('Address'),
-                Tables\Columns\TextColumn::make('type')
+                TextColumn::make('type')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'start_location' => 'success',
                         'delivery' => 'info',
                     }),
-                Tables\Columns\TextColumn::make('sequence')
+                TextColumn::make('sequence')
             ])
             ->filters([
                 //
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->preloadRecordSelect()
-                    ->form(fn(Tables\Actions\AttachAction $action): array => [
+                    ->form(fn(AttachAction $action): array => [
                         $action->getRecordSelect(),
-                        Forms\Components\Select::make('type')
+                        Select::make('type')
                             ->options([
                                 'start_location' => 'Start Location',
                                 'delivery' => 'Delivery Location',
                             ])
                             ->required(),
-                        Forms\Components\TextInput::make('sequence')
+                        TextInput::make('sequence')
                             ->numeric()
                             ->default(0)
                             ->required(),
                     ]),
-                Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DetachAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DetachAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make(),
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make(),
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

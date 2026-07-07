@@ -2,11 +2,24 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Checkbox;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\ProductResource\Pages\ListProducts;
+use App\Filament\Resources\ProductResource\Pages\CreateProduct;
+use App\Filament\Resources\ProductResource\Pages\EditProduct;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Product;
 use App\Enums\UnitOfMeasure;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -15,28 +28,28 @@ class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationGroup = 'Directories';
+    protected static string | \UnitEnum | null $navigationGroup = 'Directories';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('sku')
+        return $schema
+            ->components([
+                TextInput::make('sku')
                     ->required()
                     ->label('Product Number')
                     ->unique(ignoreRecord: true)
                     ->maxLength(255),
-                Forms\Components\TextInput::make('name')
+                TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Select::make('unit')
+                Select::make('unit')
                     ->label('Unit of Measure')
                     ->options(UnitOfMeasure::getOptions())
                     ->searchable()
                     ->preload(),
-                Forms\Components\Select::make('product_type')
+                Select::make('product_type')
                     ->label('Product Type')
                     ->options([
                         'Wilbert Burial Vaults' => 'Wilbert Burial Vaults',
@@ -48,23 +61,23 @@ class ProductResource extends Resource
                         'Other' => 'Other',
                     ])
                     ->native(false),
-                Forms\Components\Textarea::make('description')
+                Textarea::make('description')
                     ->maxLength(65535)
                     ->columnSpanFull(),
-                Forms\Components\TextInput::make('price')
+                TextInput::make('price')
                     ->required()
                     ->default(0)
                     ->numeric()
                     ->prefix('$'),
-                Forms\Components\TextInput::make('stock')
+                TextInput::make('stock')
                     ->required()
                     ->numeric()
                     ->default(0),
-                Forms\Components\FileUpload::make('featured_image')
+                FileUpload::make('featured_image')
                     ->image()
                     ->imageEditor()
                     ->columnSpanFull(),
-                Forms\Components\Checkbox::make('is_active')
+                Checkbox::make('is_active')
                     ->default('TRUE')
                     ->label('Active')
                     ->dehydrateStateUsing(fn($state) => $state ? 'TRUE' : 'FALSE'),
@@ -77,29 +90,29 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('sku')
+                TextColumn::make('sku')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('unit')
+                TextColumn::make('unit')
                     ->label('Unit')
                     ->formatStateUsing(fn($state) => $state?->label() ?? 'N/A')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('product_type')
+                TextColumn::make('product_type')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('price')
+                TextColumn::make('price')
                     ->money()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('stock')
+                TextColumn::make('stock')
                     ->sortable(),
-                Tables\Columns\IconColumn::make('is_active')
+                IconColumn::make('is_active')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -107,12 +120,12 @@ class ProductResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -127,9 +140,9 @@ class ProductResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListProducts::route('/'),
-            'create' => Pages\CreateProduct::route('/create'),
-            'edit' => Pages\EditProduct::route('/{record}/edit'),
+            'index' => ListProducts::route('/'),
+            'create' => CreateProduct::route('/create'),
+            'edit' => EditProduct::route('/{record}/edit'),
         ];
     }
 }

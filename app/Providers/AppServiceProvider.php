@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Order;
+use App\Observers\OrderObserver;
 use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Support\Facades\Log;
@@ -47,6 +49,6 @@ class AppServiceProvider extends ServiceProvider
 
         PurchaseOrder::observe(PurchaseOrderObserver::class);
         Location::observe(LocationObserver::class);
-        \App\Models\Order::observe(\App\Observers\OrderObserver::class);
+        Order::observe(OrderObserver::class);
     }
 }

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class SalesStatsWidget extends BaseWidget
 {
-    protected static ?string $pollingInterval = '15s';
+    protected ?string $pollingInterval = '15s';
 
     protected function getStats(): array
     {

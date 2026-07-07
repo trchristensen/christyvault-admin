@@ -2,10 +2,21 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\DeliveryRateResource\Pages\ListDeliveryRates;
+use App\Filament\Resources\DeliveryRateResource\Pages\CreateDeliveryRate;
+use App\Filament\Resources\DeliveryRateResource\Pages\EditDeliveryRate;
 use App\Filament\Resources\DeliveryRateResource\Pages;
 use App\Models\DeliveryRate;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -14,46 +25,46 @@ class DeliveryRateResource extends Resource
 {
     protected static ?string $model = DeliveryRate::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-banknotes';
 
-    protected static ?string $navigationGroup = 'Delivery Management';
+    protected static string | \UnitEnum | null $navigationGroup = 'Delivery Management';
 
     protected static ?string $navigationLabel = 'Delivery Rates';
 
     protected static ?int $navigationSort = 30;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Delivery Rate')
+        return $schema
+            ->components([
+                Section::make('Delivery Rate')
                     ->schema([
-                        Forms\Components\DatePicker::make('effective_date')
+                        DatePicker::make('effective_date')
                             ->required()
                             ->native(false),
-                        Forms\Components\TextInput::make('zone')
+                        TextInput::make('zone')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('min_miles')
+                        TextInput::make('min_miles')
                             ->label('Minimum Miles')
                             ->numeric()
                             ->required()
                             ->minValue(0),
-                        Forms\Components\TextInput::make('max_miles')
+                        TextInput::make('max_miles')
                             ->label('Maximum Miles')
                             ->numeric()
                             ->minValue(0),
-                        Forms\Components\TextInput::make('miles_label')
+                        TextInput::make('miles_label')
                             ->label('Displayed Miles')
                             ->helperText('Example: 51-100')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('price')
+                        TextInput::make('price')
                             ->numeric()
                             ->required()
                             ->prefix('$')
                             ->minValue(0),
-                        Forms\Components\Select::make('price_unit')
+                        Select::make('price_unit')
                             ->label('Calculation')
                             ->options([
                                 DeliveryRate::UNIT_VAULT => 'Per vault',
@@ -71,32 +82,32 @@ class DeliveryRateResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('effective_date')
+                TextColumn::make('effective_date')
                     ->date('M j, Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('zone')
+                TextColumn::make('zone')
                     ->badge()
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('miles_range_label')
+                TextColumn::make('miles_range_label')
                     ->label('Miles'),
-                Tables\Columns\TextColumn::make('price')
+                TextColumn::make('price')
                     ->money('USD')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('calculation_label')
+                TextColumn::make('calculation_label')
                     ->label('Calculation'),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('effective_date', 'desc')
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -104,9 +115,9 @@ class DeliveryRateResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDeliveryRates::route('/'),
-            'create' => Pages\CreateDeliveryRate::route('/create'),
-            'edit' => Pages\EditDeliveryRate::route('/{record}/edit'),
+            'index' => ListDeliveryRates::route('/'),
+            'create' => CreateDeliveryRate::route('/create'),
+            'edit' => EditDeliveryRate::route('/{record}/edit'),
         ];
     }
 }

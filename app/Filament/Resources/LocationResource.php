@@ -2,6 +2,29 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\MarkdownEditor;
+use Filament\Forms\Components\Placeholder;
+use Filament\Tables\Columns\TextColumn;
+use Carbon\Carbon;
+use Exception;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\LocationResource\RelationManagers\OrderedProductsRelationManager;
+use App\Filament\Resources\LocationResource\RelationManagers\OrdersRelationManager;
+use App\Filament\Resources\LocationResource\RelationManagers\NearbyLocationsRelationManager;
+use App\Filament\Resources\LocationResource\Pages\ListLocations;
+use App\Filament\Resources\LocationResource\Pages\CreateLocation;
+use App\Filament\Resources\LocationResource\Pages\ViewLocation;
+use App\Filament\Resources\LocationResource\Pages\EditLocation;
 use App\Enums\PlantLocation;
 use App\Filament\Resources\LocationResource\Pages;
 use App\Filament\Resources\LocationResource\RelationManagers;
@@ -9,7 +32,6 @@ use App\Models\Location;
 use App\Models\Contact;
 use App\Services\LocationGeocodingService;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -23,19 +45,19 @@ class LocationResource extends Resource
 {
     protected static ?string $model = Location::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-map-pin';
-    protected static ?string $navigationGroup = 'Directories';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-map-pin';
+    protected static string | \UnitEnum | null $navigationGroup = 'Directories';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Basic Information')
+        return $schema
+            ->components([
+                Section::make('Basic Information')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\Select::make('location_type')
+                        Select::make('location_type')
                             ->options([
                                 'business' => 'Business',
                                 'residential' => 'Residential',
@@ -45,7 +67,7 @@ class LocationResource extends Resource
                             ])
                             ->required()
                             ->native(false),
-                        Forms\Components\Select::make('default_plant_location')
+                        Select::make('default_plant_location')
                             ->label('Default Delivery Type')
                             ->options(
                                 collect(PlantLocation::cases())
@@ -61,10 +83,10 @@ class LocationResource extends Resource
                             ->label('General Phone Number')
                             ->helperText('This is the general phone number, not just for deliveries. Please make a contact for specifics like deliveries.')
                             ->defaultCountry('US'),
-                        Forms\Components\TextInput::make('email')
+                        TextInput::make('email')
                             ->label('General Email')
                             ->email(),
-                        Forms\Components\Select::make('preferred_delivery_contact_id')
+                        Select::make('preferred_delivery_contact_id')
                             ->label('Preferred contact for delivery')
                             ->relationship(
                                 'preferredDeliveryContact',
@@ -132,18 +154,18 @@ class LocationResource extends Resource
                                 }
                             })
                             ->createOptionForm([
-                                Forms\Components\TextInput::make('name')
+                                TextInput::make('name')
                                     ->required()
                                     ->maxLength(255),
-                                Forms\Components\TextInput::make('email')
+                                TextInput::make('email')
                                     ->email()
                                     ->maxLength(255),
-                                Forms\Components\Grid::make(2)
+                                Grid::make(2)
                                     ->schema([
                                         PhoneInput::make('phone')
                                             ->label('Office Phone')
                                             ->defaultCountry('US'),
-                                        Forms\Components\TextInput::make('phone_extension')
+                                        TextInput::make('phone_extension')
                                             ->label('Extension')
                                             ->maxLength(10)
                                             ->placeholder('x1234'),
@@ -151,7 +173,7 @@ class LocationResource extends Resource
                                 PhoneInput::make('mobile_phone')
                                     ->label('Mobile Phone')
                                     ->defaultCountry('US'),
-                                Forms\Components\Select::make('contact_types')
+                                Select::make('contact_types')
                                     ->relationship('contactTypes', 'name')
                                     ->multiple()
                                     ->preload()
@@ -159,18 +181,18 @@ class LocationResource extends Resource
                                     ->native(false),
                             ])
                             ->editOptionForm([
-                                Forms\Components\TextInput::make('name')
+                                TextInput::make('name')
                                     ->required()
                                     ->maxLength(255),
-                                Forms\Components\TextInput::make('email')
+                                TextInput::make('email')
                                     ->email()
                                     ->maxLength(255),
-                                Forms\Components\Grid::make(2)
+                                Grid::make(2)
                                     ->schema([
                                         PhoneInput::make('phone')
                                             ->label('Office Phone')
                                             ->defaultCountry('US'),
-                                        Forms\Components\TextInput::make('phone_extension')
+                                        TextInput::make('phone_extension')
                                             ->label('Extension')
                                             ->maxLength(10)
                                             ->placeholder('x1234'),
@@ -178,7 +200,7 @@ class LocationResource extends Resource
                                 PhoneInput::make('mobile_phone')
                                     ->label('Mobile Phone')
                                     ->defaultCountry('US'),
-                                Forms\Components\Select::make('contact_types')
+                                Select::make('contact_types')
                                     ->relationship('contactTypes', 'name')
                                     ->multiple()
                                     ->preload()
@@ -190,81 +212,81 @@ class LocationResource extends Resource
                             ->allowHtml(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Address Details')
+                Section::make('Address Details')
                     ->schema([
-                        Forms\Components\TextInput::make('address_line1')
+                        TextInput::make('address_line1')
                             ->label('Address Line 1')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('address_line2')
+                        TextInput::make('address_line2')
                             ->label('Address Line 2')
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('city')
+                        TextInput::make('city')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('state')
+                        TextInput::make('state')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('postal_code')
+                        TextInput::make('postal_code')
                             ->required()
                             ->maxLength(20),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Notes')
+                Section::make('Notes')
                     ->schema([
-                        Forms\Components\MarkdownEditor::make('notes')
+                        MarkdownEditor::make('notes')
                     ])
                     ->columns(1),
-                Forms\Components\Section::make('Coordinates')
+                Section::make('Coordinates')
                     ->schema([
-                        Forms\Components\TextInput::make('latitude')
+                        TextInput::make('latitude')
                             ->numeric()
                             ->rules(['nullable', 'numeric', 'between:-90,90'])
                             ->step(0.000000000001)
                             ->placeholder('e.g. 37.957702'),
-                        Forms\Components\TextInput::make('longitude')
+                        TextInput::make('longitude')
                             ->numeric()
                             ->rules(['nullable', 'numeric', 'between:-180,180'])
                             ->step(0.000000000001)
                             ->placeholder('e.g. -121.290780'),
-                        Forms\Components\Placeholder::make('geocoded_at_display')
+                        Placeholder::make('geocoded_at_display')
                             ->label('Geocoded')
                             ->content(fn(?Location $record): string => $record?->geocoded_at
                                 ? $record->geocoded_at->format('M j, Y g:i A')
                                 : 'Not geocoded'),
-                        Forms\Components\Placeholder::make('geocoding_provider_display')
+                        Placeholder::make('geocoding_provider_display')
                             ->label('Provider')
                             ->content(fn(?Location $record): string => $record?->geocoding_provider ?? 'N/A'),
-                        Forms\Components\Placeholder::make('geocoding_matched_address_display')
+                        Placeholder::make('geocoding_matched_address_display')
                             ->label('Matched Address')
                             ->content(fn(?Location $record): string => $record?->geocoding_matched_address ?? 'N/A')
                             ->columnSpanFull(),
-                        Forms\Components\Placeholder::make('geocoding_failure_display')
+                        Placeholder::make('geocoding_failure_display')
                             ->label('Last Geocoding Failure')
                             ->content(fn(?Location $record): string => $record?->geocoding_failure_reason
                                 ? "{$record->geocoding_failure_reason} ({$record->geocoding_failed_at?->format('M j, Y g:i A')})"
                                 : 'None')
                             ->columnSpanFull(),
                     ])->columns(2),
-                Forms\Components\Section::make('Default Plant Drive Distance')
+                Section::make('Default Plant Drive Distance')
                     ->schema([
-                        Forms\Components\Placeholder::make('plant_drive_distance_origin')
+                        Placeholder::make('plant_drive_distance_origin')
                             ->label('Plant')
                             ->content(fn(?Location $record): string => $record?->plantDriveDistanceOrigin?->name ?? 'Not calculated'),
-                        Forms\Components\Placeholder::make('plant_drive_distance_miles_display')
+                        Placeholder::make('plant_drive_distance_miles_display')
                             ->label('Drive Distance')
                             ->content(fn(?Location $record): string => $record?->plant_drive_distance_miles !== null
                                 ? number_format((float) $record->plant_drive_distance_miles, 1) . ' mi'
                                 : 'Not calculated'),
-                        Forms\Components\Placeholder::make('plant_drive_duration_display')
+                        Placeholder::make('plant_drive_duration_display')
                             ->label('Drive Time')
                             ->content(fn(?Location $record): string => $record?->plant_drive_duration_minutes !== null
                                 ? "{$record->plant_drive_duration_minutes} min"
                                 : 'Not calculated'),
-                        Forms\Components\Placeholder::make('current_delivery_rate_display')
+                        Placeholder::make('current_delivery_rate_display')
                             ->label('Delivery Rate')
                             ->content(fn(?Location $record): string => $record?->current_delivery_rate_summary ?? 'Not calculated'),
-                        Forms\Components\Placeholder::make('plant_drive_distance_calculated_at_display')
+                        Placeholder::make('plant_drive_distance_calculated_at_display')
                             ->label('Calculated')
                             ->content(fn(?Location $record): string => $record?->plant_drive_distance_calculated_at
                                 ? $record->plant_drive_distance_calculated_at->format('M j, Y g:i A')
@@ -279,10 +301,10 @@ class LocationResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('location_type')
+                TextColumn::make('location_type')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'business' => 'info',
@@ -293,7 +315,7 @@ class LocationResource extends Resource
                     })
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('default_plant_location')
+                TextColumn::make('default_plant_location')
                     ->label('Default Delivery Type')
                     ->badge()
                     ->formatStateUsing(function ($state): string {
@@ -305,52 +327,52 @@ class LocationResource extends Resource
                     })
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('city')
+                TextColumn::make('city')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('state')
+                TextColumn::make('state')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('order_status')
+                TextColumn::make('order_status')
                     ->badge()
                     ->color(fn(Location $record): string => $record->order_status_color),
-                Tables\Columns\TextColumn::make('last_order_at')
+                TextColumn::make('last_order_at')
                     ->label('Last order at')
                     ->formatStateUsing(function ($state) {
                         if (!$state) return 'N/A';
                         try {
-                            $date = \Carbon\Carbon::parse($state);
+                            $date = Carbon::parse($state);
                             $daysAgo = intval($date->diffInDays(now(), true));
                             $dateString = $date->format('n/j');
                             return $daysAgo === 1
                                 ? "1 day ago ({$dateString})"
                                 : "{$daysAgo} days ago " . "\n" . "({$dateString})";
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             return $state;
                         }
                     })
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('average_order_frequency_days')
+                TextColumn::make('average_order_frequency_days')
                     ->label('Avg. Order Frequency')
                     ->formatStateUsing(fn($state) => $state ? "{$state} days" : 'N/A')
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('total_orders')
+                TextColumn::make('total_orders')
                     ->label('Total Orders')
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('plant_drive_distance_miles')
+                TextColumn::make('plant_drive_distance_miles')
                     ->label('Plant Drive Miles')
                     ->formatStateUsing(fn($state): string => $state !== null ? number_format((float) $state, 1) . ' mi' : 'N/A')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('current_delivery_rate_summary')
+                TextColumn::make('current_delivery_rate_summary')
                     ->label('Delivery Rate')
                     ->badge()
                     ->placeholder('N/A')
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('common_order_items')
+                TextColumn::make('common_order_items')
                     ->label('Common Items')
                     ->formatStateUsing(function ($state) {
                         // Always decode as JSON, no matter what
@@ -377,7 +399,7 @@ class LocationResource extends Resource
             ])
             ->defaultSort('last_order_at', 'desc')
             ->filters([
-                Tables\Filters\SelectFilter::make('order_status')
+                SelectFilter::make('order_status')
                     ->options([
                         'No Orders' => 'No Orders',
                         'New Customer' => 'New Customer',
@@ -385,7 +407,7 @@ class LocationResource extends Resource
                         'Due Soon' => 'Due Soon',
                         'Recently Ordered' => 'Recently Ordered',
                     ]),
-                Tables\Filters\SelectFilter::make('location_type')
+                SelectFilter::make('location_type')
                     ->options([
                         'business' => 'Business',
                         'residential' => 'Residential',
@@ -394,10 +416,10 @@ class LocationResource extends Resource
                         'other' => 'Other',
                     ]),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('geocode')
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make(),
+                Action::make('geocode')
                     ->label('Geocode')
                     ->icon('heroicon-o-map-pin')
                     ->requiresConfirmation()
@@ -463,9 +485,9 @@ class LocationResource extends Resource
                             ->send();
                     }),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -473,19 +495,19 @@ class LocationResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\OrderedProductsRelationManager::class,
-            RelationManagers\OrdersRelationManager::class,
-            RelationManagers\NearbyLocationsRelationManager::class,
+            OrderedProductsRelationManager::class,
+            OrdersRelationManager::class,
+            NearbyLocationsRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListLocations::route('/'),
-            'create' => Pages\CreateLocation::route('/create'),
-            'view' => Pages\ViewLocation::route('/{record}'),
-            'edit' => Pages\EditLocation::route('/{record}/edit'),
+            'index' => ListLocations::route('/'),
+            'create' => CreateLocation::route('/create'),
+            'view' => ViewLocation::route('/{record}'),
+            'edit' => EditLocation::route('/{record}/edit'),
         ];
     }
 }

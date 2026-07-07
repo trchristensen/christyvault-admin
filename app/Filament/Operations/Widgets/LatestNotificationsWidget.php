@@ -2,6 +2,7 @@
 
 namespace App\Filament\Operations\Widgets;
 
+use Filament\Tables\Columns\TextColumn;
 use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -23,12 +24,12 @@ class LatestNotificationsWidget extends TableWidget
     protected function getTableColumns(): array
     {
         return [
-            \Filament\Tables\Columns\TextColumn::make('data.title')
+            TextColumn::make('data.title')
                 ->label('Title'),
-            \Filament\Tables\Columns\TextColumn::make('data.body')
+            TextColumn::make('data.body')
                 ->label('Description')
                 ->wrap(),
-            \Filament\Tables\Columns\TextColumn::make('created_at')
+            TextColumn::make('created_at')
                 ->label('Time')
                 ->dateTime()
                 ->description(fn($record) => $record->created_at->diffForHumans()),

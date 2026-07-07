@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Log;
+use ValueError;
 use App\Models\Order;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -49,7 +51,7 @@ class BulkDeliveryTagService
                 }
                 
                 try {
-                    \Log::info("Processing page {$pageNumber} of {$pageCount}");
+                    Log::info("Processing page {$pageNumber} of {$pageCount}");
                     
                     $pageResult = $this->processPage($pdf, $pageNumber, $fullPath, $dryRun);
                     
@@ -79,11 +81,11 @@ class BulkDeliveryTagService
                         ];
                     }
                     
-                    \Log::info("Completed page {$pageNumber}: " . 
+                    Log::info("Completed page {$pageNumber}: " . 
                               ($pageResult['success'] ? 'success' : 'failed'));
                               
                 } catch (Exception $e) {
-                    \Log::error("Error processing page {$pageNumber}: " . $e->getMessage());
+                    Log::error("Error processing page {$pageNumber}: " . $e->getMessage());
                     $results['errors'][] = [
                         'page' => $pageNumber,
                         'error' => $e->getMessage()
@@ -95,7 +97,7 @@ class BulkDeliveryTagService
             Storage::disk('local')->delete($tempPath);
 
         } catch (Exception $e) {
-            \Log::error('Bulk PDF processing failed: ' . $e->getMessage());
+            Log::error('Bulk PDF processing failed: ' . $e->getMessage());
             $results['errors'][] = [
                 'page' => 'general',
                 'error' => $e->getMessage()
@@ -230,25 +232,25 @@ class BulkDeliveryTagService
             
             $text = $ocr->run();
             
-            \Log::info('OCR Text (ORD focused)', [
+            Log::info('OCR Text (ORD focused)', [
                 'image' => basename($imagePath),
                 'text' => $text
             ]);
 
             // Look for "ORD-XXXXX" pattern first (primary target)
             if (preg_match('/ORD[-\s]*(\d{4,6})/i', $text, $matches)) {
-                \Log::info('Found ORD pattern', ['match' => $matches[1]]);
+                Log::info('Found ORD pattern', ['match' => $matches[1]]);
                 return $matches[1];
             }
 
             // Alternative patterns for OCR errors on ORD
             if (preg_match('/0RD[-\s]*(\d{4,6})/i', $text, $matches)) {
-                \Log::info('Found 0RD pattern', ['match' => $matches[1]]);
+                Log::info('Found 0RD pattern', ['match' => $matches[1]]);
                 return $matches[1];
             }
 
             if (preg_match('/[O0]R[D0][-\s]*(\d{4,6})/i', $text, $matches)) {
-                \Log::info('Found OCR variant pattern', ['match' => $matches[1]]);
+                Log::info('Found OCR variant pattern', ['match' => $matches[1]]);
                 return $matches[1];
             }
 
@@ -259,24 +261,24 @@ class BulkDeliveryTagService
             // No character restrictions for broader scan
             
             $broadText = $ocrBroad->run();
-            \Log::info('OCR Text (broad)', [
+            Log::info('OCR Text (broad)', [
                 'image' => basename($imagePath),
                 'text' => $broadText
             ]);
 
             // Look for ORD pattern in broader text
             if (preg_match('/ORD[-\s]*(\d{4,6})/i', $broadText, $matches)) {
-                \Log::info('Found ORD in broad text', ['match' => $matches[1]]);
+                Log::info('Found ORD in broad text', ['match' => $matches[1]]);
                 return $matches[1];
             }
 
             // Look for variations in broad text
             if (preg_match('/[O0]RD[-\s]*(\d{4,6})/i', $broadText, $matches)) {
-                \Log::info('Found ORD variant in broad text', ['match' => $matches[1]]);
+                Log::info('Found ORD variant in broad text', ['match' => $matches[1]]);
                 return $matches[1];
             }
 
-            \Log::warning('No ORD pattern found in OCR text', [
+            Log::warning('No ORD pattern found in OCR text', [
                 'image' => basename($imagePath),
                 'focused_text' => $text,
                 'broad_text' => $broadText
@@ -285,7 +287,7 @@ class BulkDeliveryTagService
             return null;
         } catch (Exception $e) {
             // Log the error for debugging
-            \Log::warning('OCR extraction failed', [
+            Log::warning('OCR extraction failed', [
                 'image' => $imagePath,
                 'error' => $e->getMessage()
             ]);
@@ -372,7 +374,7 @@ class BulkDeliveryTagService
             'ORD-' . $extractedNumber, // ORD-921 (no padding)
         ];
 
-        \Log::info('Order matching attempt', [
+        Log::info('Order matching attempt', [
             'extracted_number' => $extractedNumber,
             'trying_patterns' => $patterns
         ]);
@@ -380,7 +382,7 @@ class BulkDeliveryTagService
         foreach ($patterns as $pattern) {
             $order = Order::with('location')->where('order_number', $pattern)->first();
             if ($order) {
-                \Log::info('Order match found', [
+                Log::info('Order match found', [
                     'pattern' => $pattern,
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
@@ -390,7 +392,7 @@ class BulkDeliveryTagService
             }
         }
 
-        \Log::info('No order match found', [
+        Log::info('No order match found', [
             'extracted_number' => $extractedNumber,
             'tried_patterns' => $patterns
         ]);
@@ -409,7 +411,7 @@ class BulkDeliveryTagService
         try {
             $orderStatus = OrderStatus::from($status);
             return $orderStatus->label();
-        } catch (\ValueError $e) {
+        } catch (ValueError $e) {
             // If the status value doesn't match any enum case, return the raw value
             return ucfirst(str_replace('_', ' ', $status));
         }

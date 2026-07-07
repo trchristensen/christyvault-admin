@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Notifications\KanbanCardScanned;
@@ -127,7 +128,7 @@ class KanbanCard extends Model
                 $users = User::where('email', 'tchristensen@christyvault.com')->get();
                 LaravelNotification::send($users, new KanbanCardScanned($this));
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::error('Failed to add item to purchase order', [
                     'kanban_card_id' => $this->id,
                     'purchase_order_id' => $purchaseOrder->id,
@@ -151,7 +152,7 @@ class KanbanCard extends Model
             $preferredSupplier = $this->preferredSupplier();
             
             if (!$preferredSupplier || $purchaseOrder->supplier_id !== $preferredSupplier->id) {
-                throw new \Exception('Invalid supplier for this purchase order');
+                throw new Exception('Invalid supplier for this purchase order');
             }
 
             // Check if the item is already in the PO

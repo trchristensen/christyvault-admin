@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use Illuminate\Http\Request;
@@ -12,7 +13,7 @@ class OrderController extends Controller
      * Duplicate an order and its products
      *
      * @param Order $record
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function duplicate(Order $record)
     {

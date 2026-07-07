@@ -2,13 +2,13 @@
 
 namespace App\Filament\Sales\Pages;
 
+use Filament\Schemas\Schema;
 use App\Models\Location;
 use App\Models\Order;
 use App\Models\SalesVisit;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Flowframe\Trend\Trend;
 use Flowframe\Trend\TrendValue;
@@ -20,11 +20,11 @@ class SalesPerformance extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-presentation-chart-line';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-presentation-chart-line';
     protected static ?string $navigationLabel = 'Sales Performance';
     protected static ?string $title = 'Sales Performance';
-    protected static ?string $navigationGroup = 'Reports';
-    protected static string $view = 'filament.sales.pages.sales-performance';
+    protected static string | \UnitEnum | null $navigationGroup = 'Reports';
+    protected string $view = 'filament.sales.pages.sales-performance';
 
     public ?string $locationId = 'all';
     public ?string $timeframe = 'last_year';
@@ -45,7 +45,7 @@ class SalesPerformance extends Page implements HasForms
         $this->loadChartData();
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
         // Get locations ordered by total orders
         $locationsByOrders = Location::select('locations.*')
@@ -70,7 +70,7 @@ class SalesPerformance extends Page implements HasForms
             'firstFewLocations' => array_slice($locationOptions, 0, 5, true)
         ]);
 
-        return $form->schema([
+        return $schema->components([
             Select::make('locationId')
                 ->label('Location')
                 ->options($locationOptions)

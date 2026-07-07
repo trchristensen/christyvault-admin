@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\PlantLocation;
+use Exception;
 use App\Enums\OrderStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -60,7 +62,7 @@ class Location extends Model
         'last_order_at' => 'datetime',
         'common_order_items' => 'array',
         'average_order_value' => 'decimal:2',
-        'default_plant_location' => \App\Enums\PlantLocation::class,
+        'default_plant_location' => PlantLocation::class,
     ];
 
     public function getCoordinatesAttribute(): ?string
@@ -242,7 +244,7 @@ class Location extends Model
         try {
             return PhoneNumber::make($number, 'US')
                 ->format('(###) ###-####');
-        } catch (\Exception) {
+        } catch (Exception) {
             return $number; // fallback to raw
         }
     }

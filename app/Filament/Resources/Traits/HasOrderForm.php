@@ -2,6 +2,21 @@
 
 namespace App\Filament\Resources\Traits;
 
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Actions\Action;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\DatePicker;
+use App\Models\Employee;
+use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Components\Hidden;
 use App\Enums\OrderStatus;
 use App\Enums\PlantLocation;
 use App\Models\Location;
@@ -11,18 +26,17 @@ use Carbon\Carbon;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 use Schmeits\FilamentCharacterCounter\Forms\Components\Textarea;
 use Filament\Forms\Components\Split;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Grid;
 
 trait HasOrderForm
 {
     public static function getOrderFormSchema(?string $defaultDate = null): array
     {
         return [
-            Forms\Components\Section::make('Order Details')
+            Section::make('Order Details')
+                ->columnSpanFull()
                 ->description(fn($record) => $record?->order_number)
                 ->schema([
-                    Forms\Components\Select::make('location_id')
+                    Select::make('location_id')
                         ->label('Location')
                         ->options(function () {
                             return Location::query()
@@ -43,10 +57,11 @@ trait HasOrderForm
                             'sm' => 12,
                             'md' => 8,
                         ])
+                        ->columnSpanFull()
                         ->searchable()
                         ->allowHtml()
                         ->reactive()
-                        ->afterStateUpdated(function ($state, Forms\Set $set) {
+                        ->afterStateUpdated(function ($state, Set $set) {
                             if (!$state) return;
 
                             $location = Location::find($state);
@@ -59,7 +74,7 @@ trait HasOrderForm
                                 } else {
                                     $set('plant_location', PlantLocation::COLMA_MAIN->value);
                                 }
-                                
+
                                 // Set ordered_by if preferred delivery contact exists
                                 if ($location->preferredDeliveryContact?->name) {
                                     $set('ordered_by', $location->preferredDeliveryContact->name);
@@ -69,32 +84,32 @@ trait HasOrderForm
                         ->suffixAction(function ($state) {
                             if (!$state) return null;
 
-                            return Forms\Components\Actions\Action::make('edit')
+                            return Action::make('edit')
                                 ->icon('heroicon-m-pencil-square')
                                 ->modalHeading('Edit Location')
                                 ->modalSubmitActionLabel('Save changes')
-                                ->form([
-                                    Forms\Components\TextInput::make('name')
+                                ->schema([
+                                    TextInput::make('name')
                                         ->required()
                                         ->maxLength(255),
-                                    Forms\Components\TextInput::make('address_line1')
+                                    TextInput::make('address_line1')
                                         ->required()
                                         ->maxLength(255),
-                                    Forms\Components\TextInput::make('address_line2')
+                                    TextInput::make('address_line2')
                                         ->maxLength(255),
-                                    Forms\Components\TextInput::make('city')
+                                    TextInput::make('city')
                                         ->required()
                                         ->maxLength(255),
-                                    Forms\Components\TextInput::make('state')
+                                    TextInput::make('state')
                                         ->required()
                                         ->default('CA')
                                         ->maxLength(255),
-                                    Forms\Components\TextInput::make('postal_code')
+                                    TextInput::make('postal_code')
                                         ->required()
                                         ->maxLength(20),
                                     PhoneInput::make('phone')
                                         ->defaultCountry('US'),
-                                    Forms\Components\Select::make('location_type')
+                                    Select::make('location_type')
                                         ->options([
                                             'business' => 'Business',
                                             'residential' => 'Residential',
@@ -103,7 +118,7 @@ trait HasOrderForm
                                             'other' => 'Other',
                                         ])
                                         ->required(),
-                                    Forms\Components\Select::make('default_plant_location')
+                                    Select::make('default_plant_location')
                                         ->label('Default Delivery Type')
                                         ->options(collect(PlantLocation::cases())->mapWithKeys(fn(PlantLocation $location) => [
                                             $location->value => $location->getLabel(),
@@ -120,13 +135,13 @@ trait HasOrderForm
                                 ->visible(fn($state): bool => (bool)$state);
                         })
                         ->createOptionForm([
-                            Forms\Components\TextInput::make('name')
+                            TextInput::make('name')
                                 ->required()
                                 ->maxLength(255),
-                            Forms\Components\TextInput::make('address_line1')
+                            TextInput::make('address_line1')
                                 ->required()
                                 ->maxLength(255),
-                            Forms\Components\TextInput::make('address_line2')
+                            TextInput::make('address_line2')
                                 ->maxLength(255),
                             Grid::make([
                                 'default' => 1,
@@ -134,7 +149,7 @@ trait HasOrderForm
                                 'md' => 12,
                             ])
                                 ->schema([
-                                    Forms\Components\TextInput::make('city')
+                                    TextInput::make('city')
                                         ->required()
                                         ->maxLength(255)
                                         ->columnSpan([
@@ -142,7 +157,7 @@ trait HasOrderForm
                                             'sm' => 1,
                                             'md' => 6,
                                         ]),
-                                    Forms\Components\TextInput::make('state')
+                                    TextInput::make('state')
                                         ->required()
                                         ->default('CA')
                                         ->maxLength(255)
@@ -151,7 +166,7 @@ trait HasOrderForm
                                             'sm' => 1,
                                             'md' => 3,
                                         ]),
-                                    Forms\Components\TextInput::make('postal_code')
+                                    TextInput::make('postal_code')
                                         ->required()
                                         ->maxLength(20)
                                         ->columnSpan([
@@ -160,7 +175,7 @@ trait HasOrderForm
                                             'md' => 3,
                                         ]),
                                 ]),
-                            Forms\Components\Select::make('location_type')
+                            Select::make('location_type')
                                 ->options([
                                     'business' => 'Business',
                                     'residential' => 'Residential',
@@ -169,7 +184,7 @@ trait HasOrderForm
                                     'other' => 'Other',
                                 ])
                                 ->required(),
-                            Forms\Components\Select::make('default_plant_location')
+                            Select::make('default_plant_location')
                                 ->label('Default Delivery Type')
                                 ->options(collect(PlantLocation::cases())->mapWithKeys(fn(PlantLocation $location) => [
                                     $location->value => $location->getLabel(),
@@ -179,9 +194,9 @@ trait HasOrderForm
                             PhoneInput::make('phone')
                                 ->defaultCountry('US'),
 
-                            Forms\Components\Section::make('Contact')
+                            Section::make('Contact')
                                 ->schema([
-                                    Forms\Components\TextInput::make('contact.name')
+                                    TextInput::make('contact.name')
                                         ->required()
                                         ->label('Contact Name'),
                                     PhoneInput::make('contact.phone')
@@ -217,7 +232,7 @@ trait HasOrderForm
                             return $location->id;
                         }),
 
-                    Forms\Components\TextInput::make('customer_order_number')
+                    TextInput::make('customer_order_number')
                         ->label('Customer Order #')
                         ->nullable()
                         ->maxLength(255)
@@ -226,7 +241,7 @@ trait HasOrderForm
                             'md' => 4,
                         ]),
 
-                    Forms\Components\Select::make('status')
+                    Select::make('status')
                         ->options(collect(OrderStatus::cases())->mapWithKeys(function ($status) {
                             return [$status->value => str($status->value)
                                 ->replace('_', ' ')
@@ -240,7 +255,7 @@ trait HasOrderForm
                         ->default(OrderStatus::PENDING->value)
                         ->reactive()
                         ->required(),
-                    Forms\Components\DatePicker::make('order_date')
+                    DatePicker::make('order_date')
                         ->required()
                         ->columnSpan([
                             'sm' => 4,
@@ -248,7 +263,7 @@ trait HasOrderForm
                         ])
                         ->native(false)
                         ->default(now()->toDateString()),
-                    Forms\Components\DatePicker::make('requested_delivery_date')
+                    DatePicker::make('requested_delivery_date')
                         ->required()
                         ->native(false)
                         ->columnSpan([
@@ -256,17 +271,17 @@ trait HasOrderForm
                             'md' => 4,
                         ])
                         ->default(fn() => $defaultDate ?? now()),
-                    Forms\Components\DatePicker::make('assigned_delivery_date')
+                    DatePicker::make('assigned_delivery_date')
                         ->native(false)
                         ->columnSpan([
                             'sm' => 4,
                             'md' => 4,
                         ])
                         ->default(fn() => $defaultDate),
-                    Forms\Components\Select::make('driver_id')
+                    Select::make('driver_id')
                         ->label('Driver')
                         ->options(function () {
-                            return \App\Models\Employee::whereHas('positions', function ($q) {
+                            return Employee::whereHas('positions', function ($q) {
                                 $q->where('name', 'driver');
                             })->pluck('name', 'id');
                         })
@@ -277,7 +292,7 @@ trait HasOrderForm
                             'md' => 4,
                         ])
                         ->placeholder('Select a driver'),
-                    Forms\Components\TimePicker::make('delivery_time')
+                    TimePicker::make('delivery_time')
                         ->label("Deliver By time")
                         ->nullable()
                         ->columnSpan([
@@ -285,7 +300,7 @@ trait HasOrderForm
                             'md' => 4,
                         ])
                         ->seconds(false),
-                    Forms\Components\DateTimePicker::make('service_date')
+                    DateTimePicker::make('service_date')
                         ->nullable()
                         ->native(false)
                         ->seconds(false)
@@ -293,7 +308,7 @@ trait HasOrderForm
                             'sm' => 4,
                             'md' => 4,
                         ]),
-                    Forms\Components\Select::make('plant_location')
+                    Select::make('plant_location')
                         ->label('Delivery Type')
                         ->options(function () {
                             return collect(PlantLocation::cases())->mapWithKeys(fn($location) => [
@@ -305,7 +320,7 @@ trait HasOrderForm
                             'sm' => 4,
                             'md' => 4,
                         ]),
-                    Forms\Components\TextInput::make('ordered_by')
+                    TextInput::make('ordered_by')
                         ->label('Ordered By')
                         ->columnSpan([
                             'sm' => 4,
@@ -315,7 +330,7 @@ trait HasOrderForm
                         ->columnSpan(12)
                         ->label('Notes')
                         ->characterLimit(166),
-                    Forms\Components\FileUpload::make('delivery_tag_url')
+                    FileUpload::make('delivery_tag_url')
                         ->label('Delivery Tag Attachment')
                         ->disk('r2')
                         ->directory('delivery-tags')
@@ -340,14 +355,14 @@ trait HasOrderForm
                             $date = now()->format('Y-m-d');
                             $locationId = $get('location_id');
                             $extension = $file->getClientOriginalExtension();
-                            
+
                             if ($locationId) {
                                 $location = Location::find($locationId);
                                 if ($location) {
                                     // Clean the location name and city for filename
                                     $locationName = preg_replace('/[^A-Za-z0-9\-_]/', '_', $location->name);
                                     $city = preg_replace('/[^A-Za-z0-9\-_]/', '_', $location->city);
-                                    
+
                                     // Include order number to prevent collisions (if record exists)
                                     if ($record && $record->order_number) {
                                         return "{$date}_{$locationName}_{$city}_{$record->order_number}_delivery_tag.{$extension}";
@@ -358,7 +373,7 @@ trait HasOrderForm
                                     }
                                 }
                             }
-                            
+
                             // Fallback if no location is selected
                             if ($record && $record->order_number) {
                                 return "{$date}_{$record->order_number}_delivery_tag.{$extension}";
@@ -370,16 +385,19 @@ trait HasOrderForm
                         }),
                 ])
                 ->columns(12),
-            Forms\Components\Section::make('Products')
+            Section::make('Products')
+                ->columnSpanFull()
                 ->compact()
                 ->schema([
-                    Forms\Components\Repeater::make('orderProducts')
+                    Repeater::make('orderProducts')
+                        ->columnSpanFull()
                         ->label(false)
                         ->addActionLabel('Add a Product')
                         ->schema([
-                            Forms\Components\Grid::make(12)
+                            Grid::make(12)
+                                ->columnSpanFull()
                                 ->schema([
-                                    Forms\Components\Toggle::make('is_custom_product')
+                                    Toggle::make('is_custom_product')
                                         ->label('Custom Product')
                                         ->columnSpan(1)
                                         ->inline(false)
@@ -392,25 +410,25 @@ trait HasOrderForm
                                             }
                                         })
                                         ->live('blur'),
-                                    Forms\Components\Select::make('product_id')
+                                    Select::make('product_id')
                                         ->createOptionForm([
-                                            Forms\Components\TextInput::make('sku')
+                                            TextInput::make('sku')
                                                 ->required()
                                                 ->label('Product Number')
                                                 ->maxLength(255),
-                                            Forms\Components\TextInput::make('name')
+                                            TextInput::make('name')
                                                 ->label('Product Name')
                                                 ->required()
                                                 ->maxLength(255),
-                                            Forms\Components\TextInput::make('description')
+                                            TextInput::make('description')
                                                 ->maxLength(255),
-                                            Forms\Components\TextInput::make('price')
+                                            TextInput::make('price')
                                                 ->required()
                                                 ->numeric()
                                                 ->default(0)
                                                 ->prefix('$')
                                                 ->label('Price'),
-                                            Forms\Components\TextInput::make('stock')
+                                            TextInput::make('stock')
                                                 ->required()
                                                 ->numeric()
                                                 ->default(0)
@@ -419,7 +437,7 @@ trait HasOrderForm
                                         ->createOptionUsing(function (array $data): int {
                                             return Product::create($data)->getKey();
                                         })
-                                        ->createOptionAction(function (Forms\Components\Actions\Action $action) {
+                                        ->createOptionAction(function (Action $action) {
                                             return $action
                                                 ->modalHeading('Create new product')
                                                 ->modalWidth('lg');
@@ -464,13 +482,13 @@ trait HasOrderForm
                                             $set('price', Product::find($state)?->price ?? 0)
                                         )
                                         ->live('blur'),
-                                    Forms\Components\TextInput::make('custom_description')
+                                    TextInput::make('custom_description')
                                         ->label('Custom Product Description')
                                         ->required(fn(callable $get) => $get('is_custom_product'))
                                         ->visible(fn(callable $get) => $get('is_custom_product'))
                                         ->columnSpan(6)
                                         ->live('blur'),
-                                    Forms\Components\Toggle::make('fill_load')
+                                    Toggle::make('fill_load')
                                         ->label('Fill load')
                                         ->columnSpan(2)
                                         ->inline(false)
@@ -481,18 +499,18 @@ trait HasOrderForm
                                             }
                                         })
                                         ->live('blur'),
-                                    Forms\Components\TextInput::make('quantity')
+                                    TextInput::make('quantity')
                                         ->numeric()
                                         ->columnSpan(2)
                                         ->default(1)
-                                        ->disabled(fn(Forms\Get $get): bool => $get('fill_load'))
-                                        ->dehydrated(fn(Forms\Get $get): bool => !$get('fill_load'))
+                                        ->disabled(fn(Get $get): bool => $get('fill_load'))
+                                        ->dehydrated(fn(Get $get): bool => !$get('fill_load'))
                                         ->live('blur'),
-                                    Forms\Components\TextInput::make('quantity_delivered')
+                                    TextInput::make('quantity_delivered')
                                         ->label('Delivered')
                                         ->columnSpan(1)
                                         ->numeric()
-                                        ->disabled(function (\Filament\Forms\Get $get): bool {
+                                        ->disabled(function (Get $get): bool {
                                             $status = $get('../../status');
                                             return !in_array($status, [
                                                 OrderStatus::DELIVERED->value,
@@ -504,10 +522,10 @@ trait HasOrderForm
                                             ]);
                                         }),
                                 ]),
-                            Forms\Components\Hidden::make('price')->default(0),
-                            Forms\Components\Grid::make(12)
+                            Hidden::make('price')->default(0),
+                            Grid::make(12)
                                 ->schema([
-                                    Forms\Components\TextInput::make('location')
+                                    TextInput::make('location')
                                         ->label('Location')
                                         ->live()
                                         ->nullable()
@@ -515,7 +533,7 @@ trait HasOrderForm
                                             'default' => 12,
                                             'lg' => 6,
                                         ]),
-                                    Forms\Components\TextInput::make('notes')
+                                    TextInput::make('notes')
                                         ->label('Notes')
                                         ->live()
                                         ->nullable()
@@ -526,6 +544,7 @@ trait HasOrderForm
                                 ]),
                         ])
                         ->columns(12)
+                        ->columnSpanFull()
                         ->itemLabel(function ($state) {
                             // If fill_load is true, show "Fill load" instead of quantity
                             $quantityLabel = (!empty($state['fill_load'])) ? 'Fill load' : ($state['quantity'] ?? 1);
@@ -539,7 +558,7 @@ trait HasOrderForm
                             $sku = '';
                             $name = '';
                             if (!empty($state['product_id'])) {
-                                $product = \App\Models\Product::find($state['product_id']);
+                                $product = Product::find($state['product_id']);
                                 if ($product) {
                                     $sku = $product->sku;
                                     $name = $product->name;

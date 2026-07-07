@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Pages;
 
+use Filament\Schemas\Schema;
 use App\Models\Employee;
 use App\Services\SmsService;
 use Filament\Actions\Action;
@@ -10,7 +11,6 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Artisan;
@@ -19,9 +19,9 @@ class SmsManagement extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-phone';
-    protected static string $view = 'filament.admin.pages.sms-management';
-    protected static ?string $navigationGroup = 'Operations';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-phone';
+    protected string $view = 'filament.admin.pages.sms-management';
+    protected static string | \UnitEnum | null $navigationGroup = 'Operations';
     protected static ?string $title = 'SMS Management';
 
     public ?array $testSmsData = [];
@@ -33,10 +33,10 @@ class SmsManagement extends Page implements HasForms
         $this->dailyScheduleForm->fill();
     }
 
-    public function testSmsForm(Form $form): Form
+    public function testSmsForm(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Select::make('driver_id')
                     ->label('Driver')
                     ->options(Employee::whereNotNull('phone')->pluck('name', 'id'))
@@ -51,10 +51,10 @@ class SmsManagement extends Page implements HasForms
             ->statePath('testSmsData');
     }
 
-    public function dailyScheduleForm(Form $form): Form
+    public function dailyScheduleForm(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Select::make('driver_id')
                     ->label('Driver (Optional)')
                     ->placeholder('Send to all drivers')
@@ -69,7 +69,7 @@ class SmsManagement extends Page implements HasForms
         return [
             Action::make('sendTestSms')
                 ->label('Send Test SMS')
-                ->form([
+                ->schema([
                     Select::make('driver_id')
                         ->label('Driver')
                         ->options(Employee::whereNotNull('phone')->pluck('name', 'id'))
@@ -114,7 +114,7 @@ class SmsManagement extends Page implements HasForms
 
             Action::make('sendDailySchedule')
                 ->label('Send Daily Schedule')
-                ->form([
+                ->schema([
                     Select::make('driver_id')
                         ->label('Driver (Optional)')
                         ->placeholder('Send to all drivers')

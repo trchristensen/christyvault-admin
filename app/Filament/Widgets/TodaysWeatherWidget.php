@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use Exception;
 use App\Models\Order;
 use App\Enums\OrderStatus;
 use Filament\Widgets\Widget;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Cache;
 class TodaysWeatherWidget extends Widget
 
 {
-    protected static string $view = 'filament.widgets.todays-weather-widget';
+    protected string $view = 'filament.widgets.todays-weather-widget';
     protected static ?int $sort = 1;
     protected int | string | array $columnSpan = [
         'default' => 1,  // 1 column on mobile (full width since only 1 column total)
@@ -51,7 +52,7 @@ class TodaysWeatherWidget extends Widget
                 $normalizedCity = strtolower(trim(preg_replace('/\s+/', ' ', $order->location->city)));
                 $normalizedState = strtoupper(trim($order->location->state));
                 $key = $normalizedCity . ',' . $normalizedState;
-                
+
                 if (!isset($cityMap[$key])) {
                     $cityMap[$key] = [
                         'city' => $order->location->city, // Keep original formatting for display
@@ -77,7 +78,7 @@ class TodaysWeatherWidget extends Widget
 
         foreach ($cityMap as $cityInfo) {
             $cityKey = strtolower($cityInfo['city'] . '_' . $cityInfo['state']);
-            
+
             // Cache weather data for 30 minutes
             $weather = Cache::remember(
                 "weather_{$cityKey}_" . today()->format('Y-m-d'),
@@ -108,11 +109,11 @@ class TodaysWeatherWidget extends Widget
         try {
             // Using OpenWeatherMap One Call API 3.0 (free for first 1000 calls/day)
             $apiKey = config('services.openweather.api_key');
-            
+
             // Debug logging
             logger()->info("Weather API Debug - City: {$city}, State: {$state}");
             logger()->info("API Key present: " . ($apiKey ? 'YES' : 'NO'));
-            
+
             if (!$apiKey) {
                 logger()->warning("No API key found, using mock data for {$city}, {$state}");
                 return $this->getMockWeatherData($city, $state);
@@ -125,19 +126,19 @@ class TodaysWeatherWidget extends Widget
                 'appid' => $apiKey,
                 'limit' => 1
             ];
-            
+
             logger()->info("Getting coordinates for {$city}, {$state}");
             $geoResponse = Http::get($geoUrl, $geoParams);
-            
+
             if (!$geoResponse->successful() || empty($geoResponse->json())) {
                 logger()->error("Geocoding failed for {$city}: " . $geoResponse->status());
-                throw new \Exception("Geocoding failed");
+                throw new Exception("Geocoding failed");
             }
-            
+
             $geoData = $geoResponse->json()[0];
             $lat = $geoData['lat'];
             $lon = $geoData['lon'];
-            
+
             // Now use One Call API 3.0 (free tier)
             $url = "https://api.openweathermap.org/data/3.0/onecall";
             $params = [
@@ -147,18 +148,18 @@ class TodaysWeatherWidget extends Widget
                 'units' => 'imperial',
                 'exclude' => 'minutely,hourly,daily,alerts' // Only get current weather
             ];
-            
+
             logger()->info("Making One Call API request for {$city} at lat: {$lat}, lon: {$lon}");
 
             $response = Http::get($url, $params);
-            
+
             logger()->info("API Response Status: " . $response->status());
-            
+
             if ($response->successful()) {
                 $data = $response->json();
                 $current = $data['current'];
                 logger()->info("API Success for {$city}: Temperature = " . $current['temp']);
-                
+
                 return [
                     'city' => $city,
                     'state' => $state,
@@ -173,7 +174,7 @@ class TodaysWeatherWidget extends Widget
             } else {
                 logger()->error("API Error for {$city}: Status " . $response->status() . " - " . $response->body());
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             logger()->error("Weather API exception for {$city}: " . $e->getMessage());
         }
 
@@ -192,7 +193,7 @@ class TodaysWeatherWidget extends Widget
     //     ];
 
     //     $condition = $mockConditions[array_rand($mockConditions)];
-        
+
     //     return [
     //         'city' => $city,
     //         'state' => $state,

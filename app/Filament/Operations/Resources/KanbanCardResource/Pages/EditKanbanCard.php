@@ -2,6 +2,7 @@
 
 namespace App\Filament\Operations\Resources\KanbanCardResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Operations\Resources\KanbanCardResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -13,7 +14,7 @@ class EditKanbanCard extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

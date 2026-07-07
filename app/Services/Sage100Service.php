@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Log;
 
 class Sage100Service
@@ -29,7 +30,7 @@ class Sage100Service
             return $this->proxyService->post('inventory/level', [
                 'item_code' => $itemCode
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Sage100Service error: ' . $e->getMessage());
             return [
                 'status' => 'error',
@@ -47,7 +48,7 @@ class Sage100Service
 
         try {
             return $this->proxyService->isHealthy();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Sage100Service configuration check failed: ' . $e->getMessage());
             return false;
         }

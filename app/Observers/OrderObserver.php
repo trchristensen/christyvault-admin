@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use Exception;
 use App\Models\Location;
 use App\Models\Order;
 use App\Services\SmsService;
@@ -107,7 +108,7 @@ class OrderObserver
 
                 $this->smsService->sendOrderAssignment($order->trip->driver, $order);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to send order assignment SMS', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage()
@@ -151,7 +152,7 @@ class OrderObserver
 
                     $this->smsService->sendSms($order->trip->driver->phone, $statusMessage);
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::error('Failed to send status update SMS', [
                     'order_id' => $order->id,
                     'status' => $status,

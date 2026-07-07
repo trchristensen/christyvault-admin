@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -69,7 +70,7 @@ class DeliveryController extends Controller
               ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
               ->header('Access-Control-Allow-Headers', 'Content-Type, Accept');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Delivery show error:', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
@@ -138,7 +139,7 @@ class DeliveryController extends Controller
               ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
               ->header('Access-Control-Allow-Headers', 'Content-Type, Accept');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Delivery completion error:', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage()

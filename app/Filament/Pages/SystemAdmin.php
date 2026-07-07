@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use Exception;
 use Filament\Pages\Page;
 use Filament\Actions\Action;
 use Filament\Tables\Table;
@@ -13,19 +14,18 @@ use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use App\Models\Backup;
-use Filament\Tables\Actions\Action as TableAction;
 use Illuminate\Support\Facades\Response;
 
 class SystemAdmin extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cog-6-tooth';
     protected static ?string $navigationLabel = 'System Admin';
     protected static ?string $title = 'System Administration';
     protected static ?int $navigationSort = 100;
-    protected static ?string $navigationGroup = 'System';
-    protected static string $view = 'filament.pages.system-admin';
+    protected static string | \UnitEnum | null $navigationGroup = 'System';
+    protected string $view = 'filament.pages.system-admin';
 
     public static function canAccess(): bool
     {
@@ -45,7 +45,7 @@ class SystemAdmin extends Page implements HasTable
                             ->success()
                             ->body('The backup process has been initiated.')
                             ->send();
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                         Notification::make()
                             ->title('Backup failed')
                             ->danger()
@@ -73,13 +73,13 @@ class SystemAdmin extends Page implements HasTable
                     ->dateTime('M j, Y g:i A')
                     ->sortable(),
             ])
-            ->actions([
-                TableAction::make('download')
+            ->recordActions([
+                Action::make('download')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->action(function ($record) {
                         return Storage::disk('r2')->download($record->filename);
                     }),
-                TableAction::make('delete')
+                Action::make('delete')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->requiresConfirmation()

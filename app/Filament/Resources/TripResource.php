@@ -2,12 +2,24 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\BulkAction;
+use Filament\Forms\Components\Select;
+use Filament\Tables\Grouping\Group;
+use App\Filament\Resources\TripResource\RelationManagers\OrdersRelationManager;
+use App\Filament\Resources\TripResource\Pages\ListTrips;
+use App\Filament\Resources\TripResource\Pages\CreateTrip;
+use App\Filament\Resources\TripResource\Pages\EditTrip;
 use App\Filament\Resources\TripResource\Pages;
 use App\Filament\Resources\TripResource\RelationManagers;
 use App\Models\Driver;
 use App\Models\Trip;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -25,25 +37,25 @@ class TripResource extends Resource
 
     protected static ?string $model = Trip::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-truck';
-    protected static ?string $navigationGroup = 'Delivery Management';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-truck';
+    protected static string | \UnitEnum | null $navigationGroup = 'Delivery Management';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema(static::getTripFormSchema());
+        return $schema
+            ->components(static::getTripFormSchema());
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('trip_number')
+                TextColumn::make('trip_number')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('driver.name')
+                TextColumn::make('driver.name')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('delivery_details')
+                TextColumn::make('delivery_details')
                     ->label('Delivery Details')
                     ->html()
                     ->state(function (Trip $record): string {
@@ -73,7 +85,7 @@ class TripResource extends Resource
                     })
                     ->alignLeft()
                     ->wrap(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'pending' => 'gray',
@@ -83,18 +95,18 @@ class TripResource extends Resource
                         'completed' => 'success',
                         'cancelled' => 'danger',
                     }),
-                Tables\Columns\TextColumn::make('scheduled_date')
+                TextColumn::make('scheduled_date')
                     ->date()
                     ->sortable(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\BulkAction::make('updateStatus')
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    BulkAction::make('updateStatus')
                         ->label('Update Status')
                         ->icon('heroicon-o-truck')
                         ->action(function (Collection $records, array $data): void {
@@ -103,7 +115,7 @@ class TripResource extends Resource
                             });
                         })
                         ->form([
-                            Forms\Components\Select::make('status')
+                            Select::make('status')
                                 ->options([
                                     'pending' => 'Pending',
                                     'in_progress' => 'In Progress',
@@ -116,7 +128,7 @@ class TripResource extends Resource
             ])
             ->defaultGroup('scheduled_date')
             ->groups([
-                Tables\Grouping\Group::make('scheduled_date')
+                Group::make('scheduled_date')
                     ->label('Delivery Date')
                     ->date()
                     ->collapsible()
@@ -126,16 +138,16 @@ class TripResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\OrdersRelationManager::class,
+            OrdersRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTrips::route('/'),
-            'create' => Pages\CreateTrip::route('/create'),
-            'edit' => Pages\EditTrip::route('/{record}/edit'),
+            'index' => ListTrips::route('/'),
+            'create' => CreateTrip::route('/create'),
+            'edit' => EditTrip::route('/{record}/edit'),
         ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Log;
 use Livewire\Component;
 
 class NotificationsDropdown extends Component
@@ -20,7 +21,7 @@ class NotificationsDropdown extends Component
 
     public function render()
     {
-        \Log::info('NotificationsDropdown render called');
+        Log::info('NotificationsDropdown render called');
         return view('livewire.notifications-dropdown', [
             'notifications' => auth()->user()->unreadNotifications()->latest()->take(5)->get()
         ]);

@@ -2,12 +2,23 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\LeaveRequestResource\Pages\ListLeaveRequests;
+use App\Filament\Resources\LeaveRequestResource\Pages\CreateLeaveRequest;
+use App\Filament\Resources\LeaveRequestResource\Pages\EditLeaveRequest;
 use App\Filament\Resources\LeaveRequestResource\Pages;
 use App\Filament\Resources\LeaveRequestResource\RelationManagers;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -18,9 +29,9 @@ class LeaveRequestResource extends Resource
 {
     protected static ?string $model = LeaveRequest::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
-    protected static ?string $navigationGroup = 'Human Resources';
+    protected static string | \UnitEnum | null $navigationGroup = 'Human Resources';
 
      public static function canAccess(): bool
     {
@@ -28,27 +39,27 @@ class LeaveRequestResource extends Resource
     }
 
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('employee_id')
+        return $schema
+            ->components([
+                Select::make('employee_id')
                     ->relationship(name: 'employee', titleAttribute: 'name')
                     ->required(),
-                Forms\Components\Select::make('type')
+                Select::make('type')
                     ->options([
                         'sick' => 'Sick Leave',
                         'vacation' => 'Vacation',
                         'unpaid' => 'Unpaid Leave',
                     ])
                     ->required(),
-                Forms\Components\DateTimePicker::make('start_date')
+                DateTimePicker::make('start_date')
                     ->required(),
-                Forms\Components\DateTimePicker::make('end_date')
+                DateTimePicker::make('end_date')
                     ->required(),
-                Forms\Components\Textarea::make('reason')
+                Textarea::make('reason')
                     ->columnSpanFull(),
-                Forms\Components\Select::make('status')
+                Select::make('status')
                     ->default('pending')
                     ->options([
                         'pending' => 'Pending',
@@ -56,10 +67,10 @@ class LeaveRequestResource extends Resource
                         'rejected' => 'Rejected'
                     ])
                     ->required(),
-                Forms\Components\TextInput::make('reviewed_by')
+                TextInput::make('reviewed_by')
                     ->numeric()
                     ->disabled(),
-                Forms\Components\Textarea::make('review_notes')
+                Textarea::make('review_notes')
                     ->columnSpanFull(),
             ]);
     }
@@ -68,27 +79,27 @@ class LeaveRequestResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('employee.name')
+                TextColumn::make('employee.name')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('type')
+                TextColumn::make('type')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('start_date')
+                TextColumn::make('start_date')
                     ->dateTime()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('end_date')
+                TextColumn::make('end_date')
                     ->dateTime()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('reviewer.name')
+                TextColumn::make('reviewer.name')
                     // ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -96,12 +107,12 @@ class LeaveRequestResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -116,9 +127,9 @@ class LeaveRequestResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListLeaveRequests::route('/'),
-            'create' => Pages\CreateLeaveRequest::route('/create'),
-            'edit' => Pages\EditLeaveRequest::route('/{record}/edit'),
+            'index' => ListLeaveRequests::route('/'),
+            'create' => CreateLeaveRequest::route('/create'),
+            'edit' => EditLeaveRequest::route('/{record}/edit'),
         ];
     }
 }

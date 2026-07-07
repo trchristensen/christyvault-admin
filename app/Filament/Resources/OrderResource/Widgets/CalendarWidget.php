@@ -2,6 +2,11 @@
 
 namespace App\Filament\Resources\OrderResource\Widgets;
 
+use Illuminate\Validation\ValidationException;
+use Exception;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Section;
+use Saade\FilamentFullCalendar\Actions\DeleteAction;
 use App\Enums\OrderStatus;
 use App\Filament\Resources\OrderResource;
 use App\Models\Customer;
@@ -12,7 +17,6 @@ use Carbon\Carbon;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -22,7 +26,6 @@ use Saade\FilamentFullCalendar\Widgets\FullCalendarWidget;
 use Saade\FilamentFullCalendar\Actions;
 use Illuminate\Support\Str;
 use Saade\FilamentFullCalendar\Actions\ViewAction;
-use Filament\Forms\Get;
 use App\Filament\Resources\Traits\HasOrderForm;
 use App\Filament\Resources\Traits\HasTripForm;
 use App\Models\Trip;
@@ -152,7 +155,7 @@ class CalendarWidget extends FullCalendarWidget
                 ]);
                 $this->refreshRecords();
                 return true;
-            } catch (\Illuminate\Validation\ValidationException $e) {
+            } catch (ValidationException $e) {
                 Notification::make()
                     ->title('Date blocked')
                     ->body(collect($e->errors())->flatten()->first())
@@ -160,7 +163,7 @@ class CalendarWidget extends FullCalendarWidget
                     ->send();
 
                 return false;
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 return false;
             }
         } else if (str_starts_with($id, 'trip_')) {
@@ -185,7 +188,7 @@ class CalendarWidget extends FullCalendarWidget
                 $this->refreshRecords();
 
                 return true;
-            } catch (\Illuminate\Validation\ValidationException $e) {
+            } catch (ValidationException $e) {
                 Notification::make()
                     ->title('Date blocked')
                     ->body(collect($e->errors())->flatten()->first())
@@ -193,7 +196,7 @@ class CalendarWidget extends FullCalendarWidget
                     ->send();
 
                 return false;
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 return false;
             }
         }
@@ -364,14 +367,14 @@ class CalendarWidget extends FullCalendarWidget
     {
 
         return [
-            Actions\CreateAction::make()
+            CreateAction::make()
                 ->stickyModalFooter()
                 ->createAnother(false)
                 ->label('Create New Event')
                 ->modalHeading(null)
                 ->modalWidth('5xl')
                 ->record(fn() => $this->record = null)
-                ->form([
+                ->schema([
                     Select::make('type')
                         ->label('What would you like to create?')
                         ->options([
@@ -527,10 +530,10 @@ class CalendarWidget extends FullCalendarWidget
                     }
                 })
                 ->modalWidth('5xl'),
-            Actions\EditAction::make()
+            EditAction::make()
                 ->stickyModalFooter()
                 ->modalWidth('5xl'),
-            Actions\DeleteAction::make()
+            DeleteAction::make()
                 ->action(function () {
                     if ($this->record instanceof Trip) {
                         $this->record->delete();
@@ -551,29 +554,29 @@ class CalendarWidget extends FullCalendarWidget
     protected function viewAction(): Action
     {
         if ($this->record instanceof Trip) {
-            return Actions\ViewAction::make('view')
+            return ViewAction::make('view')
                 ->stickyModalFooter()
                 ->modalFooterActions([
-                    Actions\EditAction::make()
+                    EditAction::make()
                         ->modalWidth('7xl')
                         ->stickyModalFooter(),
-                    Actions\DeleteAction::make(),
+                    DeleteAction::make(),
                     Action::make('close')
                         ->label('Close')
                         ->color('gray')
                         ->action(fn() => $this->dispatch('close-modal')),
                 ]);
         } else {
-            return Actions\ViewAction::make('view')
+            return ViewAction::make('view')
                 ->stickyModalFooter()
                 ->modalContent(fn($record) => view(
                     'filament.resources.order-resource.custom-view',
                     ['record' => $record]
                 ))
                 // ->modalHeading(fn($record) => $record->order_number)
-                ->form([])
+                ->schema([])
                 ->modalFooterActions([
-                    Actions\EditAction::make()
+                    EditAction::make()
                         ->modalWidth('7xl')
                         ->stickyModalFooter(),
                     Action::make('duplicate')
@@ -594,7 +597,7 @@ class CalendarWidget extends FullCalendarWidget
                         ->icon('heroicon-o-printer')
                         ->url(fn(Order $record) => route('orders.print.formbg', ['order' => $record]))
                         ->openUrlInNewTab(),
-                    Actions\DeleteAction::make(),
+                    DeleteAction::make(),
                 ]);
         }
     }
@@ -834,11 +837,11 @@ class CalendarWidget extends FullCalendarWidget
         return [
             ViewAction::make()
                 ->modalWidth('2xl')
-                ->form(fn() => $this->getFormSchema()),
+                ->schema(fn() => $this->getFormSchema()),
             EditAction::make()
                 ->modalWidth('5xl')
                 ->stickyModalFooter()
-                ->form(fn() => $this->getFormSchema())
+                ->schema(fn() => $this->getFormSchema())
                 ->action(function (array $data) {
                     if ($this->event instanceof Trip) {
                         app(DeliveryCalendarAvailability::class)->validateDate(
@@ -855,7 +858,7 @@ class CalendarWidget extends FullCalendarWidget
                     $this->event->update($data);
                     $this->refreshRecords();
                 }),
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 

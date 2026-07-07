@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Exception;
 use App\Models\Employee;
 use App\Models\Order;
 use App\Models\Trip;
@@ -54,7 +55,7 @@ class SmsService
                 ]);
                 return false;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to send SMS', [
                 'to' => $to,
                 'error' => $e->getMessage(),

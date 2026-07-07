@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\DeliveryCalendarAvailability;
+use DB;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
@@ -38,7 +40,7 @@ class Trip extends Model
 
         static::creating(function ($trip) {
             if ($trip->scheduled_date) {
-                app(\App\Services\DeliveryCalendarAvailability::class)->validateDate(
+                app(DeliveryCalendarAvailability::class)->validateDate(
                     $trip->scheduled_date,
                     'scheduled_date'
                 );
@@ -49,7 +51,7 @@ class Trip extends Model
         });
         static::updating(function ($trip) {
             if ($trip->isDirty('scheduled_date') && $trip->scheduled_date) {
-                app(\App\Services\DeliveryCalendarAvailability::class)->validateDate(
+                app(DeliveryCalendarAvailability::class)->validateDate(
                     $trip->scheduled_date,
                     'scheduled_date'
                 );
@@ -111,7 +113,7 @@ class Trip extends Model
 
     public static function generateTripNumber()
     {
-        return \DB::transaction(function () {
+        return DB::transaction(function () {
             $lastTrip = static::withTrashed()
                 ->lockForUpdate()
                 ->orderBy('trip_number', 'desc')
