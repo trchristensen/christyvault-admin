@@ -14,6 +14,7 @@
             font-family: Arial, sans-serif;
             font-size: 12px;
             line-height: 1.4;
+            -webkit-print-color-adjust: exact;
         }
 
         @page {
@@ -26,9 +27,9 @@
             width: 100%;
             height: 215mm;
             padding: 5mm;
-
-            page-break-after: always;
+            display: block;
             overflow: hidden;
+            page-break-after: always;
         }
 
         .page:last-child {
@@ -38,7 +39,6 @@
         .page-header {
             height: 15mm;
             margin: 0 0 2mm 0;
-
             text-align: center;
         }
 
@@ -59,14 +59,59 @@
         }
 
         .day-column {
+            box-sizing: border-box;
             width: 20%;
             height: 100%;
-            box-sizing: border-box;
-
             vertical-align: top;
             border: 1px solid #ddd;
             padding: 10px;
         }
+
+        .date-header {
+            background: #ccc;
+            padding: 5px;
+            font-weight: bold;
+            margin: -10px -10px 10px -10px;
+            text-align: center;
+        }
+
+        .order {
+            margin-bottom: 10px;
+            padding: 5px;
+            border: 1px solid #e5e7eb;
+            background: white;
+        }
+
+        .order-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .order-details {
+            font-size: 11px;
+        }
+
+        .no-orders {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .order-section {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+
+        .order-section-header {
+            font-weight: bold;
+            padding: 5px;
+            background: #ccc;
+            margin-bottom: 10px;
+        }
+
+        .order-section-content {}
     </style>
 </head>
 
