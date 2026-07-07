@@ -18,85 +18,55 @@
 
         @page {
             margin: 0;
-            size: letter portrait;
+            size: letter landscape;
         }
 
         .page {
             box-sizing: border-box;
-            padding: 20px;
+            width: 100%;
+            height: 215mm;
+            padding: 5mm;
 
-            break-after: page;
             page-break-after: always;
+            overflow: hidden;
         }
 
         .page:last-child {
-            break-after: auto;
             page-break-after: auto;
         }
 
         .page-header {
-            text-align: center;
-            margin-bottom: 10px;
             height: 15mm;
+            margin: 0 0 2mm 0;
+
+            text-align: center;
+        }
+
+        .page-header h1 {
+            margin: 0;
         }
 
         .week-grid {
             width: 100%;
+            height: 188mm;
             border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .week-grid tbody,
+        .week-grid tr {
+            height: 100%;
         }
 
         .day-column {
             width: 20%;
+            height: 100%;
+            box-sizing: border-box;
+
             vertical-align: top;
             border: 1px solid #ddd;
             padding: 10px;
         }
-
-        .date-header {
-            background: #ccc;
-            padding: 5px;
-            font-weight: bold;
-            margin: -10px -10px 10px -10px;
-            text-align: center;
-        }
-
-        .order {
-            margin-bottom: 10px;
-            padding: 5px;
-            border: 1px solid #e5e7eb;
-            background: white;
-        }
-
-        .order-header {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .order-details {
-            font-size: 11px;
-        }
-
-        .no-orders {
-            color: #666;
-            font-style: italic;
-            text-align: center;
-            padding: 10px;
-        }
-
-        .order-section {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 20px;
-        }
-
-        .order-section-header {
-            font-weight: bold;
-            padding: 5px;
-            background: #ccc;
-            margin-bottom: 10px;
-        }
-
-        .order-section-content {}
     </style>
 </head>
 
@@ -130,8 +100,8 @@
         </div>
 
         <table class="week-grid">
-            <tbody>
-                <tr>
+            <tbody style="height: 100%">
+                <tr style="height: 100%">
                     @foreach ($firstWeek as $date)
                         <td class="day-column">
                             <div class="date-header">
