@@ -105,10 +105,24 @@
 
 <body>
     @php
+        use Propaganistas\LaravelPhone\PhoneNumber;
+
         $firstWeek = $weekdays->take(5);
         $secondWeek = $weekdays->skip(5);
 
-        use Propaganistas\LaravelPhone\PhoneNumber;
+        $formatPhone = static function ($phone): string {
+            if (blank($phone)) {
+                return '';
+            }
+
+            $phone = (string) $phone;
+
+            try {
+                return new PhoneNumber($phone, 'US')->formatNational();
+            } catch (\Throwable) {
+                return $phone;
+            }
+        };
     @endphp
 
     <!-- First Week -->
@@ -163,14 +177,19 @@
                                                     @endif
                                                     <div>
                                                         @php
-                                                            if ($order->location && $order->location->preferredDeliveryContact) {
+                                                            if (
+                                                                $order->location &&
+                                                                $order->location->preferredDeliveryContact
+                                                            ) {
                                                                 try {
-                                                                    $formattedPhone = (new PhoneNumber(
+                                                                    $formattedPhone = new PhoneNumber(
                                                                         $order->location->preferredDeliveryContact->phone,
-                                                                        'US'
-                                                                    ))->formatNational();
+                                                                        'US',
+                                                                    )->formatNational();
                                                                 } catch (\Exception $e) {
-                                                                    $formattedPhone = $order->location->preferredDeliveryContact->phone;
+                                                                    $formattedPhone =
+                                                                        $order->location->preferredDeliveryContact
+                                                                            ->phone;
                                                                 }
                                                                 echo $formattedPhone;
                                                             } else {
@@ -207,14 +226,19 @@
                                                     @endif
                                                     <div>
                                                         @php
-                                                            if ($order->location && $order->location->preferredDeliveryContact) {
+                                                            if (
+                                                                $order->location &&
+                                                                $order->location->preferredDeliveryContact
+                                                            ) {
                                                                 try {
-                                                                    $formattedPhone = (new PhoneNumber(
+                                                                    $formattedPhone = new PhoneNumber(
                                                                         $order->location->preferredDeliveryContact->phone,
-                                                                        'US'
-                                                                    ))->formatNational();
+                                                                        'US',
+                                                                    )->formatNational();
                                                                 } catch (\Exception $e) {
-                                                                    $formattedPhone = $order->location->preferredDeliveryContact->phone;
+                                                                    $formattedPhone =
+                                                                        $order->location->preferredDeliveryContact
+                                                                            ->phone;
                                                                 }
                                                                 echo $formattedPhone;
                                                             } else {
@@ -251,14 +275,19 @@
                                                     @endif
                                                     <div>
                                                         @php
-                                                            if ($order->location && $order->location->preferredDeliveryContact) {
+                                                            if (
+                                                                $order->location &&
+                                                                $order->location->preferredDeliveryContact
+                                                            ) {
                                                                 try {
-                                                                    $formattedPhone = (new PhoneNumber(
+                                                                    $formattedPhone = new PhoneNumber(
                                                                         $order->location->preferredDeliveryContact->phone,
-                                                                        'US'
-                                                                    ))->formatNational();
+                                                                        'US',
+                                                                    )->formatNational();
                                                                 } catch (\Exception $e) {
-                                                                    $formattedPhone = $order->location->preferredDeliveryContact->phone;
+                                                                    $formattedPhone =
+                                                                        $order->location->preferredDeliveryContact
+                                                                            ->phone;
                                                                 }
                                                                 echo $formattedPhone;
                                                             } else {
@@ -334,14 +363,19 @@
                                                     @endif
                                                     <div>
                                                         @php
-                                                            if ($order->location && $order->location->preferredDeliveryContact) {
+                                                            if (
+                                                                $order->location &&
+                                                                $order->location->preferredDeliveryContact
+                                                            ) {
                                                                 try {
-                                                                    $formattedPhone = (new PhoneNumber(
+                                                                    $formattedPhone = new PhoneNumber(
                                                                         $order->location->preferredDeliveryContact->phone,
-                                                                        'US'
-                                                                    ))->formatNational();
+                                                                        'US',
+                                                                    )->formatNational();
                                                                 } catch (\Exception $e) {
-                                                                    $formattedPhone = $order->location->preferredDeliveryContact->phone;
+                                                                    $formattedPhone =
+                                                                        $order->location->preferredDeliveryContact
+                                                                            ->phone;
                                                                 }
                                                                 echo $formattedPhone;
                                                             } else {
@@ -378,14 +412,19 @@
                                                     @endif
                                                     <div>
                                                         @php
-                                                            if ($order->location && $order->location->preferredDeliveryContact) {
+                                                            if (
+                                                                $order->location &&
+                                                                $order->location->preferredDeliveryContact
+                                                            ) {
                                                                 try {
-                                                                    $formattedPhone = (new PhoneNumber(
+                                                                    $formattedPhone = new PhoneNumber(
                                                                         $order->location->preferredDeliveryContact->phone,
-                                                                        'US'
-                                                                    ))->formatNational();
+                                                                        'US',
+                                                                    )->formatNational();
                                                                 } catch (\Exception $e) {
-                                                                    $formattedPhone = $order->location->preferredDeliveryContact->phone;
+                                                                    $formattedPhone =
+                                                                        $order->location->preferredDeliveryContact
+                                                                            ->phone;
                                                                 }
                                                                 echo $formattedPhone;
                                                             } else {
@@ -422,14 +461,19 @@
                                                     @endif
                                                     <div>
                                                         @php
-                                                            if ($order->location && $order->location->preferredDeliveryContact) {
+                                                            if (
+                                                                $order->location &&
+                                                                $order->location->preferredDeliveryContact
+                                                            ) {
                                                                 try {
-                                                                    $formattedPhone = (new PhoneNumber(
+                                                                    $formattedPhone = new PhoneNumber(
                                                                         $order->location->preferredDeliveryContact->phone,
-                                                                        'US'
-                                                                    ))->formatNational();
+                                                                        'US',
+                                                                    )->formatNational();
                                                                 } catch (\Exception $e) {
-                                                                    $formattedPhone = $order->location->preferredDeliveryContact->phone;
+                                                                    $formattedPhone =
+                                                                        $order->location->preferredDeliveryContact
+                                                                            ->phone;
                                                                 }
                                                                 echo $formattedPhone;
                                                             } else {
