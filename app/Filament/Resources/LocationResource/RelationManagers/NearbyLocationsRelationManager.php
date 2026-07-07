@@ -48,13 +48,17 @@ class NearbyLocationsRelationManager extends RelationManager
 
     protected function nearbyLocationsForMap(): Collection
     {
-        /** @var Location $owner */
-        $owner = $this->getOwnerRecord();
+        $records = $this->getTableRecords();
 
-        return $this->nearbyLocationsQuery($owner)
-            ->orderBy('distance_miles')
-            ->limit(10)
-            ->get();
+        if (method_exists($records, 'getCollection')) {
+            return $records->getCollection();
+        }
+
+        if (method_exists($records, 'items')) {
+            return collect($records->items());
+        }
+
+        return collect($records);
     }
 
     public function table(Table $table): Table

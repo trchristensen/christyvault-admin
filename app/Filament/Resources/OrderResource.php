@@ -262,6 +262,28 @@ class OrderResource extends Resource
                             });
                         }
                         return $query;
+                    }),
+                Tables\Filters\SelectFilter::make('state')
+                    ->label('State')
+                    ->multiple()
+                    ->options(function () {
+                        return DB::table('locations')
+                            ->join('orders', 'locations.id', '=', 'orders.location_id')
+                            ->whereNotNull('locations.state')
+                            ->where('locations.state', '!=', '')
+                            ->distinct()
+                            ->orderBy('locations.state')
+                            ->pluck('locations.state', 'locations.state')
+                            ->toArray();
+                    })
+                    ->query(function (Builder $query, array $data) {
+                        if (!empty($data['values'])) {
+                            $query->whereHas('location', function ($q) use ($data) {
+                                $q->whereIn('state', $data['values']);
+                            });
+                        }
+
+                        return $query;
                     })
 
             ])
