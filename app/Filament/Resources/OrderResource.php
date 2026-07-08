@@ -116,38 +116,18 @@ class OrderResource extends Resource
                 //     ->label('Trip')
                 //     ->default('Unassigned'),
 
-                TextColumn::make('orderProducts')
+                TextColumn::make('products_summary')
                     ->label('Products')
-                    ->formatStateUsing(function ($state, $record) {
-                        $products = [];
-                        foreach ($record->orderProducts as $orderProduct) {
-                            $isCustom = $orderProduct->is_custom_product;
-                            $key = ($isCustom ? 'custom-' . ($orderProduct->custom_description ?? $orderProduct->id) : $orderProduct->product_id) . ($orderProduct->fill_load ? '-fill' : '');
+                    ->state(fn (Order $record): string => implode("\n", static::getProductSummaryLines($record)))
+                    ->formatStateUsing(fn (string $state): string => nl2br(e($state)))
+                    ->html()
+                    ->lineClamp(3)
+                    ->tooltip(function (Order $record): ?string {
+                        $lines = static::getProductSummaryLines($record);
 
-                            if (!isset($products[$key])) {
-                                if ($orderProduct->fill_load) {
-                                    $sku = $isCustom
-                                        ? ($orderProduct->custom_description ?? 'Custom')
-                                        : ($orderProduct->product->sku ?? 'Unknown');
-                                    $products[$key] = "Fill Load x {$sku}";
-                                } else {
-                                    $quantity = $record->orderProducts
-                                        ->where('product_id', $orderProduct->product_id)
-                                        ->where('fill_load', false)
-                                        ->sum('quantity');
-                                    if ($isCustom) {
-                                        $desc = $orderProduct->custom_description ?? 'Custom';
-                                        $products[$key] = "{$orderProduct->quantity} x {$desc}";
-                                    } else {
-                                        $sku = $orderProduct->product->sku ?? 'Unknown';
-                                        $products[$key] = "{$quantity} x {$sku}";
-                                    }
-                                }
-                            }
-                        }
-                        return nl2br(implode("\n", array_values($products)));
+                        return count($lines) > 3 ? implode(' • ', $lines) : null;
                     })
-                    ->html(),
+                    ->placeholder('—'),
 
             ])
             ->defaultGroup('delivery_group')
@@ -486,8 +466,40 @@ class OrderResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->with('orderProducts.product')
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+    }
+
+    /**
+     * Collapse repeated order-product rows into one readable line per product.
+     *
+     * @return array<int, string>
+     */
+    protected static function getProductSummaryLines(Order $order): array
+    {
+        return $order->orderProducts
+            ->groupBy(function ($orderProduct): string {
+                $product = $orderProduct->is_custom_product
+                    ? 'custom:' . mb_strtolower(trim($orderProduct->custom_description ?? 'Custom'))
+                    : 'product:' . ($orderProduct->product_id ?? 'unknown');
+
+                return $product . ':fill:' . (int) (bool) $orderProduct->fill_load;
+            })
+            ->map(function ($group): string {
+                $orderProduct = $group->first();
+                $label = $orderProduct->is_custom_product
+                    ? ($orderProduct->custom_description ?? 'Custom')
+                    : ($orderProduct->product?->sku ?? 'Unknown');
+
+                if ($orderProduct->fill_load) {
+                    return "Fill Load × {$label}";
+                }
+
+                return $group->sum('quantity') . " × {$label}";
+            })
+            ->values()
+            ->all();
     }
 }

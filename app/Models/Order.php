@@ -88,21 +88,6 @@ class Order extends Model
             $model->order_number = sprintf('ORD-%05d', $nextNumber);
         });
 
-        static::created(function ($order) {
-            if (request()->has('data.orderProducts')) {
-                foreach (request()->input('data.orderProducts') as $product) {
-                    $order->orderProducts()->create([
-                        'product_id' => $product['product_id'],
-                        'fill_load' => $product['fill_load'] ?? 0,
-                        'quantity' => $product['quantity'] ?? null,
-                        'price' => $product['price'] ?? 0,
-                        'location' => $product['location'] ?? null,
-                        'notes' => $product['notes'] ?? null,
-                    ]);
-                }
-            }
-        });
-
         static::updating(function ($model) {
             if ($model->isDirty('assigned_delivery_date') && $model->assigned_delivery_date) {
                 app(DeliveryCalendarAvailability::class)->validateDate(

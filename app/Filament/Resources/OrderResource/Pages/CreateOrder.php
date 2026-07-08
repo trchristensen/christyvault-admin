@@ -6,10 +6,28 @@ use App\Enums\PlantLocation;
 use App\Filament\Resources\OrderResource;
 use App\Models\Location;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class CreateOrder extends CreateRecord
 {
     protected static string $resource = OrderResource::class;
+
+    protected function handleRecordCreation(array $data): Model
+    {
+        $products = $data['orderProducts'] ?? [];
+
+        return DB::transaction(function () use ($data, $products): Model {
+            $order = static::getModel()::create(Arr::except($data, 'orderProducts'));
+
+            if ($products !== []) {
+                $order->orderProducts()->createMany($products);
+            }
+
+            return $order;
+        });
+    }
 
     protected function fillForm(): void
     {

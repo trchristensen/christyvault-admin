@@ -524,6 +524,7 @@ trait HasOrderForm
                                 ]),
                             Hidden::make('price')->default(0),
                             Grid::make(12)
+                                ->columnSpanFull()
                                 ->schema([
                                     TextInput::make('location')
                                         ->label('Location')

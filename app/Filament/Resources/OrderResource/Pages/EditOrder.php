@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use App\Filament\Resources\OrderResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class EditOrder extends EditRecord
 {
@@ -41,19 +43,22 @@ class EditOrder extends EditRecord
 
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
-        // Update the order
-        $record->update($data);
+        $hasProducts = array_key_exists('orderProducts', $data);
+        $products = $data['orderProducts'] ?? [];
 
-        // Handle order products manually since we're not using ->relationship()
-        if (isset($data['orderProducts'])) {
-            // Delete existing order products
-            $record->orderProducts()->delete();
-            
-            // Create new ones
-            foreach ($data['orderProducts'] as $productData) {
-                $record->orderProducts()->create($productData);
+        DB::transaction(function () use ($record, $data, $hasProducts, $products): void {
+            $record->update(Arr::except($data, 'orderProducts'));
+
+            if (! $hasProducts) {
+                return;
             }
-        }
+
+            $record->orderProducts()->delete();
+
+            if ($products !== []) {
+                $record->orderProducts()->createMany($products);
+            }
+        });
 
         $record->location?->updateOrderAnalytics();
 
