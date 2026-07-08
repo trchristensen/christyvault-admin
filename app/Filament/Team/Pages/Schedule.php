@@ -16,6 +16,11 @@ class Schedule extends Page
 
     protected static ?string $title = 'Delivery Schedule';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->can('view team delivery schedule') ?? false;
+    }
+
     // don't display title on page
     public function getTitle(): string
     {

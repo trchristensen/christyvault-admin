@@ -3,8 +3,7 @@
 namespace App\Providers\Filament;
 
 use Filament\Pages\Dashboard;
-use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
+use App\Filament\Team\Widgets\TodaysDeliveriesWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -50,8 +49,7 @@ class TeamPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Team/Widgets'), for: 'App\\Filament\\Team\\Widgets')
             ->widgets([
-                AccountWidget::class,
-                FilamentInfoWidget::class,
+                TodaysDeliveriesWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
