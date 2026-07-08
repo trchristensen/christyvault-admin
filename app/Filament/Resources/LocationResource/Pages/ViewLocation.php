@@ -33,7 +33,7 @@ class ViewLocation extends ViewRecord
 
     public function infolist(Schema $schema): Schema
     {
-        return $infolist
+        return $schema
             ->schema([
                 ViewEntry::make('profile')
                     ->hiddenLabel()

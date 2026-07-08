@@ -17,7 +17,7 @@ class ViewPurchaseOrder extends ViewRecord
 
     public function infolist(Schema $schema): Schema
     {
-        return $infolist
+        return $schema
             ->schema([
                 Section::make('Order Details')
                     ->schema([
@@ -97,4 +97,4 @@ class ViewPurchaseOrder extends ViewRecord
                     ->collapsed(),
             ]);
     }
-} 
+}
