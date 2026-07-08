@@ -206,10 +206,10 @@ class Location extends Model
             $main = $this->formatPhone($contact->phone);
             $mobile = $this->formatPhone($contact->mobile_phone);
 
-            $parts = ["Contact: {$contact->name}"];
+            $parts = [];
 
             if ($main) {
-                $part = "- {$main}";
+                $part = $main;
                 if ($contact->phone_extension) {
                     $part .= " x{$contact->phone_extension}";
                 }
@@ -217,10 +217,12 @@ class Location extends Model
             }
 
             if ($mobile) {
-                $parts[] = "• M: {$mobile}";
+                $parts[] = "M: {$mobile}";
             }
 
-            return implode(' ', $parts);
+            if ($parts !== []) {
+                return implode(' • ', $parts);
+            }
         }
 
         // Fallback to location's own phone
