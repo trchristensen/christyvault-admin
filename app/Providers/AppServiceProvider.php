@@ -16,6 +16,13 @@ use App\Models\Location;
 use App\Observers\PurchaseOrderObserver;
 use App\Observers\LocationObserver;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
+use SpykApp\PasswordlessLogin\Models\MagicLoginToken;
+use App\Policies\MagicLoginTokenPolicy;
+use App\Policies\PermissionPolicy;
+use App\Policies\RolePolicy;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +36,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Super admins bypass all policy and permission checks.
+        Gate::before(fn ($user) => $user->hasRole('super-admin') ? true : null);
+
+        // This vendor model cannot rely on application policy auto-discovery.
+        Gate::policy(MagicLoginToken::class, MagicLoginTokenPolicy::class);
+        Gate::policy(Role::class, RolePolicy::class);
+        Gate::policy(Permission::class, PermissionPolicy::class);
+
         LogViewer::auth(function ($request) {
             config(['sanctum.stateful' => array_merge(
                 config('sanctum.stateful', []),

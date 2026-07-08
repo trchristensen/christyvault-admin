@@ -43,7 +43,11 @@ class TeamPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->plugins([
-                FilamentPasswordlessLoginPlugin::make(),
+                FilamentPasswordlessLoginPlugin::make()
+                    ->loginAction()
+                    ->loginActionIcon('heroicon-m-envelope')
+                    ->loginActionColor('success')
+                    ->slideover(),
                 FilamentFullCalendarPlugin::make()
                     ->selectable()
                     ->editable()
