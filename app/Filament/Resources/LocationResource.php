@@ -401,13 +401,55 @@ class LocationResource extends Resource
             ->defaultSort('last_order_at', 'desc')
             ->filters([
                 SelectFilter::make('order_status')
+                    ->label('Order Status')
                     ->options([
                         'No Orders' => 'No Orders',
                         'New Customer' => 'New Customer',
                         'Overdue' => 'Overdue',
                         'Due Soon' => 'Due Soon',
                         'Recently Ordered' => 'Recently Ordered',
-                    ]),
+                    ])
+                    ->multiple()
+                    ->native(false)
+                    ->query(function (Builder $query, array $data): Builder {
+                        $statuses = $data['values'] ?? [];
+
+                        if ($statuses === []) {
+                            return $query;
+                        }
+
+                        $daysSinceLastOrder = 'ABS(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - locations.last_order_at)) / 86400)';
+
+                        return $query->where(function (Builder $query) use ($statuses, $daysSinceLastOrder): void {
+                            foreach ($statuses as $status) {
+                                $query->orWhere(function (Builder $query) use ($status, $daysSinceLastOrder): void {
+                                    match ($status) {
+                                        'No Orders' => $query->whereNull('locations.last_order_at'),
+                                        'New Customer' => $query
+                                            ->whereNotNull('locations.last_order_at')
+                                            ->where(function (Builder $query): void {
+                                                $query->whereNull('locations.average_order_frequency_days')
+                                                    ->orWhere('locations.average_order_frequency_days', '<=', 0);
+                                            }),
+                                        'Overdue' => $query
+                                            ->whereNotNull('locations.last_order_at')
+                                            ->where('locations.average_order_frequency_days', '>', 0)
+                                            ->whereRaw("{$daysSinceLastOrder} > locations.average_order_frequency_days * 1.5"),
+                                        'Due Soon' => $query
+                                            ->whereNotNull('locations.last_order_at')
+                                            ->where('locations.average_order_frequency_days', '>', 0)
+                                            ->whereRaw("{$daysSinceLastOrder} > locations.average_order_frequency_days")
+                                            ->whereRaw("{$daysSinceLastOrder} <= locations.average_order_frequency_days * 1.5"),
+                                        'Recently Ordered' => $query
+                                            ->whereNotNull('locations.last_order_at')
+                                            ->where('locations.average_order_frequency_days', '>', 0)
+                                            ->whereRaw("{$daysSinceLastOrder} <= locations.average_order_frequency_days"),
+                                        default => null,
+                                    };
+                                });
+                            }
+                        });
+                    }),
                 SelectFilter::make('location_type')
                     ->options([
                         'business' => 'Business',
