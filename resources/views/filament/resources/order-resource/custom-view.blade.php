@@ -321,32 +321,10 @@
                     </div>
                 @endif
 
-                @if ($record->location && $record->location->preferredDeliveryContact)
+                @if ($record->location?->formatted_preferred_phone)
                     <div class="flex items-center gap-2">
                         <x-heroicon-o-phone class="w-4 h-4" />
-                        @php
-                            try {
-                                $contactPhoneObj = new PhoneNumber(
-                                    $record->location->preferredDeliveryContact->phone,
-                                    'US',
-                                );
-                                $contactFormattedPhone = $contactPhoneObj->formatNational();
-                            } catch (\Exception $e) {
-                                $contactFormattedPhone = $record->location->preferredDeliveryContact->phone;
-                            }
-                        @endphp
-
-                        <p>Contact: {{ $record->location->preferredDeliveryContact->name }}
-                            @if ($record->location->preferredDeliveryContact->phone)
-                                - {{ $contactFormattedPhone }}
-                                @if ($record->location->preferredDeliveryContact->phone_extension)
-                                    x{{ $record->location->preferredDeliveryContact->phone_extension }}
-                                @endif
-                            @endif
-                            @if ($record->location->preferredDeliveryContact->mobile_phone)
-                                • Mobile: {{ $record->location->preferredDeliveryContact->mobile_phone }}
-                            @endif
-                        </p>
+                        <p>{{ $record->location->formatted_preferred_phone }}</p>
                     </div>
                 @endif
 
@@ -358,7 +336,7 @@
                             try {
                                 $locationPhoneObj = new PhoneNumber($record->location->phone, 'US');
                                 $locationFormattedPhone = $locationPhoneObj->formatNational();
-                            } catch (\Exception $e) {
+                            } catch (\Throwable $e) {
                                 $locationFormattedPhone = $record->location->phone;
                             }
                         @endphp

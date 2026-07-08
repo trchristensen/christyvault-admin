@@ -78,7 +78,10 @@ class AdminPanelProvider extends PanelProvider
                 NavigationItem::make('Sales Panel')
                     ->url('/sales')
                     ->icon('heroicon-o-presentation-chart-line')
-                    ->visible(fn(): bool => auth()->user()?->email === 'tchristensen@christyvault.com')
+                    ->visible(fn(): bool => auth()->user()?->can('view sales panel')),
+                NavigationItem::make('Team Panel')
+                    ->url('/team')
+                    ->icon('heroicon-o-users')
             ])
             ->databaseNotifications()
             ->sidebarCollapsibleOnDesktop()

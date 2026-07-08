@@ -322,17 +322,9 @@
                                                                 $order->location &&
                                                                 $order->location->preferredDeliveryContact
                                                             ) {
-                                                                try {
-                                                                    $formattedPhone = new PhoneNumber(
-                                                                        $order->location->preferredDeliveryContact->phone,
-                                                                        'US',
-                                                                    )->formatNational();
-                                                                } catch (\Exception $e) {
-                                                                    $formattedPhone =
-                                                                        $order->location->preferredDeliveryContact
-                                                                            ->phone;
-                                                                }
-                                                                echo $formattedPhone;
+                                                                echo $formatPhone(
+                                                                    $order->location->preferredDeliveryContact->phone,
+                                                                );
                                                             } else {
                                                                 echo '';
                                                             }
