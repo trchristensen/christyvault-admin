@@ -32,7 +32,7 @@ use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 use App\Filament\Resources\OrderResource\Widgets\CalendarWidget;
 use App\Filament\Widgets\CalendarWidget as WidgetsCalendarWidget;
 use Filament\Navigation\NavigationItem;
-
+use SpykApp\FilamentPasswordlessLogin\FilamentPasswordlessLoginPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -85,6 +85,7 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarWidth('13rem')
             // ->collapsedSidebarWidth('5rem')
             ->plugins([
+                FilamentPasswordlessLoginPlugin::make(),
                 FilamentSpatieRolesPermissionsPlugin::make(),
                 BreezyCore::make()
                     ->myProfile(),

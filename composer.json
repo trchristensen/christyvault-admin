@@ -20,6 +20,7 @@
         "league/flysystem-aws-s3-v3": "^3.29",
         "opcodesio/log-viewer": "^3.12",
         "resend/resend-laravel": "^1.4",
+        "resend/resend-php": "^1.4",
         "saade/filament-fullcalendar": "^4.0",
         "schmeits/filament-character-counter": "^5.0",
         "setasign/fpdf": "^1.8",
@@ -29,6 +30,7 @@
         "spatie/laravel-backup": "^9.1",
         "spatie/pdf-to-image": "^1.2",
         "spatie/pdf-to-text": "^1.54",
+        "spykapps/filament-passwordless-login": "^1.0",
         "telnyx/telnyx-php": "^3.0",
         "thiagoalessio/tesseract_ocr": "^2.13",
         "ysfkaya/filament-phone-input": "^4.0"

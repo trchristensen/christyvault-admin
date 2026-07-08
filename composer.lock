@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7c0222fbe62040ab9dc6b319b28db03f",
+    "content-hash": "2632b0bd9216938f9d537fac02db0c91",
     "packages": [
         {
             "name": "althinect/filament-spatie-roles-permissions",
@@ -8010,6 +8010,145 @@
                 }
             ],
             "time": "2026-06-22T07:55:44+00:00"
+        },
+        {
+            "name": "spykapps/filament-passwordless-login",
+            "version": "v1.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/SpykApp/filament-passwordless-login.git",
+                "reference": "747fec3ece513592fe73188169c1111d716db151"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/SpykApp/filament-passwordless-login/zipball/747fec3ece513592fe73188169c1111d716db151",
+                "reference": "747fec3ece513592fe73188169c1111d716db151",
+                "shasum": ""
+            },
+            "require": {
+                "filament/filament": "^4.0|^5.0",
+                "php": "^8.1",
+                "spykapps/passwordless-login": "^1.0"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^9.0|^10.0",
+                "phpunit/phpunit": "^10.0|^11.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "SpykApp\\FilamentPasswordlessLogin\\FilamentPasswordlessLoginServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "SpykApp\\FilamentPasswordlessLogin\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Sanchit Patil",
+                    "email": "dev@spykapps.com"
+                }
+            ],
+            "description": "A highly customizable Filament 4 plugin for passwordless magic link authentication with login page, actions, resource management, and analytics widgets.",
+            "homepage": "https://github.com/spykapps/filament-passwordless-login",
+            "keywords": [
+                "Authentication",
+                "Passwordless",
+                "filament",
+                "filament-plugin",
+                "laravel",
+                "magic-link"
+            ],
+            "support": {
+                "issues": "https://github.com/SpykApp/filament-passwordless-login/issues",
+                "source": "https://github.com/SpykApp/filament-passwordless-login/tree/v1.0.2"
+            },
+            "time": "2026-04-10T18:21:23+00:00"
+        },
+        {
+            "name": "spykapps/passwordless-login",
+            "version": "v1.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/SpykApp/passwordless-login.git",
+                "reference": "956fd166f27d6e98d4adc4a3c62e2c2537e224a9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/SpykApp/passwordless-login/zipball/956fd166f27d6e98d4adc4a3c62e2c2537e224a9",
+                "reference": "956fd166f27d6e98d4adc4a3c62e2c2537e224a9",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/database": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/http": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/mail": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/notifications": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/routing": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^8.0|^9.0|^10.0",
+                "phpunit/phpunit": "^10.0|^11.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "PasswordlessLogin": "SpykApp\\PasswordlessLogin\\Facades\\PasswordlessLogin"
+                    },
+                    "providers": [
+                        "SpykApp\\PasswordlessLogin\\PasswordlessLoginServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "SpykApp\\PasswordlessLogin\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "SpykApps",
+                    "email": "dev@spykapps.com"
+                }
+            ],
+            "description": "A highly customizable, multilingual magic link (passwordless) authentication package for Laravel with bot detection, rate limiting, and comprehensive event system.",
+            "homepage": "https://github.com/spykapps/passwordless-login",
+            "keywords": [
+                "Authentication",
+                "Passwordless",
+                "laravel",
+                "login",
+                "magic-link",
+                "magic-login",
+                "passwordless-login"
+            ],
+            "support": {
+                "issues": "https://github.com/SpykApp/passwordless-login/issues",
+                "source": "https://github.com/SpykApp/passwordless-login/tree/v1.0.3"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/SpykApp",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-04-21T15:36:01+00:00"
         },
         {
             "name": "symfony/clock",

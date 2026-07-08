@@ -12,11 +12,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
-
+use SpykApp\PasswordlessLogin\Traits\HasMagicLogin;
 
 class User extends Authenticatable implements FilamentUser
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, HasSuperAdmin;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, HasSuperAdmin, HasMagicLogin;
 
     public function canAccessPanel(Panel $panel): bool
     {

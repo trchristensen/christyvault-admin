@@ -21,6 +21,7 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
+use SpykApp\FilamentPasswordlessLogin\FilamentPasswordlessLoginPlugin;
 
 class TeamPanelProvider extends PanelProvider
 {
@@ -41,11 +42,12 @@ class TeamPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
             ])
-            ->plugin(
+            ->plugins([
+                FilamentPasswordlessLoginPlugin::make(),
                 FilamentFullCalendarPlugin::make()
                     ->selectable()
                     ->editable()
-            )
+            ])
             ->discoverWidgets(in: app_path('Filament/Team/Widgets'), for: 'App\\Filament\\Team\\Widgets')
             ->widgets([
                 AccountWidget::class,
