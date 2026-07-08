@@ -85,11 +85,7 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarWidth('13rem')
             // ->collapsedSidebarWidth('5rem')
             ->plugins([
-                FilamentPasswordlessLoginPlugin::make()
-                    ->loginAction()
-                    ->loginActionIcon('heroicon-m-envelope')
-                    ->loginActionColor('success')
-                    ->slideover(),
+                FilamentPasswordlessLoginPlugin::make(),
                 FilamentSpatieRolesPermissionsPlugin::make(),
                 BreezyCore::make()
                     ->myProfile(),
