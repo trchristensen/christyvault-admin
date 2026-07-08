@@ -99,6 +99,36 @@
             background: #dbeafe;
         }
 
+        .delivery-tag-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            border-radius: 9999px;
+            border: 1px solid;
+            padding: 1px 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            line-height: 1.25rem;
+            white-space: nowrap;
+        }
+
+        .delivery-tag-badge svg {
+            width: .85rem;
+            height: .85rem;
+        }
+
+        .delivery-tag-printed {
+            border-color: #86efac;
+            color: #166534;
+            background: #dcfce7;
+        }
+
+        .delivery-tag-not-printed {
+            border-color: #fcd34d;
+            color: #92400e;
+            background: #fef3c7;
+        }
+
         table.orderProducts {
 
 
@@ -221,6 +251,18 @@
                                                 <span>Order #{{ $order->id }}</span>
                                                 <span class="order-status-badge order-status-{{ $statusClass }}">
                                                     {{ $statusLabel }}
+                                                </span>
+                                                <span
+                                                    class="delivery-tag-badge {{ $order->is_printed ? 'delivery-tag-printed' : 'delivery-tag-not-printed' }}"
+                                                    title="{{ $order->is_printed ? 'Delivery tag has been printed' : 'Delivery tag has not been printed yet' }}"
+                                                >
+                                                    @if ($order->is_printed)
+                                                        <x-heroicon-o-printer />
+                                                        <span>Tag printed</span>
+                                                    @else
+                                                        <x-heroicon-o-exclamation-triangle />
+                                                        <span>Tag not printed</span>
+                                                    @endif
                                                 </span>
                                             </div>
                                             <div>

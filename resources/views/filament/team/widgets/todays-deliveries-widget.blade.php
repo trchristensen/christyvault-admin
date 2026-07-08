@@ -41,6 +41,36 @@
             color: #1e40af;
         }
 
+        .team-deliveries-widget .delivery-tag-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            border: 1px solid;
+            border-radius: 9999px;
+            padding: 1px 8px;
+            font-size: .72rem;
+            font-weight: 700;
+            line-height: 1.25rem;
+            white-space: nowrap;
+        }
+
+        .team-deliveries-widget .delivery-tag-badge svg {
+            width: .85rem;
+            height: .85rem;
+        }
+
+        .team-deliveries-widget .delivery-tag-printed {
+            border-color: #86efac;
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .team-deliveries-widget .delivery-tag-not-printed {
+            border-color: #fcd34d;
+            background: #fef3c7;
+            color: #92400e;
+        }
+
         .team-deliveries-widget table.orderProducts {
             margin-top: 1rem;
             margin-left: 1rem;
@@ -132,6 +162,18 @@
                                                 <span>Order #{{ $order->id }}</span>
                                                 <span class="order-status-badge order-status-{{ $statusClass }}">
                                                     {{ $statusLabel }}
+                                                </span>
+                                                <span
+                                                    class="delivery-tag-badge {{ $order->is_printed ? 'delivery-tag-printed' : 'delivery-tag-not-printed' }}"
+                                                    title="{{ $order->is_printed ? 'Delivery tag has been printed' : 'Delivery tag has not been printed yet' }}"
+                                                >
+                                                    @if ($order->is_printed)
+                                                        <x-heroicon-o-printer />
+                                                        <span>Tag printed</span>
+                                                    @else
+                                                        <x-heroicon-o-exclamation-triangle />
+                                                        <span>Tag not printed</span>
+                                                    @endif
                                                 </span>
                                             </div>
 
