@@ -41,18 +41,41 @@
             color: #1e40af;
         }
 
-        .team-deliveries-widget .product-row + .product-row {
-            border-top: 1px solid #e5e7eb;
+        .team-deliveries-widget table.orderProducts {
+            margin-top: 1rem;
+            margin-left: 1rem;
+            font-size: .875rem;
+            line-height: 1.25rem;
+            border-collapse: collapse;
         }
 
-        .team-deliveries-widget .product-quantity {
-            width: 3.5rem;
+        .team-deliveries-widget table.orderProducts tr {
+            border-bottom: 1px solid #d1d5db;
+        }
+
+        .team-deliveries-widget table.orderProducts tr:last-child {
+            border-bottom: 0;
+        }
+
+        .team-deliveries-widget table.orderProducts .qty,
+        .team-deliveries-widget table.orderProducts .product-details {
+            padding: 4px 8px;
+            vertical-align: top;
+        }
+
+        .team-deliveries-widget table.orderProducts .qty {
+            width: 2rem;
             border-right: 1px solid #e5e7eb;
             text-align: right;
         }
 
-        .dark .team-deliveries-widget .product-row + .product-row,
-        .dark .team-deliveries-widget .product-quantity {
+        .team-deliveries-widget .fill-load-text {
+            margin-left: 1rem;
+            font-weight: 700;
+        }
+
+        .dark .team-deliveries-widget table.orderProducts tr,
+        .dark .team-deliveries-widget table.orderProducts .qty {
             border-color: rgb(255 255 255 / .1);
         }
     </style>
@@ -141,7 +164,7 @@
                                     </div>
 
                                     @if ($order->orderProducts->isNotEmpty())
-                                        <div class="mt-3 overflow-hidden rounded-md border border-gray-200 text-sm dark:border-white/10">
+                                        <table class="orderProducts">
                                             @foreach ($order->orderProducts as $orderProduct)
                                                 @php
                                                     $productSku = $orderProduct->is_custom_product
@@ -152,26 +175,36 @@
                                                         : ($orderProduct->product?->name ?? 'Unknown product');
                                                 @endphp
 
-                                                <div class="product-row flex gap-3 px-3 py-2">
-                                                    <div class="product-quantity shrink-0 pr-3 font-semibold text-gray-700 dark:text-gray-200">
-                                                        {{ $orderProduct->fill_load ? '*' : $orderProduct->quantity }}
-                                                    </div>
-                                                    <div class="min-w-0">
-                                                        <div class="font-medium text-gray-950 dark:text-white">{{ $productSku }}</div>
-                                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ $productName }}</div>
+                                                <tr>
+                                                    <td class="qty">
                                                         @if ($orderProduct->fill_load)
-                                                            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400">FILL OUT LOAD</div>
+                                                            <strong>*</strong>
+                                                        @else
+                                                            {{ $orderProduct->quantity }}
+                                                        @endif
+                                                    </td>
+                                                    <td class="product-details">
+                                                        <div class="flex flex-col">
+                                                            <span>{{ $productSku }}</span>
+                                                            <span class="text-gray-600 dark:text-gray-500">{{ $productName }}</span>
+                                                        @if ($orderProduct->fill_load)
+                                                                <span class="fill-load-text text-xs">└ FILL OUT LOAD</span>
                                                         @endif
                                                         @if ($orderProduct->location)
-                                                            <div class="text-xs text-gray-500 dark:text-gray-400">Location: {{ $orderProduct->location }}</div>
+                                                                <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                                    <strong>Location:</strong> {{ $orderProduct->location }}
+                                                                </span>
                                                         @endif
                                                         @if ($orderProduct->notes)
-                                                            <div class="text-xs text-gray-500 dark:text-gray-400">Notes: {{ $orderProduct->notes }}</div>
+                                                                <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                                    <strong>Notes:</strong> {{ $orderProduct->notes }}
+                                                                </span>
                                                         @endif
-                                                    </div>
-                                                </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
                                             @endforeach
-                                        </div>
+                                        </table>
                                     @endif
                                 </li>
                             @endforeach
