@@ -641,18 +641,23 @@
                     <div class="location-profile-panel-title">Contact</div>
                     <div class="location-profile-rows">
                         <div class="location-profile-row">
-                            <div class="location-profile-label">Preferred</div>
+                            <div class="location-profile-label">Office Phone</div>
+                            <div class="location-profile-value">{{ $record->formatted_office_phone ?: 'No office phone' }}</div>
+                        </div>
+
+                        <div class="location-profile-row">
+                            <div class="location-profile-label">Office Email</div>
+                            <div class="location-profile-value">{{ $record->email ?: 'No office email' }}</div>
+                        </div>
+
+                        <div class="location-profile-row">
+                            <div class="location-profile-label">Delivery Contact</div>
                             <div class="location-profile-value">{{ $record->preferredDeliveryContact?->name ?? 'No preferred contact' }}</div>
                         </div>
 
                         <div class="location-profile-row">
-                            <div class="location-profile-label">Phone</div>
+                            <div class="location-profile-label">Delivery Phone</div>
                             <div class="location-profile-value">{{ $record->formatted_preferred_phone ?: 'No delivery phone' }}</div>
-                        </div>
-
-                        <div class="location-profile-row">
-                            <div class="location-profile-label">Email</div>
-                            <div class="location-profile-value">{{ $record->email ?: 'No email on file' }}</div>
                         </div>
                     </div>
                 </div>

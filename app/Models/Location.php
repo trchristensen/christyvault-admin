@@ -237,6 +237,15 @@ class Location extends Model
         return '';
     }
 
+    public function getFormattedOfficePhoneAttribute(): string
+    {
+        if (!$this->phone) {
+            return '';
+        }
+
+        return $this->formatPhone($this->phone) ?? $this->phone;
+    }
+
     public function getFormattedPreferredContactPhoneAttribute(): string
     {
         if (!$this->preferredDeliveryContact) {
