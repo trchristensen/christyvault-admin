@@ -336,7 +336,24 @@ class LocationResource extends Resource
                     ->sortable(),
                 TextColumn::make('order_status')
                     ->badge()
-                    ->color(fn(Location $record): string => $record->order_status_color),
+                    ->color(fn(Location $record): string => $record->order_status_color)
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        $direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
+                        $daysSinceLastOrder = 'ABS(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - locations.last_order_at)) / 86400)';
+
+                        return $query->orderByRaw("CASE
+                            WHEN locations.last_order_at IS NOT NULL
+                                AND locations.average_order_frequency_days > 0
+                                AND {$daysSinceLastOrder} > locations.average_order_frequency_days * 1.5 THEN 1
+                            WHEN locations.last_order_at IS NOT NULL
+                                AND locations.average_order_frequency_days > 0
+                                AND {$daysSinceLastOrder} > locations.average_order_frequency_days THEN 2
+                            WHEN locations.last_order_at IS NOT NULL
+                                AND locations.average_order_frequency_days > 0 THEN 3
+                            WHEN locations.last_order_at IS NOT NULL THEN 4
+                            ELSE 5
+                        END {$direction}");
+                    }),
                 TextColumn::make('last_order_at')
                     ->label('Last order at')
                     ->formatStateUsing(function ($state) {
