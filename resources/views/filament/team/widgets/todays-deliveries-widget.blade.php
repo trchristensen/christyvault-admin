@@ -15,7 +15,7 @@
             </a>
         </x-slot>
 
-        @if ($orders->isEmpty())
+        @if ($groupedOrders->isEmpty())
             <div class="rounded-lg border border-dashed border-gray-300 px-4 py-8 text-center dark:border-gray-700">
                 <x-filament::icon
                     icon="heroicon-o-truck"
@@ -24,66 +24,102 @@
                 <p class="text-sm font-medium text-gray-600 dark:text-gray-300">No deliveries scheduled today.</p>
             </div>
         @else
-            <div class="divide-y divide-gray-200 dark:divide-white/10">
-                @foreach ($orders as $order)
-                    @php
-                        $productSummary = $order->orderProducts
-                            ->take(3)
-                            ->map(function ($orderProduct) {
-                                $label = $orderProduct->is_custom_product
-                                    ? ($orderProduct->custom_description ?? 'Custom')
-                                    : ($orderProduct->product?->sku ?? 'Unknown');
+            <div class="space-y-6">
+                @foreach ($groupedOrders as $plant => $orders)
+                    <div>
+                        <h3 class="mb-2 text-sm font-bold text-gray-950 dark:text-white">
+                            {{ match ($plant) {
+                                'colma_main' => 'Colma',
+                                'colma_locals' => 'Locals (Colma)',
+                                'tulare_plant' => 'Tulare',
+                                default => \Illuminate\Support\Str::headline($plant),
+                            } }}
+                        </h3>
 
-                                return $orderProduct->fill_load
-                                    ? "Fill load × {$label}"
-                                    : "{$orderProduct->quantity} × {$label}";
-                            })
-                            ->join(', ');
-                    @endphp
+                        <ul class="space-y-2">
+                            @foreach ($orders as $order)
+                                @php
+                                    $statusEnum = \App\Enums\OrderStatus::tryFrom($order->status);
+                                    $statusLabel = $statusEnum?->label() ?? \Illuminate\Support\Str::headline((string) $order->status);
+                                @endphp
 
-                    <div class="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400">
-                            <x-filament::icon icon="heroicon-o-truck" class="h-5 w-5" />
-                        </div>
+                                <li class="rounded-lg border border-gray-200 bg-white p-3 dark:border-white/10 dark:bg-gray-900">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                                <span>Order #{{ $order->id }}</span>
+                                                <span class="rounded-full border border-gray-300 bg-gray-50 px-2 py-0.5 text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
+                                                    {{ $statusLabel }}
+                                                </span>
+                                            </div>
 
-                        <div class="min-w-0 flex-1">
-                            <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                                <p class="truncate font-semibold text-gray-950 dark:text-white">
-                                    {{ $order->location?->name ?? 'Customer' }}
-                                </p>
-                                <span class="shrink-0 text-xs font-medium text-gray-500 dark:text-gray-400">
-                                    {{ $order->delivery_time ? \Carbon\Carbon::parse($order->delivery_time)->format('g:i A') : 'Time TBD' }}
-                                </span>
-                            </div>
+                                            <p class="mt-1 font-semibold text-gray-950 dark:text-white">
+                                                {{ $order->location?->name ?? 'Customer' }}
+                                            </p>
 
-                            <p class="truncate text-sm text-gray-500 dark:text-gray-400">
-                                {{ $order->location?->city ?? 'Address unavailable' }}
-                                @if ($order->driver)
-                                    · {{ $order->driver->name }}
-                                @endif
-                            </p>
+                                            @if ($order->location?->full_address)
+                                                <a
+                                                    href="https://www.google.com/maps/search/?api=1&query={{ urlencode($order->location->full_address) }}"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="text-sm text-primary-600 hover:underline dark:text-primary-400"
+                                                >
+                                                    {{ $order->location->full_address }}
+                                                </a>
+                                            @endif
+                                        </div>
 
-                            @if ($productSummary)
-                                <p class="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">
-                                    {{ $productSummary }}
-                                    @if ($order->orderProducts->count() > 3)
-                                        · +{{ $order->orderProducts->count() - 3 }} more
+                                        <div class="shrink-0 text-right text-xs text-gray-500 dark:text-gray-400">
+                                            @if ($order->delivery_time)
+                                                <div class="font-semibold text-gray-700 dark:text-gray-200">
+                                                    {{ \Carbon\Carbon::parse($order->delivery_time)->format('g:i A') }}
+                                                </div>
+                                            @endif
+                                            @if ($order->driver)
+                                                <div>{{ $order->driver->name }}</div>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    @if ($order->orderProducts->isNotEmpty())
+                                        <div class="mt-3 overflow-hidden rounded-md border border-gray-200 text-sm dark:border-white/10">
+                                            @foreach ($order->orderProducts as $orderProduct)
+                                                @php
+                                                    $productSku = $orderProduct->is_custom_product
+                                                        ? 'CUSTOM'
+                                                        : ($orderProduct->product?->sku ?? 'Unknown');
+                                                    $productName = $orderProduct->is_custom_product
+                                                        ? ($orderProduct->custom_description ?? 'Custom Product')
+                                                        : ($orderProduct->product?->name ?? 'Unknown product');
+                                                @endphp
+
+                                                <div class="flex gap-3 border-b border-gray-200 px-3 py-2 last:border-b-0 dark:border-white/10">
+                                                    <div class="w-12 shrink-0 text-right font-semibold text-gray-700 dark:text-gray-200">
+                                                        {{ $orderProduct->fill_load ? '*' : $orderProduct->quantity }}
+                                                    </div>
+                                                    <div class="min-w-0">
+                                                        <div class="font-medium text-gray-950 dark:text-white">{{ $productSku }}</div>
+                                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ $productName }}</div>
+                                                        @if ($orderProduct->fill_load)
+                                                            <div class="text-xs font-semibold text-gray-500 dark:text-gray-400">FILL OUT LOAD</div>
+                                                        @endif
+                                                        @if ($orderProduct->location)
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400">Location: {{ $orderProduct->location }}</div>
+                                                        @endif
+                                                        @if ($orderProduct->notes)
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400">Notes: {{ $orderProduct->notes }}</div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
                                     @endif
-                                </p>
-                            @endif
-                        </div>
+                                </li>
+                            @endforeach
+                        </ul>
                     </div>
                 @endforeach
             </div>
-
-            @if ($total > $orders->count())
-                <a
-                    href="{{ $scheduleUrl }}"
-                    class="mt-4 block rounded-lg bg-gray-50 px-4 py-2.5 text-center text-sm font-semibold text-primary-600 hover:bg-gray-100 dark:bg-white/5 dark:text-primary-400 dark:hover:bg-white/10"
-                >
-                    View {{ $total - $orders->count() }} more
-                </a>
-            @endif
         @endif
     </x-filament::section>
 </x-filament-widgets::widget>

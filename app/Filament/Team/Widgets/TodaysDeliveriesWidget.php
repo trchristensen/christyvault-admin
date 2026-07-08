@@ -34,7 +34,6 @@ class TodaysDeliveriesWidget extends Widget
                 fn ($query) => $query->whereIn('plant_location', $allowedDeliveryTypes),
             );
 
-        $total = (clone $query)->count();
         $orders = $query
             ->with(['location', 'driver', 'orderProducts.product'])
             ->orderByRaw("CASE plant_location
@@ -45,12 +44,17 @@ class TodaysDeliveriesWidget extends Widget
             END")
             ->orderBy('delivery_time')
             ->orderBy('id')
-            ->limit(5)
             ->get();
 
+        $groupedOrders = collect([
+            'colma_main' => $orders->where('plant_location', 'colma_main'),
+            'colma_locals' => $orders->where('plant_location', 'colma_locals'),
+            'tulare_plant' => $orders->where('plant_location', 'tulare_plant'),
+        ])->filter(fn ($group) => $group->isNotEmpty());
+
         return [
-            'orders' => $orders,
-            'total' => $total,
+            'groupedOrders' => $groupedOrders,
+            'total' => $orders->count(),
             'scheduleUrl' => Schedule::getUrl(panel: 'team'),
         ];
     }
