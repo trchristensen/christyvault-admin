@@ -237,6 +237,38 @@ class Location extends Model
         return '';
     }
 
+    public function getFormattedPreferredContactPhoneAttribute(): string
+    {
+        if (!$this->preferredDeliveryContact) {
+            return '';
+        }
+
+        $contact = $this->preferredDeliveryContact;
+
+        $main = $this->formatPhone($contact->phone);
+        $mobile = $this->formatPhone($contact->mobile_phone);
+
+        $parts = [];
+
+        if ($main) {
+            $part = $main;
+            if ($contact->phone_extension) {
+                $part .= " x{$contact->phone_extension}";
+            }
+            $parts[] = $part;
+        }
+
+        if ($mobile) {
+            $parts[] = "M: {$mobile}";
+        }
+
+        if ($parts === []) {
+            return '';
+        }
+
+        return "Contact: {$contact->name} - " . implode(' • ', $parts);
+    }
+
     private function formatPhone(?string $number): ?string
     {
         if (!$number) {

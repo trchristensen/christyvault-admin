@@ -321,10 +321,10 @@
                     </div>
                 @endif
 
-                @if ($record->location?->formatted_preferred_phone)
+                @if ($record->location?->formatted_preferred_contact_phone)
                     <div class="flex items-center gap-2">
                         <x-heroicon-o-phone class="w-4 h-4" />
-                        <p>{{ $record->location->formatted_preferred_phone }}</p>
+                        <p>{{ $record->location->formatted_preferred_contact_phone }}</p>
                     </div>
                 @endif
 

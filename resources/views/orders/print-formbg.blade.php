@@ -288,7 +288,7 @@
             </span>
 
             <div class="customer-phone">
-                {{ $order->location?->formatted_preferred_phone ?? '' }}
+                {{ $order->location?->formatted_preferred_contact_phone ?? $order->location?->formatted_preferred_phone ?? '' }}
             </div>
         </div>
 
