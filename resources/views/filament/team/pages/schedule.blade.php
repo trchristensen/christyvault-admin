@@ -274,7 +274,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="text-md">
+                                        <div class="text-md mt-2 font-semibold text-gray-700 dark:text-gray-200">
                                             {{ $order->location->name ?? 'Customer' }}
                                         </div>
 
