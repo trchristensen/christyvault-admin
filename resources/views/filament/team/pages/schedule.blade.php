@@ -240,22 +240,23 @@
                         @foreach ($groupOrders as $order)
                             @php
                                 $statusEnum = \App\Enums\OrderStatus::tryFrom($order->status);
-                                $statusLabel = $statusEnum?->label() ?? \Illuminate\Support\Str::headline((string) $order->status);
+                                $statusLabel =
+                                    $statusEnum?->label() ?? \Illuminate\Support\Str::headline((string) $order->status);
                                 $statusClass = preg_replace('/[^a-z0-9]+/', '_', strtolower((string) $order->status));
                             @endphp
                             <li class="p-3 border rounded-lg bg-white dark:bg-gray-800">
                                 <div class="flex justify-between items-start">
                                     <div class="w-full">
                                         <div class="flex justify-between w-full">
-                                            <div class="flex flex-wrap items-center gap-2 font-semibold text-sm text-gray-500">
+                                            <div
+                                                class="flex flex-wrap items-center gap-2 font-semibold text-sm text-gray-500">
                                                 <span>Order #{{ $order->id }}</span>
                                                 <span class="order-status-badge order-status-{{ $statusClass }}">
                                                     {{ $statusLabel }}
                                                 </span>
                                                 <span
                                                     class="delivery-tag-badge {{ $order->is_printed ? 'delivery-tag-printed' : 'delivery-tag-not-printed' }}"
-                                                    title="{{ $order->is_printed ? 'Delivery tag has been printed' : 'Delivery tag has not been printed yet' }}"
-                                                >
+                                                    title="{{ $order->is_printed ? 'Delivery tag has been printed' : 'Delivery tag has not been printed yet' }}">
                                                     @if ($order->is_printed)
                                                         <x-heroicon-o-printer />
                                                         <span>Tag printed</span>
@@ -277,9 +278,12 @@
                                             {{ $order->location->name ?? 'Customer' }}
                                         </div>
 
-                                        <div class="text-sm">
+                                        <div class="text-sm flex items-center gap-1">
                                             <a href="geo:0,0?q={{ urlencode($order->location->full_address ?? '') }}">
                                                 {{ $order->location->full_address ?? '' }}
+                                            </a>
+                                            <a href="geo:0,0?q={{ urlencode($order->location->full_address ?? '') }}">
+                                                <x-heroicon-o-map-pin class="w-4 h-4" />
                                             </a>
                                         </div>
                                     </div>
@@ -294,10 +298,10 @@
                                         @php
                                             $productSku = $orderProduct->is_custom_product
                                                 ? 'CUSTOM'
-                                                : ($orderProduct->product?->sku ?? 'Unknown');
+                                                : $orderProduct->product?->sku ?? 'Unknown';
                                             $productName = $orderProduct->is_custom_product
-                                                ? ($orderProduct->custom_description ?? 'Custom Product')
-                                                : ($orderProduct->product?->name ?? 'Unknown product');
+                                                ? $orderProduct->custom_description ?? 'Custom Product'
+                                                : $orderProduct->product?->name ?? 'Unknown product';
                                         @endphp
                                         <tr class="order-product">
                                             <td class="qty">
