@@ -36,6 +36,7 @@ class TodaysDeliveriesWidget extends Widget
 
         $orders = $query
             ->with(['location', 'driver', 'orderProducts.product'])
+            ->withCount('deliveryPhotos')
             ->orderByRaw("CASE plant_location
                 WHEN 'colma_main' THEN 1
                 WHEN 'colma_locals' THEN 2

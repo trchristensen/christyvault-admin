@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Exception;
 use App\Models\Order;
+use App\Models\OrderDeliveryPhoto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -120,8 +121,19 @@ class DeliveryController extends Controller
             if ($request->photos) {
                 foreach ($request->photos as $index => $photoData) {
                     $photoBase64 = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $photoData));
-                    $photoPath = 'delivery_photos/order_' . $order->id . '_' . time() . '_' . $index . '.jpg';
+                    $photoPath = $order->deliveryPhotoDirectory() . '/delivery_photo_' . time() . '_' . $index . '.jpg';
                     Storage::disk('r2')->put($photoPath, $photoBase64);
+
+                    OrderDeliveryPhoto::create([
+                        'order_id' => $order->id,
+                        'uploaded_by_user_id' => null,
+                        'disk' => 'r2',
+                        'path' => $photoPath,
+                        'original_filename' => basename($photoPath),
+                        'mime_type' => 'image/jpeg',
+                        'size' => strlen($photoBase64),
+                        'notes' => $request->notes,
+                    ]);
                 }
             }
 
@@ -152,4 +164,4 @@ class DeliveryController extends Controller
               ->header('Access-Control-Allow-Headers', 'Content-Type, Accept');
         }
     }
-} 
+}

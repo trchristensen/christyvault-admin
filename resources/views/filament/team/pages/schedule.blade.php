@@ -129,6 +129,81 @@
             background: #fef3c7;
         }
 
+        .delivery-photo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            border-radius: 9999px;
+            border: 1px solid #bfdbfe;
+            padding: 1px 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            line-height: 1.25rem;
+            color: #1d4ed8;
+            background: #eff6ff;
+            white-space: nowrap;
+        }
+
+        .delivery-photo-badge svg,
+        .delivery-photo-upload-button svg {
+            width: .85rem;
+            height: .85rem;
+        }
+
+        .delivery-photo-upload-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 9999px;
+            border: 1px solid #c7d2fe;
+            padding: 4px 10px;
+            font-size: .78rem;
+            font-weight: 700;
+            color: #3730a3;
+            background: #eef2ff;
+        }
+
+        .delivery-photo-upload-button:hover {
+            background: #e0e7ff;
+        }
+
+        .delivery-photo-strip {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-top: .75rem;
+        }
+
+        .delivery-photo-thumb {
+            width: 54px;
+            height: 54px;
+            overflow: hidden;
+            border: 1px solid #d1d5db;
+            border-radius: .5rem;
+            background: #f3f4f6;
+        }
+
+        .delivery-photo-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .delivery-photo-more {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 54px;
+            height: 54px;
+            border: 1px dashed #c7d2fe;
+            border-radius: .5rem;
+            color: #4338ca;
+            background: #eef2ff;
+            font-size: .8rem;
+            font-weight: 700;
+        }
+
         table.orderProducts {
 
 
@@ -265,6 +340,13 @@
                                                         <span>Tag not printed</span>
                                                     @endif
                                                 </span>
+                                                @if ($order->delivery_photos_count > 0)
+                                                    <span class="delivery-photo-badge"
+                                                        title="{{ $order->delivery_photos_count }} {{ \Illuminate\Support\Str::plural('delivery photo', $order->delivery_photos_count) }} attached">
+                                                        <x-heroicon-o-camera />
+                                                        <span>{{ $order->delivery_photos_count }} {{ \Illuminate\Support\Str::plural('photo', $order->delivery_photos_count) }}</span>
+                                                    </span>
+                                                @endif
                                             </div>
                                             <div>
                                                 @if ($order->driver)
@@ -286,6 +368,40 @@
                                                 <x-heroicon-o-map-pin class="w-4 h-4" />
                                             </a>
                                         </div>
+
+                                        <div class="mt-3 flex flex-wrap items-center gap-3">
+                                            <button type="button" class="delivery-photo-upload-button" x-data
+                                                x-on:click="$wire.mountAction('uploadDeliveryPhotos', { order: @js($order->getKey()) })">
+                                                <x-heroicon-o-camera />
+                                                <span>Upload photos</span>
+                                            </button>
+
+                                            @if ($order->deliveryPhotos->isNotEmpty())
+                                                @php
+                                                    $latestPhoto = $order->deliveryPhotos->first();
+                                                @endphp
+                                                <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                    Latest photo by {{ $latestPhoto->uploadedBy?->name ?? 'Unknown' }}
+                                                    {{ $latestPhoto->created_at?->diffForHumans() }}
+                                                </span>
+                                            @endif
+                                        </div>
+
+                                        @if ($order->deliveryPhotos->isNotEmpty())
+                                            <div class="delivery-photo-strip">
+                                                @foreach ($order->deliveryPhotos->take(4) as $photo)
+                                                    <a href="{{ $photo->url }}" target="_blank" rel="noopener noreferrer"
+                                                        class="delivery-photo-thumb"
+                                                        title="{{ $photo->original_filename ?? 'Delivery photo' }} · Uploaded by {{ $photo->uploadedBy?->name ?? 'Unknown' }} {{ $photo->created_at?->format('M j, Y g:i A') }}">
+                                                        <img src="{{ $photo->url }}" alt="Delivery photo for order #{{ $order->id }}">
+                                                    </a>
+                                                @endforeach
+
+                                                @if ($order->delivery_photos_count > 4)
+                                                    <span class="delivery-photo-more">+{{ $order->delivery_photos_count - 4 }}</span>
+                                                @endif
+                                            </div>
+                                        @endif
                                     </div>
 
                                     <div class="text-sm">

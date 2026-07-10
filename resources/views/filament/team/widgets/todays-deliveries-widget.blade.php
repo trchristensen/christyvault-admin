@@ -71,6 +71,26 @@
             color: #92400e;
         }
 
+        .team-deliveries-widget .delivery-photo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            border: 1px solid #bfdbfe;
+            border-radius: 9999px;
+            padding: 1px 8px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: .72rem;
+            font-weight: 700;
+            line-height: 1.25rem;
+            white-space: nowrap;
+        }
+
+        .team-deliveries-widget .delivery-photo-badge svg {
+            width: .85rem;
+            height: .85rem;
+        }
+
         .team-deliveries-widget table.orderProducts {
             margin-top: 1rem;
             margin-left: 1rem;
@@ -175,6 +195,13 @@
                                                         <span>Tag not printed</span>
                                                     @endif
                                                 </span>
+                                                @if ($order->delivery_photos_count > 0)
+                                                    <span class="delivery-photo-badge"
+                                                        title="{{ $order->delivery_photos_count }} {{ \Illuminate\Support\Str::plural('delivery photo', $order->delivery_photos_count) }} attached">
+                                                        <x-heroicon-o-camera />
+                                                        <span>{{ $order->delivery_photos_count }} {{ \Illuminate\Support\Str::plural('photo', $order->delivery_photos_count) }}</span>
+                                                    </span>
+                                                @endif
                                             </div>
 
                                             <p class="mt-1 font-semibold text-gray-950 dark:text-white">

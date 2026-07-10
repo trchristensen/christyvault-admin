@@ -547,6 +547,41 @@
         </div>
     @endif
 
+    @php
+        $deliveryPhotos = $record->deliveryPhotos()->with('uploadedBy')->latest()->get();
+    @endphp
+
+    @if ($deliveryPhotos->isNotEmpty())
+        <div class="p-4 mt-4 rounded-lg bg-blue-50 dark:bg-blue-950/20">
+            <div class="flex items-center justify-between gap-4 mb-3">
+                <h3 class="font-medium text-blue-950 dark:text-blue-100">Delivery Photos</h3>
+                <span class="text-xs font-semibold text-blue-700 dark:text-blue-200">
+                    {{ $deliveryPhotos->count() }} {{ \Illuminate\Support\Str::plural('photo', $deliveryPhotos->count()) }}
+                </span>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                @foreach ($deliveryPhotos as $photo)
+                    <a href="{{ $photo->url }}" target="_blank" rel="noopener noreferrer"
+                        class="block overflow-hidden rounded-lg border border-blue-100 bg-white shadow-sm dark:border-blue-900 dark:bg-gray-900"
+                        title="{{ $photo->original_filename ?? 'Delivery photo' }}">
+                        <img src="{{ $photo->url }}" alt="Delivery photo for {{ $record->order_number }}"
+                            class="h-32 w-full object-cover">
+                        <div class="space-y-1 p-2 text-xs text-gray-600 dark:text-gray-300">
+                            <div class="font-semibold text-gray-800 dark:text-gray-100">
+                                {{ $photo->uploadedBy?->name ?? 'Unknown uploader' }}
+                            </div>
+                            <div>{{ $photo->created_at?->format('M j, Y g:i A') }}</div>
+                            @if ($photo->notes)
+                                <div class="text-gray-500 dark:text-gray-400">{{ $photo->notes }}</div>
+                            @endif
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
 
     @if (
         $record->status == 'delivered' ||

@@ -109,6 +109,19 @@ class Order extends Model
         return $this->hasMany(OrderProduct::class);
     }
 
+    public function deliveryPhotos(): HasMany
+    {
+        return $this->hasMany(OrderDeliveryPhoto::class)->latest();
+    }
+
+    public function deliveryPhotoDirectory(): string
+    {
+        $folder = $this->order_number ?: "order-{$this->getKey()}";
+        $folder = preg_replace('/[^A-Za-z0-9\-_]/', '_', $folder) ?: "order-{$this->getKey()}";
+
+        return "delivery-photos/{$folder}";
+    }
+
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class)
