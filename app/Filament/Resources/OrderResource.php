@@ -477,7 +477,7 @@ class OrderResource extends Resource
      *
      * @return array<int, string>
      */
-    protected static function getProductSummaryLines(Order $order): array
+    public static function getProductSummaryLines(Order $order): array
     {
         return $order->orderProducts
             ->groupBy(function ($orderProduct): string {

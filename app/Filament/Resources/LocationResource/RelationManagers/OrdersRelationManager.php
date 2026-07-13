@@ -98,11 +98,18 @@ class OrdersRelationManager extends RelationManager
                     ->alignCenter()
                     ->toggleable(),
 
-                TextColumn::make('orderProducts')
+                TextColumn::make('products_summary')
                     ->label('Products')
-                    ->formatStateUsing(fn($state, Order $record): string => self::summarizeOrderProducts($record))
+                    ->state(fn(Order $record): string => implode("\n", OrderResource::getProductSummaryLines($record)))
+                    ->formatStateUsing(fn(string $state): string => nl2br(e($state)))
                     ->html()
-                    ->wrap()
+                    ->lineClamp(3)
+                    ->tooltip(function (Order $record): ?string {
+                        $lines = OrderResource::getProductSummaryLines($record);
+
+                        return count($lines) > 3 ? implode(' • ', $lines) : null;
+                    })
+                    ->placeholder('—')
                     ->toggleable(),
             ])
             ->filters([
@@ -157,43 +164,4 @@ class OrdersRelationManager extends RelationManager
             ->toolbarActions([]);
     }
 
-    private static function summarizeOrderProducts(Order $record): string
-    {
-        $products = [];
-
-        foreach ($record->orderProducts as $orderProduct) {
-            $isCustom = $orderProduct->is_custom_product;
-            $key = ($isCustom ? 'custom-' . ($orderProduct->custom_description ?? $orderProduct->id) : $orderProduct->product_id)
-                . ($orderProduct->fill_load ? '-fill' : '');
-
-            if (isset($products[$key])) {
-                continue;
-            }
-
-            if ($orderProduct->fill_load) {
-                $sku = $isCustom
-                    ? ($orderProduct->custom_description ?? 'Custom')
-                    : ($orderProduct->product->sku ?? 'Unknown');
-
-                $products[$key] = "Fill Load x {$sku}";
-
-                continue;
-            }
-
-            if ($isCustom) {
-                $products[$key] = "{$orderProduct->quantity} x " . ($orderProduct->custom_description ?? 'Custom');
-
-                continue;
-            }
-
-            $quantity = $record->orderProducts
-                ->where('product_id', $orderProduct->product_id)
-                ->where('fill_load', false)
-                ->sum('quantity');
-
-            $products[$key] = "{$quantity} x " . ($orderProduct->product->sku ?? 'Unknown');
-        }
-
-        return nl2br(e(collect($products)->take(5)->join("\n")));
-    }
 }
