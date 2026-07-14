@@ -15,14 +15,16 @@ use App\Models\PurchaseOrder;
 use App\Models\Location;
 use App\Observers\PurchaseOrderObserver;
 use App\Observers\LocationObserver;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Gate;
-use SpykApp\PasswordlessLogin\Models\MagicLoginToken;
+use App\Policies\ActivityPolicy;
 use App\Policies\MagicLoginTokenPolicy;
 use App\Policies\PermissionPolicy;
 use App\Policies\RolePolicy;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use SpykApp\PasswordlessLogin\Models\MagicLoginToken;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
 
         // This vendor model cannot rely on application policy auto-discovery.
         Gate::policy(MagicLoginToken::class, MagicLoginTokenPolicy::class);
+        Gate::policy(Activity::class, ActivityPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(Permission::class, PermissionPolicy::class);
 
