@@ -243,34 +243,7 @@
 
         }
     </style>
-    <div class="p-4" x-data="{
-        deliveryPhotoViewerOpen: false,
-        deliveryPhotoViewerPhotos: [],
-        deliveryPhotoViewerIndex: 0,
-        openDeliveryPhotoViewer(photos, index = 0) {
-            this.deliveryPhotoViewerPhotos = photos || [];
-            this.deliveryPhotoViewerIndex = index || 0;
-            this.deliveryPhotoViewerOpen = true;
-            document.body.style.overflow = 'hidden';
-        },
-        closeDeliveryPhotoViewer() {
-            this.deliveryPhotoViewerOpen = false;
-            document.body.style.overflow = '';
-        },
-        currentDeliveryPhoto() {
-            return this.deliveryPhotoViewerPhotos[this.deliveryPhotoViewerIndex] || {};
-        },
-        nextDeliveryPhoto() {
-            if (!this.deliveryPhotoViewerPhotos.length) return;
-            this.deliveryPhotoViewerIndex = (this.deliveryPhotoViewerIndex + 1) % this.deliveryPhotoViewerPhotos.length;
-        },
-        previousDeliveryPhoto() {
-            if (!this.deliveryPhotoViewerPhotos.length) return;
-            this.deliveryPhotoViewerIndex = (this.deliveryPhotoViewerIndex - 1 + this.deliveryPhotoViewerPhotos.length) % this.deliveryPhotoViewerPhotos.length;
-        },
-    }" x-on:keydown.escape.window="deliveryPhotoViewerOpen && closeDeliveryPhotoViewer()"
-        x-on:keydown.arrow-right.window="deliveryPhotoViewerOpen && nextDeliveryPhoto()"
-        x-on:keydown.arrow-left.window="deliveryPhotoViewerOpen && previousDeliveryPhoto()">
+    <div class="p-4">
         <!-- horizontal date bar -->
         <div class="overflow-x-auto -mx-4 px-4 static z-10">
             <div class="flex space-x-2 py-2" x-data x-init="$nextTick(() => { const el = $el.querySelector('.date-item.selected'); if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'center' }); })"
@@ -434,6 +407,8 @@
                                                     ->map(
                                                         fn($photo) => [
                                                             'url' => $photo->url,
+                                                            'thumbnailUrl' => $photo->thumbnail_url,
+                                                            'displayUrl' => $photo->display_url,
                                                             'title' => $photo->original_filename ?? 'Delivery photo',
                                                             'uploadedBy' => $photo->uploadedBy?->name ?? 'Unknown uploader',
                                                             'uploadedAt' => $photo->created_at?->format('M j, Y g:i A'),
@@ -444,27 +419,31 @@
                                                     ->all();
                                             @endphp
 
-                                            <div class="delivery-photo-strip" x-data="{ photos: @js($deliveryPhotoViewerItems) }">
-                                                @foreach ($order->deliveryPhotos->take(4) as $photo)
-                                                    @php
-                                                        $thumbnailUrl =
-                                                            $deliveryPhotoViewerItems[$loop->index]['url'] ?? $photo->url;
-                                                    @endphp
-                                                    <button type="button"
-                                                        class="delivery-photo-thumb"
-                                                        x-on:click="openDeliveryPhotoViewer(photos, {{ $loop->index }})"
-                                                        title="{{ $photo->original_filename ?? 'Delivery photo' }} · Uploaded by {{ $photo->uploadedBy?->name ?? 'Unknown' }} {{ $photo->created_at?->format('M j, Y g:i A') }}">
-                                                        <img src="{{ $thumbnailUrl }}" alt="Delivery photo for order #{{ $order->id }}">
-                                                    </button>
-                                                @endforeach
+                                            <x-delivery-photo-viewer :photos="$deliveryPhotoViewerItems">
+                                                <div class="delivery-photo-strip">
+                                                    @foreach ($order->deliveryPhotos->take(4) as $photo)
+                                                        @php
+                                                            $thumbnailUrl =
+                                                                $deliveryPhotoViewerItems[$loop->index]['thumbnailUrl'] ??
+                                                                $photo->thumbnail_url;
+                                                        @endphp
+                                                        <button type="button"
+                                                            class="delivery-photo-thumb"
+                                                            x-on:click="openDeliveryPhotoViewer({{ $loop->index }})"
+                                                            title="{{ $photo->original_filename ?? 'Delivery photo' }} · Uploaded by {{ $photo->uploadedBy?->name ?? 'Unknown' }} {{ $photo->created_at?->format('M j, Y g:i A') }}">
+                                                            <img src="{{ $thumbnailUrl }}" loading="lazy" decoding="async"
+                                                                alt="Delivery photo for order #{{ $order->id }}">
+                                                        </button>
+                                                    @endforeach
 
-                                                @if ($order->delivery_photos_count > 4)
-                                                    <button type="button" class="delivery-photo-more"
-                                                        x-on:click="openDeliveryPhotoViewer(photos, 4)">
-                                                        +{{ $order->delivery_photos_count - 4 }}
-                                                    </button>
-                                                @endif
-                                            </div>
+                                                    @if ($order->delivery_photos_count > 4)
+                                                        <button type="button" class="delivery-photo-more"
+                                                            x-on:click="openDeliveryPhotoViewer(4)">
+                                                            +{{ $order->delivery_photos_count - 4 }}
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            </x-delivery-photo-viewer>
                                         @endif
                                     </div>
 
@@ -533,58 +512,5 @@
 
         </div>
 
-        <div x-cloak x-show="deliveryPhotoViewerOpen" x-transition.opacity
-            class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-3"
-            x-on:click.self="closeDeliveryPhotoViewer()">
-            <div
-                class="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-gray-900">
-                <div class="flex items-center justify-between gap-4 border-b border-gray-200 p-4 dark:border-gray-700">
-                    <div>
-                        <div class="font-semibold text-gray-950 dark:text-white">Delivery photo</div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400"
-                            x-text="deliveryPhotoViewerPhotos.length ? `${deliveryPhotoViewerIndex + 1} of ${deliveryPhotoViewerPhotos.length}` : ''">
-                        </div>
-                    </div>
-                    <button type="button"
-                        class="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-                        x-on:click="closeDeliveryPhotoViewer()" aria-label="Close photo viewer">
-                        <x-heroicon-o-x-mark class="h-6 w-6" />
-                    </button>
-                </div>
-
-                <div class="relative flex min-h-[50vh] items-center justify-center bg-gray-950">
-                    <template x-if="deliveryPhotoViewerPhotos.length">
-                        <img x-bind:src="currentDeliveryPhoto().url"
-                            x-bind:alt="currentDeliveryPhoto().title || 'Delivery photo'"
-                            class="max-h-[70vh] w-auto max-w-full object-contain">
-                    </template>
-
-                    <button type="button" x-show="deliveryPhotoViewerPhotos.length > 1"
-                        class="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-950 shadow-lg transition hover:bg-white"
-                        x-on:click.stop="previousDeliveryPhoto()" aria-label="Previous photo">
-                        <x-heroicon-o-chevron-left class="h-6 w-6" />
-                    </button>
-
-                    <button type="button" x-show="deliveryPhotoViewerPhotos.length > 1"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-950 shadow-lg transition hover:bg-white"
-                        x-on:click.stop="nextDeliveryPhoto()" aria-label="Next photo">
-                        <x-heroicon-o-chevron-right class="h-6 w-6" />
-                    </button>
-                </div>
-
-                <div class="space-y-1 p-4 text-sm">
-                    <div class="font-semibold text-gray-950 dark:text-white"
-                        x-text="currentDeliveryPhoto().title || 'Delivery photo'"></div>
-                    <div class="text-gray-500 dark:text-gray-400">
-                        Uploaded by <span x-text="currentDeliveryPhoto().uploadedBy || 'Unknown uploader'"></span>
-                        <span x-show="currentDeliveryPhoto().uploadedAt">
-                            · <span x-text="currentDeliveryPhoto().uploadedAt"></span>
-                        </span>
-                    </div>
-                    <div class="text-gray-700 dark:text-gray-300" x-show="currentDeliveryPhoto().notes"
-                        x-text="currentDeliveryPhoto().notes"></div>
-                </div>
-            </div>
-        </div>
     </div>
 </x-filament-panels::page>

@@ -63,9 +63,11 @@ class OrderDeliveryPhotos extends Component implements HasActions, HasForms
                 }
 
                 try {
-                    if (filled($photo->path)) {
-                        Storage::disk($photo->disk ?: 'r2')->delete($photo->path);
-                    }
+                    Storage::disk($photo->disk ?: 'r2')->delete(array_values(array_filter([
+                        $photo->path,
+                        $photo->thumbnail_path,
+                        $photo->display_path,
+                    ])));
                 } catch (Throwable) {
                     Notification::make()
                         ->title('Could not delete photo')

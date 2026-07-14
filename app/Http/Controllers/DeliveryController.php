@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use Exception;
+use App\Jobs\GenerateDeliveryPhotoVariants;
 use App\Models\Order;
 use App\Models\OrderDeliveryPhoto;
+use App\Services\DeliveryPhotoVariantGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -122,9 +124,13 @@ class DeliveryController extends Controller
                 foreach ($request->photos as $index => $photoData) {
                     $photoBase64 = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $photoData));
                     $photoPath = $order->deliveryPhotoDirectory() . '/delivery_photo_' . time() . '_' . $index . '.jpg';
-                    Storage::disk('r2')->put($photoPath, $photoBase64);
+                    Storage::disk('r2')->put(
+                        $photoPath,
+                        $photoBase64,
+                        app(DeliveryPhotoVariantGenerator::class)->storageOptions('image/jpeg'),
+                    );
 
-                    OrderDeliveryPhoto::create([
+                    $photo = OrderDeliveryPhoto::create([
                         'order_id' => $order->id,
                         'uploaded_by_user_id' => null,
                         'disk' => 'r2',
@@ -134,6 +140,8 @@ class DeliveryController extends Controller
                         'size' => strlen($photoBase64),
                         'notes' => $request->notes,
                     ]);
+
+                    GenerateDeliveryPhotoVariants::dispatch($photo)->afterResponse();
                 }
             }
 

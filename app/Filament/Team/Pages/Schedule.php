@@ -3,6 +3,7 @@
 namespace App\Filament\Team\Pages;
 
 use App\Enums\PlantLocation;
+use App\Jobs\GenerateDeliveryPhotoVariants;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -232,7 +233,7 @@ class Schedule extends Page
                         ?? (is_int($key) ? ($originalFileNames[$created] ?? null) : null)
                         ?? basename($path);
 
-                    OrderDeliveryPhoto::create([
+                    $photo = OrderDeliveryPhoto::create([
                         'order_id' => $order->id,
                         'uploaded_by_user_id' => auth()->id(),
                         'disk' => 'r2',
@@ -242,6 +243,8 @@ class Schedule extends Page
                         'size' => $metadata['size'],
                         'notes' => $data['notes'] ?? null,
                     ]);
+
+                    GenerateDeliveryPhotoVariants::dispatch($photo)->afterResponse();
 
                     $created++;
                 }
