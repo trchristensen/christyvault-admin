@@ -74,7 +74,7 @@ class AdminPanelProvider extends PanelProvider
                 NavigationItem::make('Operations Panel')
                     ->url('/operations')
                     ->icon('heroicon-o-briefcase')
-                    ->visible(fn(): bool => auth()->user()?->email === 'tchristensen@christyvault.com'),
+                    ->visible(fn(): bool => auth()->user()?->can('view operations panel')),
                 NavigationItem::make('Sales Panel')
                     ->url('/sales')
                     ->icon('heroicon-o-presentation-chart-line')

@@ -36,6 +36,32 @@ it('allows only administrators to view activity', function (): void {
         ->and($policy->viewAny($employee))->toBeFalse();
 });
 
+it('allows only super administrators to view application logs', function (): void {
+    $superAdmin = Mockery::mock(User::class);
+    $superAdmin->shouldReceive('hasRole')
+        ->once()
+        ->with('super-admin')
+        ->andReturnTrue();
+    $superAdmin->shouldReceive('checkPermissionTo')
+        ->once()
+        ->with('viewLogViewer', null)
+        ->andReturnFalse();
+
+    $administrator = Mockery::mock(User::class);
+    $administrator->shouldReceive('hasRole')
+        ->twice()
+        ->with('super-admin')
+        ->andReturnFalse();
+    $administrator->shouldReceive('checkPermissionTo')
+        ->once()
+        ->with('viewLogViewer', null)
+        ->andReturnFalse();
+
+    expect(Gate::has('viewLogViewer'))->toBeTrue()
+        ->and(Gate::forUser($superAdmin)->allows('viewLogViewer'))->toBeTrue()
+        ->and(Gate::forUser($administrator)->allows('viewLogViewer'))->toBeFalse();
+});
+
 it('formats activity subjects, users, and changed properties', function (): void {
     $activity = new Activity([
         'subject_type' => Order::class,

@@ -29,7 +29,7 @@ class SystemAdmin extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return auth()->user()->email === 'tchristensen@christyvault.com';
+        return auth()->user()->hasRole('super-admin');
     }
 
     protected function getHeaderActions(): array
