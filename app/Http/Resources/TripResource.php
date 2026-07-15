@@ -10,25 +10,34 @@ class TripResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $stopOrderConfirmed = $this->resource->isStopOrderConfirmed();
+        $orders = $this->resource->orderedDeliveryOrders();
+
+        if (! $stopOrderConfirmed) {
+            $orders = $orders->sortBy('id')->values();
+        }
+
         return [
             'id' => $this->id,
             'trip_number' => $this->trip_number,
             'status' => $this->status,
+            'stop_order_confirmed' => $stopOrderConfirmed,
+            'dispatch_confirmed_at' => $this->dispatch_confirmed_at,
             'scheduled_date' => $this->scheduled_date,
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
             'notes' => $this->notes,
             'driver' => [
-                'id' => $this->driver->id,
-                'name' => $this->driver->name,
-                'email' => $this->driver->email,
-                'phone' => $this->driver->phone,
+                'id' => $this->driver?->id,
+                'name' => $this->driver?->name,
+                'email' => $this->driver?->email,
+                'phone' => $this->driver?->phone,
             ],
-            'stops' => $this->orders->map(function ($order) {
+            'stops' => $orders->values()->map(function ($order, int $index) use ($stopOrderConfirmed) {
                 return [
                     'id' => $order->id,
                     'order_number' => $order->order_number,
-                    'stop_number' => $order->stop_number,
+                    'stop_number' => $stopOrderConfirmed ? $index + 1 : null,
                     'status' => $order->status,
                     // 'customer' => [
                     //     'name' => $order->customer->name,
@@ -41,7 +50,7 @@ class TripResource extends JsonResource
                             $order->location->address_line1,
                             $order->location->city,
                             $order->location->state,
-                            $order->location->postal_code
+                            $order->location->postal_code,
                         ])),
                         'address' => $order->location->address_line1,
                         'city' => $order->location->city,

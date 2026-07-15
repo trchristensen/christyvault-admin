@@ -67,6 +67,48 @@ class DeliveryCalendar extends Page
                 ->modalDescription('Add two or more stops, then drag the rows into the order the driver should visit them.')
                 ->modalSubmitActionLabel(fn (): string => $this->editingTripId ? 'Save trip' : 'Create trip')
                 ->modalWidth('4xl')
+                ->extraModalFooterActions([
+                    Action::make('separateOrders')
+                        ->label('Separate orders')
+                        ->icon('heroicon-o-arrows-pointing-out')
+                        ->color('warning')
+                        ->visible(fn (): bool => $this->editingTripId !== null)
+                        ->requiresConfirmation()
+                        ->modalHeading('Separate these orders?')
+                        ->modalDescription('Each order will become its own delivery again. The split-load history is retained, and no orders, photos, signatures, or activity records are deleted.')
+                        ->modalSubmitActionLabel('Separate orders')
+                        ->action(function (Action $action): void {
+                            $tripId = $this->editingTripId;
+
+                            if (! $tripId) {
+                                $action->halt();
+                            }
+
+                            try {
+                                app(SplitLoadService::class)->dissolve(Trip::findOrFail($tripId));
+
+                                Notification::make()
+                                    ->title('Orders separated')
+                                    ->body('Each order is now its own delivery again.')
+                                    ->success()
+                                    ->send();
+
+                                $this->editingTripId = null;
+                                $this->dispatch('refresh-calendar');
+                            } catch (Throwable $exception) {
+                                report($exception);
+
+                                Notification::make()
+                                    ->title('Could not separate these orders')
+                                    ->body($exception->getMessage())
+                                    ->danger()
+                                    ->send();
+
+                                $action->halt();
+                            }
+                        })
+                        ->cancelParentActions(),
+                ])
                 ->schema([
                     Grid::make(2)
                         ->schema([
@@ -301,29 +343,6 @@ class DeliveryCalendar extends Page
         }
     }
 
-    public function dissolveSplitLoad(int $tripId): void
-    {
-        try {
-            app(SplitLoadService::class)->dissolve(Trip::findOrFail($tripId));
-
-            Notification::make()
-                ->title('Delivery trip dissolved')
-                ->body('The orders are separate deliveries again.')
-                ->success()
-                ->send();
-
-            $this->dispatch('refresh-calendar');
-        } catch (Throwable $exception) {
-            report($exception);
-
-            Notification::make()
-                ->title('Could not dissolve this delivery trip')
-                ->body($exception->getMessage())
-                ->danger()
-                ->send();
-        }
-    }
-
     protected function splitLoadOrderOptions(?int $editingTripId = null): array
     {
         return Order::query()
@@ -333,6 +352,8 @@ class DeliveryCalendar extends Page
                 if ($editingTripId) {
                     $query->orWhere('trip_id', $editingTripId);
                 }
+
+                $query->orWhereHas('trip', fn ($tripQuery) => $tripQuery->has('orders', '=', 1));
             })
             ->whereNotNull('assigned_delivery_date')
             ->where(function ($query) use ($editingTripId): void {

@@ -114,6 +114,16 @@ class Order extends Model
         return $this->hasMany(OrderDeliveryPhoto::class)->latest();
     }
 
+    public function tripStops(): HasMany
+    {
+        return $this->hasMany(TripStop::class);
+    }
+
+    public function activeTripStop(): HasOne
+    {
+        return $this->hasOne(TripStop::class)->whereNull('removed_at')->latestOfMany();
+    }
+
     public function deliveryPhotoDirectory(): string
     {
         $folder = $this->order_number ?: "order-{$this->getKey()}";

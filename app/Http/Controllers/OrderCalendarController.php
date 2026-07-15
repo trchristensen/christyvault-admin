@@ -21,14 +21,15 @@ class OrderCalendarController extends Controller
             ->with([
                 'driver',
                 'orders' => fn ($query) => $query->with('location')->orderBy('stop_number'),
+                'stops.order.location',
             ])
-            ->has('orders', '>=', 2)
             ->whereDate('scheduled_date', '>=', $start)
             ->whereDate('scheduled_date', '<=', $end)
-            ->get();
+            ->get()
+            ->filter(fn (Trip $trip): bool => $trip->orderedDeliveryOrders()->count() >= 2);
 
         $splitLoadOrderIds = $trips
-            ->flatMap(fn (Trip $trip): Collection => $trip->orders->pluck('id'))
+            ->flatMap(fn (Trip $trip): Collection => $trip->orderedDeliveryOrders()->pluck('id'))
             ->all();
 
         $orders = Order::query()
@@ -42,7 +43,8 @@ class OrderCalendarController extends Controller
         $items = collect();
 
         foreach ($trips as $trip) {
-            $firstOrder = $trip->orders->first();
+            $tripOrders = $trip->orderedDeliveryOrders();
+            $firstOrder = $tripOrders->first();
             $plantLocation = $firstOrder?->plant_location ?? 'colma_main';
 
             $items->push([
@@ -61,9 +63,9 @@ class OrderCalendarController extends Controller
                         'driver_name' => $trip->driver?->name,
                         'status' => str($trip->status)->headline()->toString(),
                         'plant_location' => $plantLocation,
-                        'orders' => $trip->orders->map(fn (Order $order): array => [
+                        'orders' => $tripOrders->map(fn (Order $order, int $index): array => [
                             'id' => $order->id,
-                            'stop_number' => $order->stop_number,
+                            'stop_number' => $index + 1,
                             'title' => $order->location?->name ?? $order->order_number,
                             'location_line2' => $order->location
                                 ? "{$order->location->city}, {$order->location->state}"

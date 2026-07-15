@@ -170,29 +170,34 @@
                         <ul class="space-y-2">
                             @php
                                 $deliveryGroups = $orders
-                                    ->groupBy(fn ($order) => $order->trip && !$order->trip->trashed() && $order->trip->orders->count() > 1
+                                    ->groupBy(fn ($order) => $order->trip && !$order->trip->trashed() && $order->trip->deliveryStopCount() > 1
                                         ? 'trip-'.$order->trip_id
                                         : 'order-'.$order->id)
-                                    ->map(fn ($group) => $group->sortBy('stop_number')->values());
+                                    ->map(function ($group) {
+                                        $trip = $group->first()?->trip;
+                                        $stopOrderConfirmed = ! $trip
+                                            || $group->count() <= 1
+                                            || $trip->isStopOrderConfirmed();
+
+                                        return $group
+                                            ->sortBy($stopOrderConfirmed ? 'stop_number' : 'id')
+                                            ->values();
+                                    });
                             @endphp
 
                             @foreach ($deliveryGroups as $deliveryGroup)
                                 @php
                                     $deliveryTrip = $deliveryGroup->count() > 1 ? $deliveryGroup->first()->trip : null;
                                     $isDeliveryTrip = $deliveryTrip !== null;
+                                    $stopOrderConfirmed = ! $isDeliveryTrip || $deliveryTrip->isStopOrderConfirmed();
                                 @endphp
 
                                 <li class="{{ $isDeliveryTrip ? 'delivery-trip-group-card' : '' }}">
                                     @if ($isDeliveryTrip)
-                                        <div class="delivery-trip-group-header">
-                                            <div class="delivery-trip-group-label">
-                                                Delivery trip · {{ $deliveryGroup->count() }} stops
-                                            </div>
-                                            <div class="delivery-trip-group-meta">
-                                                {{ $deliveryTrip->driver?->name ?? 'Driver unassigned' }}
-                                                · {{ $deliveryTrip->trip_number }}
-                                            </div>
-                                        </div>
+                                        <x-delivery-trip-header
+                                            :trip="$deliveryTrip"
+                                            :stop-count="$deliveryGroup->count()"
+                                        />
                                     @endif
 
                                     <div class="{{ $isDeliveryTrip ? 'delivery-trip-group-stops' : '' }}">
@@ -203,36 +208,22 @@
                                         $statusClass = preg_replace('/[^a-z0-9]+/', '_', strtolower((string) $order->status));
                                     @endphp
                                 <div class="rounded-lg border border-gray-200 bg-white p-3 dark:border-white/10 dark:bg-gray-900 {{ $isDeliveryTrip ? 'delivery-trip-stop-card' : '' }}">
-                                    <div class="flex items-start justify-between gap-3">
+                                    <div class="flex flex-wrap items-start justify-between gap-3">
                                         <div class="min-w-0 flex-1">
                                             <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
                                                 <span>Order #{{ $order->id }}</span>
-                                                @if ($isDeliveryTrip)
-                                                    <span class="delivery-trip-stop-label">
-                                                        <span class="delivery-trip-stop-number">{{ $order->stop_number }}</span>
-                                                        Stop {{ $order->stop_number }} of {{ $deliveryGroup->count() }}
+                                                @if ($order->driver)
+                                                    <span class="text-gray-700 dark:text-gray-300">{{ $order->driver->name }}</span>
+                                                @endif
+                                                @if ($order->delivery_time)
+                                                    <span class="text-gray-700 dark:text-gray-300">
+                                                        {{ \Carbon\Carbon::parse($order->delivery_time)->format('g:i A') }}
                                                     </span>
                                                 @endif
-                                                <span class="order-status-badge order-status-{{ $statusClass }}">
-                                                    {{ $statusLabel }}
-                                                </span>
-                                                <span
-                                                    class="delivery-tag-badge {{ $order->is_printed ? 'delivery-tag-printed' : 'delivery-tag-not-printed' }}"
-                                                    title="{{ $order->is_printed ? 'Delivery tag has been printed' : 'Delivery tag has not been printed yet' }}"
-                                                >
-                                                    @if ($order->is_printed)
-                                                        <x-heroicon-o-printer />
-                                                        <span>Tag printed</span>
-                                                    @else
-                                                        <x-heroicon-o-exclamation-triangle />
-                                                        <span>Tag not printed</span>
-                                                    @endif
-                                                </span>
-                                                @if ($order->delivery_photos_count > 0)
-                                                    <span class="delivery-photo-badge"
-                                                        title="{{ $order->delivery_photos_count }} {{ \Illuminate\Support\Str::plural('delivery photo', $order->delivery_photos_count) }} attached">
-                                                        <x-heroicon-o-camera />
-                                                        <span>{{ $order->delivery_photos_count }} {{ \Illuminate\Support\Str::plural('photo', $order->delivery_photos_count) }}</span>
+                                                @if ($isDeliveryTrip && $stopOrderConfirmed)
+                                                    <span class="delivery-trip-stop-label">
+                                                        <span class="delivery-trip-stop-number">{{ $order->activeTripStop?->sequence ?? $order->stop_number }}</span>
+                                                        Stop {{ $order->activeTripStop?->sequence ?? $order->stop_number }} of {{ $deliveryGroup->count() }}
                                                     </span>
                                                 @endif
                                             </div>
@@ -253,15 +244,30 @@
                                             @endif
                                         </div>
 
-                                        <div class="shrink-0 text-right text-xs text-gray-500 dark:text-gray-400">
-                                            @if ($order->delivery_time)
-                                                <div class="font-semibold text-gray-700 dark:text-gray-200">
-                                                    {{ \Carbon\Carbon::parse($order->delivery_time)->format('g:i A') }}
-                                                </div>
-                                            @endif
-                                            @if ($order->driver && !$isDeliveryTrip)
-                                                <div>{{ $order->driver->name }}</div>
-                                            @endif
+                                        <div class="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
+                                            <span class="order-status-badge order-status-{{ $statusClass }}">
+                                                {{ $statusLabel }}
+                                            </span>
+                                                <span
+                                                    class="delivery-tag-badge {{ $order->is_printed ? 'delivery-tag-printed' : 'delivery-tag-not-printed' }}"
+                                                    title="{{ $order->is_printed ? 'Delivery tag has been printed' : 'Delivery tag has not been printed yet' }}"
+                                                >
+                                                    @if ($order->is_printed)
+                                                        <x-heroicon-o-printer />
+                                                        <span>Tag printed</span>
+                                                    @else
+                                                        <x-heroicon-o-exclamation-triangle />
+                                                        <span>Tag not printed</span>
+                                                    @endif
+                                                </span>
+                                                @if ($order->delivery_photos_count > 0)
+                                                    <span class="delivery-photo-badge"
+                                                        title="{{ $order->delivery_photos_count }} {{ \Illuminate\Support\Str::plural('delivery photo', $order->delivery_photos_count) }} attached">
+                                                        <x-heroicon-o-camera />
+                                                        <span>{{ $order->delivery_photos_count }} {{ \Illuminate\Support\Str::plural('photo', $order->delivery_photos_count) }}</span>
+                                                    </span>
+                                                @endif
+                                            <x-delivery-order-actions-menu :order="$order" />
                                         </div>
                                     </div>
 
@@ -319,4 +325,6 @@
             </div>
         @endif
     </x-filament::section>
+
+    <x-filament-actions::modals />
 </x-filament-widgets::widget>

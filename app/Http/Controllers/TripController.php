@@ -28,7 +28,9 @@ class TripController extends Controller
                     'driver',
                     'orders' => fn($q) => $q->orderBy('stop_number', 'asc'),
                     'orders.location',
-                    'orders.orderProducts.product'
+                    'orders.orderProducts.product',
+                    'stops.order.location',
+                    'stops.order.orderProducts.product',
                 ])
                 ->get();
 
@@ -52,7 +54,9 @@ class TripController extends Controller
                 'driver',
                 'orders' => fn($q) => $q->orderBy('stop_number', 'asc'),
                 'orders.location',
-                'orders.orderProducts.product'
+                'orders.orderProducts.product',
+                'stops.order.location',
+                'stops.order.orderProducts.product',
             ]);
 
             return new TripResource($trip);

@@ -11,12 +11,20 @@
     @apply border-b border-indigo-100 bg-indigo-50 px-3 py-2.5 dark:border-indigo-900 dark:bg-indigo-950/50;
 }
 
+.delivery-trip-group-heading-row {
+    @apply flex flex-wrap items-center justify-between gap-2;
+}
+
 .delivery-trip-group-label {
     @apply text-xs font-bold uppercase tracking-wide text-gray-900 dark:text-gray-100;
 }
 
 .delivery-trip-group-meta {
-    @apply mt-0.5 text-[11px] font-medium text-indigo-600 dark:text-indigo-300;
+    @apply mt-0.5 block text-[11px] font-medium text-indigo-600 dark:text-indigo-300;
+}
+
+.delivery-trip-unconfirmed-badge {
+    @apply inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-200;
 }
 
 .delivery-trip-group-stops {

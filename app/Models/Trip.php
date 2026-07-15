@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 
@@ -27,12 +28,15 @@ class Trip extends Model
         'end_time',
         'notes',
         'uuid',
+        'dispatch_confirmed_at',
+        'dispatch_confirmed_by_user_id',
     ];
 
     protected $casts = [
         'scheduled_date' => 'date',
         'start_time' => 'datetime',
         'end_time' => 'datetime',
+        'dispatch_confirmed_at' => 'datetime',
     ];
 
     protected static function boot()
@@ -56,6 +60,9 @@ class Trip extends Model
                     $trip->scheduled_date,
                     'scheduled_date'
                 );
+
+                $trip->dispatch_confirmed_at = null;
+                $trip->dispatch_confirmed_by_user_id = null;
             }
 
         });
@@ -92,6 +99,53 @@ class Trip extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function stops(): HasMany
+    {
+        return $this->hasMany(TripStop::class)
+            ->whereNull('removed_at')
+            ->orderBy('sequence');
+    }
+
+    public function stopHistory(): HasMany
+    {
+        return $this->hasMany(TripStop::class)->orderBy('id');
+    }
+
+    /**
+     * Resolve the canonical stop records first, with a legacy-order fallback so
+     * deployments remain functional before the production backfill is applied.
+     */
+    public function orderedDeliveryOrders(): Collection
+    {
+        $stops = $this->relationLoaded('stops')
+            ? $this->stops
+            : $this->stops()->with('order')->get();
+
+        if ($stops->isNotEmpty()) {
+            return $stops
+                ->sortBy('sequence')
+                ->pluck('order')
+                ->filter()
+                ->values();
+        }
+
+        $orders = $this->relationLoaded('orders')
+            ? $this->orders
+            : $this->orders()->get();
+
+        return $orders->sortBy('stop_number')->values();
+    }
+
+    public function deliveryStopCount(): int
+    {
+        return $this->orderedDeliveryOrders()->count();
+    }
+
+    public function isStopOrderConfirmed(): bool
+    {
+        return $this->deliveryStopCount() <= 1 || $this->dispatch_confirmed_at !== null;
+    }
+
 
     public function locations(): MorphToMany
     {
@@ -117,6 +171,11 @@ class Trip extends Model
     public function driver(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'driver_id', 'id');
+    }
+
+    public function dispatchConfirmedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'dispatch_confirmed_by_user_id');
     }
 
     public static function generateTripNumber()

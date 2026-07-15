@@ -3,12 +3,24 @@
 namespace App\Filament\Team\Widgets;
 
 use App\Enums\PlantLocation;
+use App\Filament\Team\Concerns\ManagesDeliveryPhotos;
+use App\Filament\Team\Concerns\ManagesDeliveryTripDispatch;
 use App\Filament\Team\Pages\Schedule;
 use App\Models\Order;
+use App\Models\Trip;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Widgets\Widget;
 
-class TodaysDeliveriesWidget extends Widget
+class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
 {
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+    use ManagesDeliveryPhotos;
+    use ManagesDeliveryTripDispatch;
+
     protected string $view = 'filament.team.widgets.todays-deliveries-widget';
 
     protected static ?int $sort = 1;
@@ -22,10 +34,7 @@ class TodaysDeliveriesWidget extends Widget
 
     protected function getViewData(): array
     {
-        $allowedDeliveryTypes = collect(auth()->user()?->team_schedule_delivery_types ?? [])
-            ->filter(fn ($type): bool => PlantLocation::tryFrom((string) $type) !== null)
-            ->values()
-            ->all();
+        $allowedDeliveryTypes = $this->allowedDeliveryTypes();
 
         $query = Order::query()
             ->whereDate('assigned_delivery_date', today())
@@ -35,7 +44,15 @@ class TodaysDeliveriesWidget extends Widget
             );
 
         $orders = $query
-            ->with(['location', 'driver', 'trip.driver', 'trip.orders:id,trip_id,plant_location,stop_number', 'orderProducts.product'])
+            ->with([
+                'location',
+                'driver',
+                'activeTripStop',
+                'trip.driver',
+                'trip.orders:id,trip_id,plant_location,stop_number',
+                'trip.stops.order:id,plant_location',
+                'orderProducts.product',
+            ])
             ->withCount('deliveryPhotos')
             ->orderByRaw("CASE plant_location
                 WHEN 'colma_main' THEN 1
@@ -52,7 +69,7 @@ class TodaysDeliveriesWidget extends Widget
 
         $effectivePlant = function (Order $order): string {
             $tripOrders = $order->trip && ! $order->trip->trashed()
-                ? $order->trip->orders
+                ? $order->trip->orderedDeliveryOrders()
                 : collect();
 
             return (string) ($tripOrders->count() > 1
@@ -72,4 +89,48 @@ class TodaysDeliveriesWidget extends Widget
             'scheduleUrl' => Schedule::getUrl(panel: 'team'),
         ];
     }
+
+    protected function allowedDeliveryTypes(): array
+    {
+        return collect(auth()->user()?->team_schedule_delivery_types ?? [])
+            ->filter(fn ($type): bool => PlantLocation::tryFrom((string) $type) !== null)
+            ->values()
+            ->all();
+    }
+
+    protected function deliveryTripDispatchIsInScope(Trip $trip): bool
+    {
+        if ($trip->scheduled_date?->toDateString() !== today()->toDateString()) {
+            return false;
+        }
+
+        $allowedDeliveryTypes = $this->allowedDeliveryTypes();
+
+        return $allowedDeliveryTypes === []
+            || $trip->orderedDeliveryOrders()->every(fn (Order $order): bool => in_array(
+                (string) $order->plant_location,
+                $allowedDeliveryTypes,
+                true,
+            ));
+    }
+
+    protected function refreshDeliveryTripDispatchView(): void {}
+
+    protected function deliveryPhotoOrderIsInScope(Order $order): bool
+    {
+        if (! static::canView()) {
+            return false;
+        }
+
+        if (! $order->assigned_delivery_date || ! $order->assigned_delivery_date->isToday()) {
+            return false;
+        }
+
+        $allowedDeliveryTypes = $this->allowedDeliveryTypes();
+
+        return $allowedDeliveryTypes === []
+            || in_array((string) $order->plant_location, $allowedDeliveryTypes, true);
+    }
+
+    protected function refreshDeliveryPhotoView(): void {}
 }
