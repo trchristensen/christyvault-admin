@@ -174,11 +174,11 @@
 }
 
 .split-load-card .split-load-stop {
-    @apply flex w-full items-start gap-2 border-0 bg-white px-3 py-2.5 text-left transition hover:brightness-[0.98] dark:bg-gray-900;
+    @apply block w-full border-0 bg-white px-3 py-2.5 text-left transition hover:brightness-[0.98] dark:bg-gray-900;
 }
 
 .split-load-stop-number {
-    @apply mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gray-700 text-[9px] font-bold text-white dark:bg-gray-500;
+    @apply mr-1.5 text-[11px] font-semibold text-gray-500 dark:text-gray-400;
 }
 
 .split-load-stop-content {

@@ -122,16 +122,15 @@
                     content.innerHTML = `
                         <button type="button" class="split-load-header" data-split-load-edit title="Edit delivery trip">
                             <div>
-                                <div class="split-load-label">Delivery trip · ${props.orders?.length || 0} stops</div>
+                                <div class="split-load-label">Split load · ${props.orders?.length || 0} stops</div>
                                 <div class="split-load-meta">${props.driver_name || 'Driver unassigned'} · ${props.trip_number || ''}</div>
                             </div>
                         </button>
                         <div class="split-load-stops">
                             ${(props.orders || []).map(order => `
                                 <button type="button" class="split-load-stop status-${order.status_raw || ''}" data-split-load-order-id="${order.id}">
-                                    <span class="split-load-stop-number">${order.stop_number}</span>
                                     <span class="split-load-stop-content">
-                                        <span class="split-load-stop-title">${order.title || order.order_number || 'Order'}</span>
+                                        <span class="split-load-stop-title"><span class="split-load-stop-number">${order.stop_number}.</span>${order.title || order.order_number || 'Order'}</span>
                                         <span class="split-load-stop-address">${order.location_line2 || ''}</span>
                                         <span class="split-load-stop-status">${order.status || ''} · #${(order.order_number || '').replace(/^ORD-/, '')}</span>
                                     </span>
