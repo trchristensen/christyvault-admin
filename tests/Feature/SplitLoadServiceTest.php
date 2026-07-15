@@ -145,7 +145,7 @@ it('creates, reorders, synchronizes, and dissolves a two-stop delivery trip', fu
     expect(Blade::render(
         '<x-delivery-trip-header :trip="$trip" :stop-count="2" />',
         compact('trip'),
-    ))->toContain('Stop order not confirmed');
+    ))->toContain('Delivery plan needs review');
 
     app(SplitLoadService::class)->reverse($trip);
 
@@ -281,7 +281,7 @@ it('lets dispatch update only the driver and stop order', function (): void {
     expect(Blade::render(
         '<x-delivery-trip-header :trip="$updatedTrip" :stop-count="3" />',
         compact('updatedTrip'),
-    ))->not->toContain('Stop order not confirmed');
+    ))->not->toContain('Delivery plan needs review');
 
     expect(fn () => $service->updateDispatchPlan($trip, [1, 2], 9))
         ->toThrow(ValidationException::class);
@@ -432,12 +432,12 @@ it('renders linked orders as one delivery trip calendar event', function (): voi
         ->and($standaloneOrders->first()['id'])->toBe('3');
 });
 
-it('renders executable order menu actions with concrete record ids', function (): void {
+it('renders executable delivery photo actions with concrete record ids', function (): void {
     $order = new Order;
     $order->forceFill(['id' => 42]);
 
     $html = Blade::render(
-        '<x-delivery-order-actions-menu :order="$order" />',
+        '<x-delivery-order-photo-button :order="$order" />',
         compact('order'),
     );
 
@@ -445,6 +445,31 @@ it('renders executable order menu actions with concrete record ids', function ()
         ->toContain('$wire.mountAction')
         ->toContain('{ order: 42 }')
         ->not->toContain('@js(');
+});
+
+it('omits the repeated driver from individual split load summaries', function (): void {
+    $order = new Order;
+    $order->forceFill([
+        'id' => 42,
+        'status' => 'confirmed',
+        'is_printed' => false,
+        'delivery_photos_count' => 0,
+        'stop_number' => 1,
+    ]);
+    $order->setRelation('driver', (new \App\Models\Employee)->forceFill(['name' => 'Driver Seven']));
+    $order->setRelation('trip', (new Trip)->forceFill(['id' => 10]));
+    $order->setRelation('activeTripStop', null);
+    $order->setRelation('location', null);
+
+    $html = Blade::render(
+        '<x-delivery-order-summary :order="$order" :is-delivery-trip="true" :stop-order-confirmed="true" :stop-count="2" />',
+        compact('order'),
+    );
+
+    expect($html)
+        ->toContain('Order #42')
+        ->toContain('Upload delivery photos')
+        ->not->toContain('Driver Seven');
 });
 
 function orderRow(int $id, string $orderNumber, ?int $driverId): array

@@ -2,17 +2,50 @@
 
 @source '../../../../app/Filament/Team/**/*';
 @source '../../../../resources/views/filament/team/**/*';
+@source '../../../../resources/views/components/*.blade.php';
+
+.delivery-order-card {
+    @apply rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900;
+}
+
+.delivery-order-card-embedded {
+    @apply rounded-none border-0 bg-transparent px-0 py-4 shadow-none dark:bg-transparent;
+}
+
+.delivery-widget-order-list {
+    @apply space-y-0;
+}
+
+.delivery-widget-order-item {
+    @apply min-w-0;
+}
+
+.delivery-widget-order-item + .delivery-widget-order-item {
+    @apply border-t border-gray-200 dark:border-gray-700;
+}
+
+.delivery-widget-order-item:first-child .delivery-order-card-embedded {
+    @apply pt-0;
+}
+
+.delivery-widget-order-item:last-child .delivery-order-card-embedded {
+    @apply pb-0;
+}
+
+.delivery-widget-trip-item {
+    @apply my-3 first:mt-0 last:mb-0;
+}
 
 .delivery-trip-group-card {
-    @apply overflow-hidden rounded-lg border border-gray-300 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900;
+    @apply overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900;
 }
 
 .delivery-trip-group-header {
-    @apply border-b border-indigo-100 bg-indigo-50 px-3 py-2.5 dark:border-indigo-900 dark:bg-indigo-950/50;
+    @apply border-b border-indigo-100 bg-indigo-50/70 px-4 py-3 dark:border-indigo-900 dark:bg-indigo-950/40;
 }
 
 .delivery-trip-group-heading-row {
-    @apply flex flex-wrap items-center justify-between gap-2;
+    @apply flex items-center justify-between gap-3;
 }
 
 .delivery-trip-group-label {
@@ -20,11 +53,15 @@
 }
 
 .delivery-trip-group-meta {
-    @apply mt-0.5 block text-[11px] font-medium text-indigo-600 dark:text-indigo-300;
+    @apply mt-1 block text-xs font-medium text-indigo-600 dark:text-indigo-300;
 }
 
 .delivery-trip-unconfirmed-badge {
-    @apply inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-200;
+    @apply mt-2 inline-flex items-center gap-1.5 rounded-md bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-800 dark:bg-amber-950/60 dark:text-amber-200;
+}
+
+.delivery-trip-unconfirmed-badge svg {
+    @apply size-3.5 shrink-0;
 }
 
 .delivery-trip-group-stops {
@@ -32,7 +69,48 @@
 }
 
 .delivery-trip-stop-card {
-    @apply rounded-none border-0 bg-white shadow-none ring-0 dark:bg-gray-900;
+    @apply rounded-none border-0 bg-white p-4 shadow-none ring-0 dark:bg-gray-900;
+}
+
+.delivery-order-summary {
+    @apply min-w-0;
+}
+
+.delivery-order-topline {
+    @apply flex items-start justify-between gap-3;
+}
+
+.delivery-order-identity {
+    @apply flex min-w-0 flex-wrap items-center gap-x-1 gap-y-1 text-xs font-semibold text-gray-500 dark:text-gray-400;
+}
+
+.delivery-order-identity-separator {
+    @apply text-gray-300 dark:text-gray-600;
+}
+
+.delivery-order-driver,
+.delivery-order-time {
+    @apply text-gray-700 dark:text-gray-300;
+}
+
+.delivery-order-actions {
+    @apply flex shrink-0 items-center gap-2;
+}
+
+.delivery-order-destination {
+    @apply mt-3 text-base font-semibold leading-snug text-gray-900 dark:text-white;
+}
+
+.delivery-order-address {
+    @apply mt-0.5 flex w-fit max-w-full items-start gap-1 text-sm leading-snug text-gray-500 transition-colors hover:text-primary-600 hover:underline dark:text-gray-400 dark:hover:text-primary-400;
+}
+
+.delivery-order-address svg {
+    @apply mt-0.5 size-4 shrink-0 text-primary-500;
+}
+
+.delivery-order-statuses {
+    @apply mt-3 flex flex-wrap items-center gap-2;
 }
 
 .delivery-trip-stop-label {
@@ -41,4 +119,120 @@
 
 .delivery-trip-stop-number {
     @apply inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white shadow-sm;
+}
+
+.order-status-badge,
+.delivery-tag-badge,
+.delivery-photo-badge {
+    @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-5 whitespace-nowrap;
+}
+
+.order-status-badge {
+    @apply border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300;
+}
+
+.order-status-will_call,
+.order-status-picked_up {
+    @apply border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-200;
+}
+
+.order-status-cancelled {
+    @apply border-red-300 bg-red-100 text-red-800 dark:border-red-800 dark:bg-red-950/60 dark:text-red-200;
+}
+
+.order-status-delivered,
+.order-status-completed {
+    @apply border-green-300 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-950/60 dark:text-green-200;
+}
+
+.order-status-confirmed,
+.order-status-ready_for_delivery,
+.order-status-out_for_delivery {
+    @apply border-blue-300 bg-blue-100 text-blue-800 dark:border-blue-800 dark:bg-blue-950/60 dark:text-blue-200;
+}
+
+.delivery-tag-printed {
+    @apply border-green-300 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-950/60 dark:text-green-200;
+}
+
+.delivery-tag-not-printed {
+    @apply border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-200;
+}
+
+.delivery-photo-badge {
+    @apply border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-200;
+}
+
+.delivery-tag-badge svg,
+.delivery-photo-badge svg {
+    @apply size-3.5 shrink-0;
+}
+
+.delivery-trip-dispatch-trigger {
+    @apply !m-0 border border-primary-200 bg-primary-50 text-primary-600 shadow-sm hover:border-primary-300 hover:bg-primary-100 dark:border-primary-800 dark:bg-primary-950/50 dark:text-primary-300 dark:hover:bg-primary-950;
+}
+
+.delivery-order-photo-trigger {
+    @apply !m-0 border border-gray-200 bg-white text-gray-500 shadow-sm hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800;
+}
+
+.delivery-order-products {
+    @apply mt-4 border-t border-gray-100 pt-3 dark:border-gray-800;
+}
+
+.delivery-order-products table {
+    @apply w-full border-collapse text-sm leading-5;
+}
+
+.delivery-order-products tr {
+    @apply border-b border-gray-100 last:border-b-0 dark:border-gray-800;
+}
+
+.delivery-order-product-quantity,
+.delivery-order-product-details {
+    @apply py-1.5 align-top;
+}
+
+.delivery-order-product-quantity {
+    @apply w-10 pr-3 text-right text-gray-700 dark:text-gray-300;
+}
+
+.delivery-order-product-details {
+    @apply border-l border-gray-200 pl-3 dark:border-gray-700;
+}
+
+.delivery-order-product-content {
+    @apply flex flex-col;
+}
+
+.delivery-order-product-primary {
+    @apply flex flex-col;
+}
+
+.delivery-order-product-sku {
+    @apply font-medium text-gray-900 dark:text-gray-100;
+}
+
+.delivery-order-product-name {
+    @apply text-gray-600 dark:text-gray-400;
+}
+
+.delivery-order-product-meta {
+    @apply mt-2 space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-2.5 dark:border-gray-700 dark:bg-gray-800/60;
+}
+
+.delivery-order-product-fill {
+    @apply ml-2 mt-0.5 text-xs font-bold text-gray-700 dark:text-gray-300;
+}
+
+.delivery-order-product-meta-item {
+    @apply flex flex-col gap-0.5;
+}
+
+.delivery-order-product-meta-label {
+    @apply text-[10px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400;
+}
+
+.delivery-order-product-meta-value {
+    @apply break-words text-xs leading-5 text-gray-700 dark:text-gray-300;
 }
