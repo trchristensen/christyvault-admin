@@ -1,84 +1,139 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Order;
 use App\Enums\OrderStatus;
+use App\Models\Order;
+use App\Models\Trip;
 use App\Services\DeliveryCalendarAvailability;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class OrderCalendarController extends Controller
 {
-    public function events(Request $request, DeliveryCalendarAvailability $availability)
+    public function events(Request $request, DeliveryCalendarAvailability $availability): JsonResponse
     {
-        // Eager load 'location' relationship
-        $orders = Order::with('location')->whereNotNull('assigned_delivery_date')->get();
+        $start = $request->query('start', now()->startOfMonth()->toDateString());
+        $end = $request->query('end', now()->endOfMonth()->toDateString());
 
-        // Group orders by date first
-        $groupedOrders = [];
-        foreach ($orders as $order) {
-            $date = $order->assigned_delivery_date->format('Y-m-d');
-            if (!isset($groupedOrders[$date])) {
-                $groupedOrders[$date] = [];
-            }
-            $groupedOrders[$date][] = $order;
+        $trips = Trip::query()
+            ->with([
+                'driver',
+                'orders' => fn ($query) => $query->with('location')->orderBy('stop_number'),
+            ])
+            ->has('orders', '>=', 2)
+            ->whereDate('scheduled_date', '>=', $start)
+            ->whereDate('scheduled_date', '<=', $end)
+            ->get();
+
+        $splitLoadOrderIds = $trips
+            ->flatMap(fn (Trip $trip): Collection => $trip->orders->pluck('id'))
+            ->all();
+
+        $orders = Order::query()
+            ->with('location')
+            ->whereNotNull('assigned_delivery_date')
+            ->whereDate('assigned_delivery_date', '>=', $start)
+            ->whereDate('assigned_delivery_date', '<=', $end)
+            ->when($splitLoadOrderIds !== [], fn ($query) => $query->whereNotIn('id', $splitLoadOrderIds))
+            ->get();
+
+        $items = collect();
+
+        foreach ($trips as $trip) {
+            $firstOrder = $trip->orders->first();
+            $plantLocation = $firstOrder?->plant_location ?? 'colma_main';
+
+            $items->push([
+                'date' => $trip->scheduled_date->toDateString(),
+                'plant_location' => $plantLocation,
+                'event' => [
+                    'id' => "trip_{$trip->id}",
+                    'title' => 'Delivery Trip',
+                    'start' => $trip->scheduled_date->toDateString(),
+                    'allDay' => true,
+                    'classNames' => ['split-load-event'],
+                    'extendedProps' => [
+                        'type' => 'split_load',
+                        'trip_id' => $trip->id,
+                        'trip_number' => $trip->trip_number,
+                        'driver_name' => $trip->driver?->name,
+                        'status' => str($trip->status)->headline()->toString(),
+                        'plant_location' => $plantLocation,
+                        'orders' => $trip->orders->map(fn (Order $order): array => [
+                            'id' => $order->id,
+                            'stop_number' => $order->stop_number,
+                            'title' => $order->location?->name ?? $order->order_number,
+                            'location_line2' => $order->location
+                                ? "{$order->location->city}, {$order->location->state}"
+                                : '',
+                            'status' => OrderStatus::tryFrom($order->status)?->label()
+                                ?? str($order->status)->headline()->toString(),
+                            'status_raw' => $order->status,
+                            'order_number' => $order->order_number,
+                        ])->values()->all(),
+                    ],
+                ],
+            ]);
         }
 
-        $events = [];
-        
-        // Process each day's orders
-        foreach ($groupedOrders as $date => $dateOrders) {
-            // Simple sort by plant location (alphabetical will put colma_main before colma_locals)
-            usort($dateOrders, function($a, $b) {
-                $locA = $a->plant_location ?? 'colma_main';
-                $locB = $b->plant_location ?? 'colma_main';
-                
-                // Custom sort to ensure colma_main comes before colma_locals
-                if ($locA === 'colma_main' && $locB === 'colma_locals') return -1;
-                if ($locA === 'colma_locals' && $locB === 'colma_main') return 1;
-                
-                return strcmp($locA, $locB);
-            });
-            
-            // Track when plant location changes within the day
-            $lastPlantLocation = null;
-            $sortOrder = 0; // Add explicit sort order counter
-            foreach ($dateOrders as $order) {
-                $plantLocation = $order->plant_location ?? 'colma_main';
-                $isGroupStart = ($lastPlantLocation !== $plantLocation);
-                $lastPlantLocation = $plantLocation;
-                $sortOrder++; // Increment for each order
+        foreach ($orders as $order) {
+            $statusLabel = OrderStatus::tryFrom($order->status)?->label()
+                ?? str($order->status)->headline()->toString();
+            $plantLocation = $order->plant_location ?? 'colma_main';
 
-                // Get the proper status label from enum
-                $statusEnum = OrderStatus::tryFrom($order->status);
-                $statusLabel = $statusEnum ? $statusEnum->label() : ucfirst(str_replace('_', ' ', $order->status));
-
-                $events[] = [
-                    'id'    => $order->id,
-                    'title' => optional($order->location)->name ?? $order->order_number,
+            $items->push([
+                'date' => $order->assigned_delivery_date->toDateString(),
+                'plant_location' => $plantLocation,
+                'event' => [
+                    'id' => (string) $order->id,
+                    'title' => $order->location?->name ?? $order->order_number,
                     'start' => $order->assigned_delivery_date->toDateString(),
                     'allDay' => true,
-                    'sort_order' => $sortOrder, // Add explicit sort order
                     'extendedProps' => [
-                        'location_line1' => optional($order->location)->address_line1,
-                        'location_line2' => optional($order->location) ? "{$order->location->city}, {$order->location->state}" : '',
+                        'type' => 'order',
+                        'location_line1' => $order->location?->address_line1,
+                        'location_line2' => $order->location
+                            ? "{$order->location->city}, {$order->location->state}"
+                            : '',
                         'status' => $statusLabel,
-                        'status_raw' => $order->status, // Keep raw for CSS class
+                        'status_raw' => $order->status,
                         'order_number' => $order->order_number,
                         'requested_delivery_date' => $order->requested_delivery_date,
                         'delivered_at' => $order->delivered_at,
                         'order_date' => $order->order_date,
                         'plant_location' => $plantLocation,
-                        'is_group_start' => $isGroupStart,
-                        'sort_order' => $sortOrder, // Also in extendedProps for debugging
                     ],
-                ];
-            }
+                ],
+            ]);
         }
 
-        $start = $request->query('start', now()->startOfMonth()->toDateString());
-        $end = $request->query('end', now()->endOfMonth()->toDateString());
+        $events = $items
+            ->groupBy('date')
+            ->flatMap(function (Collection $dateItems): Collection {
+                $lastPlantLocation = null;
+
+                return $dateItems
+                    ->sortBy(fn (array $item): string => sprintf(
+                        '%02d-%d-%s',
+                        $this->plantSortOrder($item['plant_location']),
+                        ($item['event']['extendedProps']['type'] ?? null) === 'split_load' ? 0 : 1,
+                        $item['event']['id'],
+                    ))
+                    ->values()
+                    ->map(function (array $item, int $index) use (&$lastPlantLocation): array {
+                        $event = $item['event'];
+                        $event['sort_order'] = $index + 1;
+                        $event['extendedProps']['sort_order'] = $index + 1;
+                        $event['extendedProps']['is_group_start'] = $lastPlantLocation !== $item['plant_location'];
+                        $lastPlantLocation = $item['plant_location'];
+
+                        return $event;
+                    });
+            })
+            ->values()
+            ->all();
 
         return response()->json([
             ...$availability->eventsForRange($start, $end),
@@ -86,9 +141,12 @@ class OrderCalendarController extends Controller
         ]);
     }
 
-    public function assignDate(Request $request, DeliveryCalendarAvailability $availability)
+    public function assignDate(Request $request, DeliveryCalendarAvailability $availability): JsonResponse
     {
-        $order = Order::with('location')->findOrFail($request->order_id);
+        $request->validate([
+            'order_id' => ['required'],
+            'assigned_delivery_date' => ['required', 'date'],
+        ]);
 
         if ($availability->isBlocked($request->assigned_delivery_date)) {
             return response()->json([
@@ -98,89 +156,66 @@ class OrderCalendarController extends Controller
             ]);
         }
 
-        $order->assigned_delivery_date = $request->assigned_delivery_date;
-        $order->save();
+        if (str_starts_with((string) $request->order_id, 'trip_')) {
+            $trip = Trip::findOrFail((int) str($request->order_id)->after('trip_')->toString());
+            $trip->update(['scheduled_date' => $request->assigned_delivery_date]);
 
-        // We need to recalculate the sort order and group start for this date
-        // Get all orders for this date to determine proper placement
-        $dateOrders = Order::with('location')
-            ->whereDate('assigned_delivery_date', $request->assigned_delivery_date)
-            ->get();
-
-        // Sort them the same way as in events()
-        $dateOrders = $dateOrders->sortBy(function($order) {
-            $loc = $order->plant_location ?? 'colma_main';
-            if ($loc === 'colma_main') return '1';
-            if ($loc === 'colma_locals') return '2';
-            if ($loc === 'tulare_plant') return '3';
-            return '4';
-        })->values();
-
-        // Find this order's position and determine is_group_start
-        $sortOrder = 1;
-        $isGroupStart = false;
-        $lastPlantLocation = null;
-        
-        foreach ($dateOrders as $index => $dateOrder) {
-            if ($dateOrder->id === $order->id) {
-                $plantLocation = $dateOrder->plant_location ?? 'colma_main';
-                $isGroupStart = ($lastPlantLocation !== $plantLocation);
-                $sortOrder = $index + 1;
-                break;
-            }
-            $lastPlantLocation = $dateOrder->plant_location ?? 'colma_main';
+            return response()->json(['success' => true]);
         }
 
-        // Get the proper status label from enum
-        $statusEnum = OrderStatus::tryFrom($order->status);
-        $statusLabel = $statusEnum ? $statusEnum->label() : ucfirst(str_replace('_', ' ', $order->status));
+        $order = Order::with(['location', 'trip'])->findOrFail($request->order_id);
 
-        // Return the event data for updating the calendar
-        $event = [
-            'id'    => $order->id,
-            'title' => optional($order->location)->name ?? $order->order_number,
-            'start' => optional($order->assigned_delivery_date)->toDateString(),
-            'allDay' => true,
-            'sort_order' => $sortOrder,
-            'extendedProps' => [
-                'location_line1' => optional($order->location)->address_line1,
-                'location_line2' => optional($order->location) ? "{$order->location->city}, {$order->location->state}" : '',
-                'status' => $statusLabel,
-                'status_raw' => $order->status, // Keep raw for CSS class
-                'order_number' => $order->order_number,
-                'requested_delivery_date' => $order->requested_delivery_date,
-                'delivered_at' => $order->delivered_at,
-                'order_date' => $order->order_date,
-                'plant_location' => $order->plant_location ?? 'colma_main',
-                'is_group_start' => $isGroupStart,
-                'sort_order' => $sortOrder,
-            ],
-        ];
+        if ($order->trip && ! $order->trip->trashed() && $order->trip->orders()->count() > 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Move the entire delivery trip instead of an individual stop.',
+            ]);
+        }
 
-        return response()->json(['success' => true, 'event' => $event]);
+        $order->update(['assigned_delivery_date' => $request->assigned_delivery_date]);
+
+        return response()->json(['success' => true]);
     }
 
-    public function unassignDate(Request $request)
+    public function unassignDate(Request $request): JsonResponse
     {
-        $order = Order::with('location')->findOrFail($request->order_id);
-        $order->assigned_delivery_date = null;
-        $order->save();
+        $request->validate(['order_id' => ['required', 'integer']]);
 
-        // Get the proper status label from enum
-        $statusEnum = OrderStatus::tryFrom($order->status);
-        $statusLabel = $statusEnum ? $statusEnum->label() : ucfirst(str_replace('_', ' ', $order->status));
+        $order = Order::with(['location', 'trip'])->findOrFail($request->order_id);
 
-        // Return the order data for recreating the sidebar element
-        $orderData = [
-            'id' => $order->id,
-            'order_number' => $order->order_number,
-            'status' => $statusLabel,
-            'status_raw' => $order->status, // Keep raw for CSS class
-            'location_name' => optional($order->location)->name,
-            'location_city' => optional($order->location)->city,
-            'location_state' => optional($order->location)->state,
-        ];
+        if ($order->trip && ! $order->trip->trashed() && $order->trip->orders()->count() > 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dissolve the delivery trip before unassigning one of its stops.',
+            ]);
+        }
 
-        return response()->json(['success' => true, 'order' => $orderData]);
+        $order->update(['assigned_delivery_date' => null]);
+
+        $statusLabel = OrderStatus::tryFrom($order->status)?->label()
+            ?? str($order->status)->headline()->toString();
+
+        return response()->json([
+            'success' => true,
+            'order' => [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'status' => $statusLabel,
+                'status_raw' => $order->status,
+                'location_name' => $order->location?->name,
+                'location_city' => $order->location?->city,
+                'location_state' => $order->location?->state,
+            ],
+        ]);
+    }
+
+    private function plantSortOrder(?string $plantLocation): int
+    {
+        return match ($plantLocation) {
+            'colma_main' => 1,
+            'colma_locals' => 2,
+            'tulare_plant' => 3,
+            default => 4,
+        };
     }
 }

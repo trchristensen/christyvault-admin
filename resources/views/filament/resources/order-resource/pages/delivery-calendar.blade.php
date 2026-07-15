@@ -48,6 +48,7 @@
     <script>
     // Global variable to track the event being dragged from calendar
     let draggedCalendarEvent = null;
+    let pendingSplitLoadDrop = false;
     let calendar; // Store calendar reference globally
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -111,21 +112,66 @@
                 if (event.extendedProps?.type === 'calendar_block') {
                     return;
                 }
-                
-                // Build the order content
-                const props = event.extendedProps;
-                const content = document.createElement('div');
-                content.innerHTML = `
-                    <div class="order-container status-${(props.status_raw || props.status || '').toLowerCase()}">
-                        <div class="order-title">${event.title}</div>
-                        ${props.location_line2 ? `<div class="order-address">${props.location_line2}</div>` : ''}
-                        <div class="order-status">
-                            <span>${props.status || ''}</span>
-                            ${props.order_number ? `<span class="order-number">#${props.order_number.replace(/^ORD-/, '')}</span>` : ''}
+
+                if (event.extendedProps?.type === 'split_load') {
+                    const props = event.extendedProps;
+                    el.dataset.calendarTripId = props.trip_id;
+
+                    const content = document.createElement('div');
+                    content.className = 'split-load-card';
+                    content.innerHTML = `
+                        <button type="button" class="split-load-header" data-split-load-edit title="Edit delivery trip">
+                            <div>
+                                <div class="split-load-label">Delivery trip · ${props.orders?.length || 0} stops</div>
+                                <div class="split-load-meta">${props.driver_name || 'Driver unassigned'} · ${props.trip_number || ''}</div>
+                            </div>
+                        </button>
+                        <div class="split-load-stops">
+                            ${(props.orders || []).map(order => `
+                                <button type="button" class="split-load-stop status-${order.status_raw || ''}" data-split-load-order-id="${order.id}">
+                                    <span class="split-load-stop-number">${order.stop_number}</span>
+                                    <span class="split-load-stop-content">
+                                        <span class="split-load-stop-title">${order.title || order.order_number || 'Order'}</span>
+                                        <span class="split-load-stop-address">${order.location_line2 || ''}</span>
+                                        <span class="split-load-stop-status">${order.status || ''} · #${(order.order_number || '').replace(/^ORD-/, '')}</span>
+                                    </span>
+                                </button>
+                            `).join('')}
                         </div>
-                    </div>
-                `;
-                eventMainEl.replaceChildren(content);
+                    `;
+                    eventMainEl.replaceChildren(content);
+
+                    content.querySelectorAll('[data-split-load-order-id]').forEach(orderButton => {
+                        orderButton.addEventListener('click', clickEvent => {
+                            clickEvent.preventDefault();
+                            clickEvent.stopPropagation();
+                            @this.call('openOrderModal', Number(orderButton.dataset.splitLoadOrderId));
+                        });
+                    });
+
+                    content.querySelector('[data-split-load-edit]')?.addEventListener('click', clickEvent => {
+                        clickEvent.preventDefault();
+                        clickEvent.stopPropagation();
+                        @this.call('openSplitLoadModal', Number(props.trip_id));
+                    });
+                } else {
+                    el.dataset.calendarOrderId = event.id;
+                
+                    // Build the order content
+                    const props = event.extendedProps;
+                    const content = document.createElement('div');
+                    content.innerHTML = `
+                        <div class="order-container status-${(props.status_raw || props.status || '').toLowerCase()}">
+                            <div class="order-title">${event.title}</div>
+                            ${props.location_line2 ? `<div class="order-address">${props.location_line2}</div>` : ''}
+                            <div class="order-status">
+                                <span>${props.status || ''}</span>
+                                ${props.order_number ? `<span class="order-number">#${props.order_number.replace(/^ORD-/, '')}</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    eventMainEl.replaceChildren(content);
+                }
                 
                 // Add group start label if this is the start of a group
                 if (event.extendedProps?.is_group_start) {
@@ -150,7 +196,7 @@
                     const groupLabel = plantLocationMap[plantLocation] || plantLocation.charAt(0).toUpperCase() + plantLocation.slice(1);
                     groupStartLabel.textContent = groupLabel;
                     
-                    console.log(`Adding group header: ${groupLabel} for order ${props.order_number}`);
+                    console.log(`Adding group header: ${groupLabel}`);
                     eventMainEl.insertBefore(groupStartLabel, eventMainEl.firstChild);
                 }
             }
@@ -199,6 +245,7 @@
                     eventData: {
                         id: orderEl.dataset.orderId,
                         title: orderEl.textContent.trim(),
+                        extendedProps: { type: 'order' },
                     }
                 });
             }
@@ -218,6 +265,24 @@
 
     function handleEventDragStop(info) {
         console.log('Event drag stopped:', info.event.id);
+
+        if (draggedCalendarEvent?.extendedProps?.type === 'order') {
+            const targetOrder = document.elementsFromPoint(info.jsEvent.clientX, info.jsEvent.clientY)
+                .map(element => element.closest?.('[data-calendar-order-id]'))
+                .find(element => element && String(element.dataset.calendarOrderId) !== String(draggedCalendarEvent.id));
+
+            if (targetOrder) {
+                pendingSplitLoadDrop = true;
+                const draggedOrderId = Number(draggedCalendarEvent.id);
+                const targetOrderId = Number(targetOrder.dataset.calendarOrderId);
+
+                @this.call('requestSplitLoad', draggedOrderId, targetOrderId);
+                draggedCalendarEvent = null;
+                window.setTimeout(() => pendingSplitLoadDrop = false, 500);
+
+                return;
+            }
+        }
         
         // Check if the event was dropped on the sidebar
         const sidebarEl = document.getElementById('unassigned-orders');
@@ -226,7 +291,8 @@
         const mouseY = info.jsEvent.clientY;
         
         // Check if mouse position is within sidebar bounds
-        if (mouseX >= rect.left && mouseX <= rect.right && 
+        if (draggedCalendarEvent?.extendedProps?.type === 'order' &&
+            mouseX >= rect.left && mouseX <= rect.right &&
             mouseY >= rect.top && mouseY <= rect.bottom) {
             
             console.log('Event dropped on sidebar!');
@@ -258,6 +324,7 @@
                             eventData: {
                                 id: data.order.id,
                                 title: data.order.location_name || data.order.order_number,
+                                extendedProps: { type: 'order' },
                             }
                         });
                     }
@@ -288,6 +355,13 @@
     }
 
     function handleEventReceive(info) {
+        if (pendingSplitLoadDrop) {
+            pendingSplitLoadDrop = false;
+            info.revert();
+
+            return;
+        }
+
         const localDate = new Date(info.event.start);
         const year = localDate.getFullYear();
         const month = String(localDate.getMonth() + 1).padStart(2, '0');
@@ -385,7 +459,7 @@
             return;
         }
 
-        if (!/^\d+$/.test(String(info.event.id))) {
+        if (info.event.extendedProps?.type === 'split_load' || !/^\d+$/.test(String(info.event.id))) {
             return;
         }
 

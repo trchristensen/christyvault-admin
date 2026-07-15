@@ -2,3 +2,35 @@
 
 @source '../../../../app/Filament/Team/**/*';
 @source '../../../../resources/views/filament/team/**/*';
+
+.delivery-trip-group-card {
+    @apply overflow-hidden rounded-lg border border-gray-300 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900;
+}
+
+.delivery-trip-group-header {
+    @apply border-b border-indigo-100 bg-indigo-50 px-3 py-2.5 dark:border-indigo-900 dark:bg-indigo-950/50;
+}
+
+.delivery-trip-group-label {
+    @apply text-xs font-bold uppercase tracking-wide text-gray-900 dark:text-gray-100;
+}
+
+.delivery-trip-group-meta {
+    @apply mt-0.5 text-[11px] font-medium text-indigo-600 dark:text-indigo-300;
+}
+
+.delivery-trip-group-stops {
+    @apply divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900;
+}
+
+.delivery-trip-stop-card {
+    @apply rounded-none border-0 bg-white shadow-none ring-0 dark:bg-gray-900;
+}
+
+.delivery-trip-stop-label {
+    @apply inline-flex items-center gap-1.5 text-[11px] font-bold text-indigo-700 dark:text-indigo-200;
+}
+
+.delivery-trip-stop-number {
+    @apply inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white shadow-sm;
+}

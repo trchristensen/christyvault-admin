@@ -35,7 +35,7 @@ class TodaysDeliveriesWidget extends Widget
             );
 
         $orders = $query
-            ->with(['location', 'driver', 'orderProducts.product'])
+            ->with(['location', 'driver', 'trip.driver', 'trip.orders:id,trip_id,plant_location,stop_number', 'orderProducts.product'])
             ->withCount('deliveryPhotos')
             ->orderByRaw("CASE plant_location
                 WHEN 'colma_main' THEN 1
@@ -43,14 +43,27 @@ class TodaysDeliveriesWidget extends Widget
                 WHEN 'tulare_plant' THEN 3
                 ELSE 4
             END")
+            ->orderByRaw('CASE WHEN trip_id IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('trip_id')
+            ->orderBy('stop_number')
             ->orderBy('delivery_time')
             ->orderBy('id')
             ->get();
 
+        $effectivePlant = function (Order $order): string {
+            $tripOrders = $order->trip && ! $order->trip->trashed()
+                ? $order->trip->orders
+                : collect();
+
+            return (string) ($tripOrders->count() > 1
+                ? ($tripOrders->sortBy('stop_number')->first()?->plant_location ?? $order->plant_location)
+                : $order->plant_location);
+        };
+
         $groupedOrders = collect([
-            'colma_main' => $orders->where('plant_location', 'colma_main'),
-            'colma_locals' => $orders->where('plant_location', 'colma_locals'),
-            'tulare_plant' => $orders->where('plant_location', 'tulare_plant'),
+            'colma_main' => $orders->filter(fn (Order $order): bool => $effectivePlant($order) === 'colma_main'),
+            'colma_locals' => $orders->filter(fn (Order $order): bool => $effectivePlant($order) === 'colma_locals'),
+            'tulare_plant' => $orders->filter(fn (Order $order): bool => $effectivePlant($order) === 'tulare_plant'),
         ])->filter(fn ($group) => $group->isNotEmpty());
 
         return [

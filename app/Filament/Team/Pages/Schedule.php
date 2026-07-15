@@ -357,8 +357,8 @@ class Schedule extends Page
         $allowedDeliveryTypes = $this->allowedDeliveryTypes();
 
         $orders = Order::whereDate('assigned_delivery_date', $iso)
-            ->when($allowedDeliveryTypes !== [], fn($query) => $query->whereIn('plant_location', $allowedDeliveryTypes))
-            ->with(['location', 'orderProducts.product', 'driver', 'deliveryPhotos.uploadedBy'])
+            ->when($allowedDeliveryTypes !== [], fn ($query) => $query->whereIn('plant_location', $allowedDeliveryTypes))
+            ->with(['location', 'orderProducts.product', 'driver', 'trip.driver', 'trip.orders:id,trip_id,plant_location,stop_number', 'deliveryPhotos.uploadedBy'])
             ->withCount('deliveryPhotos')
             ->get();
 
@@ -369,14 +369,30 @@ class Schedule extends Page
             'tulare_plant' => 3,
         ];
 
-        // Sort orders by plant order
-        $sorted = $orders->sortBy(fn($order) => $plantOrder[$order->plant_location] ?? 999);
+        $effectivePlant = function (Order $order): string {
+            $tripOrders = $order->trip && ! $order->trip->trashed()
+                ? $order->trip->orders
+                : collect();
 
-        // Group by plant_location safely for Blade
+            return (string) ($tripOrders->count() > 1
+                ? ($tripOrders->sortBy('stop_number')->first()?->plant_location ?? $order->plant_location)
+                : $order->plant_location);
+        };
+
+        // Keep the stops in a delivery trip next to each other and in stop order.
+        $sorted = $orders->sortBy(fn (Order $order): string => sprintf(
+            '%03d-%s-%03d-%010d',
+            $plantOrder[$effectivePlant($order)] ?? 999,
+            $order->trip_id ? 'trip-'.str_pad((string) $order->trip_id, 10, '0', STR_PAD_LEFT) : 'order-'.str_pad((string) $order->id, 10, '0', STR_PAD_LEFT),
+            $order->stop_number ?? 0,
+            $order->id,
+        ));
+
+        // A delivery trip belongs under its first stop's plant heading so its stops stay together.
         $this->orders = collect([
-            'colma_main' => $sorted->where('plant_location', 'colma_main'),
-            'colma_locals' => $sorted->where('plant_location', 'colma_locals'),
-            'tulare_plant' => $sorted->where('plant_location', 'tulare_plant'),
-        ])->filter(fn($group) => $group->isNotEmpty());
+            'colma_main' => $sorted->filter(fn (Order $order): bool => $effectivePlant($order) === 'colma_main'),
+            'colma_locals' => $sorted->filter(fn (Order $order): bool => $effectivePlant($order) === 'colma_locals'),
+            'tulare_plant' => $sorted->filter(fn (Order $order): bool => $effectivePlant($order) === 'tulare_plant'),
+        ])->filter(fn ($group) => $group->isNotEmpty());
     }
 }

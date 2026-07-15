@@ -326,20 +326,54 @@
                     </h3>
 
                     <ul class="space-y-2">
-                        @foreach ($groupOrders as $order)
+                        @php
+                            $deliveryGroups = $groupOrders
+                                ->groupBy(fn ($order) => $order->trip && !$order->trip->trashed() && $order->trip->orders->count() > 1
+                                    ? 'trip-'.$order->trip_id
+                                    : 'order-'.$order->id)
+                                ->map(fn ($group) => $group->sortBy('stop_number')->values());
+                        @endphp
+
+                        @foreach ($deliveryGroups as $deliveryGroup)
                             @php
-                                $statusEnum = \App\Enums\OrderStatus::tryFrom($order->status);
-                                $statusLabel =
-                                    $statusEnum?->label() ?? \Illuminate\Support\Str::headline((string) $order->status);
-                                $statusClass = preg_replace('/[^a-z0-9]+/', '_', strtolower((string) $order->status));
+                                $deliveryTrip = $deliveryGroup->count() > 1 ? $deliveryGroup->first()->trip : null;
+                                $isDeliveryTrip = $deliveryTrip !== null;
                             @endphp
-                            <li class="p-3 border rounded-lg bg-white dark:bg-gray-800">
+
+                            <li class="{{ $isDeliveryTrip ? 'delivery-trip-group-card' : '' }}">
+                                @if ($isDeliveryTrip)
+                                    <div class="delivery-trip-group-header">
+                                        <div class="delivery-trip-group-label">
+                                            Delivery trip · {{ $deliveryGroup->count() }} stops
+                                        </div>
+                                        <div class="delivery-trip-group-meta">
+                                            {{ $deliveryTrip->driver?->name ?? 'Driver unassigned' }}
+                                            · {{ $deliveryTrip->trip_number }}
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <div class="{{ $isDeliveryTrip ? 'delivery-trip-group-stops' : '' }}">
+                                @foreach ($deliveryGroup as $order)
+                                @php
+                                    $statusEnum = \App\Enums\OrderStatus::tryFrom($order->status);
+                                    $statusLabel =
+                                        $statusEnum?->label() ?? \Illuminate\Support\Str::headline((string) $order->status);
+                                    $statusClass = preg_replace('/[^a-z0-9]+/', '_', strtolower((string) $order->status));
+                                @endphp
+                            <div class="p-3 border rounded-lg bg-white dark:bg-gray-800 {{ $isDeliveryTrip ? 'delivery-trip-stop-card' : '' }}">
                                 <div class="flex justify-between items-start">
                                     <div class="w-full">
                                         <div class="flex justify-between w-full">
                                             <div
                                                 class="flex flex-wrap items-center gap-2 font-semibold text-sm text-gray-500">
                                                 <span>Order #{{ $order->id }}</span>
+                                                @if ($isDeliveryTrip)
+                                                    <span class="delivery-trip-stop-label">
+                                                        <span class="delivery-trip-stop-number">{{ $order->stop_number }}</span>
+                                                        Stop {{ $order->stop_number }} of {{ $deliveryGroup->count() }}
+                                                    </span>
+                                                @endif
                                                 <span class="order-status-badge order-status-{{ $statusClass }}">
                                                     {{ $statusLabel }}
                                                 </span>
@@ -363,7 +397,7 @@
                                                 @endif
                                             </div>
                                             <div>
-                                                @if ($order->driver)
+                                                @if ($order->driver && !$isDeliveryTrip)
                                                     <span
                                                         class="text-sm text-gray-500 font-semibold">{{ $order->driver->name }}</span>
                                                 @endif
@@ -501,6 +535,9 @@
                                         </tr>
                                     @endforeach
                                 </table>
+                            </div>
+                                @endforeach
+                                </div>
                             </li>
                         @endforeach
                     </ul>

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -57,15 +58,22 @@ class Trip extends Model
                 );
             }
 
-            $trip->uuid = (string) str()->uuid();
         });
 
         // When trip is updated
         static::updated(function ($trip) {
+            $orderUpdates = [];
+
             if ($trip->wasChanged('scheduled_date')) {
-                $trip->orders()->update([
-                    'assigned_delivery_date' => $trip->scheduled_date
-                ]);
+                $orderUpdates['assigned_delivery_date'] = $trip->scheduled_date;
+            }
+
+            if ($trip->wasChanged('driver_id')) {
+                $orderUpdates['driver_id'] = $trip->driver_id;
+            }
+
+            if ($orderUpdates !== []) {
+                $trip->orders()->update($orderUpdates);
             }
         });
 
@@ -106,7 +114,7 @@ class Trip extends Model
             ->orderBy('sequence');
     }
 
-    public function driver()
+    public function driver(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'driver_id', 'id');
     }
