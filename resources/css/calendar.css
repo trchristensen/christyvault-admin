@@ -158,15 +158,15 @@
 }
 
 .split-load-header {
-    @apply flex w-full cursor-pointer items-start border-b border-indigo-100 bg-indigo-50 px-3 py-2.5 text-left transition hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 dark:border-indigo-900 dark:bg-indigo-950/50 dark:hover:bg-indigo-950;
+    @apply flex w-full cursor-pointer items-start border-b border-gray-200 bg-gray-50 px-3 py-2.5 text-left transition hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-400 dark:border-gray-700 dark:bg-gray-800/70 dark:hover:bg-gray-800;
 }
 
 .split-load-label {
-    @apply text-xs font-bold uppercase tracking-wide text-gray-900 dark:text-gray-100;
+    @apply text-xs font-bold uppercase tracking-wide text-gray-800 dark:text-gray-100;
 }
 
 .split-load-meta {
-    @apply mt-0.5 text-[11px] font-medium text-indigo-600 dark:text-indigo-300;
+    @apply mt-0.5 text-[11px] font-medium text-gray-500 dark:text-gray-400;
 }
 
 .split-load-stops {
@@ -174,11 +174,11 @@
 }
 
 .split-load-card .split-load-stop {
-    @apply flex w-full items-start gap-2.5 border-0 bg-white px-3 py-2.5 text-left transition hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800;
+    @apply flex w-full items-start gap-2 border-0 bg-white px-3 py-2.5 text-left transition hover:brightness-[0.98] dark:bg-gray-900;
 }
 
 .split-load-stop-number {
-    @apply mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white shadow-sm;
+    @apply mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gray-700 text-[9px] font-bold text-white dark:bg-gray-500;
 }
 
 .split-load-stop-content {
@@ -192,6 +192,116 @@
 .split-load-stop-address,
 .split-load-stop-status {
     @apply truncate text-[11px] leading-4 text-gray-500 dark:text-gray-400;
+}
+
+/* Keep every stop visually consistent with standalone order status colors. */
+.split-load-card .split-load-stop.status-delivered,
+.split-load-card .split-load-stop.status-arrived,
+.split-load-card .split-load-stop.status-ready_for_delivery {
+    @apply bg-teal-100;
+}
+
+.split-load-card .split-load-stop.status-delivered .split-load-stop-title,
+.split-load-card .split-load-stop.status-arrived .split-load-stop-title,
+.split-load-card .split-load-stop.status-ready_for_delivery .split-load-stop-title {
+    @apply text-teal-900;
+}
+
+.split-load-card .split-load-stop.status-cancelled {
+    @apply bg-red-100;
+}
+
+.split-load-card .split-load-stop.status-cancelled .split-load-stop-title {
+    @apply text-red-900;
+}
+
+.split-load-card .split-load-stop.status-pending {
+    @apply bg-yellow-100;
+}
+
+.split-load-card .split-load-stop.status-pending .split-load-stop-title {
+    @apply text-yellow-900;
+}
+
+.split-load-card .split-load-stop.status-confirmed {
+    @apply bg-blue-100;
+}
+
+.split-load-card .split-load-stop.status-confirmed .split-load-stop-title {
+    @apply text-blue-900;
+}
+
+.split-load-card .split-load-stop.status-invoiced {
+    @apply bg-purple-100;
+}
+
+.split-load-card .split-load-stop.status-invoiced .split-load-stop-title {
+    @apply text-purple-900;
+}
+
+.split-load-card .split-load-stop.status-completed {
+    @apply bg-green-200;
+}
+
+.split-load-card .split-load-stop.status-completed .split-load-stop-title {
+    @apply text-green-900;
+}
+
+.split-load-card .split-load-stop.status-in_production {
+    @apply bg-amber-100;
+}
+
+.split-load-card .split-load-stop.status-in_production .split-load-stop-title {
+    @apply text-amber-900;
+}
+
+.split-load-card .split-load-stop.status-out_for_delivery {
+    @apply bg-orange-100;
+}
+
+.split-load-card .split-load-stop.status-out_for_delivery .split-load-stop-title {
+    @apply text-orange-900;
+}
+
+.split-load-card .split-load-stop.status-will_call,
+.split-load-card .split-load-stop.status-picked_up {
+    @apply bg-gray-100;
+}
+
+.split-load-card .split-load-stop.status-will_call .split-load-stop-title,
+.split-load-card .split-load-stop.status-picked_up .split-load-stop-title {
+    @apply text-gray-900;
+}
+
+.split-load-card .split-load-stop.status-shipped {
+    @apply bg-amber-50;
+}
+
+.split-load-card .split-load-stop.status-shipped .split-load-stop-title {
+    @apply text-amber-900;
+}
+
+.split-load-card .split-load-stop.status-plant.transfer,
+.split-load-card .split-load-stop.status-plant.transferred {
+    @apply bg-indigo-50;
+}
+
+.split-load-card .split-load-stop.status-plant.transfer .split-load-stop-title,
+.split-load-card .split-load-stop.status-plant.transferred .split-load-stop-title {
+    @apply text-indigo-900;
+}
+
+.split-load-card .split-load-stop.status-prebury {
+    @apply bg-lime-100;
+}
+
+.split-load-card .split-load-stop.status-prebury_delivered {
+    @apply bg-lime-200;
+}
+
+.split-load-card .split-load-stop.status-prebury .split-load-stop-title,
+.split-load-card .split-load-stop.status-prebury_delivered .split-load-stop-title {
+    @apply text-lime-900;
 }
 
 /* Products list */
