@@ -881,6 +881,7 @@
                     <p class="text-sm text-gray-600 dark:text-gray-400">Requested Date</p>
                     <p class="font-medium">{{ $record->requested_delivery_date?->format('M j, Y') }}</p>
                 </div>
+                <x-order-assigned-driver :order="$record" />
                 <div>
                     <!-- date of order -->
                     <p class="text-sm text-gray-600 dark:text-gray-400">Date of Order</p>

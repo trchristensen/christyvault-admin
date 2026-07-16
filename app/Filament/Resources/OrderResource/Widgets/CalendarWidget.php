@@ -642,7 +642,7 @@ class CalendarWidget extends FullCalendarWidget
             ->eventsForRange($fetchInfo['start'], $fetchInfo['end']);
 
         // Fetch Trips
-        $tripEvents = Trip::with(['orders.location', 'orders.orderProducts.product', 'orders.location.preferredDeliveryContact', 'driver'])
+        $tripEvents = Trip::with(['orders.location', 'orders.orderProducts.product', 'orders.location.preferredDeliveryContact', 'orders.driver', 'driver'])
             ->whereDate('scheduled_date', '>=', $fetchInfo['start'])
             ->whereDate('scheduled_date', '<=', $fetchInfo['end'])
             ->get()
@@ -680,7 +680,7 @@ class CalendarWidget extends FullCalendarWidget
             });
 
         // Fetch standalone Orders
-        $orders = Order::with(['location', 'orderProducts.product', 'location.preferredDeliveryContact'])
+        $orders = Order::with(['location', 'orderProducts.product', 'location.preferredDeliveryContact', 'driver'])
             ->whereNull('trip_id')
             ->where(function ($query) use ($fetchInfo) {
                 $query->where(function ($q) use ($fetchInfo) {
