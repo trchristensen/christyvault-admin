@@ -14,6 +14,8 @@ use Throwable;
 
 trait ManagesDeliveryPhotos
 {
+    private const int DELIVERY_PHOTO_UPLOAD_LIMIT = 20;
+
     public function uploadDeliveryPhotosAction(): Action
     {
         return Action::make('uploadDeliveryPhotos')
@@ -34,7 +36,7 @@ trait ManagesDeliveryPhotos
                     ->visibility('private')
                     ->multiple()
                     ->appendFiles()
-                    ->maxFiles(12)
+                    ->maxFiles(self::DELIVERY_PHOTO_UPLOAD_LIMIT)
                     ->maxSize(15360)
                     ->acceptedFileTypes([
                         'image/jpeg',
@@ -49,7 +51,7 @@ trait ManagesDeliveryPhotos
                     ->openable()
                     ->downloadable()
                     ->required()
-                    ->helperText('Upload up to 12 photos. JPG, PNG, WebP, HEIC, and HEIF are accepted. Max 15 MB each.'),
+                    ->helperText('Upload up to '.self::DELIVERY_PHOTO_UPLOAD_LIMIT.' photos. JPG, PNG, WebP, HEIC, and HEIF are accepted. Max 15 MB each.'),
                 Textarea::make('notes')
                     ->label('Notes')
                     ->rows(3)
