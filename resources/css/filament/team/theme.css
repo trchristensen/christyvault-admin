@@ -176,6 +176,34 @@
     @apply !m-0 border border-gray-200 bg-white text-gray-500 shadow-sm hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800;
 }
 
+.delivery-camera-field .filepond--root {
+    @apply mb-0;
+}
+
+.delivery-camera-field .filepond--panel-root {
+    @apply border-2 border-primary-200 bg-primary-50 dark:border-primary-800 dark:bg-primary-950/50;
+}
+
+.delivery-camera-field .filepond--drop-label {
+    min-height: 7rem;
+}
+
+.delivery-camera-cta {
+    @apply inline-flex flex-col items-center justify-center gap-2 text-primary-700 dark:text-primary-300;
+}
+
+.delivery-camera-cta-icon {
+    @apply flex size-12 items-center justify-center rounded-full bg-primary-600 text-white shadow-sm;
+}
+
+.delivery-camera-cta-icon svg {
+    @apply size-7;
+}
+
+.delivery-camera-cta-label {
+    @apply text-sm font-semibold;
+}
+
 .delivery-order-products {
     @apply mt-4 border-t border-gray-100 pt-3 dark:border-gray-800;
 }
