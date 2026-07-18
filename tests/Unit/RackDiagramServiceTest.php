@@ -1,0 +1,403 @@
+<?php
+
+use App\Services\LoadPlanning\LoadDemandResult;
+use App\Services\LoadPlanning\RackDiagramService;
+
+function rackDiagramItem(array $overrides = []): array
+{
+    return array_merge([
+        'sku' => 'G3086-6',
+        'name' => 'Single Garden Crypt',
+        'quantity' => 1,
+        'fill_load' => false,
+        'handling_method' => 'individual',
+        'rack_requirement' => 'standard',
+        'required_rack_level' => 'any',
+        'required_rack_type' => 'standard_3_high',
+        'required_rack_level_count' => 3,
+        'unit_weight_lbs' => 1750,
+        'units_per_rack_position' => 1,
+    ], $overrides);
+}
+
+function rackDiagramStop(int $sequence, array $items): array
+{
+    return [
+        'sequence' => $sequence,
+        'order_number' => 'ORD-'.$sequence,
+        'location_name' => 'Stop '.$sequence,
+        'items' => $items,
+    ];
+}
+
+function rackDiagramDemand(array $stops, int $rackSpots = 8): LoadDemandResult
+{
+    return new LoadDemandResult(
+        summary: [],
+        stops: $stops,
+        warnings: [],
+        vehicleConfiguration: [
+            'type' => 'rack_trailer',
+            'rack_spot_count' => $rackSpots,
+        ],
+    );
+}
+
+it('places a confirmed 22-box load into eight three-high rack spots', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [rackDiagramItem(['quantity' => 22])]),
+    ]));
+    $emptyCells = collect($diagram['racks'])
+        ->flatMap(fn (array $rack): array => $rack['cells'])
+        ->filter(fn ($cell): bool => $cell === null)
+        ->count();
+
+    expect($diagram['placed_units'])->toBe(22)
+        ->and($diagram['used_rack_spots'])->toBe(8)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($diagram['legend'][0]['code'])->toBe('G6')
+        ->and($emptyCells)->toBe(2)
+        ->and($diagram['racks'][0]['cells'])->not->toContain(null)
+        ->and($diagram['racks'][6]['cells'])->not->toContain(null)
+        ->and($diagram['racks'][7]['cells'][0])->not->toBeNull()
+        ->and($diagram['racks'][7]['cells'][1])->toBeNull()
+        ->and($diagram['racks'][7]['cells'][2])->toBeNull();
+});
+
+it('reserves bottom-only products for bottom rack positions', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [rackDiagramItem([
+            'sku' => 'W3086-SST',
+            'quantity' => 10,
+            'required_rack_level' => 'bottom',
+            'required_rack_type' => 'standard_2_high',
+            'required_rack_level_count' => 2,
+        ])]),
+    ]));
+
+    expect($diagram['placed_units'])->toBe(8)
+        ->and($diagram['unplaced'])->toHaveCount(1)
+        ->and($diagram['unplaced'][0])->toMatchArray([
+            'quantity' => 2,
+            'reason' => 'Not enough eligible bottom rack positions.',
+        ]);
+
+    foreach ($diagram['racks'] as $rack) {
+        expect($rack['cells'][0])->not->toBeNull()
+            ->and($rack['cells'][1])->toBeNull();
+    }
+});
+
+it('loads no more than two regular Wilbert burial vaults in one rack', function (): void {
+    $twoHigh = [
+        'required_rack_type' => 'standard_2_high',
+        'required_rack_level_count' => 2,
+    ];
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem([...$twoHigh, ...[
+                'sku' => 'W3086-SST',
+                'name' => 'Stainless Steel Triune',
+                'quantity' => 1,
+                'required_rack_level' => 'bottom',
+                'unit_weight_lbs' => 2690,
+            ]]),
+            rackDiagramItem([...$twoHigh, ...[
+                'sku' => 'W3086-M',
+                'name' => 'Monticello',
+                'quantity' => 3,
+                'unit_weight_lbs' => 2190,
+            ]]),
+        ]),
+    ]));
+
+    expect($diagram['placed_units'])->toBe(4)
+        ->and($diagram['used_rack_spots'])->toBe(2)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($diagram['racks'][0]['cells'][0]['sku'])->toBe('W3086-SST')
+        ->and($diagram['racks'][0]['cells'][1]['sku'])->toBe('W3086-M');
+
+    foreach (collect($diagram['racks'])->whereNotNull('type_code') as $rack) {
+        expect(collect($rack['cells'])->filter())->toHaveCount(2);
+    }
+});
+
+it('uses one complete rack spot for each oversized product', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [rackDiagramItem([
+            'sku' => 'W3490-M',
+            'quantity' => 2,
+            'rack_requirement' => 'single',
+            'required_rack_type' => null,
+            'required_rack_level_count' => null,
+        ])]),
+    ]));
+
+    expect($diagram['placed_units'])->toBe(2)
+        ->and($diagram['used_rack_spots'])->toBe(2)
+        ->and($diagram['racks'][0]['type_code'])->toBe('oversized_single')
+        ->and($diagram['racks'][1]['type_code'])->toBe('oversized_single');
+});
+
+it('stacks up to four G5 covers in each rack position', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [rackDiagramItem([
+            'sku' => '2-3690G5',
+            'name' => 'G5 Cover',
+            'quantity' => 6,
+            'required_rack_type' => 'standard_2_high',
+            'required_rack_level_count' => 2,
+            'unit_weight_lbs' => 680,
+            'units_per_rack_position' => 4,
+        ])]),
+    ]));
+
+    expect($diagram['placed_units'])->toBe(6)
+        ->and($diagram['used_rack_spots'])->toBe(1)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($diagram['legend'][0]['code'])->toBe('G5C')
+        ->and($diagram['legend'][0]['units_per_rack_position'])->toBe(4)
+        ->and($diagram['racks'][0]['cells'][0]['code'])->toBe('4×G5C')
+        ->and($diagram['racks'][0]['cells'][0]['quantity'])->toBe(4)
+        ->and($diagram['racks'][0]['cells'][1]['code'])->toBe('2×G5C')
+        ->and($diagram['racks'][0]['cells'][1]['quantity'])->toBe(2)
+        ->and($diagram['racks'][1]['type_code'])->toBeNull();
+});
+
+it('shares the open bottom G4 rack position with G5 covers from the same stop', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(2, [
+            rackDiagramItem([
+                'sku' => 'G3086-4',
+                'quantity' => 7,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'placement_strategy' => 'full_top_split_bottom_pair',
+                'unit_weight_lbs' => 3455,
+            ]),
+            rackDiagramItem([
+                'sku' => '2-3690G5',
+                'quantity' => 2,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'unit_weight_lbs' => 680,
+                'units_per_rack_position' => 4,
+            ]),
+        ]),
+    ]));
+    $coverRack = collect($diagram['racks'])->first(
+        fn (array $rack): bool => collect($rack['cells'])->filter()->contains('sku', '2-3690G5'),
+    );
+
+    expect($diagram['placed_units'])->toBe(9)
+        ->and($diagram['used_rack_spots'])->toBe(7)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($coverRack['cells'][1]['code'])->toBe('G4')
+        ->and($coverRack['cells'][0]['code'])->toBe('2×G5C')
+        ->and($coverRack['stop_sequences'])->toBe([2]);
+});
+
+it('fills an open two-high position before opening a preferred three-high ring-liner rack', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem([
+                'sku' => 'G3086-4',
+                'quantity' => 10,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'placement_strategy' => 'full_top_split_bottom_pair',
+                'unit_weight_lbs' => 3455,
+            ]),
+            rackDiagramItem([
+                'sku' => 'L2472-4',
+                'quantity' => 3,
+                'required_rack_type' => 'standard_3_high',
+                'required_rack_level_count' => 3,
+                'allowed_rack_type_codes' => ['standard_2_high', 'standard_3_high'],
+                'unit_weight_lbs' => 513,
+            ]),
+        ]),
+    ]));
+    $cells = collect($diagram['racks'])->flatMap(fn (array $rack): array => $rack['cells'])->filter();
+
+    expect($diagram['placed_units'])->toBe(13)
+        ->and($diagram['used_rack_spots'])->toBe(8)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($cells->where('sku', 'G3086-4')->where('component', 'whole'))->toHaveCount(8)
+        ->and($cells->where('sku', 'G3086-4')->where('component', 'half'))->toHaveCount(4)
+        ->and($cells->where('sku', 'L2472-4'))->toHaveCount(3)
+        ->and($cells->where('sku', 'L2472-4')->pluck('level')->unique()->all())->toBe([1]);
+});
+
+it('places twelve doubles as eight whole tops and four split bottom pairs', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [rackDiagramItem([
+            'sku' => 'G3086-5',
+            'name' => 'Companion Garden Crypt',
+            'quantity' => 12,
+            'required_rack_type' => 'standard_2_high',
+            'required_rack_level_count' => 2,
+            'placement_strategy' => 'full_top_split_bottom_pair',
+        ])]),
+    ]));
+    $cells = collect($diagram['racks'])->flatMap(fn (array $rack): array => $rack['cells']);
+
+    expect($diagram['placed_units'])->toBe(12)
+        ->and($diagram['used_rack_spots'])->toBe(8)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($cells->where('component', 'whole'))->toHaveCount(8)
+        ->and($cells->where('component', 'half'))->toHaveCount(8)
+        ->and($cells->sum('unit_fraction'))->toBe(12.0)
+        ->and($diagram['racks'][0]['cells'][1]['code'])->toBe('G5')
+        ->and($diagram['racks'][0]['cells'][0]['code'])->toBe('½G5')
+        ->and($diagram['racks'][1]['cells'][0]['split_pair'])->toBe(1);
+});
+
+it('keeps G4 and G5 whole when the mixed load fits without splitting', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem([
+                'sku' => 'W3086-SST',
+                'name' => 'Stainless Steel Triune',
+                'quantity' => 1,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'required_rack_level' => 'bottom',
+                'unit_weight_lbs' => 2690,
+            ]),
+            rackDiagramItem([
+                'sku' => 'G3086-5',
+                'name' => 'Companion Garden Crypt',
+                'quantity' => 3,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'placement_strategy' => 'full_top_split_bottom_pair',
+                'unit_weight_lbs' => 2520,
+            ]),
+            rackDiagramItem([
+                'sku' => 'W3086-M',
+                'name' => 'Monticello',
+                'quantity' => 5,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'unit_weight_lbs' => 2190,
+            ]),
+            rackDiagramItem([
+                'sku' => 'G3086-6',
+                'quantity' => 4,
+                'unit_weight_lbs' => 1750,
+            ]),
+            rackDiagramItem([
+                'sku' => 'L3086-4',
+                'quantity' => 5,
+                'unit_weight_lbs' => 1175,
+            ]),
+        ]),
+    ]));
+    $cells = collect($diagram['racks'])->flatMap(fn (array $rack): array => $rack['cells'])->filter();
+    $g5Cells = $cells->where('sku', 'G3086-5');
+
+    expect($diagram['placed_units'])->toBe(18)
+        ->and($diagram['used_rack_spots'])->toBe(8)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($g5Cells)->toHaveCount(3)
+        ->and($g5Cells->where('component', 'whole'))->toHaveCount(3)
+        ->and($g5Cells->where('component', 'half'))->toBeEmpty()
+        ->and($g5Cells->pluck('level')->unique()->all())->toBe([2]);
+});
+
+it('splits G4 and G5 only when compacting is required to place the complete load', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem([
+                'sku' => 'G3086-4',
+                'quantity' => 7,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'placement_strategy' => 'full_top_split_bottom_pair',
+                'unit_weight_lbs' => 3455,
+            ]),
+            rackDiagramItem([
+                'sku' => 'G3086-6',
+                'quantity' => 6,
+                'unit_weight_lbs' => 1750,
+            ]),
+        ]),
+    ]));
+    $cells = collect($diagram['racks'])->flatMap(fn (array $rack): array => $rack['cells'])->filter();
+
+    expect($diagram['placed_units'])->toBe(13)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($cells->where('sku', 'G3086-4')->where('component', 'whole'))->toHaveCount(5)
+        ->and($cells->where('sku', 'G3086-4')->where('component', 'half'))->toHaveCount(4)
+        ->and($cells->where('sku', 'G3086-6'))->toHaveCount(6);
+});
+
+it('keeps unconfirmed rack heights off the diagram', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [rackDiagramItem([
+            'quantity' => 4,
+            'required_rack_type' => null,
+            'required_rack_level_count' => null,
+        ])]),
+    ]));
+
+    expect($diagram['placed_units'])->toBe(0)
+        ->and($diagram['used_rack_spots'])->toBe(0)
+        ->and($diagram['unplaced'][0])->toMatchArray([
+            'quantity' => 4,
+            'reason' => 'Rack height/type has not been confirmed for this product.',
+        ]);
+});
+
+it('loads the first stop at the rear without mixing stops in a rack', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [rackDiagramItem(['quantity' => 1])]),
+        rackDiagramStop(2, [rackDiagramItem(['sku' => 'V3086-1', 'quantity' => 1])]),
+    ]));
+
+    expect($diagram['racks'][0]['cells'][0]['stop_sequence'])->toBe(2)
+        ->and($diagram['racks'][1]['cells'][0]['stop_sequence'])->toBe(1)
+        ->and($diagram['racks'][0]['stop_sequences'])->toBe([2])
+        ->and($diagram['racks'][1]['stop_sequences'])->toBe([1])
+        ->and($diagram['racks'][2]['type_code'])->toBeNull();
+});
+
+it('puts heavier products lower and forward within the same stop', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem(['sku' => 'LIGHT', 'quantity' => 1, 'unit_weight_lbs' => 500]),
+            rackDiagramItem(['sku' => 'HEAVY', 'quantity' => 1, 'unit_weight_lbs' => 3000]),
+        ]),
+    ]));
+
+    expect($diagram['racks'][0]['cells'][0]['sku'])->toBe('HEAVY')
+        ->and($diagram['racks'][0]['cells'][1]['sku'])->toBe('LIGHT')
+        ->and($diagram['racks'][1]['type_code'])->toBeNull();
+});
+
+it('orders completed racks by total rack weight rather than individual unit weight', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem([
+                'sku' => 'W3086-M',
+                'quantity' => 2,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'unit_weight_lbs' => 2190,
+            ]),
+            rackDiagramItem([
+                'sku' => 'G3086-6',
+                'quantity' => 3,
+                'required_rack_type' => 'standard_3_high',
+                'required_rack_level_count' => 3,
+                'unit_weight_lbs' => 1750,
+            ]),
+        ]),
+    ]));
+
+    expect($diagram['racks'][0]['cells'][0]['sku'])->toBe('G3086-6')
+        ->and($diagram['racks'][0]['product_weight_lbs'])->toBe(5250.0)
+        ->and($diagram['racks'][1]['cells'][0]['sku'])->toBe('W3086-M')
+        ->and($diagram['racks'][1]['product_weight_lbs'])->toBe(4380.0);
+});

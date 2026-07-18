@@ -6,14 +6,12 @@ use App\Services\DeliveryCalendarAvailability;
 use DB;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-
 
 class Trip extends Model
 {
@@ -22,6 +20,7 @@ class Trip extends Model
     protected $fillable = [
         'trip_number',
         'driver_id',
+        'vehicle_configuration_id',
         'status',
         'scheduled_date',
         'start_time',
@@ -88,7 +87,7 @@ class Trip extends Model
         static::created(function ($trip) {
             if ($trip->scheduled_date) {
                 $trip->orders()->update([
-                    'assigned_delivery_date' => $trip->scheduled_date
+                    'assigned_delivery_date' => $trip->scheduled_date,
                 ]);
             }
         });
@@ -146,7 +145,6 @@ class Trip extends Model
         return $this->deliveryStopCount() <= 1 || $this->dispatch_confirmed_at !== null;
     }
 
-
     public function locations(): MorphToMany
     {
         return $this->morphToMany(Location::class, 'locationable')
@@ -173,6 +171,11 @@ class Trip extends Model
         return $this->belongsTo(Employee::class, 'driver_id', 'id');
     }
 
+    public function vehicleConfiguration(): BelongsTo
+    {
+        return $this->belongsTo(VehicleConfiguration::class);
+    }
+
     public function dispatchConfirmedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'dispatch_confirmed_by_user_id');
@@ -185,9 +188,10 @@ class Trip extends Model
                 ->lockForUpdate()
                 ->orderBy('trip_number', 'desc')
                 ->first();
-            
+
             $newNumber = $lastTrip ? intval(substr($lastTrip->trip_number, 5)) + 1 : 1;
-            return 'TRIP-' . str_pad($newNumber, 5, '0', STR_PAD_LEFT);
+
+            return 'TRIP-'.str_pad($newNumber, 5, '0', STR_PAD_LEFT);
         });
     }
 }

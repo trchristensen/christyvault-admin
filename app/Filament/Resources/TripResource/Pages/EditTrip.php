@@ -3,9 +3,12 @@
 namespace App\Filament\Resources\TripResource\Pages;
 
 use App\Filament\Resources\TripResource;
-use Filament\Resources\Pages\EditRecord;
-use Carbon\Carbon;
+use App\Services\SplitLoadService;
 use Filament\Notifications\Notification;
+use Filament\Resources\Pages\EditRecord;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class EditTrip extends EditRecord
 {
@@ -13,12 +16,49 @@ class EditTrip extends EditRecord
 
     public $confirmedDateChange = false;
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $data['orders'] = $this->record->orders()
+            ->orderBy('stop_number')
+            ->get()
+            ->map(fn ($order): array => [
+                'order_id' => $order->getKey(),
+                'delivery_notes' => $order->delivery_notes,
+            ])
+            ->all();
+
+        return $data;
+    }
+
+    protected function handleRecordUpdate(Model $record, array $data): Model
+    {
+        $orders = $data['orders'] ?? [];
+        $tripData = Arr::except($data, 'orders');
+
+        return DB::transaction(function () use ($record, $orders, $tripData): Model {
+            $trip = app(SplitLoadService::class)->updateTrip(
+                $record,
+                $orders,
+                $tripData['scheduled_date'],
+                $tripData['driver_id'] ?? null,
+            );
+
+            $trip->update(Arr::except($tripData, [
+                'driver_id',
+                'scheduled_date',
+                'trip_number',
+            ]));
+
+            return $trip->refresh();
+        });
+    }
+
     protected function afterSave(): void
     {
         // If this was a confirmed date change, update the order dates
         if ($this->confirmedDateChange) {
             $this->record->orders()->update([
-                'assigned_delivery_date' => $this->record->scheduled_date
+                'assigned_delivery_date' => $this->record->scheduled_date,
             ]);
 
             Notification::make()

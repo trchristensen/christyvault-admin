@@ -2,34 +2,28 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\BulkAction;
-use Filament\Forms\Components\Select;
-use Filament\Tables\Grouping\Group;
-use App\Filament\Resources\TripResource\RelationManagers\OrdersRelationManager;
-use App\Filament\Resources\TripResource\Pages\ListTrips;
+use App\Filament\Resources\Traits\HasTripForm;
 use App\Filament\Resources\TripResource\Pages\CreateTrip;
 use App\Filament\Resources\TripResource\Pages\EditTrip;
-use App\Filament\Resources\TripResource\Pages;
-use App\Filament\Resources\TripResource\RelationManagers;
-use App\Models\Driver;
+use App\Filament\Resources\TripResource\Pages\ListTrips;
+use App\Filament\Resources\TripResource\RelationManagers\OrdersRelationManager;
 use App\Models\Trip;
-use Filament\Forms;
+use App\Services\LoadPlanning\LoadDemandService;
+use App\Services\LoadPlanning\RackDiagramService;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
-use App\Models\Order;
-use App\Models\Employee;
-use Filament\Notifications\Actions\Action;
-use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
-use App\Filament\Resources\Traits\HasTripForm;
 
 class TripResource extends Resource
 {
@@ -37,8 +31,9 @@ class TripResource extends Resource
 
     protected static ?string $model = Trip::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-truck';
-    protected static string | \UnitEnum | null $navigationGroup = 'Delivery Management';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-truck';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Delivery Management';
 
     public static function form(Schema $schema): Schema
     {
@@ -55,6 +50,11 @@ class TripResource extends Resource
                 TextColumn::make('driver.name')
                     ->sortable()
                     ->searchable(),
+                TextColumn::make('vehicleConfiguration.name')
+                    ->label('Vehicle')
+                    ->placeholder('Not selected')
+                    ->badge()
+                    ->sortable(),
                 TextColumn::make('delivery_details')
                     ->label('Delivery Details')
                     ->html()
@@ -87,7 +87,7 @@ class TripResource extends Resource
                     ->wrap(),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'pending' => 'gray',
                         'in_progress' => 'warning',
                         // need a color for confirmed
@@ -100,6 +100,22 @@ class TripResource extends Resource
                     ->sortable(),
             ])
             ->recordActions([
+                Action::make('loadSummary')
+                    ->label('Load Summary')
+                    ->icon('heroicon-o-cube-transparent')
+                    ->color('info')
+                    ->modalHeading(fn (Trip $record): string => "Load summary — {$record->trip_number}")
+                    ->modalContent(function (Trip $record) {
+                        $demand = app(LoadDemandService::class)->forTrip($record);
+
+                        return view('filament.resources.trip-resource.load-summary', [
+                            'result' => $demand->toArray(),
+                            'diagram' => app(RackDiagramService::class)->forDemand($demand),
+                        ]);
+                    })
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->modalWidth('7xl'),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
@@ -131,7 +147,7 @@ class TripResource extends Resource
                 Group::make('scheduled_date')
                     ->label('Delivery Date')
                     ->date()
-                    ->collapsible()
+                    ->collapsible(),
             ]);
     }
 
@@ -158,7 +174,8 @@ class TripResource extends Resource
                 'orders.location.preferredDeliveryContact',
                 'orders.location',
                 'orders.orderProducts.product',
-                'driver'
+                'driver',
+                'vehicleConfiguration',
             ]);
     }
 }

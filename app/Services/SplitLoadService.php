@@ -42,9 +42,9 @@ class SplitLoadService
         $stops = collect($stops)->values();
         $orderIds = $stops->pluck('order_id')->filter()->values();
 
-        if ($orderIds->count() < 2) {
+        if ($orderIds->isEmpty()) {
             throw ValidationException::withMessages([
-                'stops' => 'A delivery trip needs at least two stops.',
+                'stops' => 'A delivery trip needs at least one stop.',
             ]);
         }
 
@@ -168,9 +168,9 @@ class SplitLoadService
         $stops = collect($stops)->values();
         $orderIds = $stops->pluck('order_id')->filter()->values();
 
-        if ($orderIds->count() < 2) {
+        if ($orderIds->isEmpty()) {
             throw ValidationException::withMessages([
-                'stops' => 'A delivery trip needs at least two stops.',
+                'stops' => 'A delivery trip needs at least one stop.',
             ]);
         }
 

@@ -1,12 +1,15 @@
 <?php
 
+use App\Filament\Resources\TripResource\Pages\CreateTrip;
 use App\Http\Controllers\OrderCalendarController;
+use App\Models\Employee;
 use App\Models\Order;
 use App\Models\Trip;
 use App\Models\TripStop;
 use App\Services\DeliveryCalendarAvailability;
 use App\Services\DeliveryTripService;
 use App\Services\SplitLoadService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
@@ -210,6 +213,34 @@ it('supports delivery trips with three or more reorderable stops', function (): 
 
     expect($trip->orders()->orderBy('stop_number')->pluck('id')->all())->toBe([3, 2, 1])
         ->and($trip->orders()->orderBy('stop_number')->pluck('stop_number')->all())->toBe([1, 2, 3]);
+});
+
+it('attaches one selected existing order without creating a duplicate order', function (): void {
+    DB::table('orders')->insert(orderRow(1, 'ORD-00001', 7));
+
+    $page = new class extends CreateTrip
+    {
+        public function createRecordForTest(array $data): Model
+        {
+            return $this->handleRecordCreation($data);
+        }
+    };
+
+    $trip = $page->createRecordForTest([
+        'driver_id' => 7,
+        'status' => 'confirmed',
+        'scheduled_date' => '2026-07-20',
+        'orders' => [
+            ['order_id' => 1, 'delivery_notes' => 'Use the rear gate'],
+        ],
+    ]);
+
+    expect(Order::count())->toBe(1)
+        ->and($trip->status)->toBe('confirmed')
+        ->and($trip->orders()->pluck('id')->all())->toBe([1])
+        ->and(Order::findOrFail(1)->trip_id)->toBe($trip->id)
+        ->and(Order::findOrFail(1)->stop_number)->toBe(1)
+        ->and(Order::findOrFail(1)->delivery_notes)->toBe('Use the rear gate');
 });
 
 it('updates an existing delivery trip without replacing it', function (): void {
@@ -456,7 +487,7 @@ it('omits the repeated driver from individual split load summaries', function ()
         'delivery_photos_count' => 0,
         'stop_number' => 1,
     ]);
-    $order->setRelation('driver', (new \App\Models\Employee)->forceFill(['name' => 'Driver Seven']));
+    $order->setRelation('driver', (new Employee)->forceFill(['name' => 'Driver Seven']));
     $order->setRelation('trip', (new Trip)->forceFill(['id' => 10]));
     $order->setRelation('activeTripStop', null);
     $order->setRelation('location', null);

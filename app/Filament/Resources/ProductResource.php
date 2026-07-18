@@ -2,35 +2,37 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Checkbox;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Actions\EditAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\ProductResource\Pages\ListProducts;
+use App\Enums\UnitOfMeasure;
 use App\Filament\Resources\ProductResource\Pages\CreateProduct;
 use App\Filament\Resources\ProductResource\Pages\EditProduct;
-use App\Filament\Resources\ProductResource\Pages;
+use App\Filament\Resources\ProductResource\Pages\ListProducts;
+use App\Models\LoadingProfile;
 use App\Models\Product;
-use App\Enums\UnitOfMeasure;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 
 class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Directories';
+    protected static string|\UnitEnum|null $navigationGroup = 'Directories';
 
     public static function form(Schema $schema): Schema
     {
@@ -73,6 +75,18 @@ class ProductResource extends Resource
                     ->required()
                     ->numeric()
                     ->default(0),
+                TextInput::make('weight_lbs')
+                    ->label('Shipping Weight')
+                    ->helperText('Weight of one order unit, whether it is a complete product or an individual component.')
+                    ->numeric()
+                    ->minValue(0)
+                    ->suffix('lb'),
+                Select::make('loading_profile_id')
+                    ->label('Loading Profile')
+                    ->relationship('loadingProfile', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->helperText('Defines pallet, stacking, and rack requirements for the load planner.'),
                 FileUpload::make('featured_image')
                     ->image()
                     ->imageEditor()
@@ -80,7 +94,7 @@ class ProductResource extends Resource
                 Checkbox::make('is_active')
                     ->default('TRUE')
                     ->label('Active')
-                    ->dehydrateStateUsing(fn($state) => $state ? 'TRUE' : 'FALSE'),
+                    ->dehydrateStateUsing(fn ($state) => $state ? 'TRUE' : 'FALSE'),
                 // Forms\Components\KeyValue::make('specifications')
                 //     ->columnSpanFull(),
             ]);
@@ -96,7 +110,7 @@ class ProductResource extends Resource
                     ->searchable(),
                 TextColumn::make('unit')
                     ->label('Unit')
-                    ->formatStateUsing(fn($state) => $state?->label() ?? 'N/A')
+                    ->formatStateUsing(fn ($state) => $state?->label() ?? 'N/A')
                     ->sortable(),
                 TextColumn::make('product_type')
                     ->searchable()
@@ -105,6 +119,17 @@ class ProductResource extends Resource
                     ->money()
                     ->sortable(),
                 TextColumn::make('stock')
+                    ->sortable(),
+                TextColumn::make('weight_lbs')
+                    ->label('Weight')
+                    ->formatStateUsing(fn ($state): string => filled($state) ? number_format((float) $state, 2).' lb' : '—')
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('loadingProfile.name')
+                    ->label('Loading Profile')
+                    ->placeholder('Missing rules')
+                    ->badge()
+                    ->searchable()
                     ->sortable(),
                 IconColumn::make('is_active')
                     ->boolean(),
@@ -118,13 +143,37 @@ class ProductResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                TernaryFilter::make('loading_profile_id')
+                    ->label('Loading Profile')
+                    ->nullable()
+                    ->trueLabel('Assigned')
+                    ->falseLabel('Missing')
+                    ->native(false),
             ])
             ->recordActions([
                 EditAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('assignLoadingProfile')
+                        ->label('Assign Loading Profile')
+                        ->icon('heroicon-o-cube-transparent')
+                        ->form([
+                            Select::make('loading_profile_id')
+                                ->label('Loading Profile')
+                                ->options(fn () => LoadingProfile::query()
+                                    ->where('is_active', true)
+                                    ->orderBy('name')
+                                    ->pluck('name', 'id'))
+                                ->searchable()
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $records->each->update([
+                                'loading_profile_id' => $data['loading_profile_id'],
+                            ]);
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
             ]);
