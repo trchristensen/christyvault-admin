@@ -8,6 +8,7 @@
         !$result['ready_for_automatic_placement'] || !$diagram['available'] || count($diagram['unplaced']) > 0;
     $warningMessages = collect($result['warnings'])->pluck('message')->unique()->values();
     $fillAllocations = collect($fillAllocations ?? []);
+    $isMultiStop = count($result['stops']) > 1;
 @endphp
 
 <style>
@@ -369,6 +370,7 @@
         justify-content: center;
         min-height: 0;
         padding: 2px;
+        position: relative;
         text-align: center;
     }
 
@@ -392,12 +394,26 @@
         line-height: 1.15;
     }
 
-    .cv-cell-stop {
-        font-size: 9px;
-        font-weight: 800;
+    .cv-cell-meta {
+        font-size: 8px;
+        font-weight: 750;
         line-height: 1.1;
-        margin-top: 3px;
+        margin-top: 2px;
         text-transform: uppercase;
+    }
+
+    .cv-cell-stop-badge {
+        background: rgba(255, 255, 255, .62);
+        border: 1px solid rgba(71, 84, 103, .18);
+        border-radius: 3px;
+        color: #667085;
+        font-size: 7px;
+        font-weight: 750;
+        line-height: 1;
+        padding: 2px 3px;
+        position: absolute;
+        right: 2px;
+        top: 2px;
     }
 
     .cv-stop-1 {
@@ -654,6 +670,12 @@
         background: #202733;
     }
 
+    html.dark .cv-cell-stop-badge {
+        background: rgba(17, 24, 39, .5);
+        border-color: rgba(229, 231, 235, .2);
+        color: #d1d5db;
+    }
+
     html.dark .cv-trailer {
         border-color: #aeb7c5;
     }
@@ -898,18 +920,22 @@
                                                         @if ($cell)
                                                             <div
                                                                 class="cv-rack-cell cv-stop-{{ (($cell['stop_sequence'] - 1) % 6) + 1 }}">
+                                                                @if ($isMultiStop)
+                                                                    <span class="cv-cell-stop-badge">S{{ $cell['stop_sequence'] }}</span>
+                                                                @endif
                                                                 <span
                                                                     class="cv-cell-code {{ $cell['is_pallet_level'] ?? false ? 'cv-cell-code-pallet' : '' }}">{{ $cell['code'] }}</span>
-                                                                <span class="cv-cell-stop">
-                                                                    Stop {{ $cell['stop_sequence'] }}
-                                                                    @if ($cell['is_pallet_level'] ?? false)
-                                                                        · {{ count($cell['pallets']) }}
-                                                                        {{ Str::plural('pallet', count($cell['pallets'])) }}
-                                                                    @endif
-                                                                    @if (($cell['component'] ?? null) === 'half')
-                                                                        · Pair {{ $cell['split_pair'] }}
-                                                                    @endif
-                                                                </span>
+                                                                @if (($cell['is_pallet_level'] ?? false) || ($cell['component'] ?? null) === 'half')
+                                                                    <span class="cv-cell-meta">
+                                                                        @if ($cell['is_pallet_level'] ?? false)
+                                                                            {{ count($cell['pallets']) }}
+                                                                            {{ Str::plural('pallet', count($cell['pallets'])) }}
+                                                                        @endif
+                                                                        @if (($cell['component'] ?? null) === 'half')
+                                                                            Pair {{ $cell['split_pair'] }}
+                                                                        @endif
+                                                                    </span>
+                                                                @endif
                                                             </div>
                                                         @else
                                                             <div class="cv-rack-cell cv-rack-cell-empty">—</div>
