@@ -235,3 +235,28 @@ it('carries preferred and alternate rack compatibility into planner items', func
             'standard_3_high',
         ]);
 });
+
+it('keeps three-high boxes preferred while allowing two-high rack openings', function (): void {
+    $twoHigh = new RackType(['code' => 'standard_2_high', 'level_count' => 2]);
+    $twoHigh->id = 1;
+    $threeHigh = new RackType(['code' => 'standard_3_high', 'level_count' => 3]);
+    $threeHigh->id = 2;
+    $profile = new LoadingProfile([
+        'code' => 'standard_three_high_box',
+        'handling_method' => LoadingProfile::HANDLING_INDIVIDUAL,
+        'rack_requirement' => LoadingProfile::RACK_STANDARD,
+        'required_rack_type_id' => 2,
+    ]);
+    $profile->setRelation('requiredRackType', $threeHigh);
+    $profile->setRelation('allowedRackTypes', new Collection([$twoHigh, $threeHigh]));
+    $result = (new LoadDemandService)->forOrder(loadDemandOrder('ORD-L4', [
+        loadDemandLine(loadDemandProduct('L3086-4', 1175, $profile), 1),
+    ]));
+    $item = $result->stops[0]['items'][0];
+
+    expect($item['required_rack_type'])->toBe('standard_3_high')
+        ->and($item['allowed_rack_type_codes'])->toBe([
+            'standard_2_high',
+            'standard_3_high',
+        ]);
+});

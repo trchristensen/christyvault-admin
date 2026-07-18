@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\LocationResource\RelationManagers;
 
+use App\Filament\Actions\TripLoadSummaryAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -138,6 +139,11 @@ class OrdersRelationManager extends RelationManager
                     ->modalWidth('7xl')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close')
+                    ->extraModalFooterActions([
+                        TripLoadSummaryAction::make()
+                            ->iconButton()
+                            ->tooltip('Load summary'),
+                    ])
                     ->modalHeading(fn(Order $record): string => "View {$record->order_number}")
                     ->modalContent(fn(Order $record) => view(
                         'filament.resources.order-resource.custom-view',

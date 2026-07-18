@@ -137,6 +137,7 @@
     .cv-rack-cell:last-child { border-bottom: 0; }
     .cv-rack-cell-empty { background: repeating-linear-gradient(135deg, #fff, #fff 7px, #f2f4f7 7px, #f2f4f7 14px); color: #98a2b3; }
     .cv-cell-code { font-size: 15px; font-weight: 900; line-height: 1; }
+    .cv-cell-code-pallet { font-size: 10px; line-height: 1.15; }
     .cv-cell-stop { font-size: 9px; font-weight: 800; line-height: 1.1; margin-top: 3px; text-transform: uppercase; }
     .cv-stop-1 { background: #dbeafe; color: #1e40af; }
     .cv-stop-2 { background: #dcfce7; color: #166534; }
@@ -325,9 +326,12 @@
                                                     @foreach (array_reverse($rack['cells'], true) as $cell)
                                                         @if ($cell)
                                                             <div class="cv-rack-cell cv-stop-{{ (($cell['stop_sequence'] - 1) % 6) + 1 }}">
-                                                                <span class="cv-cell-code">{{ $cell['code'] }}</span>
+                                                                <span class="cv-cell-code {{ ($cell['is_pallet_level'] ?? false) ? 'cv-cell-code-pallet' : '' }}">{{ $cell['code'] }}</span>
                                                                 <span class="cv-cell-stop">
                                                                     Stop {{ $cell['stop_sequence'] }}
+                                                                    @if ($cell['is_pallet_level'] ?? false)
+                                                                        · {{ count($cell['pallets']) }} {{ Str::plural('pallet', count($cell['pallets'])) }}
+                                                                    @endif
                                                                     @if (($cell['component'] ?? null) === 'half')
                                                                         · Pair {{ $cell['split_pair'] }}
                                                                     @endif

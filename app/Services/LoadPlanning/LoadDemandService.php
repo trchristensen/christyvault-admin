@@ -220,11 +220,13 @@ class LoadDemandService
             'loading_profile' => $product?->loadingProfile?->code,
             'loading_profile_name' => $product?->loadingProfile?->name,
             'handling_method' => $product?->loadingProfile?->handling_method,
+            'units_per_pallet' => $product?->loadingProfile?->units_per_pallet,
             'rack_requirement' => $product?->loadingProfile?->rack_requirement,
             'required_rack_level' => $product?->loadingProfile?->required_rack_level,
             'required_rack_type' => $this->requiredRackTypeCode($product?->loadingProfile),
             'required_rack_level_count' => $this->requiredRackTypeLevelCount($product?->loadingProfile),
             'allowed_rack_type_codes' => $this->allowedRackTypeCodes($product?->loadingProfile),
+            'allowed_rack_types' => $this->allowedRackTypes($product?->loadingProfile),
             'placement_strategy' => $product?->loadingProfile?->placement_strategy
                 ?? LoadingProfile::PLACEMENT_ONE_PER_LEVEL,
             'units_per_rack_position' => $product?->loadingProfile?->units_per_rack_position ?? 1,
@@ -387,6 +389,36 @@ class LoadDemandService
         }
 
         return array_values(array_unique($codes));
+    }
+
+    private function allowedRackTypes(?LoadingProfile $profile): array
+    {
+        if (! $profile) {
+            return [];
+        }
+
+        $rackTypes = $profile->relationLoaded('allowedRackTypes')
+            ? $profile->allowedRackTypes
+            : collect();
+
+        $requiredRackType = $profile->relationLoaded('requiredRackType')
+            ? $profile->requiredRackType
+            : null;
+
+        if ($rackTypes->isEmpty() && $requiredRackType) {
+            $rackTypes = collect([$requiredRackType]);
+        }
+
+        return $rackTypes
+            ->unique('code')
+            ->map(fn ($rackType): array => [
+                'code' => $rackType->code,
+                'level_count' => (int) $rackType->level_count,
+                'pallet_capable_levels' => (int) $rackType->pallet_capable_levels,
+                'pallets_per_capable_level' => (int) $rackType->pallets_per_capable_level,
+            ])
+            ->values()
+            ->all();
     }
 
     private function fullLoadProfileTotals(array $stops): array

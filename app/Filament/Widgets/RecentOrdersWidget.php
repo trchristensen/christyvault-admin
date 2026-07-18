@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Actions\TripLoadSummaryAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -105,6 +106,9 @@ class RecentOrdersWidget extends BaseWidget
                     // ->modalHeading(fn($record) => $record->order_number)
                     ->schema([])
                     ->modalFooterActions([
+                        TripLoadSummaryAction::make()
+                            ->iconButton()
+                            ->tooltip('Load summary'),
                         Action::make('edit')
                             ->modalWidth('7xl')
                             ->url(fn(Order $record): string => route('filament.admin.resources.orders.edit', ['record' => $record]))

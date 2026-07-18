@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\OrderResource\Widgets;
 
+use App\Filament\Actions\TripLoadSummaryAction;
 use Illuminate\Validation\ValidationException;
 use Exception;
 use Filament\Schemas\Components\Utilities\Get;
@@ -576,6 +577,9 @@ class CalendarWidget extends FullCalendarWidget
                 // ->modalHeading(fn($record) => $record->order_number)
                 ->schema([])
                 ->modalFooterActions([
+                    TripLoadSummaryAction::make()
+                        ->iconButton()
+                        ->tooltip('Load summary'),
                     EditAction::make()
                         ->modalWidth('7xl')
                         ->stickyModalFooter(),

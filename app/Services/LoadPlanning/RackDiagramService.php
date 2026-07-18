@@ -6,6 +6,16 @@ use App\Models\LoadingProfile;
 
 class RackDiagramService
 {
+    private const PAIRING_STANDARD_FILLER = 'standard_filler';
+
+    private const PAIRING_WILBERT_VAULT = 'wilbert_vault';
+
+    private const PAIRING_GARDEN_DOUBLE = 'garden_double';
+
+    private const PAIRING_LINER = 'liner';
+
+    private const PAIRING_AVOID = 100;
+
     public function forDemand(LoadDemandResult $demand): array
     {
         $preferred = $this->buildDiagram($demand, compactSplitDoubles: false);
@@ -46,6 +56,8 @@ class RackDiagramService
                 'type_code' => null,
                 'type_label' => 'Unassigned',
                 'level_count' => 0,
+                'pallet_capable_levels' => 0,
+                'pallets_per_capable_level' => 0,
                 'cells' => [],
                 'stop_sequences' => [],
             ])
@@ -82,12 +94,8 @@ class RackDiagramService
                 ];
 
                 if ($item['handling_method'] === LoadingProfile::HANDLING_PALLET) {
-                    $unplaced[] = $this->unplaced($item, $stop, 'Pallet rack placement is not implemented yet.');
-
-                    continue;
-                }
-
-                if ($item['rack_requirement'] === LoadingProfile::RACK_SINGLE) {
+                    $placed = $this->placePallets($racks, $item, $stop, $code);
+                } elseif ($item['rack_requirement'] === LoadingProfile::RACK_SINGLE) {
                     $placed = $this->placeOversized($racks, $item, $stop, $code);
                 } elseif ($item['rack_requirement'] === LoadingProfile::RACK_STANDARD) {
                     if (! $item['required_rack_type'] || ! $item['required_rack_level_count']) {
@@ -116,6 +124,7 @@ class RackDiagramService
 
                 if ($remaining > 0) {
                     $reason = match (true) {
+                        $item['handling_method'] === LoadingProfile::HANDLING_PALLET => 'Not enough compatible pallet rack positions.',
                         ($item['placement_strategy'] ?? null) === LoadingProfile::PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR => 'Not enough paired 2-high rack positions.',
                         $item['required_rack_level'] === LoadingProfile::LEVEL_BOTTOM => 'Not enough eligible bottom rack positions.',
                         default => 'Not enough compatible rack positions.',
@@ -147,6 +156,152 @@ class RackDiagramService
         ];
     }
 
+    private function placePallets(array &$racks, array $item, array $stop, string $code): int
+    {
+        $unitsPerPallet = (int) ($item['units_per_pallet'] ?? 0);
+        $rackType = $item['required_rack_type'] ?? null;
+        $levelCount = (int) ($item['required_rack_level_count'] ?? 0);
+
+        if ($unitsPerPallet < 1 || ! $rackType || $levelCount < 1) {
+            return 0;
+        }
+
+        $allowedRackTypes = $item['allowed_rack_type_codes'] ?? [];
+
+        if ($allowedRackTypes === []) {
+            $allowedRackTypes = [$rackType];
+        }
+
+        $remainingUnits = (int) $item['quantity'];
+        $placedUnits = 0;
+
+        while ($remainingUnits > 0) {
+            $palletUnits = min($unitsPerPallet, $remainingUnits);
+            $rackIndex = collect($racks)
+                ->keys()
+                ->first(fn (int $rackIndex): bool => in_array($racks[$rackIndex]['type_code'], $allowedRackTypes, true)
+                    && $this->rackCanAcceptStop($racks[$rackIndex], (int) $stop['sequence'])
+                    && $this->rackHasPalletPosition($racks[$rackIndex]));
+
+            if ($rackIndex === null) {
+                $rackIndex = $this->findEmptyRack($racks, (int) $stop['sequence']);
+
+                if ($rackIndex === null) {
+                    break;
+                }
+
+                $racks[$rackIndex]['type_code'] = $rackType;
+                $racks[$rackIndex]['type_label'] = $levelCount.'-high · pallets';
+                $racks[$rackIndex]['level_count'] = $levelCount;
+                $this->configurePalletCapacity($racks[$rackIndex], $item, $rackType);
+                $racks[$rackIndex]['cells'] = array_fill(0, $levelCount, null);
+            }
+
+            if (! $this->addPalletToRack(
+                $racks[$rackIndex],
+                $item,
+                $stop,
+                $code,
+                $palletUnits,
+                $unitsPerPallet,
+            )) {
+                break;
+            }
+
+            $placedUnits += $palletUnits;
+            $remainingUnits -= $palletUnits;
+        }
+
+        return $placedUnits;
+    }
+
+    private function rackHasPalletPosition(array $rack): bool
+    {
+        $palletLevels = min(
+            (int) ($rack['pallet_capable_levels'] ?? 0),
+            (int) ($rack['level_count'] ?? 0),
+        );
+        $palletsPerLevel = (int) ($rack['pallets_per_capable_level'] ?? 0);
+
+        if ($palletLevels < 1 || $palletsPerLevel < 1) {
+            return false;
+        }
+
+        for ($levelIndex = 0; $levelIndex < $palletLevels; $levelIndex++) {
+            $cell = $rack['cells'][$levelIndex] ?? null;
+
+            if ($cell === null
+                || (($cell['is_pallet_level'] ?? false)
+                    && count($cell['pallets'] ?? []) < $palletsPerLevel)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function addPalletToRack(
+        array &$rack,
+        array $item,
+        array $stop,
+        string $code,
+        int $palletUnits,
+        int $unitsPerPallet,
+    ): bool {
+        $palletLevels = min(
+            (int) ($rack['pallet_capable_levels'] ?? 0),
+            (int) ($rack['level_count'] ?? 0),
+        );
+        $palletsPerLevel = (int) ($rack['pallets_per_capable_level'] ?? 0);
+
+        for ($levelIndex = 0; $levelIndex < $palletLevels; $levelIndex++) {
+            $cell = $rack['cells'][$levelIndex] ?? null;
+
+            if ($cell !== null && (! ($cell['is_pallet_level'] ?? false)
+                || count($cell['pallets'] ?? []) >= $palletsPerLevel)) {
+                continue;
+            }
+
+            $pallet = [
+                'code' => $palletUnits.'×'.$code,
+                'sku' => $item['sku'],
+                'name' => $item['name'],
+                'units' => $palletUnits,
+                'capacity' => $unitsPerPallet,
+                'total_weight_lbs' => $item['unit_weight_lbs'] === null
+                    ? null
+                    : (float) $item['unit_weight_lbs'] * $palletUnits,
+            ];
+
+            if ($cell === null) {
+                $cell = [
+                    ...$this->cell($item, $stop, $pallet['code']),
+                    'level' => $levelIndex + 1,
+                    'is_pallet_level' => true,
+                    'pallets' => [],
+                ];
+            }
+
+            $cell['pallets'][] = $pallet;
+            $cell['code'] = collect($cell['pallets'])->pluck('code')->implode(' · ');
+            $cell['sku'] = count($cell['pallets']) === 1 ? $item['sku'] : 'PALLETS';
+            $cell['name'] = 'Palletized products';
+            $cell['unit_weight_lbs'] = collect($cell['pallets'])->contains(
+                fn (array $loadedPallet): bool => $loadedPallet['total_weight_lbs'] === null,
+            ) ? null : collect($cell['pallets'])->sum('total_weight_lbs');
+            $cell['unit_fraction'] = 1;
+            $rack['cells'][$levelIndex] = $cell;
+            $rack['stop_sequences'] = array_values(array_unique([
+                ...$rack['stop_sequences'],
+                (int) $stop['sequence'],
+            ]));
+
+            return true;
+        }
+
+        return false;
+    }
+
     private function placeOversized(array &$racks, array $item, array $stop, string $code): int
     {
         $placed = 0;
@@ -163,6 +318,8 @@ class RackDiagramService
                 'type_code' => 'oversized_single',
                 'type_label' => 'Single',
                 'level_count' => 1,
+                'pallet_capable_levels' => 0,
+                'pallets_per_capable_level' => 0,
                 'cells' => [[...$this->cell($item, $stop, $code), 'level' => 1]],
                 'stop_sequences' => [(int) $stop['sequence']],
             ];
@@ -190,16 +347,25 @@ class RackDiagramService
         $unitsPerPosition = max(1, (int) ($item['units_per_rack_position'] ?? 1));
         $placed = 0;
 
-        // Reuse compatible openings first. This reduces rearward cargo and avoids
-        // consuming another rack spot when a rack for the same stop has space.
-        for ($rackIndex = 0; $rackIndex < count($racks); $rackIndex++) {
+        $reusableRackIndexes = collect($racks)
+            ->keys()
+            ->filter(fn (int $rackIndex): bool => $racks[$rackIndex]['type_code'] !== null
+                && $this->rackCanAcceptStop($racks[$rackIndex], (int) $stop['sequence'])
+                && in_array($racks[$rackIndex]['type_code'], $allowedRackTypes, true))
+            ->sortBy(fn (int $rackIndex): array => [
+                $this->rackPairingPriority($item, $racks[$rackIndex]),
+                $rackIndex,
+            ])
+            ->values();
+
+        // Reuse preferred and neutral openings first. Explicitly discouraged
+        // combinations remain available only after empty rack spots are tried.
+        foreach ($reusableRackIndexes as $rackIndex) {
             if ($placed >= (int) $item['quantity']) {
                 break;
             }
 
-            if ($racks[$rackIndex]['type_code'] === null
-                || ! $this->rackCanAcceptStop($racks[$rackIndex], (int) $stop['sequence'])
-                || ! in_array($racks[$rackIndex]['type_code'], $allowedRackTypes, true)) {
+            if ($this->rackPairingPriority($item, $racks[$rackIndex]) >= self::PAIRING_AVOID) {
                 continue;
             }
 
@@ -227,6 +393,7 @@ class RackDiagramService
             $racks[$rackIndex]['type_code'] = $rackType;
             $racks[$rackIndex]['type_label'] = $levelCount.'-high';
             $racks[$rackIndex]['level_count'] = $levelCount;
+            $this->configurePalletCapacity($racks[$rackIndex], $item, $rackType);
             $racks[$rackIndex]['cells'] = array_fill(0, $levelCount, null);
             $placed = $this->fillStandardRack(
                 $racks[$rackIndex],
@@ -236,6 +403,48 @@ class RackDiagramService
                 $unitsPerPosition,
                 $placed,
             );
+        }
+
+        foreach ($reusableRackIndexes as $rackIndex) {
+            if ($placed >= (int) $item['quantity']) {
+                break;
+            }
+
+            if ($this->rackPairingPriority($item, $racks[$rackIndex]) < self::PAIRING_AVOID) {
+                continue;
+            }
+
+            $placed = $this->fillStandardRack(
+                $racks[$rackIndex],
+                $item,
+                $stop,
+                $code,
+                $unitsPerPosition,
+                $placed,
+            );
+        }
+
+        // Stops normally remain on separate racks. When the truck is otherwise
+        // full, allow one physically compatible rack at the boundary between
+        // adjacent stops to use an open position rather than waste it.
+        if ($placed < (int) $item['quantity']) {
+            $boundaryRackIndex = $this->boundaryRackIndex(
+                $racks,
+                $item,
+                (int) $stop['sequence'],
+                $allowedRackTypes,
+            );
+
+            if ($boundaryRackIndex !== null) {
+                $placed = $this->fillStandardRack(
+                    $racks[$boundaryRackIndex],
+                    $item,
+                    $stop,
+                    $code,
+                    $unitsPerPosition,
+                    $placed,
+                );
+            }
         }
 
         return $placed;
@@ -304,13 +513,25 @@ class RackDiagramService
 
         $placed = 0;
 
-        // A whole G4/G5 belongs on top. Reuse an existing compatible rack first,
-        // then open one rack per whole product. Splitting is deferred until every
-        // available top position has been exhausted.
-        for ($rackIndex = 0; $rackIndex < count($racks) && $placed < $quantity; $rackIndex++) {
-            if (! in_array($racks[$rackIndex]['type_code'], $allowedRackTypes, true)
-                || ! $this->rackCanAcceptStop($racks[$rackIndex], (int) $stop['sequence'])
-                || ($racks[$rackIndex]['cells'][1] ?? null) !== null) {
+        $reusableTopIndexes = collect($racks)
+            ->keys()
+            ->filter(fn (int $rackIndex): bool => in_array($racks[$rackIndex]['type_code'], $allowedRackTypes, true)
+                && $this->rackCanAcceptStop($racks[$rackIndex], (int) $stop['sequence'])
+                && ($racks[$rackIndex]['cells'][1] ?? null) === null)
+            ->sortBy(fn (int $rackIndex): array => [
+                $this->rackPairingPriority($item, $racks[$rackIndex]),
+                $rackIndex,
+            ])
+            ->values();
+
+        // A whole G4/G5 belongs on top. Prefer ordinary singles and liners
+        // underneath it, while preserving Wilbert-vault racks when possible.
+        foreach ($reusableTopIndexes as $rackIndex) {
+            if ($placed >= $quantity) {
+                break;
+            }
+
+            if ($this->rackPairingPriority($item, $racks[$rackIndex]) >= self::PAIRING_AVOID) {
                 continue;
             }
 
@@ -338,6 +559,8 @@ class RackDiagramService
                 'type_code' => $rackType,
                 'type_label' => '2-high · whole-double',
                 'level_count' => 2,
+                'pallet_capable_levels' => 1,
+                'pallets_per_capable_level' => 2,
                 'cells' => [null, [
                     ...$this->cell($item, $stop, $code),
                     'level' => 2,
@@ -346,6 +569,28 @@ class RackDiagramService
                 ]],
                 'stop_sequences' => [(int) $stop['sequence']],
             ];
+            $placed++;
+        }
+
+        foreach ($reusableTopIndexes as $rackIndex) {
+            if ($placed >= $quantity) {
+                break;
+            }
+
+            if ($this->rackPairingPriority($item, $racks[$rackIndex]) < self::PAIRING_AVOID) {
+                continue;
+            }
+
+            $racks[$rackIndex]['cells'][1] = [
+                ...$this->cell($item, $stop, $code),
+                'level' => 2,
+                'component' => 'whole',
+                'unit_fraction' => 1,
+            ];
+            $racks[$rackIndex]['stop_sequences'] = array_values(array_unique([
+                ...$racks[$rackIndex]['stop_sequences'],
+                (int) $stop['sequence'],
+            ]));
             $placed++;
         }
 
@@ -409,6 +654,8 @@ class RackDiagramService
                 'type_code' => $rackType,
                 'type_label' => '2-high · split-double',
                 'level_count' => 2,
+                'pallet_capable_levels' => 1,
+                'pallets_per_capable_level' => 2,
                 'cells' => [null, null],
                 'stop_sequences' => [(int) $stop['sequence']],
             ];
@@ -472,7 +719,164 @@ class RackDiagramService
             'name' => $item['name'],
             'stop_sequence' => (int) $stop['sequence'],
             'unit_weight_lbs' => $item['unit_weight_lbs'],
+            'pairing_category' => $this->pairingCategory($item),
+            'allowed_rack_type_codes' => ($item['allowed_rack_type_codes'] ?? []) === []
+                ? [$item['required_rack_type']]
+                : $item['allowed_rack_type_codes'],
         ];
+    }
+
+    private function boundaryRackIndex(
+        array &$racks,
+        array $item,
+        int $stopSequence,
+        array $allowedRackTypes,
+    ): ?int {
+        $laterStopSequence = $stopSequence + 1;
+        $candidateIndexes = collect($racks)
+            ->keys()
+            ->filter(fn (int $rackIndex): bool => $racks[$rackIndex]['stop_sequences'] === [$laterStopSequence])
+            ->sortDesc()
+            ->values();
+
+        foreach ($candidateIndexes as $rackIndex) {
+            if (in_array($racks[$rackIndex]['type_code'], $allowedRackTypes, true)
+                && $this->rackHasOpenLevelForItem($racks[$rackIndex], $item)) {
+                return $rackIndex;
+            }
+
+            if ($this->convertBoundaryRackForItem($racks[$rackIndex], $item)
+                && $this->rackHasOpenLevelForItem($racks[$rackIndex], $item)) {
+                return $rackIndex;
+            }
+        }
+
+        return null;
+    }
+
+    private function convertBoundaryRackForItem(array &$rack, array $item): bool
+    {
+        $targetRackType = $item['required_rack_type'] ?? null;
+        $targetLevelCount = (int) ($item['required_rack_level_count'] ?? 0);
+
+        if (! $targetRackType || $targetLevelCount < 1 || $rack['type_code'] === 'oversized_single') {
+            return false;
+        }
+
+        $occupiedCells = collect($rack['cells'])->filter();
+
+        if ($occupiedCells->contains(fn (array $cell): bool => (int) $cell['level'] > $targetLevelCount
+            || ! in_array($targetRackType, $cell['allowed_rack_type_codes'] ?? [], true))) {
+            return false;
+        }
+
+        $rack['type_code'] = $targetRackType;
+        $rack['type_label'] = $targetLevelCount.'-high · shared boundary';
+        $rack['level_count'] = $targetLevelCount;
+        $this->configurePalletCapacity($rack, $item, $targetRackType);
+        $rack['cells'] = array_pad(
+            array_slice($rack['cells'], 0, $targetLevelCount),
+            $targetLevelCount,
+            null,
+        );
+
+        return true;
+    }
+
+    private function rackHasOpenLevelForItem(array $rack, array $item): bool
+    {
+        $allowedLevels = ($item['required_rack_level'] ?? LoadingProfile::LEVEL_ANY) === LoadingProfile::LEVEL_BOTTOM
+            ? [0]
+            : range(0, (int) $rack['level_count'] - 1);
+
+        return collect($allowedLevels)->contains(
+            fn (int $levelIndex): bool => ($rack['cells'][$levelIndex] ?? null) === null,
+        );
+    }
+
+    private function configurePalletCapacity(array &$rack, array $item, string $rackType): void
+    {
+        $configuration = collect($item['allowed_rack_types'] ?? [])
+            ->firstWhere('code', $rackType);
+
+        if (! $configuration) {
+            $configuration = match ($rackType) {
+                'standard_2_high' => [
+                    'pallet_capable_levels' => 1,
+                    'pallets_per_capable_level' => 2,
+                ],
+                'standard_3_high' => [
+                    'pallet_capable_levels' => 2,
+                    'pallets_per_capable_level' => 2,
+                ],
+                default => [
+                    'pallet_capable_levels' => 0,
+                    'pallets_per_capable_level' => 0,
+                ],
+            };
+        }
+
+        $rack['pallet_capable_levels'] = (int) ($configuration['pallet_capable_levels'] ?? 0);
+        $rack['pallets_per_capable_level'] = (int) ($configuration['pallets_per_capable_level'] ?? 0);
+    }
+
+    private function rackPairingPriority(array $item, array $rack): int
+    {
+        $itemCategory = $this->pairingCategory($item);
+        $rackCategories = collect($rack['cells'])
+            ->filter()
+            ->pluck('pairing_category')
+            ->filter()
+            ->unique();
+
+        if ($rackCategories->isEmpty()) {
+            return 10;
+        }
+
+        if ($itemCategory === self::PAIRING_WILBERT_VAULT) {
+            if ($rackCategories->contains(self::PAIRING_WILBERT_VAULT)) {
+                return 0;
+            }
+
+            return $rackCategories->contains(self::PAIRING_GARDEN_DOUBLE)
+                ? self::PAIRING_AVOID
+                : 10;
+        }
+
+        if ($itemCategory === self::PAIRING_GARDEN_DOUBLE) {
+            return $rackCategories->contains(self::PAIRING_WILBERT_VAULT)
+                ? self::PAIRING_AVOID
+                : 0;
+        }
+
+        if ($itemCategory === self::PAIRING_LINER) {
+            return $rackCategories->contains(self::PAIRING_GARDEN_DOUBLE) ? 0 : 10;
+        }
+
+        return $rackCategories->contains(self::PAIRING_GARDEN_DOUBLE)
+            ? self::PAIRING_AVOID
+            : 10;
+    }
+
+    private function pairingCategory(array $item): string
+    {
+        if (($item['placement_strategy'] ?? null) === LoadingProfile::PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR) {
+            return self::PAIRING_GARDEN_DOUBLE;
+        }
+
+        if (in_array($item['loading_profile'] ?? null, [
+            'regular_burial_vault',
+            'regular_burial_vault_triune',
+        ], true) || str_starts_with(mb_strtoupper((string) ($item['sku'] ?? '')), 'W3086-')) {
+            return self::PAIRING_WILBERT_VAULT;
+        }
+
+        if (str_starts_with(mb_strtoupper((string) ($item['sku'] ?? '')), 'L')
+            || (int) ($item['units_per_rack_position'] ?? 1) > 1) {
+            return self::PAIRING_LINER;
+        }
+
+        return self::PAIRING_STANDARD_FILLER;
     }
 
     private function sortRacksByWeightWithinStops(array &$racks): void
@@ -485,7 +889,8 @@ class RackDiagramService
         foreach ($stopSequences as $stopSequence) {
             $indexes = collect($racks)
                 ->keys()
-                ->filter(fn (int $index): bool => in_array($stopSequence, $racks[$index]['stop_sequences'], true))
+                ->filter(fn (int $index): bool => count($racks[$index]['stop_sequences']) === 1
+                    && in_array($stopSequence, $racks[$index]['stop_sequences'], true))
                 ->values();
             $sorted = $indexes
                 ->map(fn (int $index): array => [...$racks[$index], '_original_index' => $index])

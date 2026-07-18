@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Actions\TripLoadSummaryAction;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Grouping\Group;
@@ -385,36 +386,51 @@ class OrderResource extends Resource
                         ['record' => $record]
                     ))
                     ->schema([])
-                    ->modalFooterActions([
+                    ->modalSubmitAction(false)
+                    ->modalCancelAction(false)
+                    ->extraModalFooterActions([
+                        TripLoadSummaryAction::make()
+                            ->iconButton()
+                            ->tooltip('Load summary'),
                         Action::make('edit')
+                            ->label('Edit Order')
+                            ->icon('heroicon-o-pencil-square')
+                            ->iconButton()
+                            ->tooltip('Edit order')
                             ->modalWidth('7xl')
-                            ->stickyModalFooter(),
-                        Action::make('restore')
-                            ->label('Restore')
-                            ->icon('heroicon-o-arrow-uturn-left')
-                            ->color('success')
-                            ->action(fn(Order $record) => $record->restore())
-                            ->requiresConfirmation()
-                            ->visible(fn(Order $record) => $record->trashed()),
-                        Action::make('duplicate')
-                            ->label('Duplicate Order')
-                            ->color(COLOR::Yellow)
-                            ->icon('heroicon-o-document-duplicate')
-                            ->url(fn(Order $record) => route('filament.admin.resources.orders.duplicate', ['record' => $record]))
-                            ->openUrlInNewTab(),
+                            ->stickyModalFooter()
+                            ->url(fn (Order $record): string => static::getUrl('edit', ['record' => $record])),
                         Action::make('print')
                             ->label('Print Delivery Tag')
-                            ->color(COLOR::Green)
                             ->icon('heroicon-o-printer')
+                            ->color('gray')
+                            ->iconButton()
+                            ->tooltip('Print delivery tag')
                             ->url(fn(Order $record) => route('orders.print', ['order' => $record]))
                             ->openUrlInNewTab(),
-                        Action::make('view-digital-tag')
-                            ->label('Preview Delivery Tag')
-                            ->color('gray')
-                            ->icon('heroicon-o-printer')
-                            ->url(fn(Order $record) => route('orders.print.formbg', ['order' => $record]))
-                            ->openUrlInNewTab(),
-                        DeleteAction::make(),
+                        ActionGroup::make([
+                            Action::make('restore')
+                                ->label('Restore')
+                                ->icon('heroicon-o-arrow-uturn-left')
+                                ->color('success')
+                                ->action(fn(Order $record) => $record->restore())
+                                ->requiresConfirmation()
+                                ->visible(fn(Order $record) => $record->trashed()),
+                            Action::make('duplicate')
+                                ->label('Duplicate Order')
+                                ->icon('heroicon-o-document-duplicate')
+                                ->url(fn(Order $record) => route('filament.admin.resources.orders.duplicate', ['record' => $record]))
+                                ->openUrlInNewTab(),
+                            Action::make('view-digital-tag')
+                                ->label('Preview Delivery Tag')
+                                ->icon('heroicon-o-eye')
+                                ->url(fn(Order $record) => route('orders.print.formbg', ['order' => $record]))
+                                ->openUrlInNewTab(),
+                            DeleteAction::make(),
+                        ])
+                            ->icon('heroicon-o-ellipsis-vertical')
+                            ->iconButton()
+                            ->tooltip('More actions'),
                     ]),
                 ActionGroup::make([
                     Action::make('Print Delivery Tag')

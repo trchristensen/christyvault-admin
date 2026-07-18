@@ -2,21 +2,28 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Models\Order;
+use App\Services\LoadPlanning\LoadDemandService;
+use App\Services\LoadPlanning\RackDiagramService;
+use Illuminate\Support\Facades\Gate;
+use Livewire\Component;
 
 class OrderModal extends Component
 {
     public $showModal = false;
+
     public $order = null;
+
+    public bool $showLoadSummary = false;
 
     protected $listeners = ['showOrderModal'];
 
     public function showOrderModal($orderId)
     {
-        logger('OrderModal: showOrderModal called with ID: ' . $orderId);
-        $this->order = Order::with(['location.plantDriveDistanceOrigin'])->find($orderId);
-        logger('OrderModal: loaded order: ' . ($this->order ? $this->order->order_number : 'null'));
+        logger('OrderModal: showOrderModal called with ID: '.$orderId);
+        $this->order = Order::with(['location.plantDriveDistanceOrigin', 'trip'])->find($orderId);
+        logger('OrderModal: loaded order: '.($this->order ? $this->order->order_number : 'null'));
+        $this->showLoadSummary = false;
         $this->showModal = true;
     }
 
@@ -24,6 +31,26 @@ class OrderModal extends Component
     {
         $this->showModal = false;
         $this->order = null;
+        $this->showLoadSummary = false;
+    }
+
+    public function canViewLoadSummary(): bool
+    {
+        return $this->order instanceof Order
+            && filled($this->order->trip_id)
+            && Gate::allows('view load summary');
+    }
+
+    public function openLoadSummary(): void
+    {
+        abort_unless($this->canViewLoadSummary(), 403);
+
+        $this->showLoadSummary = true;
+    }
+
+    public function backToOrder(): void
+    {
+        $this->showLoadSummary = false;
     }
 
     public function editOrder()
@@ -65,6 +92,16 @@ class OrderModal extends Component
 
     public function render()
     {
-        return view('livewire.order-modal');
+        $loadSummary = null;
+
+        if ($this->showLoadSummary && $this->canViewLoadSummary()) {
+            $demand = app(LoadDemandService::class)->forTrip($this->order->trip);
+            $loadSummary = [
+                'result' => $demand->toArray(),
+                'diagram' => app(RackDiagramService::class)->forDemand($demand),
+            ];
+        }
+
+        return view('livewire.order-modal', compact('loadSummary'));
     }
 }

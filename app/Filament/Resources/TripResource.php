@@ -2,14 +2,13 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Actions\TripLoadSummaryAction;
 use App\Filament\Resources\Traits\HasTripForm;
 use App\Filament\Resources\TripResource\Pages\CreateTrip;
 use App\Filament\Resources\TripResource\Pages\EditTrip;
 use App\Filament\Resources\TripResource\Pages\ListTrips;
 use App\Filament\Resources\TripResource\RelationManagers\OrdersRelationManager;
 use App\Models\Trip;
-use App\Services\LoadPlanning\LoadDemandService;
-use App\Services\LoadPlanning\RackDiagramService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -100,22 +99,7 @@ class TripResource extends Resource
                     ->sortable(),
             ])
             ->recordActions([
-                Action::make('loadSummary')
-                    ->label('Load Summary')
-                    ->icon('heroicon-o-cube-transparent')
-                    ->color('info')
-                    ->modalHeading(fn (Trip $record): string => "Load summary — {$record->trip_number}")
-                    ->modalContent(function (Trip $record) {
-                        $demand = app(LoadDemandService::class)->forTrip($record);
-
-                        return view('filament.resources.trip-resource.load-summary', [
-                            'result' => $demand->toArray(),
-                            'diagram' => app(RackDiagramService::class)->forDemand($demand),
-                        ]);
-                    })
-                    ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Close')
-                    ->modalWidth('7xl'),
+                TripLoadSummaryAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
