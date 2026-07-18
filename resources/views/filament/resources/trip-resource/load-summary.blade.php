@@ -23,6 +23,10 @@
         font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         font-size: 14px;
         line-height: 1.4;
+        max-width: 100%;
+        min-width: 0;
+        overflow: hidden;
+        width: 100%;
     }
 
     .cv-load-sheet * { box-sizing: border-box; }
@@ -66,7 +70,7 @@
         margin-top: 12px;
     }
 
-    .cv-panel { border: 1px solid var(--cv-line); border-radius: 14px; padding: 14px 16px; }
+    .cv-panel { border: 1px solid var(--cv-line); border-radius: 14px; min-width: 0; padding: 14px 16px; }
     .cv-panel-label { color: var(--cv-muted); font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
     .cv-weight-row { align-items: flex-end; display: flex; gap: 12px; justify-content: space-between; margin-top: 5px; }
     .cv-weight-value { font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
@@ -93,7 +97,7 @@
     .cv-fill-quantity { color: #1d4ed8; font-size: 18px; font-weight: 900; white-space: nowrap; }
     .cv-fill-meta { color: #52627d; font-size: 11px; margin-top: 3px; }
 
-    .cv-section { margin-top: 18px; }
+    .cv-section { margin-top: 18px; min-width: 0; }
     .cv-section-heading { align-items: baseline; display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-between; margin-bottom: 8px; }
     .cv-section-title { font-size: 16px; font-weight: 800; }
     .cv-section-note { color: var(--cv-muted); font-size: 12px; }
@@ -102,8 +106,28 @@
         background: #fbfcfe;
         border: 1px solid var(--cv-line);
         border-radius: 14px;
+        max-width: 100%;
         overflow-x: auto;
+        overscroll-behavior-x: contain;
         padding: 16px 16px 10px;
+        touch-action: pan-x pan-y;
+        width: 100%;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .cv-diagram-swipe {
+        align-items: center;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 999px;
+        color: #1d4ed8;
+        display: none;
+        font-size: 11px;
+        font-weight: 750;
+        gap: 5px;
+        margin-bottom: 10px;
+        padding: 6px 10px;
+        width: fit-content;
     }
 
     .cv-truck { min-width: 980px; }
@@ -205,10 +229,55 @@
     html.dark .cv-fill-item { background: rgba(30, 58, 138, .28); border-color: #1e40af; }
 
     @media (max-width: 820px) {
+        .fi-modal-window:has(.cv-load-sheet) {
+            border-radius: 14px !important;
+            margin: 6px !important;
+            max-height: calc(100dvh - 12px) !important;
+            max-width: calc(100vw - 12px) !important;
+            width: calc(100vw - 12px) !important;
+        }
+
+        .fi-modal-window:has(.cv-load-sheet) .fi-modal-header {
+            padding: 14px 14px 10px !important;
+        }
+
+        .fi-modal-window:has(.cv-load-sheet) .fi-modal-content {
+            min-width: 0 !important;
+            overflow-x: hidden !important;
+            padding: 10px !important;
+        }
+
+        .fi-modal-window:has(.cv-load-sheet) .fi-modal-footer {
+            padding: 10px 14px !important;
+        }
+
         .cv-sheet-header, .cv-weight-row { align-items: flex-start; flex-direction: column; }
         .cv-top-grid, .cv-legends { grid-template-columns: 1fr; }
         .cv-metrics { grid-template-columns: repeat(2, 1fr); }
         .cv-weight-remaining { text-align: left; }
+        .cv-sheet-header { gap: 10px; padding: 12px; }
+        .cv-panel { padding: 12px; }
+        .cv-weight-value { font-size: 22px; }
+        .cv-section { margin-top: 14px; }
+        .cv-section-heading { align-items: flex-start; flex-direction: column; }
+        .cv-section-note { line-height: 1.35; }
+        .cv-diagram-frame { border-radius: 12px; padding: 10px 10px 8px; }
+        .cv-diagram-swipe { display: inline-flex; }
+        .cv-truck { min-width: 760px; }
+        .cv-truck-body { grid-template-columns: 150px 1fr; }
+        .cv-tractor { height: 112px; width: 150px; }
+        .cv-trailer { min-width: 590px; }
+        .cv-rack { min-width: 66px; }
+        .cv-rack-body, .cv-rack-open { height: 112px; }
+        .cv-cell-code { font-size: 13px; }
+        .cv-legends { gap: 8px; }
+        .cv-legend-box { padding: 9px 10px; }
+        .cv-legend-list { gap: 7px; }
+        .cv-legend-item { align-items: flex-start; width: 100%; }
+        .cv-alert { overflow-x: auto; }
+        .cv-unplaced-table, .cv-detail-table { min-width: 620px; }
+        .cv-details { margin-top: 12px; }
+        .cv-detail-stop { overflow-x: auto; padding: 11px; }
     }
 
     @media print {
@@ -331,6 +400,10 @@
 
         @if ($diagram['available'])
             <div class="cv-diagram-frame">
+                <div class="cv-diagram-swipe" role="note">
+                    <span>Swipe to view the full truck</span>
+                    <span>&rarr;</span>
+                </div>
                 <div class="cv-truck">
                     <div class="cv-direction-row">
                         <span>Front / tractor</span>

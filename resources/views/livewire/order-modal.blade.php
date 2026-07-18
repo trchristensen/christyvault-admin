@@ -1,23 +1,23 @@
 <div>
     @if($showModal)
         <div 
-            class="fixed inset-0 z-50 flex items-center justify-center p-4"
+            class="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4"
             style="background-color: rgba(0, 0, 0, 0.5);"
             wire:click="closeModal"
         >
             <div 
                 wire:click.stop
-                class="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full {{ $showLoadSummary ? 'max-w-7xl' : 'max-w-4xl' }} max-h-[90vh] overflow-hidden relative flex flex-col"
-                style="min-width: min(90vw, 800px);"
+                class="bg-white dark:bg-gray-900 rounded-none sm:rounded-lg shadow-xl w-full {{ $showLoadSummary ? 'max-w-7xl' : 'max-w-4xl' }} h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-hidden relative flex flex-col min-w-0"
+                style="min-width: 0; max-width: 100vw;"
             >
                 <!-- Sticky Header -->
-                <div class="sticky top-0 z-20 flex items-center justify-between p-6 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 rounded-t-lg">
-                    <div class="flex items-center space-x-4">
+                <div class="sticky top-0 z-20 flex items-center justify-between gap-3 p-4 sm:p-6 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sm:rounded-t-lg">
+                    <div class="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1">
                         <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
                             {{ $showLoadSummary ? 'Load summary' : 'View order' }}
                         </h2>
                         @if($order)
-                            <div class="flex items-center space-x-2">
+                            <div class="flex min-w-0 flex-wrap items-center gap-2">
                                 @if($showLoadSummary)
                                     <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ $order->trip?->trip_number }}</span>
                                     <span class="text-sm text-gray-400 dark:text-gray-500">•</span>
@@ -53,7 +53,7 @@
                 <div class="flex-1 overflow-y-auto">
                     @if($order)
                         @if($showLoadSummary && $loadSummary)
-                            <div class="p-6">
+                            <div class="min-w-0 p-3 sm:p-6">
                                 @include('filament.resources.trip-resource.load-summary', $loadSummary)
                             </div>
                         @else
