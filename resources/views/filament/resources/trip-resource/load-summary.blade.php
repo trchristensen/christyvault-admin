@@ -4,9 +4,8 @@
     $maximumWeight = (float) ($summary['maximum_product_weight_lbs'] ?? 0);
     $knownWeight = (float) ($summary['known_weight_lbs'] ?? 0);
     $weightPercent = $maximumWeight > 0 ? min(100, ($knownWeight / $maximumWeight) * 100) : 0;
-    $needsReview = ! $result['ready_for_automatic_placement']
-        || ! $diagram['available']
-        || count($diagram['unplaced']) > 0;
+    $needsReview =
+        !$result['ready_for_automatic_placement'] || !$diagram['available'] || count($diagram['unplaced']) > 0;
     $warningMessages = collect($result['warnings'])->pluck('message')->unique()->values();
     $fillAllocations = collect($fillAllocations ?? []);
 @endphp
@@ -25,8 +24,15 @@
         line-height: 1.4;
     }
 
-    .cv-load-sheet * { box-sizing: border-box; }
-    .cv-load-sheet h2, .cv-load-sheet h3, .cv-load-sheet p { margin: 0; }
+    .cv-load-sheet * {
+        box-sizing: border-box;
+    }
+
+    .cv-load-sheet h2,
+    .cv-load-sheet h3,
+    .cv-load-sheet p {
+        margin: 0;
+    }
 
     .cv-sheet-header {
         align-items: center;
@@ -39,8 +45,16 @@
         padding: 14px 16px;
     }
 
-    .cv-vehicle-name { font-size: 17px; font-weight: 750; }
-    .cv-vehicle-meta { color: var(--cv-muted); font-size: 13px; margin-top: 2px; }
+    .cv-vehicle-name {
+        font-size: 17px;
+        font-weight: 750;
+    }
+
+    .cv-vehicle-meta {
+        color: var(--cv-muted);
+        font-size: 13px;
+        margin-top: 2px;
+    }
 
     .cv-status {
         align-items: center;
@@ -53,11 +67,30 @@
         padding: 7px 11px;
     }
 
-    .cv-status::before { border-radius: 50%; content: ""; height: 8px; width: 8px; }
-    .cv-status-ok { background: #dcfce7; color: #166534; }
-    .cv-status-ok::before { background: #22c55e; }
-    .cv-status-review { background: #fef3c7; color: #92400e; }
-    .cv-status-review::before { background: #f59e0b; }
+    .cv-status::before {
+        border-radius: 50%;
+        content: "";
+        height: 8px;
+        width: 8px;
+    }
+
+    .cv-status-ok {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .cv-status-ok::before {
+        background: #22c55e;
+    }
+
+    .cv-status-review {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .cv-status-review::before {
+        background: #f59e0b;
+    }
 
     .cv-top-grid {
         display: grid;
@@ -66,37 +99,182 @@
         margin-top: 12px;
     }
 
-    .cv-panel { border: 1px solid var(--cv-line); border-radius: 14px; padding: 14px 16px; }
-    .cv-panel-label { color: var(--cv-muted); font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
-    .cv-weight-row { align-items: flex-end; display: flex; gap: 12px; justify-content: space-between; margin-top: 5px; }
-    .cv-weight-value { font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
-    .cv-weight-limit { color: var(--cv-muted); font-size: 14px; font-weight: 650; }
-    .cv-weight-remaining { color: #166534; font-size: 13px; font-weight: 750; text-align: right; }
-    .cv-weight-over { color: #b91c1c; }
-    .cv-progress { background: #e8ecf2; border-radius: 99px; height: 9px; margin-top: 11px; overflow: hidden; }
-    .cv-progress-bar { background: #22a45a; border-radius: inherit; height: 100%; }
-    .cv-progress-bar-over { background: #dc2626; }
+    .cv-panel {
+        border: 1px solid var(--cv-line);
+        border-radius: 14px;
+        padding: 14px 16px;
+    }
 
-    .cv-metrics { display: grid; gap: 8px; grid-template-columns: repeat(4, 1fr); }
-    .cv-metric { background: var(--cv-soft); border-radius: 10px; min-width: 0; padding: 9px 10px; }
-    .cv-metric-value { display: block; font-size: 19px; font-weight: 800; }
-    .cv-metric-label { color: var(--cv-muted); display: block; font-size: 11px; margin-top: 1px; }
+    .cv-panel-label {
+        color: var(--cv-muted);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .03em;
+        text-transform: uppercase;
+    }
 
-    .cv-fill-panel { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; margin-top: 12px; padding: 13px 15px; }
-    .cv-fill-heading { align-items: baseline; display: flex; flex-wrap: wrap; gap: 5px 12px; justify-content: space-between; }
-    .cv-fill-title { color: #1e3a8a; font-size: 14px; font-weight: 850; }
-    .cv-fill-note { color: #4b6290; font-size: 11px; }
-    .cv-fill-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 9px; }
-    .cv-fill-item { background: rgba(255, 255, 255, .78); border: 1px solid #dbeafe; border-radius: 10px; padding: 9px 10px; }
-    .cv-fill-item-top { align-items: center; display: flex; gap: 8px; justify-content: space-between; }
-    .cv-fill-product { font-weight: 800; }
-    .cv-fill-quantity { color: #1d4ed8; font-size: 18px; font-weight: 900; white-space: nowrap; }
-    .cv-fill-meta { color: #52627d; font-size: 11px; margin-top: 3px; }
+    .cv-weight-row {
+        align-items: flex-end;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        margin-top: 5px;
+    }
 
-    .cv-section { margin-top: 18px; }
-    .cv-section-heading { align-items: baseline; display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-between; margin-bottom: 8px; }
-    .cv-section-title { font-size: 16px; font-weight: 800; }
-    .cv-section-note { color: var(--cv-muted); font-size: 12px; }
+    .cv-weight-value {
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -.02em;
+    }
+
+    .cv-weight-limit {
+        color: var(--cv-muted);
+        font-size: 14px;
+        font-weight: 650;
+    }
+
+    .cv-weight-remaining {
+        color: #166534;
+        font-size: 13px;
+        font-weight: 750;
+        text-align: right;
+    }
+
+    .cv-weight-over {
+        color: #b91c1c;
+    }
+
+    .cv-progress {
+        background: #e8ecf2;
+        border-radius: 99px;
+        height: 9px;
+        margin-top: 11px;
+        overflow: hidden;
+    }
+
+    .cv-progress-bar {
+        background: #22a45a;
+        border-radius: inherit;
+        height: 100%;
+    }
+
+    .cv-progress-bar-over {
+        background: #dc2626;
+    }
+
+    .cv-metrics {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .cv-metric {
+        background: var(--cv-soft);
+        border-radius: 10px;
+        min-width: 0;
+        padding: 9px 10px;
+    }
+
+    .cv-metric-value {
+        display: block;
+        font-size: 19px;
+        font-weight: 800;
+    }
+
+    .cv-metric-label {
+        color: var(--cv-muted);
+        display: block;
+        font-size: 11px;
+        margin-top: 1px;
+    }
+
+    .cv-fill-panel {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 13px 15px;
+    }
+
+    .cv-fill-heading {
+        align-items: baseline;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px 12px;
+        justify-content: space-between;
+    }
+
+    .cv-fill-title {
+        color: #1e3a8a;
+        font-size: 14px;
+        font-weight: 850;
+    }
+
+    .cv-fill-note {
+        color: #4b6290;
+        font-size: 11px;
+    }
+
+    .cv-fill-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        margin-top: 9px;
+    }
+
+    .cv-fill-item {
+        background: rgba(255, 255, 255, .78);
+        border: 1px solid #dbeafe;
+        border-radius: 10px;
+        padding: 9px 10px;
+    }
+
+    .cv-fill-item-top {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+    }
+
+    .cv-fill-product {
+        font-weight: 800;
+    }
+
+    .cv-fill-quantity {
+        color: #1d4ed8;
+        font-size: 18px;
+        font-weight: 900;
+        white-space: nowrap;
+    }
+
+    .cv-fill-meta {
+        color: #52627d;
+        font-size: 11px;
+        margin-top: 3px;
+    }
+
+    .cv-section {
+        margin-top: 18px;
+    }
+
+    .cv-section-heading {
+        align-items: baseline;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 12px;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .cv-section-title {
+        font-size: 16px;
+        font-weight: 800;
+    }
+
+    .cv-section-note {
+        color: var(--cv-muted);
+        font-size: 12px;
+    }
 
     .cv-diagram-frame {
         background: #fbfcfe;
@@ -110,20 +288,64 @@
         -webkit-overflow-scrolling: touch;
     }
 
-    .cv-truck { min-width: 980px; }
-    .cv-direction-row { color: var(--cv-muted); display: flex; font-size: 11px; font-weight: 800; justify-content: space-between; letter-spacing: .06em; margin: 0 8px 5px 8px; text-transform: uppercase; }
-    .cv-truck-body { align-items: end; display: grid; gap: 0; grid-template-columns: 205px 1fr; }
-    .cv-tractor { color: #344054; height: 142px; margin-bottom: 6px; width: 205px; }
-    .cv-tractor-wheel { fill: var(--cv-diagram-bg); stroke: currentColor; stroke-width: 7; }
-    .cv-trailer { border-bottom: 7px solid #344054; min-width: 700px; padding: 0 5px; position: relative; }
-    .cv-rack-grid { align-items: end; display: grid; gap: 5px; }
+    .cv-truck {
+        min-width: 980px;
+    }
 
-    .cv-rack { min-width: 76px; position: relative; }
+    .cv-direction-row {
+        color: var(--cv-muted);
+        display: flex;
+        font-size: 11px;
+        font-weight: 800;
+        justify-content: space-between;
+        letter-spacing: .06em;
+        margin: 0 8px 5px 8px;
+        text-transform: uppercase;
+    }
+
+    .cv-truck-body {
+        align-items: end;
+        display: grid;
+        gap: 0;
+        grid-template-columns: 205px 1fr;
+    }
+
+    .cv-tractor {
+        color: #344054;
+        height: 142px;
+        margin-bottom: 6px;
+        width: 205px;
+    }
+
+    .cv-tractor-wheel {
+        fill: var(--cv-diagram-bg);
+        stroke: currentColor;
+        stroke-width: 7;
+    }
+
+    .cv-trailer {
+        border-bottom: 7px solid #344054;
+        min-width: 700px;
+        padding: 0 5px;
+        position: relative;
+    }
+
+    .cv-rack-grid {
+        align-items: end;
+        display: grid;
+        gap: 5px;
+    }
+
+    .cv-rack {
+        --cv-rack-level-height: 40px;
+        min-width: 76px;
+        position: relative;
+    }
+
     .cv-rack-body {
         background: #fff;
         border: 3px solid #344054;
         display: grid;
-        height: 124px;
         overflow: hidden;
     }
 
@@ -134,7 +356,7 @@
         display: flex;
         font-size: 11px;
         font-weight: 700;
-        height: 124px;
+        height: calc((var(--cv-rack-level-height) * 3) + 6px);
         justify-content: center;
         text-align: center;
     }
@@ -150,36 +372,184 @@
         text-align: center;
     }
 
-    .cv-rack-cell:last-child { border-bottom: 0; }
-    .cv-rack-cell-empty { background: repeating-linear-gradient(135deg, #fff, #fff 7px, #f2f4f7 7px, #f2f4f7 14px); color: #98a2b3; }
-    .cv-cell-code { font-size: 15px; font-weight: 900; line-height: 1; }
-    .cv-cell-code-pallet { font-size: 10px; line-height: 1.15; }
-    .cv-cell-stop { font-size: 9px; font-weight: 800; line-height: 1.1; margin-top: 3px; text-transform: uppercase; }
-    .cv-stop-1 { background: #dbeafe; color: #1e40af; }
-    .cv-stop-2 { background: #dcfce7; color: #166534; }
-    .cv-stop-3 { background: #fef3c7; color: #92400e; }
-    .cv-stop-4 { background: #f3e8ff; color: #6b21a8; }
-    .cv-stop-5 { background: #ffe4e6; color: #9f1239; }
-    .cv-stop-6 { background: #cffafe; color: #155e75; }
-    .cv-rack-label { color: #475467; font-size: 10px; font-weight: 800; line-height: 1.15; margin-top: 5px; text-align: center; }
-    .cv-rack-weight { color: var(--cv-muted); display: block; font-size: 9px; font-weight: 700; margin-top: 2px; }
-    .cv-trailer-wheels { display: flex; gap: 4px; justify-content: flex-end; margin-right: 8%; margin-top: -2px; }
-    .cv-wheel { background: #344054; border: 4px solid #344054; border-radius: 50%; box-shadow: inset 0 0 0 8px #fbfcfe; height: 42px; width: 42px; }
+    .cv-rack-cell:last-child {
+        border-bottom: 0;
+    }
 
-    .cv-legends { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; margin-top: 10px; }
-    .cv-legend-box { background: var(--cv-soft); border-radius: 10px; padding: 10px 12px; }
-    .cv-legend-title { color: var(--cv-muted); font-size: 11px; font-weight: 800; letter-spacing: .04em; margin-bottom: 6px; text-transform: uppercase; }
-    .cv-legend-list { display: flex; flex-wrap: wrap; gap: 6px 14px; }
-    .cv-legend-item { align-items: center; display: inline-flex; font-size: 12px; gap: 6px; }
-    .cv-code-chip { background: #344054; border-radius: 5px; color: white; font-size: 11px; font-weight: 850; min-width: 30px; padding: 2px 5px; text-align: center; }
-    .cv-stop-chip { border-radius: 5px; font-size: 10px; font-weight: 850; min-width: 27px; padding: 2px 5px; text-align: center; }
+    .cv-rack-cell-empty {
+        background: repeating-linear-gradient(135deg, #fff, #fff 7px, #f2f4f7 7px, #f2f4f7 14px);
+        color: #98a2b3;
+    }
 
-    .cv-alert { border-radius: 12px; margin-top: 12px; padding: 12px 14px; }
-    .cv-alert-title { font-size: 13px; font-weight: 850; }
-    .cv-alert ul { margin: 6px 0 0 18px; padding: 0; }
-    .cv-alert li { margin-top: 3px; }
-    .cv-alert-danger { background: #fff1f2; border: 1px solid #fecdd3; color: #9f1239; }
-    .cv-alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .cv-cell-code {
+        font-size: 15px;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    .cv-cell-code-pallet {
+        font-size: 10px;
+        line-height: 1.15;
+    }
+
+    .cv-cell-stop {
+        font-size: 9px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin-top: 3px;
+        text-transform: uppercase;
+    }
+
+    .cv-stop-1 {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .cv-stop-2 {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .cv-stop-3 {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .cv-stop-4 {
+        background: #f3e8ff;
+        color: #6b21a8;
+    }
+
+    .cv-stop-5 {
+        background: #ffe4e6;
+        color: #9f1239;
+    }
+
+    .cv-stop-6 {
+        background: #cffafe;
+        color: #155e75;
+    }
+
+    .cv-rack-label {
+        color: #475467;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.15;
+        margin-top: 5px;
+        text-align: center;
+    }
+
+    .cv-rack-weight {
+        color: var(--cv-muted);
+        display: block;
+        font-size: 9px;
+        font-weight: 700;
+        margin-top: 2px;
+    }
+
+    .cv-trailer-wheels {
+        display: flex;
+        gap: 4px;
+        justify-content: flex-end;
+        margin-right: 8%;
+        margin-top: -2px;
+    }
+
+    .cv-wheel {
+        background: #344054;
+        border: 4px solid #344054;
+        border-radius: 50%;
+        box-shadow: inset 0 0 0 8px #fbfcfe;
+        height: 42px;
+        width: 42px;
+    }
+
+    .cv-legends {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr 1fr;
+        margin-top: 10px;
+    }
+
+    .cv-legend-box {
+        background: var(--cv-soft);
+        border-radius: 10px;
+        padding: 10px 12px;
+    }
+
+    .cv-legend-title {
+        color: var(--cv-muted);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .04em;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+    }
+
+    .cv-legend-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+    }
+
+    .cv-legend-item {
+        align-items: center;
+        display: inline-flex;
+        font-size: 12px;
+        gap: 6px;
+    }
+
+    .cv-code-chip {
+        background: #344054;
+        border-radius: 5px;
+        color: white;
+        font-size: 11px;
+        font-weight: 850;
+        min-width: 30px;
+        padding: 2px 5px;
+        text-align: center;
+    }
+
+    .cv-stop-chip {
+        border-radius: 5px;
+        font-size: 10px;
+        font-weight: 850;
+        min-width: 27px;
+        padding: 2px 5px;
+        text-align: center;
+    }
+
+    .cv-alert {
+        border-radius: 12px;
+        margin-top: 12px;
+        padding: 12px 14px;
+    }
+
+    .cv-alert-title {
+        font-size: 13px;
+        font-weight: 850;
+    }
+
+    .cv-alert ul {
+        margin: 6px 0 0 18px;
+        padding: 0;
+    }
+
+    .cv-alert li {
+        margin-top: 3px;
+    }
+
+    .cv-alert-danger {
+        background: #fff1f2;
+        border: 1px solid #fecdd3;
+        color: #9f1239;
+    }
+
+    .cv-alert-warning {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        color: #92400e;
+    }
 
     .cv-table-scroll {
         contain: inline-size;
@@ -189,51 +559,195 @@
         -webkit-overflow-scrolling: touch;
     }
 
-    .cv-unplaced-table, .cv-detail-table { border-collapse: collapse; margin-top: 8px; width: 100%; }
-    .cv-unplaced-table th, .cv-unplaced-table td, .cv-detail-table th, .cv-detail-table td { border-top: 1px solid rgba(127, 29, 29, .13); padding: 7px 8px; text-align: left; vertical-align: top; }
-    .cv-unplaced-table th, .cv-detail-table th { font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
-    .cv-detail-table td { border-color: var(--cv-line); }
-    .cv-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .cv-unplaced-table,
+    .cv-detail-table {
+        border-collapse: collapse;
+        margin-top: 8px;
+        width: 100%;
+    }
 
-    .cv-details { border: 1px solid var(--cv-line); border-radius: 12px; margin-top: 16px; overflow: hidden; }
-    .cv-details summary { background: var(--cv-soft); cursor: pointer; font-weight: 750; list-style-position: inside; padding: 11px 13px; }
-    .cv-detail-stop { padding: 12px 14px; }
-    .cv-detail-stop + .cv-detail-stop { border-top: 1px solid var(--cv-line); }
-    .cv-detail-stop-title { font-weight: 800; }
-    .cv-detail-stop-meta { color: var(--cv-muted); font-size: 12px; margin-top: 2px; }
+    .cv-unplaced-table th,
+    .cv-unplaced-table td,
+    .cv-detail-table th,
+    .cv-detail-table td {
+        border-top: 1px solid rgba(127, 29, 29, .13);
+        padding: 7px 8px;
+        text-align: left;
+        vertical-align: top;
+    }
 
-    html.dark .cv-load-sheet { --cv-ink: #f1f5f9; --cv-muted: #a8b0bf; --cv-line: #3a4353; --cv-soft: #232a36; --cv-diagram-bg: #171d26; }
-    html.dark .cv-sheet-header { background: #202733; }
-    html.dark .cv-diagram-frame { background: #171d26; }
-    html.dark .cv-rack-body { background: #202733; border-color: #aeb7c5; }
-    html.dark .cv-rack-cell { border-color: #aeb7c5; }
-    html.dark .cv-rack-cell-empty { background: #202733; }
-    html.dark .cv-trailer { border-color: #aeb7c5; }
-    html.dark .cv-tractor { color: #aeb7c5; }
-    html.dark .cv-wheel { background: #aeb7c5; border-color: #aeb7c5; box-shadow: inset 0 0 0 8px #171d26; }
-    html.dark .cv-fill-panel { background: #172554; border-color: #1e40af; }
-    html.dark .cv-fill-title, html.dark .cv-fill-quantity { color: #93c5fd; }
-    html.dark .cv-fill-note, html.dark .cv-fill-meta { color: #bfdbfe; }
-    html.dark .cv-fill-item { background: rgba(30, 58, 138, .28); border-color: #1e40af; }
+    .cv-unplaced-table th,
+    .cv-detail-table th {
+        font-size: 10px;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+    }
+
+    .cv-detail-table td {
+        border-color: var(--cv-line);
+    }
+
+    .cv-num {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .cv-details {
+        border: 1px solid var(--cv-line);
+        border-radius: 12px;
+        margin-top: 16px;
+        overflow: hidden;
+    }
+
+    .cv-details summary {
+        background: var(--cv-soft);
+        cursor: pointer;
+        font-weight: 750;
+        list-style-position: inside;
+        padding: 11px 13px;
+    }
+
+    .cv-detail-stop {
+        padding: 12px 14px;
+    }
+
+    .cv-detail-stop+.cv-detail-stop {
+        border-top: 1px solid var(--cv-line);
+    }
+
+    .cv-detail-stop-title {
+        font-weight: 800;
+    }
+
+    .cv-detail-stop-meta {
+        color: var(--cv-muted);
+        font-size: 12px;
+        margin-top: 2px;
+    }
+
+    html.dark .cv-load-sheet {
+        --cv-ink: #f1f5f9;
+        --cv-muted: #a8b0bf;
+        --cv-line: #3a4353;
+        --cv-soft: #232a36;
+        --cv-diagram-bg: #171d26;
+    }
+
+    html.dark .cv-sheet-header {
+        background: #202733;
+    }
+
+    html.dark .cv-diagram-frame {
+        background: #171d26;
+    }
+
+    html.dark .cv-rack-body {
+        background: #202733;
+        border-color: #aeb7c5;
+    }
+
+    html.dark .cv-rack-cell {
+        border-color: #aeb7c5;
+    }
+
+    html.dark .cv-rack-cell-empty {
+        background: #202733;
+    }
+
+    html.dark .cv-trailer {
+        border-color: #aeb7c5;
+    }
+
+    html.dark .cv-tractor {
+        color: #aeb7c5;
+    }
+
+    html.dark .cv-wheel {
+        background: #aeb7c5;
+        border-color: #aeb7c5;
+        box-shadow: inset 0 0 0 8px #171d26;
+    }
+
+    html.dark .cv-fill-panel {
+        background: #172554;
+        border-color: #1e40af;
+    }
+
+    html.dark .cv-fill-title,
+    html.dark .cv-fill-quantity {
+        color: #93c5fd;
+    }
+
+    html.dark .cv-fill-note,
+    html.dark .cv-fill-meta {
+        color: #bfdbfe;
+    }
+
+    html.dark .cv-fill-item {
+        background: rgba(30, 58, 138, .28);
+        border-color: #1e40af;
+    }
 
     @media (max-width: 820px) {
-        .cv-sheet-header, .cv-weight-row { align-items: flex-start; flex-direction: column; }
-        .cv-top-grid, .cv-legends { grid-template-columns: 1fr; }
-        .cv-metrics { grid-template-columns: repeat(2, 1fr); }
-        .cv-weight-remaining { text-align: left; }
-        .cv-truck { min-width: 760px; }
-        .cv-truck-body { grid-template-columns: 150px 1fr; }
-        .cv-tractor { height: 112px; width: 150px; }
-        .cv-trailer { min-width: 590px; }
-        .cv-rack { min-width: 66px; }
-        .cv-rack-body, .cv-rack-open { height: 112px; }
-        .cv-cell-code { font-size: 13px; }
+
+        .cv-sheet-header,
+        .cv-weight-row {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .cv-top-grid,
+        .cv-legends {
+            grid-template-columns: 1fr;
+        }
+
+        .cv-metrics {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .cv-weight-remaining {
+            text-align: left;
+        }
+
+        .cv-truck {
+            min-width: 760px;
+        }
+
+        .cv-truck-body {
+            grid-template-columns: 150px 1fr;
+        }
+
+        .cv-tractor {
+            height: 112px;
+            width: 150px;
+        }
+
+        .cv-trailer {
+            min-width: 590px;
+        }
+
+        .cv-rack {
+            --cv-rack-level-height: 36px;
+            min-width: 66px;
+        }
+
+        .cv-cell-code {
+            font-size: 13px;
+        }
     }
 
     @media print {
-        .cv-load-sheet { color: #111827; }
-        .cv-diagram-frame { overflow: visible; }
-        .cv-details { display: none; }
+        .cv-load-sheet {
+            color: #111827;
+        }
+
+        .cv-diagram-frame {
+            overflow: visible;
+        }
+
+        .cv-details {
+            display: none;
+        }
     }
 </style>
 
@@ -280,10 +794,8 @@
 
             @if ($maximumWeight > 0)
                 <div class="cv-progress" aria-label="Product weight capacity used">
-                    <div
-                        class="cv-progress-bar {{ $summary['is_overweight'] ? 'cv-progress-bar-over' : '' }}"
-                        style="width: {{ number_format($weightPercent, 2, '.', '') }}%"
-                    ></div>
+                    <div class="cv-progress-bar {{ $summary['is_overweight'] ? 'cv-progress-bar-over' : '' }}"
+                        style="width: {{ number_format($weightPercent, 2, '.', '') }}%"></div>
                 </div>
             @endif
         </section>
@@ -324,12 +836,15 @@
                         <div class="cv-fill-item-top">
                             <span class="cv-fill-product">{{ $allocation['sku'] }}</span>
                             <span class="cv-fill-quantity">
-                                {{ $allocation['resolved'] ? number_format($allocation['planned_quantity']) : '?' }} planned
+                                {{ $allocation['resolved'] ? number_format($allocation['planned_quantity']) : '?' }}
+                                planned
                             </span>
                         </div>
                         <div class="cv-fill-meta">
-                            Priority {{ $allocation['priority'] }} · Stop {{ $allocation['stop_sequence'] }} · {{ $allocation['order_number'] }}
-                            · {{ match ($allocation['source']) {
+                            Priority {{ $allocation['priority'] }} · Stop {{ $allocation['stop_sequence'] }} ·
+                            {{ $allocation['order_number'] }}
+                            ·
+                            {{ match ($allocation['source']) {
                                 'locked' => 'Locked at dispatch',
                                 'manual' => 'Manual allocation',
                                 'automatic' => 'Calculated automatically',
@@ -345,9 +860,7 @@
     <section class="cv-section">
         <div class="cv-section-heading">
             <h2 class="cv-section-title">Truck loading diagram</h2>
-            @if ($diagram['available'])
-                <span class="cv-section-note">Forward-weighted within stop order · partial and empty racks at rear · Stop 1 unloads first.</span>
-            @endif
+
         </div>
 
         @if ($diagram['available'])
@@ -358,20 +871,13 @@
                         <span>Rear / unload first →</span>
                     </div>
                     <div class="cv-truck-body">
-                        <svg class="cv-tractor" viewBox="0 0 230 150" role="img" aria-label="Three-axle truck tractor">
-                            <path
-                                d="M7 83h52l12-19h13l12-34h57v19h23v55h46v17H7z"
-                                fill="currentColor"
-                                opacity=".14"
-                            />
+                        <svg class="cv-tractor" viewBox="0 0 230 150" role="img"
+                            aria-label="Three-axle truck tractor">
+                            <path d="M7 83h52l12-19h13l12-34h57v19h23v55h46v17H7z" fill="currentColor" opacity=".14" />
                             <path
                                 d="M7 83h52l12-19h13l12-34h57v19h23v55h46v17H7zM99 35h42v35H89zM146 35v69M153 54h18M12 91h47M15 103h34M69 72v32M79 106h31M112 112h105"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="5"
-                            />
+                                fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                stroke-width="5" />
                             <path d="M79 105h31v11H72zM174 94h27l10 7h-37z" fill="currentColor" opacity=".35" />
                             <circle class="cv-tractor-wheel" cx="48" cy="121" r="17" />
                             <circle class="cv-tractor-wheel" cx="158" cy="121" r="17" />
@@ -380,26 +886,25 @@
 
                         <div>
                             <div class="cv-trailer">
-                                <div
-                                    class="cv-rack-grid"
-                                    style="grid-template-columns: repeat({{ count($diagram['racks']) }}, minmax(76px, 1fr));"
-                                >
+                                <div class="cv-rack-grid"
+                                    style="grid-template-columns: repeat({{ count($diagram['racks']) }}, minmax(76px, 1fr));">
                                     @foreach ($diagram['racks'] as $rack)
                                         <div class="cv-rack">
                                             @if ($rack['type_code'])
-                                                <div
-                                                    class="cv-rack-body"
-                                                    style="grid-template-rows: repeat({{ $rack['level_count'] }}, 1fr);"
-                                                    title="Rack {{ $rack['number'] }} · {{ $rack['type_label'] }}"
-                                                >
+                                                <div class="cv-rack-body"
+                                                    style="grid-template-rows: repeat({{ $rack['level_count'] }}, var(--cv-rack-level-height));"
+                                                    title="Rack {{ $rack['number'] }} · {{ $rack['type_label'] }}">
                                                     @foreach (array_reverse($rack['cells'], true) as $cell)
                                                         @if ($cell)
-                                                            <div class="cv-rack-cell cv-stop-{{ (($cell['stop_sequence'] - 1) % 6) + 1 }}">
-                                                                <span class="cv-cell-code {{ ($cell['is_pallet_level'] ?? false) ? 'cv-cell-code-pallet' : '' }}">{{ $cell['code'] }}</span>
+                                                            <div
+                                                                class="cv-rack-cell cv-stop-{{ (($cell['stop_sequence'] - 1) % 6) + 1 }}">
+                                                                <span
+                                                                    class="cv-cell-code {{ $cell['is_pallet_level'] ?? false ? 'cv-cell-code-pallet' : '' }}">{{ $cell['code'] }}</span>
                                                                 <span class="cv-cell-stop">
                                                                     Stop {{ $cell['stop_sequence'] }}
                                                                     @if ($cell['is_pallet_level'] ?? false)
-                                                                        · {{ count($cell['pallets']) }} {{ Str::plural('pallet', count($cell['pallets'])) }}
+                                                                        · {{ count($cell['pallets']) }}
+                                                                        {{ Str::plural('pallet', count($cell['pallets'])) }}
                                                                     @endif
                                                                     @if (($cell['component'] ?? null) === 'half')
                                                                         · Pair {{ $cell['split_pair'] }}
@@ -418,8 +923,11 @@
                                                 R{{ $rack['number'] }}
                                                 @if ($rack['type_code'])
                                                     <span class="cv-rack-weight">
-                                                        {{ number_format($rack['product_weight_lbs'], 0) }} lb{{ $rack['has_unknown_weight'] ? ' + ?' : '' }}
+                                                        {{ number_format($rack['product_weight_lbs'], 0) }}
+                                                        lb{{ $rack['has_unknown_weight'] ? ' + ?' : '' }}
                                                     </span>
+                                                @else
+                                                    <span class="cv-rack-weight">0 lb</span>
                                                 @endif
                                             </div>
                                         </div>
@@ -445,13 +953,15 @@
                                     @if (($entry['units_per_rack_position'] ?? 1) > 1)
                                         <span class="cv-legend-item">
                                             <span class="cv-code-chip">{{ $entry['units_per_rack_position'] }}×</span>
-                                            <span>Up to {{ $entry['units_per_rack_position'] }} {{ $entry['sku'] }} products share one rack position</span>
+                                            <span>Up to {{ $entry['units_per_rack_position'] }} {{ $entry['sku'] }}
+                                                products share one rack position</span>
                                         </span>
                                     @endif
                                     @if (($entry['placement_strategy'] ?? null) === \App\Models\LoadingProfile::PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR)
                                         <span class="cv-legend-item">
                                             <span class="cv-code-chip">½{{ $entry['code'] }}</span>
-                                            <span>One half of a split {{ $entry['sku'] }} · two halves count as one product</span>
+                                            <span>One half of a split {{ $entry['sku'] }} · two halves count as one
+                                                product</span>
                                         </span>
                                     @endif
                                 @empty
@@ -465,8 +975,10 @@
                             <div class="cv-legend-list">
                                 @foreach ($result['stops'] as $stop)
                                     <span class="cv-legend-item">
-                                        <span class="cv-stop-chip cv-stop-{{ (($stop['sequence'] - 1) % 6) + 1 }}">S{{ $stop['sequence'] }}</span>
-                                        <span>{{ $stop['location_name'] ?: 'Location unavailable' }} · {{ $stop['order_number'] ?: 'Order '.$stop['order_id'] }}</span>
+                                        <span
+                                            class="cv-stop-chip cv-stop-{{ (($stop['sequence'] - 1) % 6) + 1 }}">S{{ $stop['sequence'] }}</span>
+                                        <span>{{ $stop['location_name'] ?: 'Location unavailable' }} ·
+                                            {{ $stop['order_number'] ?: 'Order ' . $stop['order_id'] }}</span>
                                     </span>
                                 @endforeach
                             </div>
@@ -525,11 +1037,13 @@
         <summary>Order details and weights</summary>
         @forelse ($result['stops'] as $stop)
             <section class="cv-detail-stop">
-                <div class="cv-detail-stop-title">Stop {{ $stop['sequence'] }} · {{ $stop['location_name'] ?: 'Location unavailable' }}</div>
+                <div class="cv-detail-stop-title">Stop {{ $stop['sequence'] }} ·
+                    {{ $stop['location_name'] ?: 'Location unavailable' }}</div>
                 <div class="cv-detail-stop-meta">
-                    {{ $stop['order_number'] ?: 'Order '.$stop['order_id'] }}
+                    {{ $stop['order_number'] ?: 'Order ' . $stop['order_id'] }}
                     · {{ number_format($stop['summary']['known_weight_lbs'], 0) }} lb known
-                    · {{ $stop['sequence'] === 1 ? 'Load toward rear — unload first' : 'Load forward of earlier stops' }}
+                    ·
+                    {{ $stop['sequence'] === 1 ? 'Load toward rear — unload first' : 'Load forward of earlier stops' }}
                 </div>
                 <div class="cv-table-scroll">
                     <table class="cv-detail-table">
@@ -546,7 +1060,8 @@
                                 <tr>
                                     <td class="cv-num">
                                         @if ($item['fill_load'])
-                                            Fill → {{ $item['fill_resolved'] ? number_format($item['quantity']) : '?' }}
+                                            Fill →
+                                            {{ $item['fill_resolved'] ? number_format($item['quantity']) : '?' }}
                                         @else
                                             {{ number_format($item['quantity'] ?? 0) }}
                                         @endif
@@ -561,8 +1076,10 @@
                                             {{ $item['required_rack_type'] ? str($item['required_rack_type'])->replace('_', ' ')->title() : 'Rack type not confirmed' }}
                                             @php
                                                 $alternateRackTypes = collect($item['allowed_rack_type_codes'] ?? [])
-                                                    ->reject(fn (string $code): bool => $code === $item['required_rack_type'])
-                                                    ->map(fn (string $code) => str($code)->replace('_', ' ')->title())
+                                                    ->reject(
+                                                        fn(string $code): bool => $code === $item['required_rack_type'],
+                                                    )
+                                                    ->map(fn(string $code) => str($code)->replace('_', ' ')->title())
                                                     ->values();
                                             @endphp
                                             @if ($alternateRackTypes->isNotEmpty())
@@ -578,7 +1095,9 @@
                                             Manual review
                                         @endif
                                     </td>
-                                    <td class="cv-num">{{ $item['total_weight_lbs'] === null ? 'Unknown' : number_format($item['total_weight_lbs'], 0).' lb' }}</td>
+                                    <td class="cv-num">
+                                        {{ $item['total_weight_lbs'] === null ? 'Unknown' : number_format($item['total_weight_lbs'], 0) . ' lb' }}
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
