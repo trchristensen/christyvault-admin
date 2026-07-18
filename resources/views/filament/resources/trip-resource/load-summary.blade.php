@@ -8,6 +8,7 @@
         || ! $diagram['available']
         || count($diagram['unplaced']) > 0;
     $warningMessages = collect($result['warnings'])->pluck('message')->unique()->values();
+    $fillAllocations = collect($fillAllocations ?? []);
 @endphp
 
 <style>
@@ -80,6 +81,17 @@
     .cv-metric { background: var(--cv-soft); border-radius: 10px; min-width: 0; padding: 9px 10px; }
     .cv-metric-value { display: block; font-size: 19px; font-weight: 800; }
     .cv-metric-label { color: var(--cv-muted); display: block; font-size: 11px; margin-top: 1px; }
+
+    .cv-fill-panel { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; margin-top: 12px; padding: 13px 15px; }
+    .cv-fill-heading { align-items: baseline; display: flex; flex-wrap: wrap; gap: 5px 12px; justify-content: space-between; }
+    .cv-fill-title { color: #1e3a8a; font-size: 14px; font-weight: 850; }
+    .cv-fill-note { color: #4b6290; font-size: 11px; }
+    .cv-fill-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 9px; }
+    .cv-fill-item { background: rgba(255, 255, 255, .78); border: 1px solid #dbeafe; border-radius: 10px; padding: 9px 10px; }
+    .cv-fill-item-top { align-items: center; display: flex; gap: 8px; justify-content: space-between; }
+    .cv-fill-product { font-weight: 800; }
+    .cv-fill-quantity { color: #1d4ed8; font-size: 18px; font-weight: 900; white-space: nowrap; }
+    .cv-fill-meta { color: #52627d; font-size: 11px; margin-top: 3px; }
 
     .cv-section { margin-top: 18px; }
     .cv-section-heading { align-items: baseline; display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-between; margin-bottom: 8px; }
@@ -187,6 +199,10 @@
     html.dark .cv-trailer { border-color: #aeb7c5; }
     html.dark .cv-tractor { color: #aeb7c5; }
     html.dark .cv-wheel { background: #aeb7c5; border-color: #aeb7c5; box-shadow: inset 0 0 0 8px #171d26; }
+    html.dark .cv-fill-panel { background: #172554; border-color: #1e40af; }
+    html.dark .cv-fill-title, html.dark .cv-fill-quantity { color: #93c5fd; }
+    html.dark .cv-fill-note, html.dark .cv-fill-meta { color: #bfdbfe; }
+    html.dark .cv-fill-item { background: rgba(30, 58, 138, .28); border-color: #1e40af; }
 
     @media (max-width: 820px) {
         .cv-sheet-header, .cv-weight-row { align-items: flex-start; flex-direction: column; }
@@ -272,6 +288,38 @@
             </div>
         </section>
     </div>
+
+    @if ($fillAllocations->isNotEmpty())
+        <section class="cv-fill-panel">
+            <div class="cv-fill-heading">
+                <div class="cv-fill-title">Fill load allocation</div>
+                <div class="cv-fill-note">
+                    Fixed products load first. Lower priority numbers receive remaining safe capacity first.
+                </div>
+            </div>
+            <div class="cv-fill-grid">
+                @foreach ($fillAllocations as $allocation)
+                    <div class="cv-fill-item">
+                        <div class="cv-fill-item-top">
+                            <span class="cv-fill-product">{{ $allocation['sku'] }}</span>
+                            <span class="cv-fill-quantity">
+                                {{ $allocation['resolved'] ? number_format($allocation['planned_quantity']) : '?' }} planned
+                            </span>
+                        </div>
+                        <div class="cv-fill-meta">
+                            Priority {{ $allocation['priority'] }} · Stop {{ $allocation['stop_sequence'] }} · {{ $allocation['order_number'] }}
+                            · {{ match ($allocation['source']) {
+                                'locked' => 'Locked at dispatch',
+                                'manual' => 'Manual allocation',
+                                'automatic' => 'Calculated automatically',
+                                default => 'Needs review',
+                            } }}
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </section>
+    @endif
 
     <section class="cv-section">
         <div class="cv-section-heading">
@@ -472,7 +520,13 @@
                     <tbody>
                         @foreach ($stop['items'] as $item)
                             <tr>
-                                <td class="cv-num">{{ $item['fill_load'] ? 'Fill' : number_format($item['quantity'] ?? 0) }}</td>
+                                <td class="cv-num">
+                                    @if ($item['fill_load'])
+                                        Fill → {{ $item['fill_resolved'] ? number_format($item['quantity']) : '?' }}
+                                    @else
+                                        {{ number_format($item['quantity'] ?? 0) }}
+                                    @endif
+                                </td>
                                 <td><strong>{{ $item['sku'] }}</strong><br>{{ $item['name'] }}</td>
                                 <td>
                                     @if ($item['handling_method'] === 'pallet')

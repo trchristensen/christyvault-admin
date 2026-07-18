@@ -4,8 +4,7 @@ namespace App\Filament\Actions;
 
 use App\Models\Order;
 use App\Models\Trip;
-use App\Services\LoadPlanning\LoadDemandService;
-use App\Services\LoadPlanning\RackDiagramService;
+use App\Services\LoadPlanning\TripLoadPlanService;
 use Filament\Actions\Action;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
@@ -25,11 +24,12 @@ final class TripLoadSummaryAction
                 return "Load summary — {$trip->trip_number}";
             })
             ->modalContent(function (Model $record) {
-                $demand = app(LoadDemandService::class)->forTrip(self::tripFor($record));
+                $plan = app(TripLoadPlanService::class)->forTrip(self::tripFor($record));
 
                 return view('filament.resources.trip-resource.load-summary', [
-                    'result' => $demand->toArray(),
-                    'diagram' => app(RackDiagramService::class)->forDemand($demand),
+                    'result' => $plan['demand']->toArray(),
+                    'diagram' => $plan['diagram'],
+                    'fillAllocations' => $plan['fill_allocations'],
                 ]);
             })
             ->modalSubmitAction(false)

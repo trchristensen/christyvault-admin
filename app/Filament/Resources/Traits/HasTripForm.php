@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Traits;
 use App\Models\Employee;
 use App\Models\VehicleConfiguration;
 use App\Services\TripOrderSelector;
+use App\Services\TripVehicleConfigurationResolver;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -12,6 +13,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 
 trait HasTripForm
 {
@@ -41,6 +43,9 @@ trait HasTripForm
                             ->pluck('name', 'id'))
                         ->searchable()
                         ->preload()
+                        ->default(fn (): ?int => app(TripVehicleConfigurationResolver::class)
+                            ->defaultIdForOrderIds([]))
+                        ->required()
                         ->helperText('Controls available rack spots and whether the piggyback forklift is onboard.'),
                     Select::make('status')
                         ->options([
@@ -81,6 +86,18 @@ trait HasTripForm
                                     $search,
                                 ))
                                 ->getOptionLabelUsing(fn ($value): ?string => app(TripOrderSelector::class)->labelForValue($value))
+                                ->live()
+                                ->afterStateUpdated(function (Get $get, Set $set): void {
+                                    $orderIds = collect($get('../../orders') ?? [])
+                                        ->pluck('order_id')
+                                        ->filter()
+                                        ->values();
+
+                                    $set(
+                                        '../../vehicle_configuration_id',
+                                        app(TripVehicleConfigurationResolver::class)->defaultIdForOrderIds($orderIds),
+                                    );
+                                })
                                 ->required(),
                             TextInput::make('delivery_notes')
                                 ->nullable()

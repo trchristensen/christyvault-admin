@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\DB;
 
 class DeliveryTripService
 {
+    public function __construct(
+        private readonly TripVehicleConfigurationResolver $vehicleConfigurations,
+    ) {}
+
     /**
      * These statuses do not represent a routed delivery.
      */
@@ -39,6 +43,7 @@ class DeliveryTripService
 
         return DB::transaction(function () use ($order): Trip {
             $order = Order::query()->lockForUpdate()->findOrFail($order->getKey());
+            $order->loadMissing('location');
             $trip = $order->trip;
 
             if ($trip) {
@@ -49,6 +54,8 @@ class DeliveryTripService
 
             $trip = Trip::create([
                 'driver_id' => $order->driver_id,
+                'vehicle_configuration_id' => $this->vehicleConfigurations
+                    ->defaultForOrders([$order])?->getKey(),
                 'status' => 'pending',
                 'scheduled_date' => $order->assigned_delivery_date,
             ]);

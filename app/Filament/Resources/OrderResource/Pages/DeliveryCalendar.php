@@ -8,8 +8,11 @@ use App\Filament\Resources\Traits\HasOrderForm;
 use App\Models\Employee;
 use App\Models\Order;
 use App\Models\Trip;
+use App\Models\VehicleConfiguration;
 use App\Services\DeliveryCalendarAvailability;
+use App\Services\LoadPlanning\TripLoadPlanService;
 use App\Services\SplitLoadService;
+use App\Services\TripVehicleConfigurationResolver;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\DatePicker;
@@ -19,8 +22,11 @@ use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
+use Illuminate\Support\Facades\Gate;
 use Throwable;
 
 class DeliveryCalendar extends Page
@@ -68,6 +74,31 @@ class DeliveryCalendar extends Page
                 ->modalSubmitActionLabel(fn (): string => $this->editingTripId ? 'Save trip' : 'Create trip')
                 ->modalWidth('4xl')
                 ->extraModalFooterActions([
+                    Action::make('viewTripLoadSummary')
+                        ->label('Load summary')
+                        ->icon('heroicon-o-cube-transparent')
+                        ->color('info')
+                        ->visible(fn (): bool => $this->editingTripId !== null
+                            && Gate::allows('view load summary'))
+                        ->modalHeading(function (): string {
+                            $trip = Trip::query()->findOrFail($this->editingTripId);
+
+                            return "Load summary — {$trip->trip_number}";
+                        })
+                        ->modalDescription('This summary uses the last saved trip. Save trip changes before relying on an updated load plan.')
+                        ->modalContent(function () {
+                            $trip = Trip::query()->findOrFail($this->editingTripId);
+                            $plan = app(TripLoadPlanService::class)->forTrip($trip);
+
+                            return view('filament.resources.trip-resource.load-summary', [
+                                'result' => $plan['demand']->toArray(),
+                                'diagram' => $plan['diagram'],
+                                'fillAllocations' => $plan['fill_allocations'],
+                            ]);
+                        })
+                        ->modalSubmitAction(false)
+                        ->modalCancelActionLabel('Back to trip')
+                        ->modalWidth('7xl'),
                     Action::make('separateOrders')
                         ->label('Separate orders')
                         ->icon('heroicon-o-arrows-pointing-out')
@@ -110,7 +141,7 @@ class DeliveryCalendar extends Page
                         ->cancelParentActions(),
                 ])
                 ->schema([
-                    Grid::make(2)
+                    Grid::make(3)
                         ->schema([
                             DatePicker::make('scheduled_date')
                                 ->label('Delivery date')
@@ -126,6 +157,16 @@ class DeliveryCalendar extends Page
                                 ->searchable()
                                 ->preload()
                                 ->placeholder('Assign later'),
+                            Select::make('vehicle_configuration_id')
+                                ->label('Vehicle Configuration')
+                                ->options(fn (): array => VehicleConfiguration::query()
+                                    ->where('is_active', true)
+                                    ->orderBy('name')
+                                    ->pluck('name', 'id')
+                                    ->all())
+                                ->searchable()
+                                ->preload()
+                                ->required(),
                         ]),
                     Repeater::make('stops')
                         ->label('Stops')
@@ -136,6 +177,18 @@ class DeliveryCalendar extends Page
                                 ->searchable()
                                 ->preload()
                                 ->disableOptionsWhenSelectedInSiblingRepeaterItems()
+                                ->live()
+                                ->afterStateUpdated(function (Get $get, Set $set): void {
+                                    $orderIds = collect($get('../../stops') ?? [])
+                                        ->pluck('order_id')
+                                        ->filter()
+                                        ->values();
+
+                                    $set(
+                                        '../../vehicle_configuration_id',
+                                        app(TripVehicleConfigurationResolver::class)->defaultIdForOrderIds($orderIds),
+                                    );
+                                })
                                 ->required(),
                             Textarea::make('delivery_notes')
                                 ->label('Stop notes')
@@ -164,6 +217,9 @@ class DeliveryCalendar extends Page
                         return [
                             'scheduled_date' => $trip->scheduled_date?->toDateString(),
                             'driver_id' => $trip->driver_id,
+                            'vehicle_configuration_id' => $trip->vehicle_configuration_id
+                                ?? app(TripVehicleConfigurationResolver::class)
+                                    ->defaultIdForOrderIds($trip->orders->modelKeys()),
                             'stops' => $trip->orders->map(fn (Order $order): array => [
                                 'order_id' => $order->getKey(),
                                 'delivery_notes' => $order->delivery_notes,
@@ -180,6 +236,8 @@ class DeliveryCalendar extends Page
                         'scheduled_date' => $firstOrder?->assigned_delivery_date?->toDateString()
                             ?? $secondOrder?->assigned_delivery_date?->toDateString(),
                         'driver_id' => $drivers->count() === 1 ? $drivers->first() : null,
+                        'vehicle_configuration_id' => app(TripVehicleConfigurationResolver::class)
+                            ->defaultIdForOrderIds($orders->pluck('id')),
                         'stops' => $orders->isNotEmpty()
                             ? $orders->map(fn (Order $order): array => [
                                 'order_id' => $order->getKey(),
@@ -197,11 +255,13 @@ class DeliveryCalendar extends Page
                             $data['stops'],
                             $data['scheduled_date'],
                             $data['driver_id'] ?? null,
+                            $data['vehicle_configuration_id'] ?? null,
                         )
                         : $service->createTrip(
                             $data['stops'],
                             $data['scheduled_date'],
                             $data['driver_id'] ?? null,
+                            $data['vehicle_configuration_id'] ?? null,
                         );
 
                     Notification::make()

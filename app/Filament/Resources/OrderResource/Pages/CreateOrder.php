@@ -5,6 +5,7 @@ namespace App\Filament\Resources\OrderResource\Pages;
 use App\Enums\PlantLocation;
 use App\Filament\Resources\OrderResource;
 use App\Models\Location;
+use App\Support\DeliveryArea;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
@@ -79,7 +80,7 @@ class CreateOrder extends CreateRecord
             return PlantLocation::tryFrom((string) $location->default_plant_location) ?? PlantLocation::COLMA_MAIN;
         }
 
-        return in_array(strtolower((string) $location->city), ['colma', 'south san francisco'], true)
+        return DeliveryArea::isLocalLocation($location)
             ? PlantLocation::COLMA_LOCALS
             : PlantLocation::COLMA_MAIN;
     }

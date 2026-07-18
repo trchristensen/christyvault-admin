@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 
 class LoadDemandService
 {
-    public function forTrip(Trip $trip): LoadDemandResult
+    public function forTrip(Trip $trip, array $fillQuantityOverrides = []): LoadDemandResult
     {
         if ($trip->exists) {
             $trip->loadMissing([
@@ -37,6 +37,7 @@ class LoadDemandService
                 ?? $order->stop_number
                 ?? ($index + 1)
             ),
+            $fillQuantityOverrides,
         );
 
         if (! $trip->vehicleConfiguration) {
@@ -61,6 +62,7 @@ class LoadDemandService
     public function forOrder(
         Order $order,
         ?VehicleConfiguration $vehicleConfiguration = null,
+        array $fillQuantityOverrides = [],
     ): LoadDemandResult {
         if ($order->exists) {
             $order->loadMissing([
@@ -70,13 +72,18 @@ class LoadDemandService
             ]);
         }
 
-        return $this->build(collect([$order]), $vehicleConfiguration);
+        return $this->build(
+            collect([$order]),
+            $vehicleConfiguration,
+            fillQuantityOverrides: $fillQuantityOverrides,
+        );
     }
 
     private function build(
         Collection $orders,
         ?VehicleConfiguration $vehicleConfiguration,
         ?callable $sequenceResolver = null,
+        array $fillQuantityOverrides = [],
     ): LoadDemandResult {
         $summary = [
             'product_units' => 0,
@@ -93,7 +100,7 @@ class LoadDemandService
             $sequence = $sequenceResolver
                 ? $sequenceResolver($order, $index)
                 : ($index + 1);
-            $stop = $this->buildStop($order, $sequence);
+            $stop = $this->buildStop($order, $sequence, $fillQuantityOverrides);
 
             foreach ($summary as $key => $value) {
                 $summary[$key] += $stop['summary'][$key];
@@ -164,7 +171,7 @@ class LoadDemandService
         );
     }
 
-    private function buildStop(Order $order, int $sequence): array
+    private function buildStop(Order $order, int $sequence, array $fillQuantityOverrides): array
     {
         $summary = [
             'product_units' => 0,
@@ -179,7 +186,14 @@ class LoadDemandService
         $palletBuckets = [];
 
         foreach ($order->orderProducts as $orderProduct) {
-            $item = $this->buildItem($order, $orderProduct, $summary, $warnings, $palletBuckets);
+            $item = $this->buildItem(
+                $order,
+                $orderProduct,
+                $summary,
+                $warnings,
+                $palletBuckets,
+                $fillQuantityOverrides,
+            );
             $items[] = $item;
         }
 
@@ -207,16 +221,38 @@ class LoadDemandService
         array &$summary,
         array &$warnings,
         array &$palletBuckets,
+        array $fillQuantityOverrides,
     ): array {
         $product = $orderProduct->product;
-        $quantity = $orderProduct->fill_load ? null : (int) $orderProduct->quantity;
+        $isFillLoad = (bool) $orderProduct->fill_load;
+        $overrideKey = $orderProduct->getKey();
+        $hasFillOverride = $isFillLoad
+            && $overrideKey !== null
+            && array_key_exists($overrideKey, $fillQuantityOverrides);
+        $quantity = $isFillLoad
+            ? ($hasFillOverride
+                ? max(0, (int) $fillQuantityOverrides[$overrideKey])
+                : ($orderProduct->planned_fill_quantity === null
+                    ? null
+                    : max(0, (int) $orderProduct->planned_fill_quantity)))
+            : (int) $orderProduct->quantity;
         $base = [
             'order_product_id' => $orderProduct->getKey(),
             'product_id' => $product?->getKey(),
             'sku' => $product?->sku ?? 'CUSTOM',
             'name' => $product?->name ?? ($orderProduct->custom_description ?: 'Custom product'),
             'quantity' => $quantity,
-            'fill_load' => (bool) $orderProduct->fill_load,
+            'fill_load' => $isFillLoad,
+            'fill_priority' => $orderProduct->fill_priority,
+            'fill_locked_at' => $orderProduct->fill_locked_at?->toAtomString(),
+            'fill_plan_source' => $isFillLoad
+                ? ($orderProduct->fill_locked_at
+                    ? 'locked'
+                    : ($orderProduct->fill_plan_source === 'manual'
+                        ? 'manual'
+                        : ($hasFillOverride ? 'automatic' : null)))
+                : null,
+            'fill_resolved' => ! $isFillLoad || $quantity !== null,
             'loading_profile' => $product?->loadingProfile?->code,
             'loading_profile_name' => $product?->loadingProfile?->name,
             'handling_method' => $product?->loadingProfile?->handling_method,
@@ -236,13 +272,46 @@ class LoadDemandService
             'pallet_equivalent' => null,
         ];
 
-        if ($orderProduct->fill_load) {
+        if ($isFillLoad && $quantity === null) {
             $warnings[] = $this->warning(
                 'fill_load_quantity_required',
-                "{$base['sku']} is marked Fill load; enter a planning quantity before automatic placement.",
+                "{$base['sku']} is marked Fill load, but a safe planned quantity could not be calculated.",
                 $order,
                 $base['sku'],
             );
+
+            return $base;
+        }
+
+        if ($isFillLoad && $quantity === 0) {
+            if (! $product || $orderProduct->is_custom_product) {
+                $warnings[] = $this->warning(
+                    'custom_product',
+                    "{$base['name']} needs a loading profile before automatic placement.",
+                    $order,
+                    $base['sku'],
+                );
+
+                return $base;
+            }
+
+            if (! $product->loadingProfile) {
+                $warnings[] = $this->warning(
+                    'missing_loading_profile',
+                    "{$product->sku} does not have a loading profile.",
+                    $order,
+                    $product->sku,
+                );
+            }
+
+            if ($product->weight_lbs === null) {
+                $warnings[] = $this->warning(
+                    'missing_weight',
+                    "{$product->sku} does not have a shipping weight.",
+                    $order,
+                    $product->sku,
+                );
+            }
 
             return $base;
         }

@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Models\Employee;
 use App\Models\Order;
 use App\Models\Trip;
+use App\Services\LoadPlanning\TripLoadPlanService;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,8 @@ class SplitLoadService
     public function __construct(
         private readonly DeliveryCalendarAvailability $availability,
         private readonly DeliveryTripService $deliveryTrips,
+        private readonly TripVehicleConfigurationResolver $vehicleConfigurations,
+        private readonly TripLoadPlanService $loadPlans,
     ) {}
 
     public function create(
@@ -37,6 +40,7 @@ class SplitLoadService
         array $stops,
         CarbonInterface|string $scheduledDate,
         ?int $driverId = null,
+        ?int $vehicleConfigurationId = null,
     ): Trip {
         $date = Carbon::parse($scheduledDate)->toDateString();
         $stops = collect($stops)->values();
@@ -56,8 +60,9 @@ class SplitLoadService
 
         $this->availability->validateDate($date, 'scheduled_date');
 
-        return DB::transaction(function () use ($stops, $orderIds, $date, $driverId): Trip {
+        return DB::transaction(function () use ($stops, $orderIds, $date, $driverId, $vehicleConfigurationId): Trip {
             $orders = Order::query()
+                ->with('location')
                 ->whereKey($orderIds)
                 ->lockForUpdate()
                 ->get()
@@ -108,6 +113,8 @@ class SplitLoadService
             }
 
             $driverId ??= $existingDrivers->first();
+            $vehicleConfigurationId ??= $this->vehicleConfigurations
+                ->defaultForOrders($orders)?->getKey();
 
             $preferredTripId = $orders->get($orderIds->first())?->trip_id;
             $trip = $sourceTrips->get($preferredTripId) ?? $sourceTrips->first();
@@ -115,6 +122,7 @@ class SplitLoadService
             if ($trip) {
                 $trip->update([
                     'driver_id' => $driverId,
+                    'vehicle_configuration_id' => $vehicleConfigurationId,
                     'scheduled_date' => $date,
                     'dispatch_confirmed_at' => null,
                     'dispatch_confirmed_by_user_id' => null,
@@ -122,6 +130,7 @@ class SplitLoadService
             } else {
                 $trip = Trip::create([
                     'driver_id' => $driverId,
+                    'vehicle_configuration_id' => $vehicleConfigurationId,
                     'status' => 'pending',
                     'scheduled_date' => $date,
                 ]);
@@ -145,6 +154,7 @@ class SplitLoadService
             }
 
             $this->deliveryTrips->syncStopsFromLegacyOrders($trip);
+            $this->loadPlans->unlockFillPlan($trip);
 
             foreach ($sourceTrips->except($trip->getKey()) as $sourceTrip) {
                 $this->deliveryTrips->syncStopsFromLegacyOrders($sourceTrip);
@@ -163,6 +173,7 @@ class SplitLoadService
         array $stops,
         CarbonInterface|string $scheduledDate,
         ?int $driverId = null,
+        ?int $vehicleConfigurationId = null,
     ): Trip {
         $date = Carbon::parse($scheduledDate)->toDateString();
         $stops = collect($stops)->values();
@@ -184,10 +195,11 @@ class SplitLoadService
 
         $removedOrderIds = [];
 
-        $trip = DB::transaction(function () use ($trip, $stops, $orderIds, $date, $driverId, &$removedOrderIds): Trip {
+        $trip = DB::transaction(function () use ($trip, $stops, $orderIds, $date, $driverId, $vehicleConfigurationId, &$removedOrderIds): Trip {
             $trip = Trip::query()->lockForUpdate()->findOrFail($trip->getKey());
             $existingOrders = $trip->orders()->lockForUpdate()->get();
             $orders = Order::query()
+                ->with('location')
                 ->whereKey($orderIds)
                 ->lockForUpdate()
                 ->get()
@@ -240,6 +252,8 @@ class SplitLoadService
             }
 
             $driverId ??= $trip->driver_id ?? $existingDrivers->first();
+            $vehicleConfigurationId ??= $trip->vehicle_configuration_id
+                ?? $this->vehicleConfigurations->defaultForOrders($orders)?->getKey();
 
             $removedOrderIds = $existingOrders
                 ->whereNotIn('id', $orderIds)
@@ -259,6 +273,7 @@ class SplitLoadService
 
             $trip->update([
                 'driver_id' => $driverId,
+                'vehicle_configuration_id' => $vehicleConfigurationId,
                 'scheduled_date' => $date,
                 'dispatch_confirmed_at' => null,
                 'dispatch_confirmed_by_user_id' => null,
@@ -280,6 +295,7 @@ class SplitLoadService
             }
 
             $this->deliveryTrips->syncStopsFromLegacyOrders($trip);
+            $this->loadPlans->unlockFillPlan($trip);
 
             foreach ($sourceTrips as $sourceTrip) {
                 $this->deliveryTrips->syncStopsFromLegacyOrders($sourceTrip);
@@ -318,6 +334,7 @@ class SplitLoadService
 
             $this->deliveryTrips->syncStopsFromLegacyOrders($trip);
             $this->deliveryTrips->invalidateStopOrderConfirmation($trip);
+            $this->loadPlans->unlockFillPlan($trip);
 
             return $trip->refresh()->load(['driver', 'orders.location', 'stops.order']);
         });
@@ -377,6 +394,7 @@ class SplitLoadService
             }
 
             $this->deliveryTrips->syncStopsFromLegacyOrders($trip);
+            $this->loadPlans->lockFillPlan($trip->refresh());
 
             if (! $wasConfirmed || $oldDriverId !== $driverId || $oldStopOrder !== $orderedOrderIds->all()) {
                 activity('trip')

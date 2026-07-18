@@ -2,11 +2,12 @@
 
 namespace App\Filament\Resources\OrderResource\Pages;
 
-use Filament\Actions\DeleteAction;
-use Illuminate\Database\Eloquent\Model;
 use App\Filament\Resources\OrderResource;
-use Filament\Actions;
+use App\Services\DeliveryTripService;
+use App\Services\LoadPlanning\TripLoadPlanService;
+use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
@@ -31,6 +32,10 @@ class EditOrder extends EditRecord
                 'custom_description' => $orderProduct->custom_description,
                 'quantity' => $orderProduct->quantity,
                 'fill_load' => $orderProduct->fill_load,
+                'planned_fill_quantity' => $orderProduct->planned_fill_quantity,
+                'fill_priority' => $orderProduct->fill_priority,
+                'fill_plan_source' => $orderProduct->fill_plan_source,
+                'fill_locked_at' => $orderProduct->fill_locked_at?->toDateTimeString(),
                 'price' => $orderProduct->price,
                 'location' => $orderProduct->location,
                 'notes' => $orderProduct->notes,
@@ -61,6 +66,11 @@ class EditOrder extends EditRecord
         });
 
         $record->location?->updateOrderAnalytics();
+
+        if ($record->trip) {
+            app(TripLoadPlanService::class)->unlockFillPlan($record->trip);
+            app(DeliveryTripService::class)->invalidateStopOrderConfirmation($record->trip);
+        }
 
         return $record;
     }

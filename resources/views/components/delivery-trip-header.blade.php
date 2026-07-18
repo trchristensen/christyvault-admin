@@ -10,7 +10,10 @@
 <div class="delivery-trip-group-header">
     <div class="delivery-trip-group-heading-row">
         <div class="delivery-trip-group-label">Split load · {{ $stopCount }} stops</div>
-        <x-delivery-trip-dispatch-button :trip="$trip" />
+        <div class="delivery-trip-group-actions">
+            <x-delivery-trip-load-summary-button :trip="$trip" />
+            <x-delivery-trip-dispatch-button :trip="$trip" />
+        </div>
     </div>
     <div class="delivery-trip-group-meta">
         {{ $trip->trip_number }} · {{ $trip->driver?->name ?? 'Driver unassigned' }}

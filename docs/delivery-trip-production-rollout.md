@@ -89,6 +89,8 @@ Rack diagrams use a forward-weight bias while preserving unload order. Later sto
 
 Stops remain on separate racks by default. If all rack spots are otherwise consumed, the planner may use one shared rack at the physical boundary between adjacent stops when every product is compatible with the resulting rack type. The earlier-delivery product occupies the accessible upper position and the later-stop product remains below. Mixed-stop racks are a last-resort capacity rule, not a general permission to scatter stops across racks.
 
+Migration `2026_07_18_020000_add_fill_planning_to_order_product.php` adds Fill-load planning without changing existing order quantities. The planner loads every fixed quantity first, honors any manual Fill allocation next, and gives the remaining safe weight and rack capacity to automatic Fill lines in priority order. Lower `fill_priority` values win; blank priorities fall back to the earlier order request. The load summary shows the calculated quantity and whether it is automatic, manual, or locked. Confirming dispatch persists and locks those calculated quantities. Editing the trip, its stop order, vehicle, or an attached order clears automatic locks so the plan is recalculated; manual allocations remain reserved until changed by a user.
+
 After deploying and running migrations, inspect catalog-weight matches without changing production:
 
 ```bash

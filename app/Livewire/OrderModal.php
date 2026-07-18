@@ -3,8 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Order;
-use App\Services\LoadPlanning\LoadDemandService;
-use App\Services\LoadPlanning\RackDiagramService;
+use App\Services\LoadPlanning\TripLoadPlanService;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 
@@ -95,10 +94,11 @@ class OrderModal extends Component
         $loadSummary = null;
 
         if ($this->showLoadSummary && $this->canViewLoadSummary()) {
-            $demand = app(LoadDemandService::class)->forTrip($this->order->trip);
+            $plan = app(TripLoadPlanService::class)->forTrip($this->order->trip);
             $loadSummary = [
-                'result' => $demand->toArray(),
-                'diagram' => app(RackDiagramService::class)->forDemand($demand),
+                'result' => $plan['demand']->toArray(),
+                'diagram' => $plan['diagram'],
+                'fillAllocations' => $plan['fill_allocations'],
             ];
         }
 

@@ -23,12 +23,14 @@ class CreateTrip extends CreateRecord
                 $orders,
                 $tripData['scheduled_date'],
                 $tripData['driver_id'] ?? null,
+                $tripData['vehicle_configuration_id'] ?? null,
             );
 
             $trip->update(Arr::except($tripData, [
                 'driver_id',
                 'scheduled_date',
                 'trip_number',
+                'vehicle_configuration_id',
             ]));
 
             return $trip->refresh();

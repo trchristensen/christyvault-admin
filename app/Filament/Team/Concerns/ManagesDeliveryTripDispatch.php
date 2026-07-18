@@ -4,6 +4,7 @@ namespace App\Filament\Team\Concerns;
 
 use App\Models\Employee;
 use App\Models\Trip;
+use App\Services\LoadPlanning\TripLoadPlanService;
 use App\Services\SplitLoadService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
@@ -15,6 +16,30 @@ use Illuminate\Auth\Access\AuthorizationException;
 
 trait ManagesDeliveryTripDispatch
 {
+    public function viewDeliveryTripLoadSummaryAction(): Action
+    {
+        return Action::make('viewDeliveryTripLoadSummary')
+            ->authorize('view load summary')
+            ->modalHeading(function (Action $action): string {
+                $trip = $this->deliveryTripForLoadSummary((int) ($action->getArguments()['trip'] ?? 0));
+
+                return "Load summary — {$trip->trip_number}";
+            })
+            ->modalContent(function (Action $action) {
+                $trip = $this->deliveryTripForLoadSummary((int) ($action->getArguments()['trip'] ?? 0));
+                $plan = app(TripLoadPlanService::class)->forTrip($trip);
+
+                return view('filament.resources.trip-resource.load-summary', [
+                    'result' => $plan['demand']->toArray(),
+                    'diagram' => $plan['diagram'],
+                    'fillAllocations' => $plan['fill_allocations'],
+                ]);
+            })
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Close')
+            ->modalWidth('7xl');
+    }
+
     public function manageDeliveryTripDispatchAction(): Action
     {
         return Action::make('manageDeliveryTripDispatch')
@@ -102,6 +127,18 @@ trait ManagesDeliveryTripDispatch
         if (! (auth()->user()?->can('manage delivery trip dispatch') ?? false)
             || ! $this->deliveryTripDispatchIsInScope($trip)) {
             throw new AuthorizationException('You cannot manage this delivery trip.');
+        }
+
+        return $trip;
+    }
+
+    protected function deliveryTripForLoadSummary(int $tripId): Trip
+    {
+        $trip = Trip::query()->findOrFail($tripId);
+
+        if (! (auth()->user()?->can('view load summary') ?? false)
+            || ! $this->deliveryTripDispatchIsInScope($trip)) {
+            throw new AuthorizationException('You cannot view this delivery trip load summary.');
         }
 
         return $trip;

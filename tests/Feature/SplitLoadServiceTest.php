@@ -78,10 +78,98 @@ beforeEach(function (): void {
         'updated_at' => now(),
     ])->all());
 
+    Schema::create('vehicle_configurations', function (Blueprint $table): void {
+        $table->id();
+        $table->string('code')->unique();
+        $table->string('name');
+        $table->string('configuration_type');
+        $table->unsignedTinyInteger('rack_spot_count')->nullable();
+        $table->decimal('max_product_weight_lbs', 10, 2)->nullable();
+        $table->boolean('piggyback_forklift_onboard')->default(false);
+        $table->text('notes')->nullable();
+        $table->boolean('is_active')->default(true);
+        $table->timestamps();
+    });
+
+    DB::table('vehicle_configurations')->insert([
+        [
+            'id' => 1,
+            'code' => 'rack_trailer_forklift_onboard',
+            'name' => 'Rack trailer — forklift onboard',
+            'configuration_type' => 'rack_trailer',
+            'rack_spot_count' => 8,
+            'max_product_weight_lbs' => 38500,
+            'piggyback_forklift_onboard' => true,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ],
+        [
+            'id' => 2,
+            'code' => 'boom_truck',
+            'name' => 'Boom truck',
+            'configuration_type' => 'boom_truck',
+            'rack_spot_count' => null,
+            'max_product_weight_lbs' => null,
+            'piggyback_forklift_onboard' => false,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ],
+    ]);
+
+    Schema::create('rack_types', function (Blueprint $table): void {
+        $table->id();
+        $table->string('code')->unique();
+        $table->string('name');
+        $table->unsignedTinyInteger('level_count');
+        $table->unsignedTinyInteger('pallet_capable_levels')->default(0);
+        $table->unsignedTinyInteger('pallets_per_capable_level')->default(2);
+        $table->boolean('supports_standard_boxes')->default(true);
+        $table->boolean('supports_oversized_boxes')->default(false);
+        $table->boolean('is_active')->default(true);
+        $table->timestamps();
+    });
+
+    Schema::create('loading_profiles', function (Blueprint $table): void {
+        $table->id();
+        $table->string('code')->unique();
+        $table->string('name');
+        $table->string('handling_method')->default('individual');
+        $table->unsignedSmallInteger('units_per_pallet')->nullable();
+        $table->unsignedSmallInteger('units_per_rack_position')->default(1);
+        $table->unsignedSmallInteger('full_load_units')->nullable();
+        $table->string('pallet_compatibility_group')->nullable();
+        $table->string('rack_requirement')->default('standard');
+        $table->string('required_rack_level')->default('any');
+        $table->unsignedBigInteger('required_rack_type_id')->nullable();
+        $table->string('placement_strategy')->default('one_per_level');
+        $table->boolean('is_stackable')->default(true);
+        $table->boolean('is_active')->default(true);
+        $table->timestamps();
+    });
+
+    Schema::create('loading_profile_rack_type', function (Blueprint $table): void {
+        $table->unsignedBigInteger('loading_profile_id');
+        $table->unsignedBigInteger('rack_type_id');
+        $table->primary(['loading_profile_id', 'rack_type_id']);
+    });
+
+    Schema::create('products', function (Blueprint $table): void {
+        $table->id();
+        $table->string('name');
+        $table->string('sku')->unique();
+        $table->decimal('weight_lbs', 10, 2)->nullable();
+        $table->unsignedBigInteger('loading_profile_id')->nullable();
+        $table->boolean('is_active')->default(true);
+        $table->timestamps();
+    });
+
     Schema::create('trips', function (Blueprint $table): void {
         $table->id();
         $table->string('trip_number')->unique();
         $table->unsignedBigInteger('driver_id')->nullable();
+        $table->unsignedBigInteger('vehicle_configuration_id')->nullable();
         $table->string('status')->default('pending');
         $table->date('scheduled_date');
         $table->timestamp('start_time')->nullable();
@@ -94,6 +182,12 @@ beforeEach(function (): void {
         $table->softDeletes();
     });
 
+    Schema::create('locations', function (Blueprint $table): void {
+        $table->id();
+        $table->string('city')->nullable();
+        $table->timestamps();
+    });
+
     Schema::create('orders', function (Blueprint $table): void {
         $table->id();
         $table->string('order_number');
@@ -102,12 +196,28 @@ beforeEach(function (): void {
         $table->unsignedBigInteger('trip_id')->nullable();
         $table->unsignedInteger('stop_number')->nullable();
         $table->unsignedBigInteger('driver_id')->nullable();
+        $table->unsignedBigInteger('location_id')->nullable();
         $table->string('plant_location')->nullable();
         $table->text('delivery_notes')->nullable();
         $table->uuid('uuid')->nullable();
         $table->timestamps();
         $table->softDeletes();
         $table->unique(['trip_id', 'stop_number']);
+    });
+
+    Schema::create('order_product', function (Blueprint $table): void {
+        $table->id();
+        $table->unsignedBigInteger('order_id');
+        $table->unsignedBigInteger('product_id')->nullable();
+        $table->text('custom_description')->nullable();
+        $table->boolean('is_custom_product')->default(false);
+        $table->unsignedInteger('quantity')->nullable();
+        $table->boolean('fill_load')->default(false);
+        $table->unsignedInteger('planned_fill_quantity')->nullable();
+        $table->unsignedInteger('fill_priority')->nullable();
+        $table->string('fill_plan_source')->nullable();
+        $table->timestamp('fill_locked_at')->nullable();
+        $table->timestamps();
     });
 
     Schema::create('trip_stops', function (Blueprint $table): void {
@@ -123,6 +233,57 @@ beforeEach(function (): void {
     DB::statement('CREATE UNIQUE INDEX trip_stops_active_order_unique ON trip_stops (trip_id, order_id) WHERE removed_at IS NULL AND order_id IS NOT NULL');
 
     Activity::disableLogging();
+});
+
+it('defaults local trips to the boom truck and all other trips to the rack trailer', function (): void {
+    DB::table('locations')->insert([
+        ['id' => 1, 'city' => 'Colma', 'created_at' => now(), 'updated_at' => now()],
+        ['id' => 2, 'city' => ' South San Francisco ', 'created_at' => now(), 'updated_at' => now()],
+        ['id' => 3, 'city' => 'Fresno', 'created_at' => now(), 'updated_at' => now()],
+    ]);
+
+    DB::table('orders')->insert([
+        orderRow(1, 'ORD-00001', 7, 1),
+        orderRow(2, 'ORD-00002', 7, 2),
+        orderRow(3, 'ORD-00003', 7, 3),
+        orderRow(4, 'ORD-00004', 7, 1),
+    ]);
+
+    $service = app(SplitLoadService::class);
+    $localTrip = $service->createTrip([
+        ['order_id' => 1],
+        ['order_id' => 2],
+    ], '2026-07-20', 7);
+
+    expect($localTrip->vehicle_configuration_id)->toBe(2);
+
+    $mixedTrip = $service->createTrip([
+        ['order_id' => 4],
+        ['order_id' => 3],
+    ], '2026-07-20', 7);
+
+    expect($mixedTrip->vehicle_configuration_id)->toBe(1);
+});
+
+it('keeps an explicitly selected vehicle configuration', function (): void {
+    DB::table('locations')->insert([
+        'id' => 1,
+        'city' => 'Colma',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('orders')->insert([
+        orderRow(1, 'ORD-00001', 7, 1),
+        orderRow(2, 'ORD-00002', 7, 1),
+    ]);
+
+    $trip = app(SplitLoadService::class)->createTrip([
+        ['order_id' => 1],
+        ['order_id' => 2],
+    ], '2026-07-20', 7, 1);
+
+    expect($trip->vehicle_configuration_id)->toBe(1);
 });
 
 it('creates, reorders, synchronizes, and dissolves a two-stop delivery trip', function (): void {
@@ -228,6 +389,7 @@ it('attaches one selected existing order without creating a duplicate order', fu
 
     $trip = $page->createRecordForTest([
         'driver_id' => 7,
+        'vehicle_configuration_id' => 2,
         'status' => 'confirmed',
         'scheduled_date' => '2026-07-20',
         'orders' => [
@@ -237,6 +399,7 @@ it('attaches one selected existing order without creating a duplicate order', fu
 
     expect(Order::count())->toBe(1)
         ->and($trip->status)->toBe('confirmed')
+        ->and($trip->vehicle_configuration_id)->toBe(2)
         ->and($trip->orders()->pluck('id')->all())->toBe([1])
         ->and(Order::findOrFail(1)->trip_id)->toBe($trip->id)
         ->and(Order::findOrFail(1)->stop_number)->toBe(1)
@@ -318,6 +481,71 @@ it('lets dispatch update only the driver and stop order', function (): void {
         ->toThrow(ValidationException::class);
 });
 
+it('locks automatic Fill quantities at dispatch and recalculates them after a trip edit', function (): void {
+    DB::table('rack_types')->insert([
+        'id' => 1,
+        'code' => 'standard_3_high',
+        'name' => 'Standard 3-high rack',
+        'level_count' => 3,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    DB::table('loading_profiles')->insert([
+        'id' => 1,
+        'code' => 'standard_three_high_box',
+        'name' => 'Standard box — 22 per 3-high load',
+        'full_load_units' => 22,
+        'required_rack_type_id' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    DB::table('loading_profile_rack_type')->insert([
+        'loading_profile_id' => 1,
+        'rack_type_id' => 1,
+    ]);
+    DB::table('products')->insert([
+        'id' => 1,
+        'name' => 'Single Garden Crypt',
+        'sku' => 'G3086-6',
+        'weight_lbs' => 1000,
+        'loading_profile_id' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    DB::table('orders')->insert(orderRow(1, 'ORD-00001', 7));
+    DB::table('order_product')->insert([
+        'id' => 1,
+        'order_id' => 1,
+        'product_id' => 1,
+        'fill_load' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $service = app(SplitLoadService::class);
+    $trip = $service->createTrip([
+        ['order_id' => 1],
+    ], '2026-07-20', 7, 1);
+
+    $service->updateDispatchPlan($trip, [1], 7);
+
+    $lockedLine = DB::table('order_product')->find(1);
+
+    expect($lockedLine->planned_fill_quantity)->toBe(22)
+        ->and($lockedLine->fill_plan_source)->toBe('automatic')
+        ->and($lockedLine->fill_locked_at)->not->toBeNull();
+
+    $service->updateTrip($trip, [
+        ['order_id' => 1],
+    ], '2026-07-21', 7, 1);
+
+    $unlockedLine = DB::table('order_product')->find(1);
+
+    expect($unlockedLine->planned_fill_quantity)->toBeNull()
+        ->and($unlockedLine->fill_plan_source)->toBeNull()
+        ->and($unlockedLine->fill_locked_at)->toBeNull();
+});
+
 it('creates a one-stop trip for an eligible scheduled delivery', function (): void {
     DB::table('orders')->insert(orderRow(1, 'ORD-00001', 7));
 
@@ -331,6 +559,21 @@ it('creates a one-stop trip for an eligible scheduled delivery', function (): vo
         ->and($trip->stops()->pluck('order_id')->all())->toBe([1])
         ->and($trip->isStopOrderConfirmed())->toBeTrue()
         ->and(Order::findOrFail(1)->stop_number)->toBe(1);
+});
+
+it('defaults an automatically created local one-stop trip to the boom truck', function (): void {
+    DB::table('locations')->insert([
+        'id' => 1,
+        'city' => 'South San Francisco',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    DB::table('orders')->insert(orderRow(1, 'ORD-00001', 7, 1));
+
+    $trip = app(DeliveryTripService::class)
+        ->ensureScheduledOrderHasTrip(Order::findOrFail(1));
+
+    expect($trip?->vehicle_configuration_id)->toBe(2);
 });
 
 it('lets dispatch assign the driver on a one-stop trip', function (): void {
@@ -503,7 +746,7 @@ it('omits the repeated driver from individual split load summaries', function ()
         ->not->toContain('Driver Seven');
 });
 
-function orderRow(int $id, string $orderNumber, ?int $driverId): array
+function orderRow(int $id, string $orderNumber, ?int $driverId, ?int $locationId = null): array
 {
     return [
         'id' => $id,
@@ -511,6 +754,7 @@ function orderRow(int $id, string $orderNumber, ?int $driverId): array
         'status' => 'pending',
         'assigned_delivery_date' => '2026-07-20',
         'driver_id' => $driverId,
+        'location_id' => $locationId,
         'plant_location' => 'tulare_plant',
         'uuid' => (string) str()->uuid(),
         'created_at' => now(),

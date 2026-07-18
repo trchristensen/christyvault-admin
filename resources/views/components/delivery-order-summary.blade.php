@@ -39,6 +39,7 @@
 
         <div class="delivery-order-actions">
             @if (! $isDeliveryTrip && $activeTrip)
+                <x-delivery-trip-load-summary-button :trip="$activeTrip" />
                 <x-delivery-trip-dispatch-button :trip="$activeTrip" />
             @endif
 

@@ -79,7 +79,7 @@ class RackDiagramService
                 });
 
             foreach ($items as $item) {
-                if (! $item['quantity'] || $item['fill_load']) {
+                if (! $item['quantity'] || ($item['fill_load'] && ! ($item['fill_resolved'] ?? false))) {
                     continue;
                 }
 

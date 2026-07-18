@@ -10,6 +10,10 @@ class VehicleConfiguration extends Model
 {
     use HasFactory;
 
+    public const CODE_RACK_TRAILER_FORKLIFT_ONBOARD = 'rack_trailer_forklift_onboard';
+
+    public const CODE_BOOM_TRUCK = 'boom_truck';
+
     public const TYPE_RACK_TRAILER = 'rack_trailer';
 
     public const TYPE_BOOM_TRUCK = 'boom_truck';

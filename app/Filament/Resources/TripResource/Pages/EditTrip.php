@@ -4,6 +4,7 @@ namespace App\Filament\Resources\TripResource\Pages;
 
 use App\Filament\Resources\TripResource;
 use App\Services\SplitLoadService;
+use App\Services\TripVehicleConfigurationResolver;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -18,9 +19,13 @@ class EditTrip extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $data['orders'] = $this->record->orders()
+        $orders = $this->record->orders()
             ->orderBy('stop_number')
-            ->get()
+            ->get();
+
+        $data['vehicle_configuration_id'] ??= app(TripVehicleConfigurationResolver::class)
+            ->defaultIdForOrderIds($orders->modelKeys());
+        $data['orders'] = $orders
             ->map(fn ($order): array => [
                 'order_id' => $order->getKey(),
                 'delivery_notes' => $order->delivery_notes,
@@ -41,12 +46,14 @@ class EditTrip extends EditRecord
                 $orders,
                 $tripData['scheduled_date'],
                 $tripData['driver_id'] ?? null,
+                $tripData['vehicle_configuration_id'] ?? null,
             );
 
             $trip->update(Arr::except($tripData, [
                 'driver_id',
                 'scheduled_date',
                 'trip_number',
+                'vehicle_configuration_id',
             ]));
 
             return $trip->refresh();

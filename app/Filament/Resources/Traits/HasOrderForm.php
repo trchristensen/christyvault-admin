@@ -2,30 +2,28 @@
 
 namespace App\Filament\Resources\Traits;
 
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\Select;
-use Filament\Schemas\Components\Utilities\Set;
-use Filament\Actions\Action;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Grid;
-use Filament\Forms\Components\DatePicker;
-use App\Models\Employee;
-use Filament\Forms\Components\TimePicker;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Forms\Components\Hidden;
 use App\Enums\OrderStatus;
 use App\Enums\PlantLocation;
+use App\Models\Employee;
 use App\Models\Location;
 use App\Models\Product;
-use Filament\Forms;
-use Carbon\Carbon;
-use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
+use App\Support\DeliveryArea;
+use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Schmeits\FilamentCharacterCounter\Forms\Components\Textarea;
-use Filament\Forms\Components\Split;
+use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 
 trait HasOrderForm
 {
@@ -34,7 +32,7 @@ trait HasOrderForm
         return [
             Section::make('Order Details')
                 ->columnSpanFull()
-                ->description(fn($record) => $record?->order_number)
+                ->description(fn ($record) => $record?->order_number)
                 ->schema([
                     Select::make('location_id')
                         ->label('Location')
@@ -62,14 +60,16 @@ trait HasOrderForm
                         ->allowHtml()
                         ->reactive()
                         ->afterStateUpdated(function ($state, Set $set) {
-                            if (!$state) return;
+                            if (! $state) {
+                                return;
+                            }
 
                             $location = Location::find($state);
                             if ($location) {
                                 // Prefer the location's saved default, with the previous city-based rule as a fallback.
                                 if ($location->default_plant_location) {
                                     $set('plant_location', $location->default_plant_location->value);
-                                } elseif (strtolower($location->city) === 'colma' || strtolower($location->city) === 'south san francisco') {
+                                } elseif (DeliveryArea::isLocalLocation($location)) {
                                     $set('plant_location', PlantLocation::COLMA_LOCALS->value);
                                 } else {
                                     $set('plant_location', PlantLocation::COLMA_MAIN->value);
@@ -82,7 +82,9 @@ trait HasOrderForm
                             }
                         })
                         ->suffixAction(function ($state) {
-                            if (!$state) return null;
+                            if (! $state) {
+                                return null;
+                            }
 
                             return Action::make('edit')
                                 ->icon('heroicon-m-pencil-square')
@@ -120,19 +122,19 @@ trait HasOrderForm
                                         ->required(),
                                     Select::make('default_plant_location')
                                         ->label('Default Delivery Type')
-                                        ->options(collect(PlantLocation::cases())->mapWithKeys(fn(PlantLocation $location) => [
+                                        ->options(collect(PlantLocation::cases())->mapWithKeys(fn (PlantLocation $location) => [
                                             $location->value => $location->getLabel(),
                                         ]))
                                         ->default(PlantLocation::COLMA_MAIN->value)
                                         ->required(),
                                 ])
-                                ->fillForm(fn() => Location::find($state)->toArray())
+                                ->fillForm(fn () => Location::find($state)->toArray())
                                 ->action(function (array $data, $state): void {
                                     $location = Location::find($state);
                                     $location->update($data);
                                 })
                                 ->modalWidth('lg')
-                                ->visible(fn($state): bool => (bool)$state);
+                                ->visible(fn ($state): bool => (bool) $state);
                         })
                         ->createOptionForm([
                             TextInput::make('name')
@@ -186,7 +188,7 @@ trait HasOrderForm
                                 ->required(),
                             Select::make('default_plant_location')
                                 ->label('Default Delivery Type')
-                                ->options(collect(PlantLocation::cases())->mapWithKeys(fn(PlantLocation $location) => [
+                                ->options(collect(PlantLocation::cases())->mapWithKeys(fn (PlantLocation $location) => [
                                     $location->value => $location->getLabel(),
                                 ]))
                                 ->default(PlantLocation::COLMA_MAIN->value)
@@ -204,7 +206,7 @@ trait HasOrderForm
                                     PhoneInput::make('contact.mobile_phone')
                                         ->label('Mobile Phone')
                                         ->defaultCountry('US'),
-                                ])
+                                ]),
                         ])
                         ->createOptionUsing(function (array $data): int {
                             $location = Location::create([
@@ -270,14 +272,14 @@ trait HasOrderForm
                             'sm' => 4,
                             'md' => 4,
                         ])
-                        ->default(fn() => $defaultDate ?? now()),
+                        ->default(fn () => $defaultDate ?? now()),
                     DatePicker::make('assigned_delivery_date')
                         ->native(false)
                         ->columnSpan([
                             'sm' => 4,
                             'md' => 4,
                         ])
-                        ->default(fn() => $defaultDate),
+                        ->default(fn () => $defaultDate),
                     Select::make('driver_id')
                         ->label('Driver')
                         ->options(function () {
@@ -293,7 +295,7 @@ trait HasOrderForm
                         ])
                         ->placeholder('Select a driver'),
                     TimePicker::make('delivery_time')
-                        ->label("Deliver By time")
+                        ->label('Deliver By time')
                         ->nullable()
                         ->columnSpan([
                             'sm' => 4,
@@ -311,7 +313,7 @@ trait HasOrderForm
                     Select::make('plant_location')
                         ->label('Delivery Type')
                         ->options(function () {
-                            return collect(PlantLocation::cases())->mapWithKeys(fn($location) => [
+                            return collect(PlantLocation::cases())->mapWithKeys(fn ($location) => [
                                 $location->value => $location->getLabel(),
                             ]);
                         })
@@ -369,6 +371,7 @@ trait HasOrderForm
                                     } else {
                                         // For new orders, add timestamp to prevent collisions
                                         $timestamp = now()->format('His'); // HHMMSS
+
                                         return "{$date}_{$locationName}_{$city}_{$timestamp}_delivery_tag.{$extension}";
                                     }
                                 }
@@ -380,6 +383,7 @@ trait HasOrderForm
                             } else {
                                 // For new orders without location, use timestamp
                                 $timestamp = now()->format('His');
+
                                 return "{$date}_{$timestamp}_delivery_tag.{$extension}";
                             }
                         }),
@@ -448,18 +452,18 @@ trait HasOrderForm
                                             Product::query()
                                                 ->active()
                                                 ->get()
-                                                ->mapWithKeys(fn(Product $product) => [
+                                                ->mapWithKeys(fn (Product $product) => [
                                                     $product->id => view('filament.components.product-option', [
                                                         'sku' => $product->sku,
                                                         'name' => $product->name,
-                                                    ])->render()
+                                                    ])->render(),
                                                 ])
                                         )
                                         ->allowHtml()
-                                        ->required(fn(callable $get) => !$get('is_custom_product'))
+                                        ->required(fn (callable $get) => ! $get('is_custom_product'))
                                         ->reactive()
                                         ->searchable()
-                                        ->visible(fn(callable $get) => !$get('is_custom_product'))
+                                        ->visible(fn (callable $get) => ! $get('is_custom_product'))
                                         ->getSearchResultsUsing(function (string $search): array {
                                             return Product::query()
                                                 ->active()
@@ -469,23 +473,22 @@ trait HasOrderForm
                                                 })
                                                 ->limit(50)
                                                 ->get()
-                                                ->mapWithKeys(fn(Product $product) => [
+                                                ->mapWithKeys(fn (Product $product) => [
                                                     $product->id => view('filament.components.product-option', [
                                                         'sku' => $product->sku,
                                                         'name' => $product->name,
-                                                    ])->render()
+                                                    ])->render(),
                                                 ])
                                                 ->toArray();
                                         })
                                         ->afterStateUpdated(
-                                            fn($state, callable $set) =>
-                                            $set('price', Product::find($state)?->price ?? 0)
+                                            fn ($state, callable $set) => $set('price', Product::find($state)?->price ?? 0)
                                         )
                                         ->live('blur'),
                                     TextInput::make('custom_description')
                                         ->label('Custom Product Description')
-                                        ->required(fn(callable $get) => $get('is_custom_product'))
-                                        ->visible(fn(callable $get) => $get('is_custom_product'))
+                                        ->required(fn (callable $get) => $get('is_custom_product'))
+                                        ->visible(fn (callable $get) => $get('is_custom_product'))
                                         ->columnSpan(6)
                                         ->live('blur'),
                                     Toggle::make('fill_load')
@@ -496,6 +499,11 @@ trait HasOrderForm
                                         ->afterStateUpdated(function ($state, callable $set) {
                                             if ($state) {
                                                 $set('quantity', null);
+                                            } else {
+                                                $set('planned_fill_quantity', null);
+                                                $set('fill_priority', null);
+                                                $set('fill_plan_source', null);
+                                                $set('fill_locked_at', null);
                                             }
                                         })
                                         ->live('blur'),
@@ -503,16 +511,42 @@ trait HasOrderForm
                                         ->numeric()
                                         ->columnSpan(2)
                                         ->default(1)
-                                        ->disabled(fn(Get $get): bool => $get('fill_load'))
-                                        ->dehydrated(fn(Get $get): bool => !$get('fill_load'))
+                                        ->disabled(fn (Get $get): bool => $get('fill_load'))
+                                        ->dehydrated(fn (Get $get): bool => ! $get('fill_load'))
                                         ->live('blur'),
+                                    TextInput::make('fill_priority')
+                                        ->label('Fill priority')
+                                        ->numeric()
+                                        ->minValue(1)
+                                        ->placeholder('Automatic')
+                                        ->helperText('Lower numbers receive remaining capacity first. Blank uses request order.')
+                                        ->visible(fn (Get $get): bool => (bool) $get('fill_load'))
+                                        ->afterStateUpdated(fn (callable $set) => $set('fill_locked_at', null))
+                                        ->live('blur')
+                                        ->columnSpan(2),
+                                    TextInput::make('planned_fill_quantity')
+                                        ->label('Planned fill override')
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->placeholder('Calculate automatically')
+                                        ->helperText('Optional. Leave blank for the load planner to calculate the maximum safe quantity.')
+                                        ->visible(fn (Get $get): bool => (bool) $get('fill_load'))
+                                        ->afterStateUpdated(function ($state, callable $set): void {
+                                            $set('fill_plan_source', filled($state) ? 'manual' : null);
+                                            $set('fill_locked_at', null);
+                                        })
+                                        ->live('blur')
+                                        ->columnSpan(3),
+                                    Hidden::make('fill_plan_source'),
+                                    Hidden::make('fill_locked_at'),
                                     TextInput::make('quantity_delivered')
                                         ->label('Delivered')
                                         ->columnSpan(1)
                                         ->numeric()
                                         ->disabled(function (Get $get): bool {
                                             $status = $get('../../status');
-                                            return !in_array($status, [
+
+                                            return ! in_array($status, [
                                                 OrderStatus::DELIVERED->value,
                                                 OrderStatus::INVOICED->value,
                                                 OrderStatus::COMPLETED->value,
@@ -548,24 +582,25 @@ trait HasOrderForm
                         ->columnSpanFull()
                         ->itemLabel(function ($state) {
                             // If fill_load is true, show "Fill load" instead of quantity
-                            $quantityLabel = (!empty($state['fill_load'])) ? 'Fill load' : ($state['quantity'] ?? 1);
+                            $quantityLabel = (! empty($state['fill_load'])) ? 'Fill load' : ($state['quantity'] ?? 1);
 
                             // If using custom product, use the custom description
-                            if (($state['is_custom_product'] ?? false) && !empty($state['custom_description'])) {
+                            if (($state['is_custom_product'] ?? false) && ! empty($state['custom_description'])) {
                                 return "{$quantityLabel} x Custom - {$state['custom_description']}";
                             }
 
                             // Otherwise, look up the product by product_id
                             $sku = '';
                             $name = '';
-                            if (!empty($state['product_id'])) {
+                            if (! empty($state['product_id'])) {
                                 $product = Product::find($state['product_id']);
                                 if ($product) {
                                     $sku = $product->sku;
                                     $name = $product->name;
                                 }
                             }
-                            return "{$quantityLabel} x {$sku}" . ($name ? " - {$name}" : '');
+
+                            return "{$quantityLabel} x {$sku}".($name ? " - {$name}" : '');
                         }),
                 ]),
         ];

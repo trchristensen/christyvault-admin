@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class OrderProduct extends Pivot
 {
@@ -26,12 +26,19 @@ class OrderProduct extends Pivot
         'price',
         'notes',
         'location',
-        'fill_load'
+        'fill_load',
+        'planned_fill_quantity',
+        'fill_priority',
+        'fill_plan_source',
+        'fill_locked_at',
     ];
 
     protected $casts = [
         'fill_load' => 'integer',
         'is_custom_product' => 'boolean',
+        'planned_fill_quantity' => 'integer',
+        'fill_priority' => 'integer',
+        'fill_locked_at' => 'datetime',
     ];
 
     public function order(): BelongsTo
@@ -59,7 +66,7 @@ class OrderProduct extends Pivot
         return $this->is_custom_product ? $this->custom_description : $this->product->description;
     }
 
-       public function getActivitylogOptions(): LogOptions
+    public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->logOnlyDirty()
