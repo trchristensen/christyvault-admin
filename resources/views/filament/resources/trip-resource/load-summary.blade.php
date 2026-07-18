@@ -231,10 +231,7 @@
     @media (max-width: 820px) {
         .fi-modal-window:has(.cv-load-sheet) {
             border-radius: 14px !important;
-            margin: 6px !important;
-            max-height: calc(100dvh - 12px) !important;
-            max-width: calc(100vw - 12px) !important;
-            width: calc(100vw - 12px) !important;
+            max-height: calc(100dvh - 2rem) !important;
         }
 
         .fi-modal-window:has(.cv-load-sheet) .fi-modal-header {
