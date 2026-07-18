@@ -176,6 +176,23 @@ class RackDiagramService
         $placedUnits = 0;
 
         while ($remainingUnits > 0) {
+            $mixedUnits = $this->addToCompatiblePartialPallet(
+                $racks,
+                $item,
+                $stop,
+                $code,
+                $remainingUnits,
+                $unitsPerPallet,
+                $allowedRackTypes,
+            );
+
+            if ($mixedUnits > 0) {
+                $placedUnits += $mixedUnits;
+                $remainingUnits -= $mixedUnits;
+
+                continue;
+            }
+
             $palletUnits = min($unitsPerPallet, $remainingUnits);
             $rackIndex = collect($racks)
                 ->keys()
@@ -268,6 +285,18 @@ class RackDiagramService
                 'name' => $item['name'],
                 'units' => $palletUnits,
                 'capacity' => $unitsPerPallet,
+                'capacity_used' => $palletUnits / $unitsPerPallet,
+                'compatibility_group' => $item['pallet_compatibility_group'] ?? null,
+                'products' => [[
+                    'code' => $palletUnits.'×'.$code,
+                    'sku' => $item['sku'],
+                    'name' => $item['name'],
+                    'units' => $palletUnits,
+                    'capacity' => $unitsPerPallet,
+                    'total_weight_lbs' => $item['unit_weight_lbs'] === null
+                        ? null
+                        : (float) $item['unit_weight_lbs'] * $palletUnits,
+                ]],
                 'total_weight_lbs' => $item['unit_weight_lbs'] === null
                     ? null
                     : (float) $item['unit_weight_lbs'] * $palletUnits,
@@ -283,13 +312,7 @@ class RackDiagramService
             }
 
             $cell['pallets'][] = $pallet;
-            $cell['code'] = collect($cell['pallets'])->pluck('code')->implode(' · ');
-            $cell['sku'] = count($cell['pallets']) === 1 ? $item['sku'] : 'PALLETS';
-            $cell['name'] = 'Palletized products';
-            $cell['unit_weight_lbs'] = collect($cell['pallets'])->contains(
-                fn (array $loadedPallet): bool => $loadedPallet['total_weight_lbs'] === null,
-            ) ? null : collect($cell['pallets'])->sum('total_weight_lbs');
-            $cell['unit_fraction'] = 1;
+            $this->refreshPalletCell($cell);
             $rack['cells'][$levelIndex] = $cell;
             $rack['stop_sequences'] = array_values(array_unique([
                 ...$rack['stop_sequences'],
@@ -300,6 +323,110 @@ class RackDiagramService
         }
 
         return false;
+    }
+
+    private function addToCompatiblePartialPallet(
+        array &$racks,
+        array $item,
+        array $stop,
+        string $code,
+        int $remainingUnits,
+        int $unitsPerPallet,
+        array $allowedRackTypes,
+    ): int {
+        $compatibilityGroup = $item['pallet_compatibility_group'] ?? null;
+
+        if (! filled($compatibilityGroup)) {
+            return 0;
+        }
+
+        foreach ($racks as &$rack) {
+            if (! in_array($rack['type_code'], $allowedRackTypes, true)
+                || ! $this->rackCanAcceptStop($rack, (int) $stop['sequence'])) {
+                continue;
+            }
+
+            $palletLevels = min(
+                (int) ($rack['pallet_capable_levels'] ?? 0),
+                (int) ($rack['level_count'] ?? 0),
+            );
+
+            for ($levelIndex = 0; $levelIndex < $palletLevels; $levelIndex++) {
+                $cell = &$rack['cells'][$levelIndex];
+
+                if (! ($cell['is_pallet_level'] ?? false)) {
+                    unset($cell);
+
+                    continue;
+                }
+
+                foreach ($cell['pallets'] as &$pallet) {
+                    if (($pallet['compatibility_group'] ?? null) !== $compatibilityGroup) {
+                        continue;
+                    }
+
+                    $remainingFraction = max(0, 1 - (float) ($pallet['capacity_used'] ?? 1));
+                    $unitsThatFit = (int) floor(($remainingFraction * $unitsPerPallet) + 0.000001);
+
+                    if ($unitsThatFit < 1) {
+                        continue;
+                    }
+
+                    $unitsToAdd = min($remainingUnits, $unitsThatFit);
+                    $productWeight = $item['unit_weight_lbs'] === null
+                        ? null
+                        : (float) $item['unit_weight_lbs'] * $unitsToAdd;
+                    $existingProductIndex = collect($pallet['products'] ?? [])
+                        ->search(fn (array $product): bool => $product['sku'] === $item['sku']);
+
+                    if ($existingProductIndex === false) {
+                        $pallet['products'][] = [
+                            'code' => $unitsToAdd.'×'.$code,
+                            'sku' => $item['sku'],
+                            'name' => $item['name'],
+                            'units' => $unitsToAdd,
+                            'capacity' => $unitsPerPallet,
+                            'total_weight_lbs' => $productWeight,
+                        ];
+                    } else {
+                        $pallet['products'][$existingProductIndex]['units'] += $unitsToAdd;
+                        $pallet['products'][$existingProductIndex]['code'] = $pallet['products'][$existingProductIndex]['units'].'×'.$code;
+                        $pallet['products'][$existingProductIndex]['total_weight_lbs'] = $item['unit_weight_lbs'] === null
+                            ? null
+                            : (float) $item['unit_weight_lbs'] * $pallet['products'][$existingProductIndex]['units'];
+                    }
+
+                    $pallet['capacity_used'] = min(1, (float) $pallet['capacity_used'] + ($unitsToAdd / $unitsPerPallet));
+                    $pallet['units'] = collect($pallet['products'])->sum('units');
+                    $pallet['code'] = collect($pallet['products'])->pluck('code')->implode(' + ');
+                    $pallet['sku'] = count($pallet['products']) === 1 ? $pallet['products'][0]['sku'] : 'MIXED';
+                    $pallet['name'] = count($pallet['products']) === 1 ? $pallet['products'][0]['name'] : 'Mixed boxed products';
+                    $pallet['total_weight_lbs'] = collect($pallet['products'])->contains(
+                        fn (array $product): bool => $product['total_weight_lbs'] === null,
+                    ) ? null : collect($pallet['products'])->sum('total_weight_lbs');
+                    $this->refreshPalletCell($cell);
+
+                    unset($pallet, $cell, $rack);
+
+                    return $unitsToAdd;
+                }
+                unset($pallet, $cell);
+            }
+        }
+        unset($rack);
+
+        return 0;
+    }
+
+    private function refreshPalletCell(array &$cell): void
+    {
+        $cell['code'] = collect($cell['pallets'])->pluck('code')->implode(' · ');
+        $cell['sku'] = count($cell['pallets']) === 1 ? $cell['pallets'][0]['sku'] : 'PALLETS';
+        $cell['name'] = 'Palletized products';
+        $cell['unit_weight_lbs'] = collect($cell['pallets'])->contains(
+            fn (array $loadedPallet): bool => $loadedPallet['total_weight_lbs'] === null,
+        ) ? null : collect($cell['pallets'])->sum('total_weight_lbs');
+        $cell['unit_fraction'] = 1;
     }
 
     private function placeOversized(array &$racks, array $item, array $stop, string $code): int

@@ -243,7 +243,7 @@
             <div class="cv-vehicle-name">{{ $vehicle['name'] ?? 'Vehicle configuration missing' }}</div>
             <div class="cv-vehicle-meta">
                 @if ($vehicle)
-                    {{ $vehicle['rack_spot_count'] ?? 'No' }} rack spots
+                    {{ $vehicle['rack_spot_count'] ?? 'No' }} physical racks
                     · Piggyback forklift {{ $vehicle['piggyback_forklift_onboard'] ? 'onboard' : 'already at site' }}
                 @else
                     Select a vehicle on the trip to generate a loading diagram.
@@ -294,8 +294,10 @@
                 <span class="cv-metric-label">Product units</span>
             </div>
             <div class="cv-metric">
-                <span class="cv-metric-value">{{ number_format($diagram['used_rack_spots'] ?? 0) }}</span>
-                <span class="cv-metric-label">Rack spots used</span>
+                <span class="cv-metric-value">{{ number_format($diagram['rack_spot_count'] ?? 0) }}</span>
+                <span class="cv-metric-label">
+                    Trailer racks · {{ number_format($diagram['used_rack_spots'] ?? 0) }} carrying product
+                </span>
             </div>
             <div class="cv-metric">
                 <span class="cv-metric-value">{{ number_format($summary['oversized_rack_spots']) }}</span>
@@ -344,7 +346,7 @@
         <div class="cv-section-heading">
             <h2 class="cv-section-title">Truck loading diagram</h2>
             @if ($diagram['available'])
-                <span class="cv-section-note">Forward-weighted within stop order · partial and open racks at rear · Stop 1 unloads first.</span>
+                <span class="cv-section-note">Forward-weighted within stop order · partial and empty racks at rear · Stop 1 unloads first.</span>
             @endif
         </div>
 
@@ -410,7 +412,7 @@
                                                     @endforeach
                                                 </div>
                                             @else
-                                                <div class="cv-rack-open">Open<br>rack spot</div>
+                                                <div class="cv-rack-open">Empty<br>rack</div>
                                             @endif
                                             <div class="cv-rack-label">
                                                 R{{ $rack['number'] }}

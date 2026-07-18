@@ -46,7 +46,7 @@ trait HasTripForm
                         ->default(fn (): ?int => app(TripVehicleConfigurationResolver::class)
                             ->defaultIdForOrderIds([]))
                         ->required()
-                        ->helperText('Controls available rack spots and whether the piggyback forklift is onboard.'),
+                        ->helperText('Selects the 8- or 10-rack physical trailer layout and whether the piggyback forklift is onboard.'),
                     Select::make('status')
                         ->options([
                             'pending' => 'Pending',

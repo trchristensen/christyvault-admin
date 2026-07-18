@@ -53,13 +53,13 @@ class VehicleConfigurationResource extends Resource
                         ->required()
                         ->live()
                         ->native(false),
-                    TextInput::make('rack_spot_count')
-                        ->label('Rack Spots')
-                        ->numeric()
-                        ->integer()
-                        ->minValue(1)
+                    Select::make('rack_spot_count')
+                        ->label('Physical Trailer Racks')
+                        ->options(VehicleConfiguration::rackTrailerCountOptions())
+                        ->helperText('The movable rack stops allow exactly 8 or 10 physical racks; a rack trailer cannot run with fewer than 8.')
                         ->required(fn (Get $get): bool => $get('configuration_type') === VehicleConfiguration::TYPE_RACK_TRAILER)
-                        ->visible(fn (Get $get): bool => $get('configuration_type') === VehicleConfiguration::TYPE_RACK_TRAILER),
+                        ->visible(fn (Get $get): bool => $get('configuration_type') === VehicleConfiguration::TYPE_RACK_TRAILER)
+                        ->native(false),
                     TextInput::make('max_product_weight_lbs')
                         ->label('Maximum Product Weight')
                         ->helperText('Product cargo only. Racks and the piggyback forklift are excluded.')
@@ -92,8 +92,9 @@ class VehicleConfigurationResource extends Resource
                     ->formatStateUsing(fn (string $state): string => VehicleConfiguration::typeOptions()[$state] ?? $state)
                     ->badge(),
                 TextColumn::make('rack_spot_count')
-                    ->label('Rack Spots')
+                    ->label('Physical Racks')
                     ->placeholder('No racks')
+                    ->formatStateUsing(fn ($state): string => filled($state) ? $state.' racks' : 'No racks')
                     ->sortable(),
                 TextColumn::make('max_product_weight_lbs')
                     ->label('Product Weight Limit')

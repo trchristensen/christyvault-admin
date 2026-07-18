@@ -39,3 +39,16 @@ it('assigns L2472-4 to its confirmed three-high profile', function (): void {
 
     expect($assignments['L2472-4']['profile_code'])->toBe('ring_liner_three_high');
 });
+
+it('assigns the confirmed P-series pallet capacities', function (): void {
+    $assignments = collect(require dirname(__DIR__, 2).'/database/data/product_loading_profiles.php')
+        ->keyBy(fn (array $assignment): string => mb_strtoupper(trim($assignment['sku'])));
+
+    foreach (['P300', 'P310', 'P300P', 'P310P', 'P300WS', 'P310WS'] as $sku) {
+        expect($assignments[$sku]['profile_code'])->toBe('boxed_urn_products_18_per_pallet');
+    }
+
+    foreach (['P400', 'P410', 'P400WS'] as $sku) {
+        expect($assignments[$sku]['profile_code'])->toBe('boxed_urn_products_9_per_pallet');
+    }
+});

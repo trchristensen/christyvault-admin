@@ -57,4 +57,15 @@ return [
     ['sku' => 'UV712-WVS', 'profile_code' => 'wilbert_urn_vault_pallet'],
     ['sku' => 'UV712-MS', 'profile_code' => 'wilbert_urn_vault_pallet'],
     ['sku' => 'UV1212-M', 'profile_code' => 'wilbert_urn_vault_pallet'],
+
+    // Lightweight boxed urn products. All profiles in this family may share a mixed pallet.
+    ['sku' => 'P300', 'profile_code' => 'boxed_urn_products_18_per_pallet'],
+    ['sku' => 'P310', 'profile_code' => 'boxed_urn_products_18_per_pallet'],
+    ['sku' => 'P300P', 'profile_code' => 'boxed_urn_products_18_per_pallet'],
+    ['sku' => 'P310P', 'profile_code' => 'boxed_urn_products_18_per_pallet'],
+    ['sku' => 'P300WS', 'profile_code' => 'boxed_urn_products_18_per_pallet'],
+    ['sku' => 'P310WS', 'profile_code' => 'boxed_urn_products_18_per_pallet'],
+    ['sku' => 'P400', 'profile_code' => 'boxed_urn_products_9_per_pallet'],
+    ['sku' => 'P410', 'profile_code' => 'boxed_urn_products_9_per_pallet'],
+    ['sku' => 'P400WS', 'profile_code' => 'boxed_urn_products_9_per_pallet'],
 ];

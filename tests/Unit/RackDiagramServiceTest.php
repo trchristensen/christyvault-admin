@@ -153,6 +153,8 @@ it('stacks up to four G5 covers in each rack position', function (): void {
     ]));
 
     expect($diagram['placed_units'])->toBe(6)
+        ->and($diagram['rack_spot_count'])->toBe(8)
+        ->and($diagram['racks'])->toHaveCount(8)
         ->and($diagram['used_rack_spots'])->toBe(1)
         ->and($diagram['unplaced'])->toBeEmpty()
         ->and($diagram['legend'][0]['code'])->toBe('G5C')
@@ -162,6 +164,17 @@ it('stacks up to four G5 covers in each rack position', function (): void {
         ->and($diagram['racks'][0]['cells'][1]['code'])->toBe('2×G5C')
         ->and($diagram['racks'][0]['cells'][1]['quantity'])->toBe(2)
         ->and($diagram['racks'][1]['type_code'])->toBeNull();
+});
+
+it('retains all ten physical racks in the ten-rack trailer configuration', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [rackDiagramItem(['quantity' => 1])]),
+    ], rackSpots: 10));
+
+    expect($diagram['rack_spot_count'])->toBe(10)
+        ->and($diagram['racks'])->toHaveCount(10)
+        ->and($diagram['used_rack_spots'])->toBe(1)
+        ->and(collect($diagram['racks'])->whereNull('type_code'))->toHaveCount(9);
 });
 
 it('loads four Wilbert urn vaults per pallet and two pallets per capable rack level', function (): void {
@@ -215,6 +228,53 @@ it('loads four Wilbert urn vaults per pallet and two pallets per capable rack le
         ->and($loadedPallets->where('sku', 'UV1212-M')->pluck('units')->all())->toBe([1])
         ->and($palletCells->first()['pallets'])->toHaveCount(2)
         ->and($diagram['racks'][0]['cells'][1])->toBeNull();
+});
+
+it('combines compatible P-series products with different capacities on one mixed pallet', function (): void {
+    $palletProfile = [
+        'handling_method' => 'pallet',
+        'pallet_compatibility_group' => 'boxed_urn_products',
+        'required_rack_type' => 'standard_2_high',
+        'required_rack_level_count' => 2,
+        'allowed_rack_type_codes' => ['standard_2_high', 'standard_3_high'],
+        'allowed_rack_types' => [[
+            'code' => 'standard_2_high',
+            'level_count' => 2,
+            'pallet_capable_levels' => 1,
+            'pallets_per_capable_level' => 2,
+        ]],
+    ];
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem([...$palletProfile, ...[
+                'sku' => 'P400',
+                'name' => 'P400',
+                'quantity' => 4,
+                'units_per_pallet' => 9,
+                'unit_weight_lbs' => 45,
+            ]]),
+            rackDiagramItem([...$palletProfile, ...[
+                'sku' => 'P310',
+                'name' => 'P310',
+                'quantity' => 10,
+                'units_per_pallet' => 18,
+                'unit_weight_lbs' => 20,
+            ]]),
+        ]),
+    ]));
+    $loadedPallets = collect($diagram['racks'])
+        ->flatMap(fn (array $rack): array => $rack['cells'])
+        ->filter(fn ($cell): bool => (bool) ($cell['is_pallet_level'] ?? false))
+        ->flatMap(fn (array $cell): array => $cell['pallets']);
+    $mixedPallet = $loadedPallets->first();
+
+    expect($diagram['placed_units'])->toBe(14)
+        ->and($diagram['used_rack_spots'])->toBe(1)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($loadedPallets)->toHaveCount(1)
+        ->and($mixedPallet['sku'])->toBe('MIXED')
+        ->and($mixedPallet['capacity_used'])->toBe(1.0)
+        ->and(collect($mixedPallet['products'])->pluck('sku')->all())->toBe(['P400', 'P310']);
 });
 
 it('shares the open bottom G4 rack position with G5 covers from the same stop', function (): void {

@@ -18,6 +18,8 @@ class VehicleConfiguration extends Model
 
     public const TYPE_BOOM_TRUCK = 'boom_truck';
 
+    public const RACK_TRAILER_COUNTS = [8, 10];
+
     protected $fillable = [
         'code',
         'name',
@@ -42,6 +44,13 @@ class VehicleConfiguration extends Model
             self::TYPE_RACK_TRAILER => 'Rack trailer',
             self::TYPE_BOOM_TRUCK => 'Boom truck',
         ];
+    }
+
+    public static function rackTrailerCountOptions(): array
+    {
+        return collect(self::RACK_TRAILER_COUNTS)
+            ->mapWithKeys(fn (int $count): array => [$count => "{$count} racks"])
+            ->all();
     }
 
     public function trips(): HasMany
