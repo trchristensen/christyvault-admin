@@ -49,7 +49,7 @@
 }
 
 .delivery-trip-group-actions {
-    @apply flex shrink-0 items-center gap-2;
+    @apply flex shrink-0 items-center gap-1 rounded-lg border border-indigo-200 bg-white/80 p-1 shadow-sm dark:border-indigo-800 dark:bg-gray-900/80;
 }
 
 .delivery-trip-group-label {
