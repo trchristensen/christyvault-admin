@@ -25,6 +25,7 @@ class VehicleConfiguration extends Model
         'name',
         'configuration_type',
         'rack_spot_count',
+        'flatbed_pallet_capacity',
         'max_product_weight_lbs',
         'piggyback_forklift_onboard',
         'notes',
@@ -33,6 +34,7 @@ class VehicleConfiguration extends Model
 
     protected $casts = [
         'rack_spot_count' => 'integer',
+        'flatbed_pallet_capacity' => 'integer',
         'max_product_weight_lbs' => 'decimal:2',
         'piggyback_forklift_onboard' => 'boolean',
         'is_active' => 'boolean',

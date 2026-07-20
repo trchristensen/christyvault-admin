@@ -165,6 +165,7 @@ class LoadDemandService
                 'name' => $vehicleConfiguration->name,
                 'type' => $vehicleConfiguration->configuration_type,
                 'rack_spot_count' => $vehicleConfiguration->rack_spot_count,
+                'flatbed_pallet_capacity' => $vehicleConfiguration->flatbed_pallet_capacity,
                 'max_product_weight_lbs' => $maximumProductWeight,
                 'piggyback_forklift_onboard' => $vehicleConfiguration->piggyback_forklift_onboard,
             ] : null,

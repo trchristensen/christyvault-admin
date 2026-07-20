@@ -84,6 +84,7 @@ beforeEach(function (): void {
         $table->string('name');
         $table->string('configuration_type');
         $table->unsignedTinyInteger('rack_spot_count')->nullable();
+        $table->unsignedTinyInteger('flatbed_pallet_capacity')->default(0);
         $table->decimal('max_product_weight_lbs', 10, 2)->nullable();
         $table->boolean('piggyback_forklift_onboard')->default(false);
         $table->text('notes')->nullable();
@@ -98,6 +99,7 @@ beforeEach(function (): void {
             'name' => 'Rack trailer — forklift onboard',
             'configuration_type' => 'rack_trailer',
             'rack_spot_count' => 8,
+            'flatbed_pallet_capacity' => 4,
             'max_product_weight_lbs' => 38500,
             'piggyback_forklift_onboard' => true,
             'is_active' => true,
@@ -110,6 +112,7 @@ beforeEach(function (): void {
             'name' => 'Boom truck',
             'configuration_type' => 'boom_truck',
             'rack_spot_count' => null,
+            'flatbed_pallet_capacity' => 0,
             'max_product_weight_lbs' => null,
             'piggyback_forklift_onboard' => false,
             'is_active' => true,

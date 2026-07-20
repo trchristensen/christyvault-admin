@@ -60,6 +60,15 @@ class VehicleConfigurationResource extends Resource
                         ->required(fn (Get $get): bool => $get('configuration_type') === VehicleConfiguration::TYPE_RACK_TRAILER)
                         ->visible(fn (Get $get): bool => $get('configuration_type') === VehicleConfiguration::TYPE_RACK_TRAILER)
                         ->native(false),
+                    TextInput::make('flatbed_pallet_capacity')
+                        ->label('Fallback Flatbed Pallet Spots')
+                        ->helperText('Pallets prefer protected rack positions. These flatbed spots are used only when needed to fit the complete load.')
+                        ->numeric()
+                        ->integer()
+                        ->default(0)
+                        ->minValue(0)
+                        ->required()
+                        ->visible(fn (Get $get): bool => $get('configuration_type') === VehicleConfiguration::TYPE_RACK_TRAILER),
                     TextInput::make('max_product_weight_lbs')
                         ->label('Maximum Product Weight')
                         ->helperText('Product cargo only. Racks and the piggyback forklift are excluded.')
@@ -95,6 +104,10 @@ class VehicleConfigurationResource extends Resource
                     ->label('Physical Racks')
                     ->placeholder('No racks')
                     ->formatStateUsing(fn ($state): string => filled($state) ? $state.' racks' : 'No racks')
+                    ->sortable(),
+                TextColumn::make('flatbed_pallet_capacity')
+                    ->label('Flatbed Pallets')
+                    ->formatStateUsing(fn ($state): string => number_format((int) $state).' fallback spots')
                     ->sortable(),
                 TextColumn::make('max_product_weight_lbs')
                     ->label('Product Weight Limit')

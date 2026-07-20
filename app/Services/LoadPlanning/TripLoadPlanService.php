@@ -155,9 +155,10 @@ final class TripLoadPlanService
         }
 
         $rackSpots = max(1, (int) ($demand->vehicleConfiguration['rack_spot_count'] ?? 0));
+        $flatbedPalletCapacity = max(0, (int) ($demand->vehicleConfiguration['flatbed_pallet_capacity'] ?? 0));
         $physicalLimit = match (true) {
-            $item['handling_method'] === LoadingProfile::HANDLING_PALLET => $rackSpots
-                * 4
+            $item['handling_method'] === LoadingProfile::HANDLING_PALLET => (($rackSpots * 4)
+                + $flatbedPalletCapacity)
                 * max(1, (int) ($item['units_per_pallet'] ?? 1)),
             $item['rack_requirement'] === LoadingProfile::RACK_SINGLE => $rackSpots,
             default => $rackSpots * 3 * max(1, (int) ($item['units_per_rack_position'] ?? 1)),

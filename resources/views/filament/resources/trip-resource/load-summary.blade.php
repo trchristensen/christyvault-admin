@@ -331,10 +331,67 @@
         position: relative;
     }
 
+    .cv-trailer-cargo {
+        align-items: end;
+        display: flex;
+        gap: 10px;
+    }
+
     .cv-rack-grid {
         align-items: end;
         display: grid;
+        flex: 1;
         gap: 5px;
+    }
+
+    .cv-flatbed-zone {
+        min-width: 0;
+    }
+
+    .cv-flatbed-zone-label {
+        color: var(--cv-muted);
+        font-size: 8px;
+        font-weight: 800;
+        letter-spacing: .04em;
+        margin-bottom: 3px;
+        text-align: center;
+        text-transform: uppercase;
+    }
+
+    .cv-flatbed-slots {
+        display: grid;
+        gap: 4px;
+    }
+
+    .cv-flatbed-slot {
+        align-items: center;
+        border: 2px solid #344054;
+        display: flex;
+        flex-direction: column;
+        height: 58px;
+        justify-content: center;
+        min-width: 66px;
+        padding: 3px;
+        position: relative;
+        text-align: center;
+    }
+
+    .cv-flatbed-position {
+        min-width: 66px;
+    }
+
+    .cv-flatbed-slot-empty {
+        border-style: dashed;
+        color: #98a2b3;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .cv-flatbed-spot-label {
+        color: var(--cv-muted);
+        font-size: 8px;
+        font-weight: 750;
+        margin-top: 2px;
     }
 
     .cv-rack {
@@ -662,6 +719,10 @@
         border-color: #aeb7c5;
     }
 
+    html.dark .cv-flatbed-slot {
+        border-color: #aeb7c5;
+    }
+
     html.dark .cv-rack-cell {
         border-color: #aeb7c5;
     }
@@ -780,6 +841,7 @@
             <div class="cv-vehicle-meta">
                 @if ($vehicle)
                     {{ $vehicle['rack_spot_count'] ?? 'No' }} physical racks
+                    · {{ number_format($vehicle['flatbed_pallet_capacity'] ?? 0) }} fallback flatbed pallet spots
                     · Piggyback forklift {{ $vehicle['piggyback_forklift_onboard'] ? 'onboard' : 'already at site' }}
                 @else
                     Select a vehicle on the trip to generate a loading diagram.
@@ -839,7 +901,9 @@
             </div>
             <div class="cv-metric">
                 <span class="cv-metric-value">{{ number_format($summary['pallets']) }}</span>
-                <span class="cv-metric-label">Pallets</span>
+                <span class="cv-metric-label">
+                    Pallets · {{ number_format($diagram['flatbed_pallets_used'] ?? 0) }} strapped to flatbed
+                </span>
             </div>
         </section>
     </div>
@@ -908,56 +972,92 @@
 
                         <div>
                             <div class="cv-trailer">
-                                <div class="cv-rack-grid"
-                                    style="grid-template-columns: repeat({{ count($diagram['racks']) }}, minmax(76px, 1fr));">
-                                    @foreach ($diagram['racks'] as $rack)
-                                        <div class="cv-rack">
-                                            @if ($rack['type_code'])
-                                                <div class="cv-rack-body"
-                                                    style="grid-template-rows: repeat({{ $rack['level_count'] }}, var(--cv-rack-level-height));"
-                                                    title="Rack {{ $rack['number'] }} · {{ $rack['type_label'] }}">
-                                                    @foreach (array_reverse($rack['cells'], true) as $cell)
-                                                        @if ($cell)
-                                                            <div
-                                                                class="cv-rack-cell cv-stop-{{ (($cell['stop_sequence'] - 1) % 6) + 1 }}">
+                                <div class="cv-trailer-cargo">
+                                    <div class="cv-rack-grid"
+                                        style="grid-template-columns: repeat({{ count($diagram['racks']) }}, minmax(76px, 1fr));">
+                                        @foreach ($diagram['racks'] as $rack)
+                                            <div class="cv-rack">
+                                                @if ($rack['type_code'])
+                                                    <div class="cv-rack-body"
+                                                        style="grid-template-rows: repeat({{ $rack['level_count'] }}, var(--cv-rack-level-height));"
+                                                        title="Rack {{ $rack['number'] }} · {{ $rack['type_label'] }}">
+                                                        @foreach (array_reverse($rack['cells'], true) as $cell)
+                                                            @if ($cell)
+                                                                <div
+                                                                    class="cv-rack-cell cv-stop-{{ (($cell['stop_sequence'] - 1) % 6) + 1 }}">
+                                                                    @if ($isMultiStop)
+                                                                        <span class="cv-cell-stop-badge">S{{ $cell['stop_sequence'] }}</span>
+                                                                    @endif
+                                                                    <span
+                                                                        class="cv-cell-code {{ $cell['is_pallet_level'] ?? false ? 'cv-cell-code-pallet' : '' }}">{{ $cell['code'] }}</span>
+                                                                    @if (($cell['is_pallet_level'] ?? false) || ($cell['component'] ?? null) === 'half')
+                                                                        <span class="cv-cell-meta">
+                                                                            @if ($cell['is_pallet_level'] ?? false)
+                                                                                {{ count($cell['pallets']) }}
+                                                                                {{ Str::plural('pallet', count($cell['pallets'])) }}
+                                                                            @endif
+                                                                            @if (($cell['component'] ?? null) === 'half')
+                                                                                Pair {{ $cell['split_pair'] }}
+                                                                            @endif
+                                                                        </span>
+                                                                    @endif
+                                                                </div>
+                                                            @else
+                                                                <div class="cv-rack-cell cv-rack-cell-empty">—</div>
+                                                            @endif
+                                                        @endforeach
+                                                    </div>
+                                                @else
+                                                    <div class="cv-rack-open">Empty<br>rack</div>
+                                                @endif
+                                                <div class="cv-rack-label">
+                                                    R{{ $rack['number'] }}
+                                                    @if ($rack['type_code'])
+                                                        <span class="cv-rack-weight">
+                                                            {{ number_format($rack['product_weight_lbs'], 0) }}
+                                                            lb{{ $rack['has_unknown_weight'] ? ' + ?' : '' }}
+                                                        </span>
+                                                    @else
+                                                        <span class="cv-rack-weight">0 lb</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+
+                                    @if (($diagram['flatbed_pallets_used'] ?? 0) > 0)
+                                        <div class="cv-flatbed-zone">
+                                            <div class="cv-flatbed-zone-label">Strapped flatbed fallback</div>
+                                            <div class="cv-flatbed-slots"
+                                                style="grid-template-columns: repeat({{ $diagram['flatbed_pallet_capacity'] }}, minmax(66px, 1fr));">
+                                                @for ($spot = 1; $spot <= $diagram['flatbed_pallet_capacity']; $spot++)
+                                                    @php
+                                                        $pallet = $diagram['flatbed_pallets'][$spot - 1] ?? null;
+                                                    @endphp
+                                                    <div class="cv-flatbed-position">
+                                                        @if ($pallet)
+                                                            <div class="cv-flatbed-slot cv-stop-{{ (($pallet['stop_sequence'] - 1) % 6) + 1 }}"
+                                                                title="Flatbed pallet {{ $spot }} · {{ $pallet['name'] }}">
                                                                 @if ($isMultiStop)
-                                                                    <span class="cv-cell-stop-badge">S{{ $cell['stop_sequence'] }}</span>
+                                                                    <span class="cv-cell-stop-badge">S{{ $pallet['stop_sequence'] }}</span>
                                                                 @endif
-                                                                <span
-                                                                    class="cv-cell-code {{ $cell['is_pallet_level'] ?? false ? 'cv-cell-code-pallet' : '' }}">{{ $cell['code'] }}</span>
-                                                                @if (($cell['is_pallet_level'] ?? false) || ($cell['component'] ?? null) === 'half')
-                                                                    <span class="cv-cell-meta">
-                                                                        @if ($cell['is_pallet_level'] ?? false)
-                                                                            {{ count($cell['pallets']) }}
-                                                                            {{ Str::plural('pallet', count($cell['pallets'])) }}
-                                                                        @endif
-                                                                        @if (($cell['component'] ?? null) === 'half')
-                                                                            Pair {{ $cell['split_pair'] }}
-                                                                        @endif
-                                                                    </span>
-                                                                @endif
+                                                                <span class="cv-cell-code cv-cell-code-pallet">{{ $pallet['code'] }}</span>
+                                                                <span class="cv-cell-meta">Strap to deck</span>
                                                             </div>
                                                         @else
-                                                            <div class="cv-rack-cell cv-rack-cell-empty">—</div>
+                                                            <div class="cv-flatbed-slot cv-flatbed-slot-empty">Open</div>
                                                         @endif
-                                                    @endforeach
-                                                </div>
-                                            @else
-                                                <div class="cv-rack-open">Empty<br>rack</div>
-                                            @endif
-                                            <div class="cv-rack-label">
-                                                R{{ $rack['number'] }}
-                                                @if ($rack['type_code'])
-                                                    <span class="cv-rack-weight">
-                                                        {{ number_format($rack['product_weight_lbs'], 0) }}
-                                                        lb{{ $rack['has_unknown_weight'] ? ' + ?' : '' }}
-                                                    </span>
-                                                @else
-                                                    <span class="cv-rack-weight">0 lb</span>
-                                                @endif
+                                                        <div class="cv-flatbed-spot-label">
+                                                            P{{ $spot }}
+                                                            @if ($pallet)
+                                                                · {{ $pallet['total_weight_lbs'] === null ? '?' : number_format($pallet['total_weight_lbs'], 0) }} lb
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                @endfor
                                             </div>
                                         </div>
-                                    @endforeach
+                                    @endif
                                 </div>
                             </div>
                             <div class="cv-trailer-wheels" aria-hidden="true">

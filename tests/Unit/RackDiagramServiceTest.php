@@ -30,7 +30,7 @@ function rackDiagramStop(int $sequence, array $items): array
     ];
 }
 
-function rackDiagramDemand(array $stops, int $rackSpots = 8): LoadDemandResult
+function rackDiagramDemand(array $stops, int $rackSpots = 8, int $flatbedPalletCapacity = 0): LoadDemandResult
 {
     return new LoadDemandResult(
         summary: [],
@@ -39,6 +39,7 @@ function rackDiagramDemand(array $stops, int $rackSpots = 8): LoadDemandResult
         vehicleConfiguration: [
             'type' => 'rack_trailer',
             'rack_spot_count' => $rackSpots,
+            'flatbed_pallet_capacity' => $flatbedPalletCapacity,
         ],
     );
 }
@@ -214,7 +215,7 @@ it('loads four Wilbert urn vaults per pallet and two pallets per capable rack le
                 'unit_weight_lbs' => 104,
             ]]),
         ]),
-    ]));
+    ], flatbedPalletCapacity: 4));
     $palletCells = collect($diagram['racks'])
         ->flatMap(fn (array $rack): array => $rack['cells'])
         ->filter(fn ($cell): bool => (bool) ($cell['is_pallet_level'] ?? false));
@@ -222,12 +223,150 @@ it('loads four Wilbert urn vaults per pallet and two pallets per capable rack le
 
     expect($diagram['placed_units'])->toBe(6)
         ->and($diagram['used_rack_spots'])->toBe(2)
+        ->and($diagram['flatbed_pallets_used'])->toBe(0)
         ->and($diagram['unplaced'])->toBeEmpty()
         ->and($loadedPallets)->toHaveCount(3)
         ->and($loadedPallets->where('sku', 'UV1212-VWS')->pluck('units')->all())->toBe([4, 1])
         ->and($loadedPallets->where('sku', 'UV1212-M')->pluck('units')->all())->toBe([1])
         ->and($palletCells->first()['pallets'])->toHaveCount(2)
         ->and($diagram['racks'][0]['cells'][1])->toBeNull();
+});
+
+it('uses the fewest fallback flatbed pallet spots needed to fit the complete load', function (): void {
+    $palletProfile = [
+        'handling_method' => 'pallet',
+        'units_per_pallet' => 4,
+        'required_rack_type' => 'standard_2_high',
+        'required_rack_level_count' => 2,
+        'allowed_rack_type_codes' => ['standard_2_high', 'standard_3_high'],
+        'allowed_rack_types' => [[
+            'code' => 'standard_2_high',
+            'level_count' => 2,
+            'pallet_capable_levels' => 1,
+            'pallets_per_capable_level' => 2,
+        ]],
+    ];
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem([
+                'sku' => 'W3490-M',
+                'name' => 'Oversized vault',
+                'quantity' => 8,
+                'rack_requirement' => 'single',
+                'required_rack_type' => null,
+                'required_rack_level_count' => null,
+                'unit_weight_lbs' => 3000,
+            ]),
+            rackDiagramItem([...$palletProfile, ...[
+                'sku' => 'UV1212-M',
+                'name' => 'Monticello Urn Vault',
+                'quantity' => 4,
+                'unit_weight_lbs' => 104,
+            ]]),
+        ]),
+    ], flatbedPalletCapacity: 4));
+
+    expect($diagram['placed_units'])->toBe(12)
+        ->and($diagram['used_rack_spots'])->toBe(8)
+        ->and($diagram['flatbed_pallet_capacity'])->toBe(4)
+        ->and($diagram['flatbed_pallets_used'])->toBe(1)
+        ->and($diagram['flatbed_pallets'][0])->toMatchArray([
+            'spot_number' => 1,
+            'sku' => 'UV1212-M',
+            'units' => 4,
+            'stop_sequence' => 1,
+        ])
+        ->and($diagram['unplaced'])->toBeEmpty();
+});
+
+it('does not exceed the configured flatbed pallet fallback capacity', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem([
+                'sku' => 'W3490-M',
+                'quantity' => 8,
+                'rack_requirement' => 'single',
+                'required_rack_type' => null,
+                'required_rack_level_count' => null,
+                'unit_weight_lbs' => 3000,
+            ]),
+            rackDiagramItem([
+                'sku' => 'UV1212-M',
+                'name' => 'Monticello Urn Vault',
+                'quantity' => 20,
+                'handling_method' => 'pallet',
+                'units_per_pallet' => 4,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'allowed_rack_type_codes' => ['standard_2_high'],
+                'allowed_rack_types' => [[
+                    'code' => 'standard_2_high',
+                    'level_count' => 2,
+                    'pallet_capable_levels' => 1,
+                    'pallets_per_capable_level' => 2,
+                ]],
+                'unit_weight_lbs' => 104,
+            ]),
+        ]),
+    ], flatbedPalletCapacity: 4));
+
+    expect($diagram['placed_units'])->toBe(24)
+        ->and($diagram['flatbed_pallets_used'])->toBe(4)
+        ->and($diagram['unplaced'])->toHaveCount(1)
+        ->and($diagram['unplaced'][0])->toMatchArray([
+            'sku' => 'UV1212-M',
+            'quantity' => 4,
+            'reason' => 'Not enough compatible pallet rack or fallback flatbed positions.',
+        ]);
+});
+
+it('combines compatible products on one fallback flatbed pallet', function (): void {
+    $palletProfile = [
+        'handling_method' => 'pallet',
+        'pallet_compatibility_group' => 'boxed_urn_products',
+        'required_rack_type' => 'standard_2_high',
+        'required_rack_level_count' => 2,
+        'allowed_rack_type_codes' => ['standard_2_high'],
+        'allowed_rack_types' => [[
+            'code' => 'standard_2_high',
+            'level_count' => 2,
+            'pallet_capable_levels' => 1,
+            'pallets_per_capable_level' => 2,
+        ]],
+    ];
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem([
+                'sku' => 'W3490-M',
+                'quantity' => 8,
+                'rack_requirement' => 'single',
+                'required_rack_type' => null,
+                'required_rack_level_count' => null,
+                'unit_weight_lbs' => 3000,
+            ]),
+            rackDiagramItem([...$palletProfile, ...[
+                'sku' => 'P400',
+                'name' => 'P400',
+                'quantity' => 4,
+                'units_per_pallet' => 9,
+                'unit_weight_lbs' => 45,
+            ]]),
+            rackDiagramItem([...$palletProfile, ...[
+                'sku' => 'P310',
+                'name' => 'P310',
+                'quantity' => 10,
+                'units_per_pallet' => 18,
+                'unit_weight_lbs' => 20,
+            ]]),
+        ]),
+    ], flatbedPalletCapacity: 4));
+
+    expect($diagram['placed_units'])->toBe(22)
+        ->and($diagram['flatbed_pallets_used'])->toBe(1)
+        ->and($diagram['flatbed_pallets'][0]['sku'])->toBe('MIXED')
+        ->and($diagram['flatbed_pallets'][0]['capacity_used'])->toBe(1.0)
+        ->and(collect($diagram['flatbed_pallets'][0]['products'])->pluck('sku')->all())->toBe(['P400', 'P310'])
+        ->and($diagram['unplaced'])->toBeEmpty();
 });
 
 it('combines compatible P-series products with different capacities on one mixed pallet', function (): void {

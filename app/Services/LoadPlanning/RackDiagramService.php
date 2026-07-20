@@ -18,23 +18,44 @@ class RackDiagramService
 
     public function forDemand(LoadDemandResult $demand): array
     {
-        $preferred = $this->buildDiagram($demand, compactSplitDoubles: false);
+        $flatbedCapacity = max(0, (int) ($demand->vehicleConfiguration['flatbed_pallet_capacity'] ?? 0));
+        $compactOptions = $this->hasSplitDoubleItems($demand) ? [false, true] : [false];
+        $best = null;
 
-        if (! $preferred['available'] || ! $this->hasSplitDoubleItems($demand)) {
-            return $preferred;
+        for ($flatbedPalletTarget = 0; $flatbedPalletTarget <= $flatbedCapacity; $flatbedPalletTarget++) {
+            foreach ($compactOptions as $compactSplitDoubles) {
+                $candidate = $this->buildDiagram(
+                    $demand,
+                    compactSplitDoubles: $compactSplitDoubles,
+                    flatbedPalletTarget: $flatbedPalletTarget,
+                );
+
+                if ($best === null || $this->diagramIsBetter($candidate, $best)) {
+                    $best = $candidate;
+                }
+            }
         }
 
-        $compact = $this->buildDiagram($demand, compactSplitDoubles: true);
-
-        return $compact['placed_units'] > $preferred['placed_units']
-            ? $compact
-            : $preferred;
+        return $best;
     }
 
-    private function buildDiagram(LoadDemandResult $demand, bool $compactSplitDoubles): array
+    private function diagramIsBetter(array $candidate, array $current): bool
     {
+        if (($candidate['placed_units'] ?? 0) !== ($current['placed_units'] ?? 0)) {
+            return ($candidate['placed_units'] ?? 0) > ($current['placed_units'] ?? 0);
+        }
+
+        return ($candidate['flatbed_pallets_used'] ?? 0) < ($current['flatbed_pallets_used'] ?? 0);
+    }
+
+    private function buildDiagram(
+        LoadDemandResult $demand,
+        bool $compactSplitDoubles,
+        int $flatbedPalletTarget,
+    ): array {
         $vehicle = $demand->vehicleConfiguration;
         $rackSpotCount = (int) ($vehicle['rack_spot_count'] ?? 0);
+        $flatbedPalletCapacity = max(0, (int) ($vehicle['flatbed_pallet_capacity'] ?? 0));
 
         if (($vehicle['type'] ?? null) !== 'rack_trailer' || $rackSpotCount < 1) {
             return [
@@ -47,6 +68,9 @@ class RackDiagramService
                 'unplaced' => [],
                 'placed_units' => 0,
                 'used_rack_spots' => 0,
+                'flatbed_pallets' => [],
+                'flatbed_pallets_used' => 0,
+                'flatbed_pallet_capacity' => $flatbedPalletCapacity,
             ];
         }
 
@@ -66,6 +90,7 @@ class RackDiagramService
         $unplaced = [];
         $usedCodes = [];
         $placedUnits = 0;
+        $flatbedPallets = [];
 
         foreach (array_reverse($demand->stops) as $stop) {
             $items = collect($stop['items'])
@@ -94,7 +119,14 @@ class RackDiagramService
                 ];
 
                 if ($item['handling_method'] === LoadingProfile::HANDLING_PALLET) {
-                    $placed = $this->placePallets($racks, $item, $stop, $code);
+                    $placed = $this->placePallets(
+                        $racks,
+                        $flatbedPallets,
+                        $flatbedPalletTarget,
+                        $item,
+                        $stop,
+                        $code,
+                    );
                 } elseif ($item['rack_requirement'] === LoadingProfile::RACK_SINGLE) {
                     $placed = $this->placeOversized($racks, $item, $stop, $code);
                 } elseif ($item['rack_requirement'] === LoadingProfile::RACK_STANDARD) {
@@ -124,7 +156,7 @@ class RackDiagramService
 
                 if ($remaining > 0) {
                     $reason = match (true) {
-                        $item['handling_method'] === LoadingProfile::HANDLING_PALLET => 'Not enough compatible pallet rack positions.',
+                        $item['handling_method'] === LoadingProfile::HANDLING_PALLET => 'Not enough compatible pallet rack or fallback flatbed positions.',
                         ($item['placement_strategy'] ?? null) === LoadingProfile::PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR => 'Not enough paired 2-high rack positions.',
                         $item['required_rack_level'] === LoadingProfile::LEVEL_BOTTOM => 'Not enough eligible bottom rack positions.',
                         default => 'Not enough compatible rack positions.',
@@ -153,11 +185,20 @@ class RackDiagramService
             'placed_units' => $placedUnits,
             'used_rack_spots' => collect($racks)->whereNotNull('type_code')->count(),
             'rack_spot_count' => $rackSpotCount,
+            'flatbed_pallets' => $flatbedPallets,
+            'flatbed_pallets_used' => count($flatbedPallets),
+            'flatbed_pallet_capacity' => $flatbedPalletCapacity,
         ];
     }
 
-    private function placePallets(array &$racks, array $item, array $stop, string $code): int
-    {
+    private function placePallets(
+        array &$racks,
+        array &$flatbedPallets,
+        int $flatbedPalletTarget,
+        array $item,
+        array $stop,
+        string $code,
+    ): int {
         $unitsPerPallet = (int) ($item['units_per_pallet'] ?? 0);
         $rackType = $item['required_rack_type'] ?? null;
         $levelCount = (int) ($item['required_rack_level_count'] ?? 0);
@@ -193,7 +234,38 @@ class RackDiagramService
                 continue;
             }
 
+            $mixedFlatbedUnits = $this->addToCompatiblePartialFlatbedPallet(
+                $flatbedPallets,
+                $item,
+                $stop,
+                $code,
+                $remainingUnits,
+                $unitsPerPallet,
+            );
+
+            if ($mixedFlatbedUnits > 0) {
+                $placedUnits += $mixedFlatbedUnits;
+                $remainingUnits -= $mixedFlatbedUnits;
+
+                continue;
+            }
+
             $palletUnits = min($unitsPerPallet, $remainingUnits);
+
+            if (count($flatbedPallets) < $flatbedPalletTarget) {
+                $flatbedPallets[] = [
+                    ...$this->pallet($item, $code, $palletUnits, $unitsPerPallet),
+                    'spot_number' => count($flatbedPallets) + 1,
+                    'stop_sequence' => (int) $stop['sequence'],
+                    'order_number' => $stop['order_number'] ?? null,
+                    'location_name' => $stop['location_name'] ?? null,
+                ];
+                $placedUnits += $palletUnits;
+                $remainingUnits -= $palletUnits;
+
+                continue;
+            }
+
             $rackIndex = collect($racks)
                 ->keys()
                 ->first(fn (int $rackIndex): bool => in_array($racks[$rackIndex]['type_code'], $allowedRackTypes, true)
@@ -279,28 +351,7 @@ class RackDiagramService
                 continue;
             }
 
-            $pallet = [
-                'code' => $palletUnits.'×'.$code,
-                'sku' => $item['sku'],
-                'name' => $item['name'],
-                'units' => $palletUnits,
-                'capacity' => $unitsPerPallet,
-                'capacity_used' => $palletUnits / $unitsPerPallet,
-                'compatibility_group' => $item['pallet_compatibility_group'] ?? null,
-                'products' => [[
-                    'code' => $palletUnits.'×'.$code,
-                    'sku' => $item['sku'],
-                    'name' => $item['name'],
-                    'units' => $palletUnits,
-                    'capacity' => $unitsPerPallet,
-                    'total_weight_lbs' => $item['unit_weight_lbs'] === null
-                        ? null
-                        : (float) $item['unit_weight_lbs'] * $palletUnits,
-                ]],
-                'total_weight_lbs' => $item['unit_weight_lbs'] === null
-                    ? null
-                    : (float) $item['unit_weight_lbs'] * $palletUnits,
-            ];
+            $pallet = $this->pallet($item, $code, $palletUnits, $unitsPerPallet);
 
             if ($cell === null) {
                 $cell = [
@@ -323,6 +374,70 @@ class RackDiagramService
         }
 
         return false;
+    }
+
+    private function pallet(array $item, string $code, int $palletUnits, int $unitsPerPallet): array
+    {
+        $totalWeight = $item['unit_weight_lbs'] === null
+            ? null
+            : (float) $item['unit_weight_lbs'] * $palletUnits;
+
+        return [
+            'code' => $palletUnits.'×'.$code,
+            'sku' => $item['sku'],
+            'name' => $item['name'],
+            'units' => $palletUnits,
+            'capacity' => $unitsPerPallet,
+            'capacity_used' => $palletUnits / $unitsPerPallet,
+            'compatibility_group' => $item['pallet_compatibility_group'] ?? null,
+            'products' => [[
+                'code' => $palletUnits.'×'.$code,
+                'sku' => $item['sku'],
+                'name' => $item['name'],
+                'units' => $palletUnits,
+                'capacity' => $unitsPerPallet,
+                'total_weight_lbs' => $totalWeight,
+            ]],
+            'total_weight_lbs' => $totalWeight,
+        ];
+    }
+
+    private function addToCompatiblePartialFlatbedPallet(
+        array &$flatbedPallets,
+        array $item,
+        array $stop,
+        string $code,
+        int $remainingUnits,
+        int $unitsPerPallet,
+    ): int {
+        $compatibilityGroup = $item['pallet_compatibility_group'] ?? null;
+
+        if (! filled($compatibilityGroup)) {
+            return 0;
+        }
+
+        foreach ($flatbedPallets as &$pallet) {
+            if (($pallet['stop_sequence'] ?? null) !== (int) $stop['sequence']
+                || ($pallet['compatibility_group'] ?? null) !== $compatibilityGroup) {
+                continue;
+            }
+
+            $remainingFraction = max(0, 1 - (float) ($pallet['capacity_used'] ?? 1));
+            $unitsThatFit = (int) floor(($remainingFraction * $unitsPerPallet) + 0.000001);
+
+            if ($unitsThatFit < 1) {
+                continue;
+            }
+
+            $unitsToAdd = min($remainingUnits, $unitsThatFit);
+            $this->addProductToPallet($pallet, $item, $code, $unitsToAdd, $unitsPerPallet);
+            unset($pallet);
+
+            return $unitsToAdd;
+        }
+        unset($pallet);
+
+        return 0;
     }
 
     private function addToCompatiblePartialPallet(
@@ -373,37 +488,7 @@ class RackDiagramService
                     }
 
                     $unitsToAdd = min($remainingUnits, $unitsThatFit);
-                    $productWeight = $item['unit_weight_lbs'] === null
-                        ? null
-                        : (float) $item['unit_weight_lbs'] * $unitsToAdd;
-                    $existingProductIndex = collect($pallet['products'] ?? [])
-                        ->search(fn (array $product): bool => $product['sku'] === $item['sku']);
-
-                    if ($existingProductIndex === false) {
-                        $pallet['products'][] = [
-                            'code' => $unitsToAdd.'×'.$code,
-                            'sku' => $item['sku'],
-                            'name' => $item['name'],
-                            'units' => $unitsToAdd,
-                            'capacity' => $unitsPerPallet,
-                            'total_weight_lbs' => $productWeight,
-                        ];
-                    } else {
-                        $pallet['products'][$existingProductIndex]['units'] += $unitsToAdd;
-                        $pallet['products'][$existingProductIndex]['code'] = $pallet['products'][$existingProductIndex]['units'].'×'.$code;
-                        $pallet['products'][$existingProductIndex]['total_weight_lbs'] = $item['unit_weight_lbs'] === null
-                            ? null
-                            : (float) $item['unit_weight_lbs'] * $pallet['products'][$existingProductIndex]['units'];
-                    }
-
-                    $pallet['capacity_used'] = min(1, (float) $pallet['capacity_used'] + ($unitsToAdd / $unitsPerPallet));
-                    $pallet['units'] = collect($pallet['products'])->sum('units');
-                    $pallet['code'] = collect($pallet['products'])->pluck('code')->implode(' + ');
-                    $pallet['sku'] = count($pallet['products']) === 1 ? $pallet['products'][0]['sku'] : 'MIXED';
-                    $pallet['name'] = count($pallet['products']) === 1 ? $pallet['products'][0]['name'] : 'Mixed boxed products';
-                    $pallet['total_weight_lbs'] = collect($pallet['products'])->contains(
-                        fn (array $product): bool => $product['total_weight_lbs'] === null,
-                    ) ? null : collect($pallet['products'])->sum('total_weight_lbs');
+                    $this->addProductToPallet($pallet, $item, $code, $unitsToAdd, $unitsPerPallet);
                     $this->refreshPalletCell($cell);
 
                     unset($pallet, $cell, $rack);
@@ -416,6 +501,46 @@ class RackDiagramService
         unset($rack);
 
         return 0;
+    }
+
+    private function addProductToPallet(
+        array &$pallet,
+        array $item,
+        string $code,
+        int $unitsToAdd,
+        int $unitsPerPallet,
+    ): void {
+        $productWeight = $item['unit_weight_lbs'] === null
+            ? null
+            : (float) $item['unit_weight_lbs'] * $unitsToAdd;
+        $existingProductIndex = collect($pallet['products'] ?? [])
+            ->search(fn (array $product): bool => $product['sku'] === $item['sku']);
+
+        if ($existingProductIndex === false) {
+            $pallet['products'][] = [
+                'code' => $unitsToAdd.'×'.$code,
+                'sku' => $item['sku'],
+                'name' => $item['name'],
+                'units' => $unitsToAdd,
+                'capacity' => $unitsPerPallet,
+                'total_weight_lbs' => $productWeight,
+            ];
+        } else {
+            $pallet['products'][$existingProductIndex]['units'] += $unitsToAdd;
+            $pallet['products'][$existingProductIndex]['code'] = $pallet['products'][$existingProductIndex]['units'].'×'.$code;
+            $pallet['products'][$existingProductIndex]['total_weight_lbs'] = $item['unit_weight_lbs'] === null
+                ? null
+                : (float) $item['unit_weight_lbs'] * $pallet['products'][$existingProductIndex]['units'];
+        }
+
+        $pallet['capacity_used'] = min(1, (float) $pallet['capacity_used'] + ($unitsToAdd / $unitsPerPallet));
+        $pallet['units'] = collect($pallet['products'])->sum('units');
+        $pallet['code'] = collect($pallet['products'])->pluck('code')->implode(' + ');
+        $pallet['sku'] = count($pallet['products']) === 1 ? $pallet['products'][0]['sku'] : 'MIXED';
+        $pallet['name'] = count($pallet['products']) === 1 ? $pallet['products'][0]['name'] : 'Mixed boxed products';
+        $pallet['total_weight_lbs'] = collect($pallet['products'])->contains(
+            fn (array $product): bool => $product['total_weight_lbs'] === null,
+        ) ? null : collect($pallet['products'])->sum('total_weight_lbs');
     }
 
     private function refreshPalletCell(array &$cell): void
