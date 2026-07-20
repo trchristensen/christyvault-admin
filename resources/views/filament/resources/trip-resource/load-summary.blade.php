@@ -283,13 +283,25 @@
         border-radius: 14px;
         contain: inline-size;
         min-width: 0;
-        overflow-x: auto;
+        overflow: hidden;
         padding: 16px 16px 10px;
+        width: 100%;
+    }
+
+    .cv-truck {
+        min-width: 0;
+    }
+
+    .cv-truck-scroll {
+        contain: inline-size;
+        min-width: 0;
+        overflow-x: auto;
+        padding-bottom: 8px;
         width: 100%;
         -webkit-overflow-scrolling: touch;
     }
 
-    .cv-truck {
+    .cv-truck-canvas {
         min-width: 980px;
     }
 
@@ -331,8 +343,8 @@
     }
 
     .cv-trailer-stack {
-        flex: 1;
-        min-width: 0;
+        flex: 1 0 max-content;
+        min-width: max-content;
     }
 
     .cv-piggyback-wrap {
@@ -369,6 +381,7 @@
     }
 
     .cv-trailer-cargo {
+        --cv-rack-level-height: 40px;
         align-items: end;
         display: flex;
         gap: 10px;
@@ -383,6 +396,7 @@
 
     .cv-flatbed-zone {
         min-width: 0;
+        position: relative;
     }
 
     .cv-flatbed-zone-label {
@@ -390,9 +404,12 @@
         font-size: 8px;
         font-weight: 800;
         letter-spacing: .04em;
-        margin-bottom: 3px;
+        left: 0;
+        position: absolute;
         text-align: center;
+        top: -15px;
         text-transform: uppercase;
+        width: 100%;
     }
 
     .cv-flatbed-slots {
@@ -405,7 +422,7 @@
         border: 2px solid #344054;
         display: flex;
         flex-direction: column;
-        height: 58px;
+        height: calc((var(--cv-rack-level-height) * 3) + 6px);
         justify-content: center;
         min-width: 66px;
         padding: 3px;
@@ -426,13 +443,14 @@
 
     .cv-flatbed-spot-label {
         color: var(--cv-muted);
-        font-size: 8px;
-        font-weight: 750;
-        margin-top: 2px;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.15;
+        margin-top: 5px;
+        text-align: center;
     }
 
     .cv-rack {
-        --cv-rack-level-height: 40px;
         min-width: 76px;
         position: relative;
     }
@@ -833,7 +851,7 @@
             text-align: left;
         }
 
-        .cv-truck {
+        .cv-truck-canvas {
             min-width: 760px;
         }
 
@@ -848,6 +866,7 @@
 
         .cv-piggyback-wrap {
             flex-basis: 62px;
+            margin-left: -5px;
         }
 
         .cv-piggyback {
@@ -859,8 +878,11 @@
             min-width: 590px;
         }
 
-        .cv-rack {
+        .cv-trailer-cargo {
             --cv-rack-level-height: 36px;
+        }
+
+        .cv-rack {
             min-width: 66px;
         }
 
@@ -875,6 +897,10 @@
         }
 
         .cv-diagram-frame {
+            overflow: visible;
+        }
+
+        .cv-truck-scroll {
             overflow: visible;
         }
 
@@ -1002,13 +1028,15 @@
         @if ($diagram['available'])
             <div class="cv-diagram-frame">
                 <div class="cv-truck">
-                    <div class="cv-direction-row">
-                        <span>Front / tractor</span>
-                        <span>Rear / unload first →</span>
-                    </div>
-                    <div class="cv-truck-body">
-                        <svg class="cv-tractor" viewBox="0 0 160 140" role="img"
-                            aria-label="Compact cab-over truck tractor">
+                    <div class="cv-truck-scroll">
+                        <div class="cv-truck-canvas">
+                            <div class="cv-direction-row">
+                                <span>Front / tractor</span>
+                                <span>Rear / unload first →</span>
+                            </div>
+                            <div class="cv-truck-body">
+                                <svg class="cv-tractor" viewBox="0 0 160 140" role="img"
+                                    aria-label="Compact cab-over truck tractor">
                             <path d="M8 43 19 24h75l14 18v57h43v10H8z" fill="currentColor" opacity=".14" />
                             <path
                                 d="M8 103V43l11-19h75l14 18v57h43v10H8zM22 32h62l14 16v22H20V43zM99 48v51M108 87h23l9 8M13 78h28M13 87h28M53 82h34M52 94h39M14 101h23"
@@ -1017,9 +1045,9 @@
                             <path d="M96 98h23v10H92zM126 94h17l7 6h-24z" fill="currentColor" opacity=".35" />
                             <circle class="cv-tractor-wheel" cx="43" cy="108" r="17" />
                             <circle class="cv-tractor-wheel" cx="119" cy="108" r="17" />
-                        </svg>
+                                </svg>
 
-                        <div class="cv-trailer-assembly">
+                                <div class="cv-trailer-assembly">
                             <div class="cv-trailer-stack">
                                 <div class="cv-trailer">
                                     <div class="cv-trailer-cargo">
@@ -1100,7 +1128,11 @@
                                                         <div class="cv-flatbed-spot-label">
                                                             P{{ $spot }}
                                                             @if ($pallet)
-                                                                · {{ $pallet['total_weight_lbs'] === null ? '?' : number_format($pallet['total_weight_lbs'], 0) }} lb
+                                                                <span class="cv-rack-weight">
+                                                                    {{ $pallet['total_weight_lbs'] === null ? '?' : number_format($pallet['total_weight_lbs'], 0) }} lb
+                                                                </span>
+                                                            @else
+                                                                <span class="cv-rack-weight">&nbsp;</span>
                                                             @endif
                                                         </div>
                                                     </div>
@@ -1134,6 +1166,8 @@
                                     <span class="cv-piggyback-label">Piggyback</span>
                                 </div>
                             @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
 
