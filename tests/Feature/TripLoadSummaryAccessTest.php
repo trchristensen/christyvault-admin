@@ -165,5 +165,7 @@ it('renders fallback flatbed pallets in the shared load summary', function () {
     expect($html)->toContain('Strapped flatbed fallback')
         ->and($html)->toContain('4×UVM')
         ->and($html)->toContain('Strap to deck')
-        ->and($html)->toContain('P1');
+        ->and($html)->toContain('P1')
+        ->and($html)->toContain('Compact cab-over truck tractor')
+        ->and($html)->toContain('Piggyback forklift suspended from rear of trailer');
 });

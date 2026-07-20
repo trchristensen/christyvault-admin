@@ -308,20 +308,57 @@
         align-items: end;
         display: grid;
         gap: 0;
-        grid-template-columns: 205px 1fr;
+        grid-template-columns: 138px minmax(0, 1fr);
     }
 
     .cv-tractor {
         color: #344054;
-        height: 142px;
+        height: 122px;
         margin-bottom: 6px;
-        width: 205px;
+        width: 138px;
     }
 
     .cv-tractor-wheel {
         fill: var(--cv-diagram-bg);
         stroke: currentColor;
         stroke-width: 7;
+    }
+
+    .cv-trailer-assembly {
+        align-items: end;
+        display: flex;
+        min-width: 0;
+    }
+
+    .cv-trailer-stack {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .cv-piggyback-wrap {
+        align-items: center;
+        color: #344054;
+        display: flex;
+        flex: 0 0 76px;
+        flex-direction: column;
+        margin: 0 0 1px -16px;
+        pointer-events: none;
+        position: relative;
+        z-index: 2;
+    }
+
+    .cv-piggyback {
+        height: 92px;
+        width: 74px;
+    }
+
+    .cv-piggyback-label {
+        color: var(--cv-muted);
+        font-size: 8px;
+        font-weight: 800;
+        letter-spacing: .04em;
+        margin-top: -2px;
+        text-transform: uppercase;
     }
 
     .cv-trailer {
@@ -745,6 +782,10 @@
         color: #aeb7c5;
     }
 
+    html.dark .cv-piggyback-wrap {
+        color: #aeb7c5;
+    }
+
     html.dark .cv-wheel {
         background: #aeb7c5;
         border-color: #aeb7c5;
@@ -797,12 +838,21 @@
         }
 
         .cv-truck-body {
-            grid-template-columns: 150px 1fr;
+            grid-template-columns: 108px minmax(0, 1fr);
         }
 
         .cv-tractor {
-            height: 112px;
-            width: 150px;
+            height: 100px;
+            width: 108px;
+        }
+
+        .cv-piggyback-wrap {
+            flex-basis: 62px;
+        }
+
+        .cv-piggyback {
+            height: 78px;
+            width: 60px;
         }
 
         .cv-trailer {
@@ -957,22 +1007,22 @@
                         <span>Rear / unload first →</span>
                     </div>
                     <div class="cv-truck-body">
-                        <svg class="cv-tractor" viewBox="0 0 230 150" role="img"
-                            aria-label="Three-axle truck tractor">
-                            <path d="M7 83h52l12-19h13l12-34h57v19h23v55h46v17H7z" fill="currentColor" opacity=".14" />
+                        <svg class="cv-tractor" viewBox="0 0 160 140" role="img"
+                            aria-label="Compact cab-over truck tractor">
+                            <path d="M8 43 19 24h75l14 18v57h43v10H8z" fill="currentColor" opacity=".14" />
                             <path
-                                d="M7 83h52l12-19h13l12-34h57v19h23v55h46v17H7zM99 35h42v35H89zM146 35v69M153 54h18M12 91h47M15 103h34M69 72v32M79 106h31M112 112h105"
+                                d="M8 103V43l11-19h75l14 18v57h43v10H8zM22 32h62l14 16v22H20V43zM99 48v51M108 87h23l9 8M13 78h28M13 87h28M53 82h34M52 94h39M14 101h23"
                                 fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                stroke-width="5" />
-                            <path d="M79 105h31v11H72zM174 94h27l10 7h-37z" fill="currentColor" opacity=".35" />
-                            <circle class="cv-tractor-wheel" cx="48" cy="121" r="17" />
-                            <circle class="cv-tractor-wheel" cx="158" cy="121" r="17" />
-                            <circle class="cv-tractor-wheel" cx="202" cy="121" r="17" />
+                                stroke-width="4.5" />
+                            <path d="M96 98h23v10H92zM126 94h17l7 6h-24z" fill="currentColor" opacity=".35" />
+                            <circle class="cv-tractor-wheel" cx="43" cy="108" r="17" />
+                            <circle class="cv-tractor-wheel" cx="119" cy="108" r="17" />
                         </svg>
 
-                        <div>
-                            <div class="cv-trailer">
-                                <div class="cv-trailer-cargo">
+                        <div class="cv-trailer-assembly">
+                            <div class="cv-trailer-stack">
+                                <div class="cv-trailer">
+                                    <div class="cv-trailer-cargo">
                                     <div class="cv-rack-grid"
                                         style="grid-template-columns: repeat({{ count($diagram['racks']) }}, minmax(76px, 1fr));">
                                         @foreach ($diagram['racks'] as $rack)
@@ -1058,12 +1108,32 @@
                                             </div>
                                         </div>
                                     @endif
+                                    </div>
+                                </div>
+                                <div class="cv-trailer-wheels" aria-hidden="true">
+                                    <span class="cv-wheel"></span>
+                                    <span class="cv-wheel"></span>
                                 </div>
                             </div>
-                            <div class="cv-trailer-wheels" aria-hidden="true">
-                                <span class="cv-wheel"></span>
-                                <span class="cv-wheel"></span>
-                            </div>
+
+                            @if ($vehicle['piggyback_forklift_onboard'] ?? false)
+                                <div class="cv-piggyback-wrap">
+                                    <svg class="cv-piggyback" viewBox="0 0 82 100" role="img"
+                                        aria-label="Piggyback forklift suspended from rear of trailer">
+                                        <path d="M24 18v65M31 22v57M24 48H2M24 56H2" fill="none"
+                                            stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                            stroke-width="4" />
+                                        <path d="M32 39h29l10 15v25H32z" fill="currentColor" opacity=".14" />
+                                        <path d="M34 39h27l10 15v25H32V51zM43 39V24h19l8 15M43 25v27h27M34 61h15M72 61h7v18h-8"
+                                            fill="none" stroke="currentColor" stroke-linecap="round"
+                                            stroke-linejoin="round" stroke-width="4" />
+                                        <circle class="cv-tractor-wheel" cx="42" cy="81" r="10" />
+                                        <circle class="cv-tractor-wheel" cx="68" cy="81" r="10" />
+                                        <path d="M20 46h8v14h-8z" fill="currentColor" opacity=".35" />
+                                    </svg>
+                                    <span class="cv-piggyback-label">Piggyback</span>
+                                </div>
+                            @endif
                         </div>
                     </div>
 
