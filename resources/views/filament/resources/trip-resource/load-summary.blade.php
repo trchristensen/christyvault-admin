@@ -413,6 +413,7 @@
     }
 
     .cv-flatbed-slots {
+        align-items: end;
         display: grid;
         gap: 4px;
     }
@@ -420,25 +421,66 @@
     .cv-flatbed-slot {
         align-items: center;
         border: 2px solid #344054;
+        border-radius: 3px 3px 0 0;
         display: flex;
         flex-direction: column;
-        height: calc((var(--cv-rack-level-height) * 3) + 6px);
+        height: calc(var(--cv-rack-level-height) + 22px);
         justify-content: center;
         min-width: 66px;
-        padding: 3px;
+        padding: 4px 4px 13px;
         position: relative;
         text-align: center;
     }
 
     .cv-flatbed-position {
+        align-items: end;
+        display: grid;
+        grid-template-rows: calc(var(--cv-rack-level-height) + 22px) auto;
         min-width: 66px;
     }
 
+    .cv-flatbed-slot:not(.cv-flatbed-slot-empty)::before {
+        background: repeating-linear-gradient(90deg,
+                #344054 0,
+                #344054 20%,
+                transparent 20%,
+                transparent 27%);
+        border-bottom: 2px solid #344054;
+        border-top: 2px solid #344054;
+        bottom: 0;
+        content: "";
+        height: 9px;
+        left: -2px;
+        position: absolute;
+        right: -2px;
+        z-index: 1;
+    }
+
+    .cv-flatbed-slot:not(.cv-flatbed-slot-empty)::after {
+        background: currentColor;
+        content: "";
+        inset: 0 auto 9px 50%;
+        opacity: .2;
+        position: absolute;
+        transform: translateX(-50%);
+        width: 5px;
+        z-index: 0;
+    }
+
+    .cv-flatbed-slot>* {
+        position: relative;
+        z-index: 2;
+    }
+
     .cv-flatbed-slot-empty {
+        align-self: end;
+        border-radius: 0;
         border-style: dashed;
         color: #98a2b3;
         font-size: 10px;
         font-weight: 700;
+        height: 24px;
+        padding: 2px;
     }
 
     .cv-flatbed-spot-label {
@@ -775,6 +817,15 @@
     }
 
     html.dark .cv-flatbed-slot {
+        border-color: #aeb7c5;
+    }
+
+    html.dark .cv-flatbed-slot:not(.cv-flatbed-slot-empty)::before {
+        background: repeating-linear-gradient(90deg,
+                #aeb7c5 0,
+                #aeb7c5 20%,
+                transparent 20%,
+                transparent 27%);
         border-color: #aeb7c5;
     }
 
