@@ -8,9 +8,9 @@
 
         <div>
             <div class="delivery-order-products-locked-title">Waiting for delivery tag</div>
-            <div class="delivery-order-products-locked-message">
+            {{-- <div class="delivery-order-products-locked-message">
                 Product lines are hidden until the delivery tag is printed. Do not pull or load materials until you receive the printed tag.
-            </div>
+            </div> --}}
         </div>
     </div>
 @elseif ($order->orderProducts->isNotEmpty())

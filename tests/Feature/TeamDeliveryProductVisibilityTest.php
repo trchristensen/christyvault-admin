@@ -34,7 +34,7 @@ it('hides team delivery product lines until the delivery tag is printed', functi
 
     expect($html)
         ->toContain('Waiting for delivery tag')
-        ->toContain('Do not pull or load materials')
+        ->not->toContain('Do not pull or load materials')
         ->not->toContain('SECRET-SKU')
         ->not->toContain('Secret loading product')
         ->not->toContain('Secret loading notes');
