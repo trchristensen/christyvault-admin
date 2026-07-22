@@ -140,6 +140,22 @@ class Trip extends Model
         return $this->orderedDeliveryOrders()->count();
     }
 
+    public function loadSummaryIsVisibleTo(?User $user): bool
+    {
+        if (! ($user?->can('view load summary') ?? false)) {
+            return false;
+        }
+
+        $orders = $this->relationLoaded('orders')
+            ? $this->orders
+            : $this->orders()->get(['id', 'trip_id', 'is_printed']);
+        $allTagsArePrinted = $orders
+            ->every(fn (Order $order): bool => $order->is_printed);
+
+        return $allTagsArePrinted
+            || ($user?->can(Order::VIEW_UNPRINTED_PRODUCT_LINES_PERMISSION) ?? false);
+    }
+
     public function isStopOrderConfirmed(): bool
     {
         return $this->deliveryStopCount() <= 1 || $this->dispatch_confirmed_at !== null;

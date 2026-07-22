@@ -20,6 +20,8 @@ class Order extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
 
+    public const VIEW_UNPRINTED_PRODUCT_LINES_PERMISSION = 'view unprinted delivery product lines';
+
     protected $fillable = [
         'order_number',
         'customer_order_number',
@@ -107,6 +109,12 @@ class Order extends Model
     public function orderProducts(): HasMany
     {
         return $this->hasMany(OrderProduct::class);
+    }
+
+    public function deliveryProductLinesAreVisibleTo(?User $user): bool
+    {
+        return $this->is_printed
+            || ($user?->can(self::VIEW_UNPRINTED_PRODUCT_LINES_PERMISSION) ?? false);
     }
 
     public function deliveryPhotos(): HasMany

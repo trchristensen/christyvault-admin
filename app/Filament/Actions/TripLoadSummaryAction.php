@@ -7,7 +7,6 @@ use App\Models\Trip;
 use App\Services\LoadPlanning\TripLoadPlanService;
 use Filament\Actions\Action;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Gate;
 
 final class TripLoadSummaryAction
 {
@@ -17,14 +16,15 @@ final class TripLoadSummaryAction
             ->label('Load Summary')
             ->icon('heroicon-o-cube-transparent')
             ->color('info')
-            ->visible(fn (Model $record): bool => self::hasTrip($record) && Gate::allows('view load summary'))
+            ->visible(fn (Model $record): bool => self::hasTrip($record)
+                && self::tripFor($record)->loadSummaryIsVisibleTo(auth()->user()))
             ->modalHeading(function (Model $record): string {
-                $trip = self::tripFor($record);
+                $trip = self::authorizedTripFor($record);
 
                 return "Load summary — {$trip->trip_number}";
             })
             ->modalContent(function (Model $record) {
-                $plan = app(TripLoadPlanService::class)->forTrip(self::tripFor($record));
+                $plan = app(TripLoadPlanService::class)->forTrip(self::authorizedTripFor($record));
 
                 return view('filament.resources.trip-resource.load-summary', [
                     'result' => $plan['demand']->toArray(),
@@ -50,9 +50,22 @@ final class TripLoadSummaryAction
         }
 
         if ($record instanceof Order && filled($record->trip_id)) {
+            if ($record->relationLoaded('trip') && $record->trip) {
+                return $record->trip;
+            }
+
             return Trip::query()->findOrFail($record->trip_id);
         }
 
         abort(404, 'This order is not assigned to a trip.');
+    }
+
+    private static function authorizedTripFor(Model $record): Trip
+    {
+        $trip = self::tripFor($record);
+
+        abort_unless($trip->loadSummaryIsVisibleTo(auth()->user()), 403);
+
+        return $trip;
     }
 }

@@ -27,7 +27,6 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
-use Illuminate\Support\Facades\Gate;
 use Throwable;
 
 class DeliveryCalendar extends Page
@@ -63,6 +62,20 @@ class DeliveryCalendar extends Page
         return Width::Full;
     }
 
+    protected function tripForLoadSummary(int $tripId): Trip
+    {
+        return Trip::query()->findOrFail($tripId);
+    }
+
+    protected function authorizedTripForLoadSummary(int $tripId): Trip
+    {
+        $trip = $this->tripForLoadSummary($tripId);
+
+        abort_unless($trip->loadSummaryIsVisibleTo(auth()->user()), 403);
+
+        return $trip;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -82,15 +95,15 @@ class DeliveryCalendar extends Page
                         ->iconButton()
                         ->tooltip('Load summary')
                         ->visible(fn (): bool => $this->editingTripId !== null
-                            && Gate::allows('view load summary'))
+                            && $this->tripForLoadSummary($this->editingTripId)->loadSummaryIsVisibleTo(auth()->user()))
                         ->modalHeading(function (): string {
-                            $trip = Trip::query()->findOrFail($this->editingTripId);
+                            $trip = $this->authorizedTripForLoadSummary($this->editingTripId);
 
                             return "Load summary — {$trip->trip_number}";
                         })
                         ->modalDescription('This summary uses the last saved trip. Save trip changes before relying on an updated load plan.')
                         ->modalContent(function () {
-                            $trip = Trip::query()->findOrFail($this->editingTripId);
+                            $trip = $this->authorizedTripForLoadSummary($this->editingTripId);
                             $plan = app(TripLoadPlanService::class)->forTrip($trip);
 
                             return view('filament.resources.trip-resource.load-summary', [

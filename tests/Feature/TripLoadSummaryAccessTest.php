@@ -8,73 +8,117 @@ use App\Models\Trip;
 use App\Models\User;
 use Filament\Actions\Action;
 use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\Facades\Gate;
+
+function tripWithDeliveryTagStates(bool ...$printedStates): Trip
+{
+    $trip = (new Trip)->forceFill([
+        'id' => 42,
+        'trip_number' => 'TRIP-00042',
+    ]);
+    $orders = collect($printedStates)->map(function (bool $isPrinted, int $index) use ($trip): Order {
+        $order = (new Order)->forceFill([
+            'id' => $index + 1,
+            'trip_id' => 42,
+            'is_printed' => $isPrinted,
+        ]);
+        $order->setRelation('trip', $trip);
+
+        return $order;
+    });
+    $trip->setRelation('stops', collect());
+    $trip->setRelation('orders', $orders);
+
+    return $trip;
+}
+
+function loadSummaryViewer(bool $mayView, bool $mayViewUnprinted = false): User
+{
+    $user = new class extends User
+    {
+        public bool $mayViewLoadSummary = false;
+
+        public bool $mayViewUnprintedProductLines = false;
+
+        public function can($abilities, $arguments = []): bool
+        {
+            return match ($abilities) {
+                'view load summary' => $this->mayViewLoadSummary,
+                Order::VIEW_UNPRINTED_PRODUCT_LINES_PERMISSION => $this->mayViewUnprintedProductLines,
+                default => false,
+            };
+        }
+    };
+    $user->mayViewLoadSummary = $mayView;
+    $user->mayViewUnprintedProductLines = $mayViewUnprinted;
+
+    return $user;
+}
 
 it('requires both a trip and the view load summary permission', function () {
     $unassignedOrder = new Order;
-    $assignedOrder = (new Order)->forceFill(['trip_id' => 42]);
-
-    Gate::shouldReceive('allows')
-        ->twice()
-        ->with('view load summary')
-        ->andReturn(false, true);
+    $assignedOrder = tripWithDeliveryTagStates(true)->orders->first();
+    $user = loadSummaryViewer(false);
+    auth()->setUser($user);
 
     expect(TripLoadSummaryAction::make()->record($unassignedOrder)->isVisible())->toBeFalse()
-        ->and(TripLoadSummaryAction::make()->record($assignedOrder)->isVisible())->toBeFalse()
-        ->and(TripLoadSummaryAction::make()->record($assignedOrder)->isVisible())->toBeTrue();
+        ->and(TripLoadSummaryAction::make()->record($assignedOrder)->isVisible())->toBeFalse();
+
+    $user->mayViewLoadSummary = true;
+
+    expect(TripLoadSummaryAction::make()->record($assignedOrder)->isVisible())->toBeTrue();
 });
 
 it('uses the same permission for the calendar order modal', function () {
     $modal = new OrderModal;
-    $modal->order = (new Order)->forceFill(['trip_id' => 42]);
+    $modal->order = tripWithDeliveryTagStates(true)->orders->first();
+    $user = loadSummaryViewer(false);
+    auth()->setUser($user);
 
-    Gate::shouldReceive('allows')
-        ->twice()
-        ->with('view load summary')
-        ->andReturn(false, true);
+    expect($modal->canViewLoadSummary())->toBeFalse();
 
-    expect($modal->canViewLoadSummary())->toBeFalse()
-        ->and($modal->canViewLoadSummary())->toBeTrue();
+    $user->mayViewLoadSummary = true;
+
+    expect($modal->canViewLoadSummary())->toBeTrue();
 });
 
 it('shows the load summary in the saved trip edit modal with the same permission', function () {
     $page = new class extends DeliveryCalendar
     {
+        public Trip $tripForTest;
+
         public function tripEditorActionForTest(): Action
         {
             return collect($this->getHeaderActions())
                 ->first(fn (Action $action): bool => $action->getName() === 'createSplitLoad');
         }
+
+        protected function tripForLoadSummary(int $tripId): Trip
+        {
+            return $this->tripForTest;
+        }
     };
+    $page->tripForTest = tripWithDeliveryTagStates(true);
+    $user = loadSummaryViewer(false);
+    auth()->setUser($user);
     $loadSummaryAction = $page->tripEditorActionForTest()
         ->livewire($page)
         ->getExtraModalFooterActions()['viewTripLoadSummary'];
-
-    Gate::shouldReceive('allows')
-        ->twice()
-        ->with('view load summary')
-        ->andReturn(false, true);
 
     expect($loadSummaryAction->isVisible())->toBeFalse();
 
     $page->editingTripId = 42;
 
-    expect($loadSummaryAction->isVisible())->toBeFalse()
-        ->and($loadSummaryAction->isVisible())->toBeTrue();
+    expect($loadSummaryAction->isVisible())->toBeFalse();
+
+    $user->mayViewLoadSummary = true;
+
+    expect($loadSummaryAction->isVisible())->toBeTrue();
 });
 
 it('shows the team schedule load summary trigger only with permission', function () {
-    $user = new class extends User
-    {
-        public bool $mayViewLoadSummary = false;
-
-        public function can($abilities, $arguments = []): bool
-        {
-            return $abilities === 'view load summary' && $this->mayViewLoadSummary;
-        }
-    };
+    $user = loadSummaryViewer(false);
     auth()->setUser($user);
-    $trip = (new Trip)->forceFill(['id' => 42]);
+    $trip = tripWithDeliveryTagStates(true);
 
     $deniedHtml = Blade::render(
         '<x-delivery-trip-load-summary-button :trip="$trip" />',
@@ -90,6 +134,32 @@ it('shows the team schedule load summary trigger only with permission', function
     expect(trim($deniedHtml))->toBe('')
         ->and($allowedHtml)->toContain('viewDeliveryTripLoadSummary')
         ->and($allowedHtml)->toContain('trip: 42')
+        ->and($allowedHtml)->toContain('Load summary');
+});
+
+it('holds every load summary until all tags are printed unless the viewer has the bypass permission', function () {
+    $user = loadSummaryViewer(true);
+    auth()->setUser($user);
+    $trip = tripWithDeliveryTagStates(true, false);
+    $order = $trip->orders->first();
+
+    $heldHtml = Blade::render(
+        '<x-delivery-trip-load-summary-button :trip="$trip" />',
+        compact('trip'),
+    );
+
+    expect($trip->loadSummaryIsVisibleTo($user))->toBeFalse()
+        ->and(TripLoadSummaryAction::make()->record($order)->isVisible())->toBeFalse()
+        ->and(trim($heldHtml))->toBe('');
+
+    $user->mayViewUnprintedProductLines = true;
+    $allowedHtml = Blade::render(
+        '<x-delivery-trip-load-summary-button :trip="$trip" />',
+        compact('trip'),
+    );
+
+    expect($trip->loadSummaryIsVisibleTo($user))->toBeTrue()
+        ->and(TripLoadSummaryAction::make()->record($order)->isVisible())->toBeTrue()
         ->and($allowedHtml)->toContain('Load summary');
 });
 

@@ -136,7 +136,7 @@ trait ManagesDeliveryTripDispatch
     {
         $trip = Trip::query()->findOrFail($tripId);
 
-        if (! (auth()->user()?->can('view load summary') ?? false)
+        if (! $trip->loadSummaryIsVisibleTo(auth()->user())
             || ! $this->deliveryTripDispatchIsInScope($trip)) {
             throw new AuthorizationException('You cannot view this delivery trip load summary.');
         }

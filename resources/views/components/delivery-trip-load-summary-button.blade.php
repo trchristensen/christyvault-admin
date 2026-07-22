@@ -2,7 +2,7 @@
     'trip',
 ])
 
-@if (auth()->user()?->can('view load summary'))
+@if ($trip->loadSummaryIsVisibleTo(auth()->user()))
     <x-filament::icon-button
         type="button"
         icon="heroicon-o-cube-transparent"

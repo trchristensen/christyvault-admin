@@ -229,16 +229,23 @@ class Schedule extends Page
             ->when($allowedDeliveryTypes !== [], fn ($query) => $query->whereIn('plant_location', $allowedDeliveryTypes))
             ->with([
                 'location',
-                'orderProducts.product',
                 'driver',
                 'activeTripStop',
                 'trip.driver',
-                'trip.orders:id,trip_id,plant_location,stop_number',
-                'trip.stops.order:id,plant_location',
+                'trip.orders:id,trip_id,plant_location,stop_number,is_printed',
+                'trip.stops.order:id,plant_location,is_printed',
                 'deliveryPhotos.uploadedBy',
             ])
             ->withCount('deliveryPhotos')
             ->get();
+
+        $canViewUnprintedProductLines = auth()->user()?->can(Order::VIEW_UNPRINTED_PRODUCT_LINES_PERMISSION) ?? false;
+
+        // Product lines are operational loading instructions. Only load them
+        // after tag printing unless the viewer has the explicit bypass permission.
+        $orders
+            ->filter(fn (Order $order): bool => $order->is_printed || $canViewUnprintedProductLines)
+            ->load('orderProducts.product');
 
         // Define the custom plant order
         $plantOrder = [

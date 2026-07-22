@@ -49,9 +49,8 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
                 'driver',
                 'activeTripStop',
                 'trip.driver',
-                'trip.orders:id,trip_id,plant_location,stop_number',
-                'trip.stops.order:id,plant_location',
-                'orderProducts.product',
+                'trip.orders:id,trip_id,plant_location,stop_number,is_printed',
+                'trip.stops.order:id,plant_location,is_printed',
             ])
             ->withCount('deliveryPhotos')
             ->orderByRaw("CASE plant_location
@@ -66,6 +65,14 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
             ->orderBy('delivery_time')
             ->orderBy('id')
             ->get();
+
+        $canViewUnprintedProductLines = auth()->user()?->can(Order::VIEW_UNPRINTED_PRODUCT_LINES_PERMISSION) ?? false;
+
+        // Product lines are operational loading instructions. Only load them
+        // after tag printing unless the viewer has the explicit bypass permission.
+        $orders
+            ->filter(fn (Order $order): bool => $order->is_printed || $canViewUnprintedProductLines)
+            ->load('orderProducts.product');
 
         $effectivePlant = function (Order $order): string {
             $tripOrders = $order->trip && ! $order->trip->trashed()

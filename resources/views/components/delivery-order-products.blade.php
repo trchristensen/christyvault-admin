@@ -2,7 +2,18 @@
     'order',
 ])
 
-@if ($order->orderProducts->isNotEmpty())
+@if (! $order->deliveryProductLinesAreVisibleTo(auth()->user()))
+    <div class="delivery-order-products-locked" role="status">
+        <x-heroicon-o-printer />
+
+        <div>
+            <div class="delivery-order-products-locked-title">Waiting for delivery tag</div>
+            <div class="delivery-order-products-locked-message">
+                Product lines are hidden until the delivery tag is printed. Do not pull or load materials until you receive the printed tag.
+            </div>
+        </div>
+    </div>
+@elseif ($order->orderProducts->isNotEmpty())
     <div class="delivery-order-products">
         <table>
             @foreach ($order->orderProducts as $orderProduct)

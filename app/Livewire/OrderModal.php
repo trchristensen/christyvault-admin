@@ -4,7 +4,6 @@ namespace App\Livewire;
 
 use App\Models\Order;
 use App\Services\LoadPlanning\TripLoadPlanService;
-use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 
 class OrderModal extends Component
@@ -37,7 +36,7 @@ class OrderModal extends Component
     {
         return $this->order instanceof Order
             && filled($this->order->trip_id)
-            && Gate::allows('view load summary');
+            && $this->order->trip?->loadSummaryIsVisibleTo(auth()->user());
     }
 
     public function openLoadSummary(): void
