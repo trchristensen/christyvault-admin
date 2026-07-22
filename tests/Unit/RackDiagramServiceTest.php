@@ -16,6 +16,7 @@ function rackDiagramItem(array $overrides = []): array
         'required_rack_type' => 'standard_3_high',
         'required_rack_level_count' => 3,
         'unit_weight_lbs' => 1750,
+        'unit_of_measure' => 'vault',
         'units_per_rack_position' => 1,
     ], $overrides);
 }
@@ -58,6 +59,7 @@ it('places a confirmed 22-box load into eight three-high rack spots', function (
         ->and($diagram['unplaced'])->toBeEmpty()
         ->and($diagram['legend'][0]['code'])->toBe('G6')
         ->and($diagram['legend'][0]['unit_weight_lbs'])->toBe(1750)
+        ->and($diagram['legend'][0]['unit_of_measure'])->toBe('vault')
         ->and($diagram['legend'][0]['handling_method'])->toBe('individual')
         ->and($diagram['legend'][0]['rack_requirement'])->toBe('standard')
         ->and($emptyCells)->toBe(2)

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UnitOfMeasure;
 use App\Models\LoadingProfile;
 use App\Models\Order;
 use App\Models\OrderProduct;
@@ -84,8 +85,10 @@ it('counts loose accessories by weight without creating rack or pallet demand', 
         'handling_method' => LoadingProfile::HANDLING_LOOSE,
         'rack_requirement' => LoadingProfile::RACK_NONE,
     ]);
+    $product = loadDemandProduct('SEA-02', 2, $profile);
+    $product->unit = UnitOfMeasure::ROLL;
     $order = loadDemandOrder('ORD-LOOSE', [
-        loadDemandLine(loadDemandProduct('SEA-02', 2, $profile), 20),
+        loadDemandLine($product, 20),
     ]);
 
     $result = (new LoadDemandService)->forOrder($order);
@@ -97,7 +100,8 @@ it('counts loose accessories by weight without creating rack or pallet demand', 
         'pallets' => 0,
         'known_weight_lbs' => 40.0,
         'unknown_weight_items' => 0,
-    ])->and($result->warnings)->toBeEmpty()
+    ])->and($result->stops[0]['items'][0]['unit_of_measure'])->toBe('roll')
+        ->and($result->warnings)->toBeEmpty()
         ->and($result->isReadyForAutomaticPlacement())->toBeTrue();
 });
 

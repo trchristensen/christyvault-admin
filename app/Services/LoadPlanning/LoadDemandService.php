@@ -242,6 +242,7 @@ class LoadDemandService
             'product_id' => $product?->getKey(),
             'sku' => $product?->sku ?? 'CUSTOM',
             'name' => $product?->name ?? ($orderProduct->custom_description ?: 'Custom product'),
+            'unit_of_measure' => $product?->unit?->value ?? 'unit',
             'quantity' => $quantity,
             'fill_load' => $isFillLoad,
             'fill_priority' => $orderProduct->fill_priority,

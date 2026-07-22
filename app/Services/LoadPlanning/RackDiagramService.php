@@ -116,6 +116,7 @@ class RackDiagramService
                     'sku' => $item['sku'],
                     'name' => $item['name'],
                     'unit_weight_lbs' => $item['unit_weight_lbs'],
+                    'unit_of_measure' => $item['unit_of_measure'] ?? 'unit',
                     'handling_method' => $item['handling_method'],
                     'rack_requirement' => $item['rack_requirement'],
                     'placement_strategy' => $item['placement_strategy']

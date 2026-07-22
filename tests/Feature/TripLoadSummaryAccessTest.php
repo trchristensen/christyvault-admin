@@ -220,6 +220,7 @@ it('renders fallback flatbed pallets in the shared load summary', function () {
             'sku' => 'G3086-6',
             'name' => 'Single Garden Crypt',
             'unit_weight_lbs' => 1750.0,
+            'unit_of_measure' => 'vault',
             'handling_method' => 'individual',
             'rack_requirement' => 'standard',
             'units_per_rack_position' => 1,
@@ -247,8 +248,8 @@ it('renders fallback flatbed pallets in the shared load summary', function () {
         ->and($html)->toContain('4×UVM')
         ->and($html)->toContain('Strap to deck')
         ->and($html)->toContain('P1')
-        ->and($html)->toContain('1,750 lb each')
-        ->and($html)->not->toContain('104 lb each')
+        ->and($html)->toContain('1,750 lb / vault')
+        ->and($html)->not->toContain('lb each')
         ->and($html)->toContain('Compact cab-over truck tractor')
         ->and($html)->toContain('Piggyback forklift suspended from rear of trailer');
 });

@@ -673,6 +673,13 @@
         gap: 6px;
     }
 
+    .cv-legend-weight {
+        color: var(--cv-muted);
+        display: block;
+        font-size: 11px;
+        margin-top: 2px;
+    }
+
     .cv-code-chip {
         background: #344054;
         border-radius: 5px;
@@ -1241,7 +1248,9 @@
                                                     \App\Models\LoadingProfile::RACK_STANDARD,
                                                     \App\Models\LoadingProfile::RACK_SINGLE,
                                                 ], true))
-                                                · <strong>{{ number_format($entry['unit_weight_lbs'], 0) }} lb each</strong>
+                                                <span class="cv-legend-weight">
+                                                    {{ number_format($entry['unit_weight_lbs'], 0) }} lb / {{ str($entry['unit_of_measure'] ?? 'unit')->replace('_', ' ') }}
+                                                </span>
                                             @endif
                                         </span>
                                     </span>
