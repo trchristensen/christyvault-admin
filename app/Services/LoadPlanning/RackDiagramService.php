@@ -115,6 +115,9 @@ class RackDiagramService
                     'code' => $code,
                     'sku' => $item['sku'],
                     'name' => $item['name'],
+                    'unit_weight_lbs' => $item['unit_weight_lbs'],
+                    'handling_method' => $item['handling_method'],
+                    'rack_requirement' => $item['rack_requirement'],
                     'placement_strategy' => $item['placement_strategy']
                         ?? LoadingProfile::PLACEMENT_ONE_PER_LEVEL,
                     'units_per_rack_position' => $item['units_per_rack_position'] ?? 1,

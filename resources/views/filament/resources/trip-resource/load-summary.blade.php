@@ -1233,7 +1233,17 @@
                                 @forelse ($diagram['legend'] as $entry)
                                     <span class="cv-legend-item">
                                         <span class="cv-code-chip">{{ $entry['code'] }}</span>
-                                        <span><strong>{{ $entry['sku'] }}</strong> · {{ $entry['name'] }}</span>
+                                        <span>
+                                            <strong>{{ $entry['sku'] }}</strong> · {{ $entry['name'] }}
+                                            @if (($entry['unit_weight_lbs'] ?? null) !== null
+                                                && ($entry['handling_method'] ?? null) === \App\Models\LoadingProfile::HANDLING_INDIVIDUAL
+                                                && in_array($entry['rack_requirement'] ?? null, [
+                                                    \App\Models\LoadingProfile::RACK_STANDARD,
+                                                    \App\Models\LoadingProfile::RACK_SINGLE,
+                                                ], true))
+                                                · <strong>{{ number_format($entry['unit_weight_lbs'], 0) }} lb each</strong>
+                                            @endif
+                                        </span>
                                     </span>
                                     @if (($entry['units_per_rack_position'] ?? 1) > 1)
                                         <span class="cv-legend-item">
