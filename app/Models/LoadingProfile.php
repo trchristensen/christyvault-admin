@@ -16,6 +16,8 @@ class LoadingProfile extends Model
 
     public const HANDLING_PALLET = 'pallet';
 
+    public const HANDLING_LOOSE = 'loose';
+
     public const RACK_STANDARD = 'standard';
 
     public const RACK_SINGLE = 'single';
@@ -60,6 +62,7 @@ class LoadingProfile extends Model
         return [
             self::HANDLING_INDIVIDUAL => 'Individual product',
             self::HANDLING_PALLET => 'Palletized',
+            self::HANDLING_LOOSE => 'Loose / boxed accessory (no rack space)',
         ];
     }
 

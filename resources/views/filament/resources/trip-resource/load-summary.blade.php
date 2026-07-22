@@ -647,6 +647,10 @@
         padding: 10px 12px;
     }
 
+    .cv-legend-box-wide {
+        grid-column: 1 / -1;
+    }
+
     .cv-legend-title {
         color: var(--cv-muted);
         font-size: 11px;
@@ -1264,6 +1268,24 @@
                                 @endforeach
                             </div>
                         </div>
+
+                        @if (! empty($diagram['non_rack_cargo']))
+                            <div class="cv-legend-box cv-legend-box-wide">
+                                <div class="cv-legend-title">Loose / boxed accessories — no rack space</div>
+                                <div class="cv-legend-list">
+                                    @foreach ($diagram['non_rack_cargo'] as $item)
+                                        <span class="cv-legend-item">
+                                            <span class="cv-code-chip">{{ number_format($item['quantity']) }}×</span>
+                                            <span>
+                                                <strong>{{ $item['sku'] }}</strong> · {{ $item['name'] }}
+                                                · Stop {{ $item['stop_sequence'] }}
+                                                · {{ $item['total_weight_lbs'] === null ? 'weight pending' : number_format($item['total_weight_lbs'], 0).' lb' }}
+                                            </span>
+                                        </span>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

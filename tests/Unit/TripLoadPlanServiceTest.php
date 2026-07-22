@@ -147,6 +147,33 @@ it('calculates the largest safe fill quantity after fixed products', function ()
         ->and($plan['diagram']['unplaced'])->toBeEmpty();
 });
 
+it('calculates fill quantities around weighted loose accessories without reserving rack space', function (): void {
+    $threeHigh = new RackType(['code' => 'standard_3_high', 'level_count' => 3]);
+    $threeHigh->id = 2;
+    $g6Profile = fillPlanProfile('standard_three_high_box', $threeHigh, 22);
+    $looseProfile = new LoadingProfile([
+        'code' => 'loose_accessory',
+        'handling_method' => LoadingProfile::HANDLING_LOOSE,
+        'rack_requirement' => LoadingProfile::RACK_NONE,
+    ]);
+    $order = fillPlanOrder(1, 'ORD-LOOSE-FILL', [
+        fillPlanLine(1, fillPlanProduct('G3086-6', 1750, $g6Profile), null, true),
+        fillPlanLine(2, fillPlanProduct('SEA-02', 2, $looseProfile), 20),
+    ]);
+
+    $plan = fillPlanner()->forTrip(fillPlanTrip([$order]));
+
+    expect($plan['fill_allocations'][0])->toMatchArray([
+        'sku' => 'G3086-6',
+        'planned_quantity' => 21,
+        'resolved' => true,
+        'source' => 'automatic',
+    ])->and($plan['demand']->summary['known_weight_lbs'])->toBe(36790.0)
+        ->and($plan['diagram']['used_rack_spots'])->toBe(7)
+        ->and($plan['diagram']['non_rack_cargo'])->toHaveCount(1)
+        ->and($plan['diagram']['unplaced'])->toBeEmpty();
+});
+
 it('allocates multiple automatic fills by adjustable priority', function (): void {
     $threeHigh = new RackType(['code' => 'standard_3_high', 'level_count' => 3]);
     $threeHigh->id = 2;

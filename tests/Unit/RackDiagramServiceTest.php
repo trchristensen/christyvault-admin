@@ -65,6 +65,34 @@ it('places a confirmed 22-box load into eight three-high rack spots', function (
         ->and($diagram['racks'][7]['cells'][2])->toBeNull();
 });
 
+it('counts loose accessories without consuming rack or pallet positions', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [rackDiagramItem([
+            'sku' => 'SEA-02',
+            'name' => 'Sealer roll',
+            'quantity' => 20,
+            'handling_method' => 'loose',
+            'rack_requirement' => 'none',
+            'required_rack_type' => null,
+            'required_rack_level_count' => null,
+            'unit_weight_lbs' => 2,
+            'total_weight_lbs' => 40,
+        ])]),
+    ]));
+
+    expect($diagram['placed_units'])->toBe(20)
+        ->and($diagram['used_rack_spots'])->toBe(0)
+        ->and($diagram['flatbed_pallets_used'])->toBe(0)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($diagram['non_rack_cargo'])->toHaveCount(1)
+        ->and($diagram['non_rack_cargo'][0])->toMatchArray([
+            'sku' => 'SEA-02',
+            'quantity' => 20,
+            'stop_sequence' => 1,
+            'total_weight_lbs' => 40,
+        ]);
+});
+
 it('reserves bottom-only products for bottom rack positions', function (): void {
     $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
         rackDiagramStop(1, [rackDiagramItem([

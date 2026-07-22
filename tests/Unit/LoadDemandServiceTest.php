@@ -78,6 +78,29 @@ it('normalizes standard, oversized, pallet, and weight demand', function (): voi
         ->and($result->isReadyForAutomaticPlacement())->toBeTrue();
 });
 
+it('counts loose accessories by weight without creating rack or pallet demand', function (): void {
+    $profile = new LoadingProfile([
+        'code' => 'loose_accessory',
+        'handling_method' => LoadingProfile::HANDLING_LOOSE,
+        'rack_requirement' => LoadingProfile::RACK_NONE,
+    ]);
+    $order = loadDemandOrder('ORD-LOOSE', [
+        loadDemandLine(loadDemandProduct('SEA-02', 2, $profile), 20),
+    ]);
+
+    $result = (new LoadDemandService)->forOrder($order);
+
+    expect($result->summary)->toMatchArray([
+        'product_units' => 20,
+        'standard_box_units' => 0,
+        'oversized_rack_spots' => 0,
+        'pallets' => 0,
+        'known_weight_lbs' => 40.0,
+        'unknown_weight_items' => 0,
+    ])->and($result->warnings)->toBeEmpty()
+        ->and($result->isReadyForAutomaticPlacement())->toBeTrue();
+});
+
 it('combines compatible products on a shared pallet within one stop', function (): void {
     $p400Profile = new LoadingProfile([
         'code' => 'p400_boxed',

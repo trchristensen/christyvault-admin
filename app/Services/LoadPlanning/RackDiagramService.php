@@ -66,6 +66,7 @@ class RackDiagramService
                 'racks' => [],
                 'legend' => [],
                 'unplaced' => [],
+                'non_rack_cargo' => [],
                 'placed_units' => 0,
                 'used_rack_spots' => 0,
                 'flatbed_pallets' => [],
@@ -91,6 +92,7 @@ class RackDiagramService
         $usedCodes = [];
         $placedUnits = 0;
         $flatbedPallets = [];
+        $nonRackCargo = [];
 
         foreach (array_reverse($demand->stops) as $stop) {
             $items = collect($stop['items'])
@@ -118,7 +120,20 @@ class RackDiagramService
                     'units_per_rack_position' => $item['units_per_rack_position'] ?? 1,
                 ];
 
-                if ($item['handling_method'] === LoadingProfile::HANDLING_PALLET) {
+                if ($item['handling_method'] === LoadingProfile::HANDLING_LOOSE
+                    || $item['rack_requirement'] === LoadingProfile::RACK_NONE) {
+                    $placed = (int) $item['quantity'];
+                    $nonRackCargo[] = [
+                        'code' => $code,
+                        'sku' => $item['sku'],
+                        'name' => $item['name'],
+                        'quantity' => $placed,
+                        'stop_sequence' => (int) $stop['sequence'],
+                        'order_number' => $stop['order_number'] ?? null,
+                        'location_name' => $stop['location_name'] ?? null,
+                        'total_weight_lbs' => $item['total_weight_lbs'],
+                    ];
+                } elseif ($item['handling_method'] === LoadingProfile::HANDLING_PALLET) {
                     $placed = $this->placePallets(
                         $racks,
                         $flatbedPallets,
@@ -182,6 +197,7 @@ class RackDiagramService
             'racks' => $racks,
             'legend' => array_values($legend),
             'unplaced' => $unplaced,
+            'non_rack_cargo' => $nonRackCargo,
             'placed_units' => $placedUnits,
             'used_rack_spots' => collect($racks)->whereNotNull('type_code')->count(),
             'rack_spot_count' => $rackSpotCount,
