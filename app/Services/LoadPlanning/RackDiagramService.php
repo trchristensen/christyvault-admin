@@ -45,7 +45,15 @@ class RackDiagramService
             return ($candidate['placed_units'] ?? 0) > ($current['placed_units'] ?? 0);
         }
 
-        return ($candidate['flatbed_pallets_used'] ?? 0) < ($current['flatbed_pallets_used'] ?? 0);
+        if (($candidate['flatbed_pallets_used'] ?? 0) !== ($current['flatbed_pallets_used'] ?? 0)) {
+            return ($candidate['flatbed_pallets_used'] ?? 0) < ($current['flatbed_pallets_used'] ?? 0);
+        }
+
+        if (($candidate['mixed_stop_racks'] ?? 0) !== ($current['mixed_stop_racks'] ?? 0)) {
+            return ($candidate['mixed_stop_racks'] ?? 0) < ($current['mixed_stop_racks'] ?? 0);
+        }
+
+        return ($candidate['split_products'] ?? 0) < ($current['split_products'] ?? 0);
     }
 
     private function buildDiagram(
@@ -210,6 +218,16 @@ class RackDiagramService
                 ->contains(fn (array $cell): bool => $cell['unit_weight_lbs'] === null);
         }
         unset($rack);
+        $placedCells = collect($racks)
+            ->flatMap(fn (array $rack): array => $rack['cells'])
+            ->filter();
+        $mixedStopRacks = collect($racks)
+            ->filter(fn (array $rack): bool => count($rack['stop_sequences']) > 1)
+            ->count();
+        $splitProducts = intdiv(
+            $placedCells->where('component', 'half')->count(),
+            2,
+        );
 
         return [
             'available' => true,
@@ -224,6 +242,8 @@ class RackDiagramService
             'flatbed_pallets' => $flatbedPallets,
             'flatbed_pallets_used' => count($flatbedPallets),
             'flatbed_pallet_capacity' => $flatbedPalletCapacity,
+            'mixed_stop_racks' => $mixedStopRacks,
+            'split_products' => $splitProducts,
         ];
     }
 
@@ -1282,9 +1302,20 @@ class RackDiagramService
             return $rackCategories->contains(self::PAIRING_GARDEN_DOUBLE) ? 0 : 10;
         }
 
+        if ($this->prefersWholeGardenDoubleBottomPairing($item)) {
+            return $rackCategories->contains(self::PAIRING_GARDEN_DOUBLE) ? 0 : 10;
+        }
+
         return $rackCategories->contains(self::PAIRING_GARDEN_DOUBLE)
             ? self::PAIRING_AVOID
             : 10;
+    }
+
+    private function prefersWholeGardenDoubleBottomPairing(array $item): bool
+    {
+        // A same-stop V1 physically fits beneath a whole G4/G5 in a 2-high
+        // rack. Prefer that lower-bay use before splitting the garden double.
+        return mb_strtoupper(trim((string) ($item['sku'] ?? ''))) === 'V3086-1';
     }
 
     private function pairingCategory(array $item): string
