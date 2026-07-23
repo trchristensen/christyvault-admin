@@ -212,6 +212,103 @@ it('palletizes four 2-1637V1 covers and keeps those pallets below the top bay', 
         ->and($diagram['unplaced'])->toBeEmpty();
 });
 
+it('rebalances the reviewed load before sending lower-bay products to the flatbed', function (): void {
+    $standardThreeHigh = [
+        'required_rack_type' => 'standard_3_high',
+        'required_rack_level_count' => 3,
+        'allowed_rack_type_codes' => ['standard_2_high', 'standard_3_high'],
+    ];
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem([
+                'sku' => 'G3086-4',
+                'name' => 'Companion Garden Crypt',
+                'quantity' => 2,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'placement_strategy' => 'full_top_split_bottom_pair',
+                'unit_weight_lbs' => 3455,
+            ]),
+            rackDiagramItem([
+                'sku' => 'W3086-M',
+                'name' => 'Monticello',
+                'quantity' => 4,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'unit_weight_lbs' => 2190,
+                'loading_profile' => 'regular_burial_vault',
+            ]),
+            rackDiagramItem([...$standardThreeHigh, ...[
+                'sku' => 'V3086-1',
+                'name' => 'Christy Vault',
+                'quantity' => 8,
+                'unit_weight_lbs' => 1288,
+            ]]),
+            rackDiagramItem([...$standardThreeHigh, ...[
+                'sku' => 'L3086-4',
+                'name' => 'Ring Liner',
+                'quantity' => 4,
+                'unit_weight_lbs' => 1175,
+            ]]),
+            rackDiagramItem([...$standardThreeHigh, ...[
+                'sku' => '2-3086G5',
+                'name' => 'Cover',
+                'quantity' => 1,
+                'required_rack_level' => 'lower_not_top',
+                'units_per_rack_position' => 6,
+                'unit_weight_lbs' => 575,
+            ]]),
+            rackDiagramItem([...$standardThreeHigh, ...[
+                'sku' => 'V1637-1',
+                'name' => 'Christy Vault (16 x 37)',
+                'quantity' => 2,
+                'required_rack_level' => 'lower_not_top',
+                'units_per_rack_position' => 4,
+                'flatbed_fallback_units_per_spot' => 1,
+                'unit_weight_lbs' => 300,
+            ]]),
+            rackDiagramItem([...$standardThreeHigh, ...[
+                'sku' => '2-1637V1',
+                'name' => 'Christy Vault Cover',
+                'quantity' => 1,
+                'handling_method' => 'pallet',
+                'units_per_pallet' => 4,
+                'required_rack_level' => 'lower_not_top',
+                'allowed_rack_types' => [
+                    [
+                        'code' => 'standard_2_high',
+                        'level_count' => 2,
+                        'pallet_capable_levels' => 1,
+                        'pallets_per_capable_level' => 2,
+                    ],
+                    [
+                        'code' => 'standard_3_high',
+                        'level_count' => 3,
+                        'pallet_capable_levels' => 2,
+                        'pallets_per_capable_level' => 2,
+                    ],
+                ],
+                'unit_weight_lbs' => 100,
+            ]]),
+        ]),
+    ], rackSpots: 8, flatbedPalletCapacity: 4));
+    $rebalancedRack = collect($diagram['racks'])->first(
+        fn (array $rack): bool => collect($rack['cells'])->filter()->contains('sku', '2-3086G5'),
+    );
+
+    expect($diagram['placed_units'])->toBe(22)
+        ->and($diagram['used_rack_spots'])->toBe(8)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($diagram['flatbed_pallets_used'])->toBe(1)
+        ->and(collect($diagram['flatbed_pallets'])->pluck('sku')->all())->toBe(['2-1637V1'])
+        ->and($rebalancedRack['cells'][0]['sku'])->toBe('2-3086G5')
+        ->and($rebalancedRack['cells'][1])->toMatchArray([
+            'sku' => 'V1637-1',
+            'quantity' => 2,
+        ])
+        ->and($rebalancedRack['cells'][2]['sku'])->toBe('L3086-4');
+});
+
 it('loads no more than two regular Wilbert burial vaults in one rack', function (): void {
     $twoHigh = [
         'required_rack_type' => 'standard_2_high',

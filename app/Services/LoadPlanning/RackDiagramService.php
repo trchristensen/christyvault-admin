@@ -682,6 +682,13 @@ class RackDiagramService
             $allowedRackTypes = [$rackType];
         }
 
+        $this->promoteFlexibleBottomForLowerOnly(
+            $racks,
+            $item,
+            (int) $stop['sequence'],
+            $allowedRackTypes,
+        );
+
         $unitsPerPosition = max(1, (int) ($item['units_per_rack_position'] ?? 1));
         $placed = 0;
 
@@ -1056,6 +1063,9 @@ class RackDiagramService
             'stop_sequence' => (int) $stop['sequence'],
             'unit_weight_lbs' => $item['unit_weight_lbs'],
             'pairing_category' => $this->pairingCategory($item),
+            'required_rack_level' => $item['required_rack_level'] ?? LoadingProfile::LEVEL_ANY,
+            'placement_strategy' => $item['placement_strategy']
+                ?? LoadingProfile::PLACEMENT_ONE_PER_LEVEL,
             'allowed_rack_type_codes' => ($item['allowed_rack_type_codes'] ?? []) === []
                 ? [$item['required_rack_type']]
                 : $item['allowed_rack_type_codes'],
@@ -1126,6 +1136,74 @@ class RackDiagramService
         return collect($allowedLevels)->contains(
             fn (int $levelIndex): bool => ($rack['cells'][$levelIndex] ?? null) === null,
         );
+    }
+
+    private function promoteFlexibleBottomForLowerOnly(
+        array &$racks,
+        array $item,
+        int $stopSequence,
+        array $allowedRackTypes,
+    ): void {
+        if (($item['required_rack_level'] ?? null) !== LoadingProfile::LEVEL_LOWER_NOT_TOP) {
+            return;
+        }
+
+        $compatibleRackIndexes = collect($racks)
+            ->keys()
+            ->filter(fn (int $rackIndex): bool => in_array(
+                $racks[$rackIndex]['type_code'],
+                $allowedRackTypes,
+                true,
+            ) && $this->rackCanAcceptStop($racks[$rackIndex], $stopSequence));
+
+        if ($compatibleRackIndexes->contains(
+            fn (int $rackIndex): bool => ($racks[$rackIndex]['cells'][0] ?? null) === null,
+        )) {
+            return;
+        }
+
+        $rackIndex = $compatibleRackIndexes
+            ->filter(fn (int $rackIndex): bool => $this->canPromoteBottomCell($racks[$rackIndex]))
+            ->sortBy(fn (int $rackIndex): array => [
+                $this->rackPairingPriority($item, $racks[$rackIndex]),
+                $this->cellWeight($racks[$rackIndex]['cells'][0]),
+                $rackIndex,
+            ])
+            ->first();
+
+        if ($rackIndex === null) {
+            return;
+        }
+
+        $topLevelIndex = (int) $racks[$rackIndex]['level_count'] - 1;
+        $promotedCell = $racks[$rackIndex]['cells'][0];
+        $promotedCell['level'] = $topLevelIndex + 1;
+        $racks[$rackIndex]['cells'][$topLevelIndex] = $promotedCell;
+        $racks[$rackIndex]['cells'][0] = null;
+    }
+
+    private function canPromoteBottomCell(array $rack): bool
+    {
+        $levelCount = (int) ($rack['level_count'] ?? 0);
+        $bottomCell = $rack['cells'][0] ?? null;
+        $topCell = $levelCount > 1
+            ? ($rack['cells'][$levelCount - 1] ?? null)
+            : null;
+
+        return $levelCount > 1
+            && $bottomCell !== null
+            && $topCell === null
+            && ! ($bottomCell['is_pallet_level'] ?? false)
+            && ! isset($bottomCell['component'])
+            && ($bottomCell['required_rack_level'] ?? LoadingProfile::LEVEL_ANY) === LoadingProfile::LEVEL_ANY
+            && ($bottomCell['placement_strategy'] ?? LoadingProfile::PLACEMENT_ONE_PER_LEVEL)
+                === LoadingProfile::PLACEMENT_ONE_PER_LEVEL;
+    }
+
+    private function cellWeight(array $cell): float
+    {
+        return (float) ($cell['unit_weight_lbs'] ?? PHP_FLOAT_MAX)
+            * (float) ($cell['unit_fraction'] ?? 1);
     }
 
     private function allowedRackLevelIndexes(array $rack, array $item): array
