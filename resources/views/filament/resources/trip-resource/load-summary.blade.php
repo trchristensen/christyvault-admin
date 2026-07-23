@@ -1201,6 +1201,10 @@
             height: calc(100% - 6px);
         }
 
+        .cv-load-sheet-print .cv-flatbed-slot-direct>.cv-pallet-strap {
+            height: 100%;
+        }
+
         .cv-load-sheet-print .cv-rack-label,
         .cv-load-sheet-print .cv-flatbed-spot-label {
             font-size: 7px;
