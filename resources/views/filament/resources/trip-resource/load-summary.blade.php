@@ -499,6 +499,10 @@
         z-index: 1;
     }
 
+    .cv-flatbed-slot-direct>.cv-pallet-strap {
+        height: 100%;
+    }
+
     .cv-pallet-strap-webbing {
         fill: #b7791f;
     }
@@ -1494,7 +1498,7 @@
                                                     @endphp
                                                     <div class="cv-flatbed-position">
                                                         @if ($pallet)
-                                                            <div class="cv-flatbed-slot cv-stop-{{ (($pallet['stop_sequence'] - 1) % 6) + 1 }}"
+                                                            <div class="cv-flatbed-slot {{ ($pallet['is_direct_flatbed'] ?? false) ? 'cv-flatbed-slot-direct' : '' }} cv-stop-{{ (($pallet['stop_sequence'] - 1) % 6) + 1 }}"
                                                                 title="Flatbed spot {{ $spot }} · {{ $pallet['name'] }}">
                                                                 @if ($isMultiStop)
                                                                     <span class="cv-cell-stop-badge">S{{ $pallet['stop_sequence'] }}</span>
@@ -1503,14 +1507,14 @@
                                                                 <span class="cv-cell-meta">
                                                                     {{ ($pallet['is_direct_flatbed'] ?? false) ? 'Secure to deck' : 'Strap pallet to deck' }}
                                                                 </span>
+                                                                <svg class="cv-pallet-strap" viewBox="0 0 100 100"
+                                                                    preserveAspectRatio="none" aria-hidden="true">
+                                                                    <path class="cv-pallet-strap-webbing"
+                                                                        d="M17 0h3v100h-3z" />
+                                                                    <rect class="cv-pallet-strap-buckle" x="14" y="82"
+                                                                        width="9" height="8" rx="1.5" />
+                                                                </svg>
                                                                 @if (! ($pallet['is_direct_flatbed'] ?? false))
-                                                                    <svg class="cv-pallet-strap" viewBox="0 0 100 100"
-                                                                        preserveAspectRatio="none" aria-hidden="true">
-                                                                        <path class="cv-pallet-strap-webbing"
-                                                                            d="M17 0h3v100h-3z" />
-                                                                        <rect class="cv-pallet-strap-buckle" x="14" y="60"
-                                                                            width="9" height="8" rx="1.5" />
-                                                                    </svg>
                                                                     <svg class="cv-pallet-base" viewBox="0 0 100 14"
                                                                         preserveAspectRatio="none" aria-hidden="true">
                                                                         <path class="cv-pallet-base-shape"
