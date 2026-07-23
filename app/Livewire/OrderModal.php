@@ -51,6 +51,16 @@ class OrderModal extends Component
         $this->showLoadSummary = false;
     }
 
+    public function editDeliveryTrip(): void
+    {
+        abort_unless($this->order instanceof Order && filled($this->order->trip_id), 404);
+
+        $tripId = (int) $this->order->trip_id;
+
+        $this->closeModal();
+        $this->dispatch('editDeliveryTrip', tripId: $tripId);
+    }
+
     public function editOrder()
     {
         if ($this->order) {

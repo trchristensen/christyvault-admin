@@ -300,6 +300,9 @@ it('creates, reorders, synchronizes, and dissolves a two-stop delivery trip', fu
         Order::findOrFail(2),
         '2026-07-20',
     );
+    $oneStopTrip = app(SplitLoadService::class)->createTrip([
+        ['order_id' => 3],
+    ], '2026-07-20');
 
     expect($trip->driver_id)->toBe(7)
         ->and($trip->dispatch_confirmed_at)->toBeNull()
@@ -720,7 +723,9 @@ it('renders linked orders as one delivery trip calendar event', function (): voi
         ->and(data_get($splitLoad, 'extendedProps.orders'))->toHaveCount(2)
         ->and(collect(data_get($splitLoad, 'extendedProps.orders'))->pluck('id')->all())->toBe([1, 2])
         ->and($standaloneOrders)->toHaveCount(1)
-        ->and($standaloneOrders->first()['id'])->toBe('3');
+        ->and($standaloneOrders->first()['id'])->toBe('3')
+        ->and(data_get($standaloneOrders->first(), 'extendedProps.trip_id'))->toBe($oneStopTrip->id)
+        ->and(data_get($standaloneOrders->first(), 'extendedProps.trip_number'))->toBe($oneStopTrip->trip_number);
 });
 
 it('renders executable delivery photo actions with concrete record ids', function (): void {

@@ -159,16 +159,47 @@
                     // Build the order content
                     const props = event.extendedProps;
                     const content = document.createElement('div');
-                    content.innerHTML = `
-                        <div class="order-container status-${(props.status_raw || props.status || '').toLowerCase()}">
-                            <div class="order-title">${event.title}</div>
-                            ${props.location_line2 ? `<div class="order-address">${props.location_line2}</div>` : ''}
-                            <div class="order-status">
-                                <span>${props.status || ''}</span>
-                                ${props.order_number ? `<span class="order-number">#${props.order_number.replace(/^ORD-/, '')}</span>` : ''}
+
+                    if (props.trip_id) {
+                        content.className = 'split-load-card single-trip-card';
+                        content.innerHTML = `
+                            <button type="button" class="split-load-header single-trip-header" data-single-trip-edit title="Edit delivery">
+                                <div class="split-load-meta">${props.driver_name || 'Driver unassigned'} · ${props.trip_number || ''}</div>
+                            </button>
+                            <div class="split-load-stops">
+                                <button type="button" class="split-load-stop status-${props.status_raw || ''}" data-single-trip-order>
+                                    <span class="split-load-stop-content">
+                                        <span class="split-load-stop-title">${event.title}</span>
+                                        <span class="split-load-stop-address">${props.location_line2 || ''}</span>
+                                        <span class="split-load-stop-status">${props.status || ''} · #${(props.order_number || '').replace(/^ORD-/, '')}</span>
+                                    </span>
+                                </button>
                             </div>
-                        </div>
-                    `;
+                        `;
+
+                        content.querySelector('[data-single-trip-edit]')?.addEventListener('click', clickEvent => {
+                            clickEvent.preventDefault();
+                            clickEvent.stopPropagation();
+                            @this.call('openSplitLoadModal', Number(props.trip_id));
+                        });
+
+                        content.querySelector('[data-single-trip-order]')?.addEventListener('click', clickEvent => {
+                            clickEvent.preventDefault();
+                            clickEvent.stopPropagation();
+                            @this.call('openOrderModal', Number(event.id));
+                        });
+                    } else {
+                        content.innerHTML = `
+                            <div class="order-container status-${(props.status_raw || props.status || '').toLowerCase()}">
+                                <div class="order-title">${event.title}</div>
+                                ${props.location_line2 ? `<div class="order-address">${props.location_line2}</div>` : ''}
+                                <div class="order-status">
+                                    <span>${props.status || ''}</span>
+                                    ${props.order_number ? `<span class="order-number">#${props.order_number.replace(/^ORD-/, '')}</span>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }
                     eventMainEl.replaceChildren(content);
                 }
                 

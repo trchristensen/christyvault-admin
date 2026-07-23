@@ -33,7 +33,7 @@ class OrderCalendarController extends Controller
             ->all();
 
         $orders = Order::query()
-            ->with('location')
+            ->with(['location', 'trip.driver'])
             ->whereNotNull('assigned_delivery_date')
             ->whereDate('assigned_delivery_date', '>=', $start)
             ->whereDate('assigned_delivery_date', '<=', $end)
@@ -93,8 +93,12 @@ class OrderCalendarController extends Controller
                     'title' => $order->location?->name ?? $order->order_number,
                     'start' => $order->assigned_delivery_date->toDateString(),
                     'allDay' => true,
+                    'classNames' => $order->trip_id ? ['single-trip-event'] : [],
                     'extendedProps' => [
                         'type' => 'order',
+                        'trip_id' => $order->trip_id,
+                        'trip_number' => $order->trip?->trip_number,
+                        'driver_name' => $order->trip?->driver?->name,
                         'location_line1' => $order->location?->address_line1,
                         'location_line2' => $order->location
                             ? "{$order->location->city}, {$order->location->state}"

@@ -79,6 +79,19 @@
                         @else
                             <div class="flex flex-wrap items-center justify-end gap-2">
                                 <div class="inline-flex overflow-hidden bg-white border border-gray-300 divide-x divide-gray-300 rounded-lg shadow-sm dark:bg-gray-900 dark:border-gray-600 dark:divide-gray-600">
+                                    @if(filled($order->trip_id))
+                                        <button
+                                            type="button"
+                                            wire:click="editDeliveryTrip"
+                                            class="p-2.5 text-gray-600 transition hover:bg-gray-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 dark:text-gray-300 dark:hover:bg-gray-700"
+                                            title="Edit delivery"
+                                            aria-label="Edit delivery"
+                                        >
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17h8m-9-5h10l2 5H5l2-5zm2 5a2 2 0 11-4 0m14 0a2 2 0 11-4 0M7 12l1.5-5h7L17 12"></path>
+                                            </svg>
+                                        </button>
+                                    @endif
                                     @if($this->canViewLoadSummary())
                                         <button
                                             type="button"

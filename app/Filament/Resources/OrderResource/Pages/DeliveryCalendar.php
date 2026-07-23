@@ -46,11 +46,16 @@ class DeliveryCalendar extends Page
 
     protected string $view = 'filament.resources.order-resource.pages.delivery-calendar';
 
-    protected $listeners = ['openOrderModal'];
+    protected $listeners = [
+        'openOrderModal',
+        'editDeliveryTrip' => 'openSplitLoadModal',
+    ];
 
     public ?string $selectedDate = null;
 
     public ?int $editingTripId = null;
+
+    public ?int $editingTripStopCount = null;
 
     public function getTitle(): string
     {
@@ -83,8 +88,14 @@ class DeliveryCalendar extends Page
                 ->label('Create delivery trip')
                 ->icon('heroicon-o-link')
                 ->color('info')
-                ->modalHeading(fn (): string => $this->editingTripId ? 'Edit delivery trip' : 'Plan a delivery trip')
-                ->modalDescription('Add two or more stops, then drag the rows into the order the driver should visit them.')
+                ->modalHeading(fn (): string => match (true) {
+                    $this->editingTripStopCount === 1 => 'Edit delivery',
+                    $this->editingTripId !== null => 'Edit delivery trip',
+                    default => 'Plan a delivery trip',
+                })
+                ->modalDescription(fn (): string => $this->editingTripStopCount === 1
+                    ? 'Update the delivery date, driver, or vehicle configuration. Add another stop if this order will share the trip.'
+                    : 'Add two or more stops, then drag the rows into the order the driver should visit them.')
                 ->modalSubmitActionLabel(fn (): string => $this->editingTripId ? 'Save trip' : 'Create trip')
                 ->modalWidth('4xl')
                 ->extraModalFooterActions([
@@ -163,7 +174,8 @@ class DeliveryCalendar extends Page
                         ->icon('heroicon-o-ellipsis-vertical')
                         ->iconButton()
                         ->tooltip('More trip actions')
-                        ->visible(fn (): bool => $this->editingTripId !== null),
+                        ->visible(fn (): bool => $this->editingTripId !== null
+                            && ($this->editingTripStopCount ?? 0) > 1),
                 ])
                 ->schema([
                     Grid::make(3)
@@ -221,7 +233,7 @@ class DeliveryCalendar extends Page
                                 ->placeholder('Optional delivery notes for this stop'),
                         ])
                         ->columns(2)
-                        ->minItems(2)
+                        ->minItems(fn (): int => $this->editingTripStopCount === 1 ? 1 : 2)
                         ->defaultItems(2)
                         ->reorderable()
                         ->reorderableWithButtons()
@@ -233,11 +245,13 @@ class DeliveryCalendar extends Page
                     $this->editingTripId = isset($arguments['tripId'])
                         ? (int) $arguments['tripId']
                         : null;
+                    $this->editingTripStopCount = null;
 
                     if ($this->editingTripId) {
                         $trip = Trip::query()
                             ->with(['orders' => fn ($query) => $query->orderBy('stop_number')])
                             ->findOrFail($this->editingTripId);
+                        $this->editingTripStopCount = $trip->orders->count();
 
                         return [
                             'scheduled_date' => $trip->scheduled_date?->toDateString(),
@@ -296,6 +310,7 @@ class DeliveryCalendar extends Page
                         ->send();
 
                     $this->editingTripId = null;
+                    $this->editingTripStopCount = null;
                     $this->dispatch('refresh-calendar');
                 }),
             CreateAction::make('createOrder')
