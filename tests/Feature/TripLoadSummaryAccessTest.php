@@ -9,6 +9,7 @@ use App\Models\Trip;
 use App\Models\User;
 use App\Services\LoadPlanning\TripLoadPlanService;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -124,9 +125,15 @@ it('shows the load summary in the saved trip edit modal with the same permission
     $page->tripForTest = tripWithDeliveryTagStates(true);
     $user = loadSummaryViewer(false);
     auth()->setUser($user);
-    $loadSummaryAction = $page->tripEditorActionForTest()
+    $tripActionGroup = $page->tripEditorActionForTest()
         ->livewire($page)
-        ->getExtraModalFooterActions()['viewTripLoadSummary'];
+        ->getExtraModalFooterActions()[0];
+    $loadSummaryAction = $tripActionGroup->getFlatActions()['viewTripLoadSummary'];
+
+    expect($tripActionGroup)
+        ->toBeInstanceOf(ActionGroup::class)
+        ->and($tripActionGroup->isButtonGroup())->toBeTrue()
+        ->and($loadSummaryAction->getIcon())->toBe(TripLoadSummaryAction::ICON);
 
     expect($loadSummaryAction->isVisible())->toBeFalse();
 

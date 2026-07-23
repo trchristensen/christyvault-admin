@@ -10,12 +10,14 @@ use Illuminate\Database\Eloquent\Model;
 
 final class TripLoadSummaryAction
 {
+    public const ICON = 'heroicon-o-cube-transparent';
+
     public static function make(string $name = 'loadSummary'): Action
     {
         return Action::make($name)
             ->label('Load Summary')
-            ->icon('heroicon-o-cube-transparent')
-            ->color('info')
+            ->icon(self::ICON)
+            ->color('gray')
             ->visible(fn (Model $record): bool => self::hasTrip($record)
                 && self::tripFor($record)->loadSummaryIsVisibleTo(auth()->user()))
             ->modalHeading(function (Model $record): string {

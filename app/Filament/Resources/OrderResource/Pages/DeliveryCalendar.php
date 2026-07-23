@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Enums\OrderStatus;
+use App\Filament\Actions\TripLoadSummaryAction;
 use App\Filament\Resources\OrderResource;
 use App\Filament\Resources\Traits\HasOrderForm;
 use App\Models\Employee;
@@ -99,83 +100,88 @@ class DeliveryCalendar extends Page
                 ->modalSubmitActionLabel(fn (): string => $this->editingTripId ? 'Save trip' : 'Create trip')
                 ->modalWidth('4xl')
                 ->extraModalFooterActions([
-                    Action::make('viewTripLoadSummary')
-                        ->label('Load summary')
-                        ->icon('heroicon-o-cube-transparent')
-                        ->color('info')
-                        ->iconButton()
-                        ->tooltip('Load summary')
-                        ->visible(fn (): bool => $this->editingTripId !== null
-                            && $this->tripForLoadSummary($this->editingTripId)->loadSummaryIsVisibleTo(auth()->user()))
-                        ->modalHeading(function (): string {
-                            $trip = $this->authorizedTripForLoadSummary($this->editingTripId);
-
-                            return "Load summary — {$trip->trip_number}";
-                        })
-                        ->modalDescription('This summary uses the last saved trip. Save trip changes before relying on an updated load plan.')
-                        ->modalContent(function () {
-                            $trip = $this->authorizedTripForLoadSummary($this->editingTripId);
-                            $plan = app(TripLoadPlanService::class)->forTrip($trip);
-
-                            return view('filament.resources.trip-resource.load-summary', [
-                                'result' => $plan['demand']->toArray(),
-                                'diagram' => $plan['diagram'],
-                                'fillAllocations' => $plan['fill_allocations'],
-                                'printUrl' => route('trips.load-summary.print', [
-                                    'trip' => $trip,
-                                    'print' => 1,
-                                ]),
-                            ]);
-                        })
-                        ->modalSubmitAction(false)
-                        ->modalCancelActionLabel('Back to trip')
-                        ->modalWidth('7xl'),
                     ActionGroup::make([
-                        Action::make('separateOrders')
-                            ->label('Separate orders')
-                            ->icon('heroicon-o-arrows-pointing-out')
-                            ->color('warning')
-                            ->requiresConfirmation()
-                            ->modalHeading('Separate these orders?')
-                            ->modalDescription('Each order will become its own delivery again. The split-load history is retained, and no orders, photos, signatures, or activity records are deleted.')
-                            ->modalSubmitActionLabel('Separate orders')
-                            ->action(function (Action $action): void {
-                                $tripId = $this->editingTripId;
+                        Action::make('viewTripLoadSummary')
+                            ->label('Load summary')
+                            ->hiddenLabel()
+                            ->icon(TripLoadSummaryAction::ICON)
+                            ->color('gray')
+                            ->tooltip('Load summary')
+                            ->visible(fn (): bool => $this->editingTripId !== null
+                                && $this->tripForLoadSummary($this->editingTripId)->loadSummaryIsVisibleTo(auth()->user()))
+                            ->modalHeading(function (): string {
+                                $trip = $this->authorizedTripForLoadSummary($this->editingTripId);
 
-                                if (! $tripId) {
-                                    $action->halt();
-                                }
-
-                                try {
-                                    app(SplitLoadService::class)->dissolve(Trip::findOrFail($tripId));
-
-                                    Notification::make()
-                                        ->title('Orders separated')
-                                        ->body('Each order is now its own delivery again.')
-                                        ->success()
-                                        ->send();
-
-                                    $this->editingTripId = null;
-                                    $this->dispatch('refresh-calendar');
-                                } catch (Throwable $exception) {
-                                    report($exception);
-
-                                    Notification::make()
-                                        ->title('Could not separate these orders')
-                                        ->body($exception->getMessage())
-                                        ->danger()
-                                        ->send();
-
-                                    $action->halt();
-                                }
+                                return "Load summary — {$trip->trip_number}";
                             })
-                            ->cancelParentActions(),
+                            ->modalDescription('This summary uses the last saved trip. Save trip changes before relying on an updated load plan.')
+                            ->modalContent(function () {
+                                $trip = $this->authorizedTripForLoadSummary($this->editingTripId);
+                                $plan = app(TripLoadPlanService::class)->forTrip($trip);
+
+                                return view('filament.resources.trip-resource.load-summary', [
+                                    'result' => $plan['demand']->toArray(),
+                                    'diagram' => $plan['diagram'],
+                                    'fillAllocations' => $plan['fill_allocations'],
+                                    'printUrl' => route('trips.load-summary.print', [
+                                        'trip' => $trip,
+                                        'print' => 1,
+                                    ]),
+                                ]);
+                            })
+                            ->modalSubmitAction(false)
+                            ->modalCancelActionLabel('Back to trip')
+                            ->modalWidth('7xl'),
+                        ActionGroup::make([
+                            Action::make('separateOrders')
+                                ->label('Separate orders')
+                                ->icon('heroicon-o-arrows-pointing-out')
+                                ->color('warning')
+                                ->requiresConfirmation()
+                                ->modalHeading('Separate these orders?')
+                                ->modalDescription('Each order will become its own delivery again. The split-load history is retained, and no orders, photos, signatures, or activity records are deleted.')
+                                ->modalSubmitActionLabel('Separate orders')
+                                ->action(function (Action $action): void {
+                                    $tripId = $this->editingTripId;
+
+                                    if (! $tripId) {
+                                        $action->halt();
+                                    }
+
+                                    try {
+                                        app(SplitLoadService::class)->dissolve(Trip::findOrFail($tripId));
+
+                                        Notification::make()
+                                            ->title('Orders separated')
+                                            ->body('Each order is now its own delivery again.')
+                                            ->success()
+                                            ->send();
+
+                                        $this->editingTripId = null;
+                                        $this->dispatch('refresh-calendar');
+                                    } catch (Throwable $exception) {
+                                        report($exception);
+
+                                        Notification::make()
+                                            ->title('Could not separate these orders')
+                                            ->body($exception->getMessage())
+                                            ->danger()
+                                            ->send();
+
+                                        $action->halt();
+                                    }
+                                })
+                                ->cancelParentActions(),
+                        ])
+                            ->label('More trip actions')
+                            ->hiddenLabel()
+                            ->icon('heroicon-o-ellipsis-horizontal')
+                            ->color('gray')
+                            ->tooltip('More trip actions')
+                            ->visible(fn (): bool => $this->editingTripId !== null
+                                && ($this->editingTripStopCount ?? 0) > 1),
                     ])
-                        ->icon('heroicon-o-ellipsis-vertical')
-                        ->iconButton()
-                        ->tooltip('More trip actions')
-                        ->visible(fn (): bool => $this->editingTripId !== null
-                            && ($this->editingTripStopCount ?? 0) > 1),
+                        ->buttonGroup(),
                 ])
                 ->schema([
                     Grid::make(3)

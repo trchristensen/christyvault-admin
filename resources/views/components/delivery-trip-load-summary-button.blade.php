@@ -5,8 +5,8 @@
 @if ($trip->loadSummaryIsVisibleTo(auth()->user()))
     <x-filament::icon-button
         type="button"
-        icon="heroicon-o-cube-transparent"
-        color="info"
+        :icon="\App\Filament\Actions\TripLoadSummaryAction::ICON"
+        color="gray"
         size="sm"
         label="Load summary"
         tooltip="Load summary"

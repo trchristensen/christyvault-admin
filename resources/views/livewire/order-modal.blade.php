@@ -100,9 +100,10 @@
                                             title="Load summary"
                                             aria-label="Load summary"
                                         >
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h10"></path>
-                                            </svg>
+                                            <x-filament::icon
+                                                :icon="\App\Filament\Actions\TripLoadSummaryAction::ICON"
+                                                class="w-5 h-5"
+                                            />
                                         </button>
                                     @endif
                                     <button
