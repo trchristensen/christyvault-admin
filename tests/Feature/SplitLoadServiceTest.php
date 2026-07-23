@@ -300,9 +300,6 @@ it('creates, reorders, synchronizes, and dissolves a two-stop delivery trip', fu
         Order::findOrFail(2),
         '2026-07-20',
     );
-    $oneStopTrip = app(SplitLoadService::class)->createTrip([
-        ['order_id' => 3],
-    ], '2026-07-20');
 
     expect($trip->driver_id)->toBe(7)
         ->and($trip->dispatch_confirmed_at)->toBeNull()
@@ -707,6 +704,9 @@ it('renders linked orders as one delivery trip calendar event', function (): voi
         Order::findOrFail(2),
         '2026-07-20',
     );
+    $oneStopTrip = app(SplitLoadService::class)->createTrip([
+        ['order_id' => 3],
+    ], '2026-07-20');
 
     $response = app(OrderCalendarController::class)->events(
         Request::create('/calendar-events', 'GET', [

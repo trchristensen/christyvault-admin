@@ -53,9 +53,9 @@ class OrderModal extends Component
 
     public function editDeliveryTrip(): void
     {
-        abort_unless($this->order instanceof Order && filled($this->order->trip_id), 404);
+        abort_unless($this->order instanceof Order && $this->order->trip !== null, 404);
 
-        $tripId = (int) $this->order->trip_id;
+        $tripId = (int) $this->order->trip->getKey();
 
         $this->closeModal();
         $this->dispatch('editDeliveryTrip', tripId: $tripId);

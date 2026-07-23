@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
+use function Livewire\store;
+
 function tripWithDeliveryTagStates(bool ...$printedStates): Trip
 {
     $trip = (new Trip)->forceFill([
@@ -83,6 +85,24 @@ it('uses the same permission for the calendar order modal', function () {
     $user->mayViewLoadSummary = true;
 
     expect($modal->canViewLoadSummary())->toBeTrue();
+});
+
+it('hands a one-stop delivery from the order modal to the calendar trip editor', function () {
+    $modal = new OrderModal;
+    $modal->order = tripWithDeliveryTagStates(true)->orders->first();
+    $modal->showModal = true;
+
+    $modal->editDeliveryTrip();
+
+    $events = collect(store($modal)->get('dispatched'))
+        ->map->serialize();
+
+    expect($modal->showModal)->toBeFalse()
+        ->and($modal->order)->toBeNull()
+        ->and($events)->toContain([
+            'name' => 'editDeliveryTrip',
+            'params' => ['tripId' => 42],
+        ]);
 });
 
 it('shows the load summary in the saved trip edit modal with the same permission', function () {

@@ -79,7 +79,7 @@
                         @else
                             <div class="flex flex-wrap items-center justify-end gap-2">
                                 <div class="inline-flex overflow-hidden bg-white border border-gray-300 divide-x divide-gray-300 rounded-lg shadow-sm dark:bg-gray-900 dark:border-gray-600 dark:divide-gray-600">
-                                    @if(filled($order->trip_id))
+                                    @if($order->trip)
                                         <button
                                             type="button"
                                             wire:click="editDeliveryTrip"
