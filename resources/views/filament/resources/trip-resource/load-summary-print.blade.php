@@ -13,7 +13,7 @@
         html,
         body {
             background: #fff;
-            color: #172033;
+            color: #111;
             margin: 0;
             padding: 0;
         }
@@ -45,25 +45,10 @@
             padding: 8px 14px;
         }
 
-        .cv-print-document-heading {
-            align-items: baseline;
-            display: flex;
-            font-family: ui-sans-serif, system-ui, sans-serif;
-            gap: 10px;
-            margin: 12px 14px 8px;
-        }
-
-        .cv-print-document-heading strong {
-            font-size: 18px;
-        }
-
-        .cv-print-document-heading span {
-            color: #657085;
-            font-size: 12px;
-        }
-
         .cv-print-content {
-            padding: 0 14px 14px;
+            margin: 0 auto;
+            max-width: 11in;
+            padding: 14px;
         }
 
         @media print {
@@ -71,19 +56,8 @@
                 display: none;
             }
 
-            .cv-print-document-heading {
-                margin: 0 0 5px;
-            }
-
-            .cv-print-document-heading strong {
-                font-size: 13px;
-            }
-
-            .cv-print-document-heading span {
-                font-size: 9px;
-            }
-
             .cv-print-content {
+                max-width: none;
                 padding: 0;
             }
         }
@@ -95,29 +69,8 @@
         <button type="button" onclick="window.print()">Print load diagram</button>
     </div>
 
-    <div class="cv-print-document-heading">
-        <strong>Load summary</strong>
-        <span>
-            {{ $trip->trip_number }}
-            @if ($trip->scheduled_date)
-                · {{ $trip->scheduled_date->format('M j, Y') }}
-            @endif
-            @php
-                $printOrderNumbers = $trip->orderedDeliveryOrders()
-                    ->pluck('order_number')
-                    ->filter()
-                    ->join(' · ');
-            @endphp
-            @if ($printOrderNumbers)
-                · {{ $printOrderNumbers }}
-            @endif
-        </span>
-    </div>
-
     <div class="cv-print-content">
-        @include('filament.resources.trip-resource.load-summary', [
-            'printMode' => true,
-        ])
+        @include('filament.resources.trip-resource.load-summary-print-sheet')
     </div>
 
     @if ($autoPrint)

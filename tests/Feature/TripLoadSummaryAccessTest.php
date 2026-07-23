@@ -285,6 +285,16 @@ it('renders fallback flatbed pallets in the shared load summary', function () {
         'fillAllocations' => [],
         'autoPrint' => true,
     ])->render();
+    $emptyFlatbedDiagram = $diagram;
+    $emptyFlatbedDiagram['flatbed_pallets_used'] = 0;
+    $emptyFlatbedDiagram['flatbed_pallets'] = [];
+    $emptyFlatbedPrintHtml = view('filament.resources.trip-resource.load-summary-print', [
+        'trip' => $printTrip,
+        'result' => $result,
+        'diagram' => $emptyFlatbedDiagram,
+        'fillAllocations' => [],
+        'autoPrint' => false,
+    ])->render();
     $directFlatbedDiagram = $diagram;
     $directFlatbedDiagram['flatbed_pallets'][0]['is_direct_flatbed'] = true;
     $directFlatbedHtml = view('filament.resources.trip-resource.load-summary', [
@@ -311,5 +321,12 @@ it('renders fallback flatbed pallets in the shared load summary', function () {
         ->and($printButtonHtml)->toContain('/trips/42/load-summary/print?print=1')
         ->and($printHtml)->toContain('size: Letter landscape')
         ->and($printHtml)->toContain('cv-load-sheet-print')
+        ->and($printHtml)->toContain('cv-print-rack-grid')
+        ->and($printHtml)->toContain('<div class="cv-print-flatbed-grid"')
+        ->and($printHtml)->toContain('aria-label="Product code key"')
+        ->and($printHtml)->not->toContain('Compact cab-over truck tractor')
+        ->and($printHtml)->not->toContain('cv-tractor')
+        ->and($emptyFlatbedPrintHtml)->not->toContain('<div class="cv-print-flatbed-grid"')
+        ->and($emptyFlatbedPrintHtml)->not->toContain('2 · Flatbed deck')
         ->and($printHtml)->toContain('window.print()');
 });
