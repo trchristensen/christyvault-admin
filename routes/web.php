@@ -9,6 +9,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderCalendarController;
+use App\Http\Controllers\TripLoadSummaryPrintController;
 use App\Models\KanbanCard;
 use App\Models\Order;
 use App\Models\Driver;
@@ -152,6 +153,9 @@ Route::get('/delivery/{order}/{token}', function (Order $order, string $token) {
 Route::get('/orders/calendar/print', [DeliveryCalendarPrintController::class, 'view'])->name('delivery-calendar.print')->middleware('auth');
 Route::get('/orders/{order}/print', [DeliveryTagController::class, 'view'])->name('orders.print')->middleware('auth');
 Route::get('/orders/{order}/print-formbg', [DeliveryTagController::class, 'viewWithFormBg'])->name('orders.print.formbg')->middleware('auth');
+Route::get('/trips/{trip}/load-summary/print', TripLoadSummaryPrintController::class)
+    ->name('trips.load-summary.print')
+    ->middleware('auth');
 
 
 Route::get('/calendar-events', [OrderCalendarController::class, 'events'])

@@ -98,6 +98,10 @@ class OrderModal extends Component
                 'result' => $plan['demand']->toArray(),
                 'diagram' => $plan['diagram'],
                 'fillAllocations' => $plan['fill_allocations'],
+                'printUrl' => route('trips.load-summary.print', [
+                    'trip' => $this->order->trip,
+                    'print' => 1,
+                ]),
             ];
         }
 

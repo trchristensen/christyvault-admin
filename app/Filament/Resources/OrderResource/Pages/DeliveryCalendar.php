@@ -110,6 +110,10 @@ class DeliveryCalendar extends Page
                                 'result' => $plan['demand']->toArray(),
                                 'diagram' => $plan['diagram'],
                                 'fillAllocations' => $plan['fill_allocations'],
+                                'printUrl' => route('trips.load-summary.print', [
+                                    'trip' => $trip,
+                                    'print' => 1,
+                                ]),
                             ]);
                         })
                         ->modalSubmitAction(false)

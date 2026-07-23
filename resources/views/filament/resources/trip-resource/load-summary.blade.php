@@ -9,6 +9,7 @@
     $warningMessages = collect($result['warnings'])->pluck('message')->unique()->values();
     $fillAllocations = collect($fillAllocations ?? []);
     $isMultiStop = count($result['stops']) > 1;
+    $printMode = (bool) ($printMode ?? false);
 @endphp
 
 <style>
@@ -73,6 +74,37 @@
         content: "";
         height: 8px;
         width: 8px;
+    }
+
+    .cv-header-actions {
+        align-items: center;
+        display: flex;
+        flex: 0 0 auto;
+        gap: 8px;
+    }
+
+    .cv-print-button {
+        align-items: center;
+        background: #1c3366;
+        border: 1px solid #1c3366;
+        border-radius: 8px;
+        color: #fff;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 750;
+        gap: 6px;
+        padding: 7px 10px;
+        text-decoration: none;
+    }
+
+    .cv-print-button:hover {
+        background: #14264f;
+        color: #fff;
+    }
+
+    .cv-print-button svg {
+        height: 16px;
+        width: 16px;
     }
 
     .cv-status-ok {
@@ -439,37 +471,43 @@
         min-width: 66px;
     }
 
-    .cv-flatbed-slot:not(.cv-flatbed-slot-empty)::before {
-        background: repeating-linear-gradient(90deg,
-                #344054 0,
-                #344054 20%,
-                transparent 20%,
-                transparent 27%);
-        border-bottom: 2px solid #344054;
-        border-top: 2px solid #344054;
-        bottom: 0;
-        content: "";
-        height: 9px;
-        left: -2px;
-        position: absolute;
-        right: -2px;
-        z-index: 1;
-    }
-
-    .cv-flatbed-slot:not(.cv-flatbed-slot-empty)::after {
-        background: currentColor;
-        content: "";
-        inset: 0 auto 9px 50%;
-        opacity: .2;
-        position: absolute;
-        transform: translateX(-50%);
-        width: 5px;
-        z-index: 0;
-    }
-
     .cv-flatbed-slot>* {
         position: relative;
         z-index: 2;
+    }
+
+    .cv-flatbed-slot>.cv-pallet-base {
+        bottom: -2px;
+        height: 14px;
+        left: -2px;
+        position: absolute;
+        width: calc(100% + 4px);
+        z-index: 3;
+    }
+
+    .cv-pallet-base-shape {
+        fill: #344054;
+    }
+
+    .cv-flatbed-slot>.cv-pallet-strap {
+        height: calc(100% - 9px);
+        inset: 0 0 auto;
+        opacity: .55;
+        pointer-events: none;
+        position: absolute;
+        width: 100%;
+        z-index: 1;
+    }
+
+    .cv-pallet-strap-webbing {
+        fill: #b7791f;
+    }
+
+    .cv-pallet-strap-buckle {
+        fill: #fef3c7;
+        stroke: #78350f;
+        stroke-width: 1.5;
+        vector-effect: non-scaling-stroke;
     }
 
     .cv-flatbed-slot-empty {
@@ -831,15 +869,6 @@
         border-color: #aeb7c5;
     }
 
-    html.dark .cv-flatbed-slot:not(.cv-flatbed-slot-empty)::before {
-        background: repeating-linear-gradient(90deg,
-                #aeb7c5 0,
-                #aeb7c5 20%,
-                transparent 20%,
-                transparent 27%);
-        border-color: #aeb7c5;
-    }
-
     html.dark .cv-rack-cell {
         border-color: #aeb7c5;
     }
@@ -954,6 +983,10 @@
     }
 
     @media print {
+        .cv-print-button {
+            display: none;
+        }
+
         .cv-load-sheet {
             color: #111827;
         }
@@ -969,10 +1002,277 @@
         .cv-details {
             display: none;
         }
+
+        .cv-load-sheet-print {
+            font-size: 10px;
+            line-height: 1.2;
+        }
+
+        .cv-load-sheet-print .cv-sheet-header {
+            border-radius: 7px;
+            gap: 8px;
+            padding: 6px 8px;
+        }
+
+        .cv-load-sheet-print .cv-vehicle-name {
+            font-size: 12px;
+        }
+
+        .cv-load-sheet-print .cv-vehicle-meta,
+        .cv-load-sheet-print .cv-weight-limit,
+        .cv-load-sheet-print .cv-weight-remaining {
+            font-size: 9px;
+        }
+
+        .cv-load-sheet-print .cv-status {
+            font-size: 9px;
+            padding: 4px 7px;
+        }
+
+        .cv-load-sheet-print .cv-top-grid {
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .cv-load-sheet-print .cv-panel {
+            border-radius: 7px;
+            padding: 6px 8px;
+        }
+
+        .cv-load-sheet-print .cv-panel-label {
+            font-size: 8px;
+        }
+
+        .cv-load-sheet-print .cv-weight-row {
+            margin-top: 2px;
+        }
+
+        .cv-load-sheet-print .cv-weight-value {
+            font-size: 17px;
+        }
+
+        .cv-load-sheet-print .cv-progress {
+            height: 5px;
+            margin-top: 5px;
+        }
+
+        .cv-load-sheet-print .cv-metrics {
+            gap: 4px;
+        }
+
+        .cv-load-sheet-print .cv-metric {
+            border-radius: 5px;
+            padding: 4px 6px;
+        }
+
+        .cv-load-sheet-print .cv-metric-value {
+            font-size: 14px;
+        }
+
+        .cv-load-sheet-print .cv-metric-label,
+        .cv-load-sheet-print .cv-fill-note,
+        .cv-load-sheet-print .cv-fill-meta {
+            font-size: 8px;
+        }
+
+        .cv-load-sheet-print .cv-fill-panel {
+            border-radius: 7px;
+            margin-top: 6px;
+            padding: 6px 8px;
+        }
+
+        .cv-load-sheet-print .cv-fill-title {
+            font-size: 10px;
+        }
+
+        .cv-load-sheet-print .cv-fill-grid {
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .cv-load-sheet-print .cv-fill-item {
+            border-radius: 5px;
+            padding: 4px 6px;
+        }
+
+        .cv-load-sheet-print .cv-fill-quantity {
+            font-size: 13px;
+        }
+
+        .cv-load-sheet-print .cv-section {
+            margin-top: 7px;
+        }
+
+        .cv-load-sheet-print .cv-section-heading {
+            margin-bottom: 4px;
+        }
+
+        .cv-load-sheet-print .cv-section-title {
+            font-size: 11px;
+        }
+
+        .cv-load-sheet-print .cv-diagram-frame {
+            border-radius: 7px;
+            contain: none;
+            padding: 7px 7px 4px;
+        }
+
+        .cv-load-sheet-print .cv-truck-scroll {
+            contain: none;
+            padding-bottom: 3px;
+        }
+
+        .cv-load-sheet-print .cv-truck-canvas {
+            min-width: 0;
+        }
+
+        .cv-load-sheet-print .cv-direction-row {
+            font-size: 7px;
+            margin-bottom: 2px;
+        }
+
+        .cv-load-sheet-print .cv-truck-body {
+            grid-template-columns: 88px minmax(0, 1fr);
+        }
+
+        .cv-load-sheet-print .cv-tractor {
+            height: 78px;
+            width: 88px;
+        }
+
+        .cv-load-sheet-print .cv-piggyback-wrap {
+            flex-basis: 48px;
+            margin-left: -8px;
+        }
+
+        .cv-load-sheet-print .cv-piggyback {
+            height: 58px;
+            width: 46px;
+        }
+
+        .cv-load-sheet-print .cv-trailer {
+            border-bottom-width: 5px;
+            min-width: 0;
+        }
+
+        .cv-load-sheet-print .cv-trailer-cargo {
+            --cv-rack-level-height: 27px;
+            gap: 5px;
+        }
+
+        .cv-load-sheet-print .cv-rack-grid,
+        .cv-load-sheet-print .cv-flatbed-slots {
+            gap: 3px;
+        }
+
+        .cv-load-sheet-print .cv-rack,
+        .cv-load-sheet-print .cv-flatbed-position,
+        .cv-load-sheet-print .cv-flatbed-slot {
+            min-width: 44px;
+        }
+
+        .cv-load-sheet-print .cv-rack-body {
+            border-width: 2px;
+        }
+
+        .cv-load-sheet-print .cv-rack-cell {
+            border-bottom-width: 1px;
+        }
+
+        .cv-load-sheet-print .cv-cell-code {
+            font-size: 10px;
+        }
+
+        .cv-load-sheet-print .cv-cell-code-pallet,
+        .cv-load-sheet-print .cv-cell-meta {
+            font-size: 6px;
+        }
+
+        .cv-load-sheet-print .cv-pallet-base {
+            bottom: -1px;
+            height: 9px;
+        }
+
+        .cv-load-sheet-print .cv-pallet-strap {
+            height: calc(100% - 6px);
+        }
+
+        .cv-load-sheet-print .cv-rack-label,
+        .cv-load-sheet-print .cv-flatbed-spot-label {
+            font-size: 7px;
+            margin-top: 2px;
+        }
+
+        .cv-load-sheet-print .cv-rack-weight {
+            font-size: 6px;
+            margin-top: 1px;
+        }
+
+        .cv-load-sheet-print .cv-trailer-wheels {
+            margin-top: -1px;
+        }
+
+        .cv-load-sheet-print .cv-wheel {
+            border-width: 3px;
+            box-shadow: inset 0 0 0 5px #fbfcfe;
+            height: 27px;
+            width: 27px;
+        }
+
+        .cv-load-sheet-print .cv-legends {
+            gap: 5px;
+            margin-top: 4px;
+        }
+
+        .cv-load-sheet-print .cv-legend-box {
+            border-radius: 5px;
+            padding: 4px 6px;
+        }
+
+        .cv-load-sheet-print .cv-legend-title {
+            font-size: 7px;
+            margin-bottom: 3px;
+        }
+
+        .cv-load-sheet-print .cv-legend-list {
+            gap: 3px 8px;
+        }
+
+        .cv-load-sheet-print .cv-legend-item {
+            font-size: 8px;
+            gap: 3px;
+        }
+
+        .cv-load-sheet-print .cv-legend-weight {
+            font-size: 7px;
+            margin-top: 1px;
+        }
+
+        .cv-load-sheet-print .cv-code-chip,
+        .cv-load-sheet-print .cv-stop-chip {
+            font-size: 7px;
+            min-width: 20px;
+            padding: 1px 3px;
+        }
+
+        .cv-load-sheet-print .cv-alert {
+            border-radius: 6px;
+            font-size: 8px;
+            margin-top: 5px;
+            padding: 5px 7px;
+        }
+
+        .cv-load-sheet-print .cv-alert-title {
+            font-size: 9px;
+        }
+
+        .cv-load-sheet-print .cv-alert ul {
+            margin-top: 2px;
+        }
     }
 </style>
 
-<div class="cv-load-sheet">
+<div class="cv-load-sheet {{ $printMode ? 'cv-load-sheet-print' : '' }}">
     <header class="cv-sheet-header">
         <div>
             <div class="cv-vehicle-name">{{ $vehicle['name'] ?? 'Vehicle configuration missing' }}</div>
@@ -987,9 +1287,27 @@
             </div>
         </div>
 
-        <span class="cv-status {{ $needsReview ? 'cv-status-review' : 'cv-status-ok' }}">
-            {{ $needsReview ? 'Manual review needed' : 'Cheat sheet ready' }}
-        </span>
+        <div class="cv-header-actions">
+            <span class="cv-status {{ $needsReview ? 'cv-status-review' : 'cv-status-ok' }}">
+                {{ $needsReview ? 'Manual review needed' : 'Cheat sheet ready' }}
+            </span>
+
+            @if (filled($printUrl ?? null))
+                <a
+                    href="{{ $printUrl }}"
+                    target="_blank"
+                    rel="noopener"
+                    class="cv-print-button"
+                    aria-label="Print load diagram"
+                >
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v7H6z" />
+                    </svg>
+                    Print
+                </a>
+            @endif
+        </div>
     </header>
 
     <div class="cv-top-grid">
@@ -1185,6 +1503,20 @@
                                                                 <span class="cv-cell-meta">
                                                                     {{ ($pallet['is_direct_flatbed'] ?? false) ? 'Secure to deck' : 'Strap pallet to deck' }}
                                                                 </span>
+                                                                @if (! ($pallet['is_direct_flatbed'] ?? false))
+                                                                    <svg class="cv-pallet-strap" viewBox="0 0 100 100"
+                                                                        preserveAspectRatio="none" aria-hidden="true">
+                                                                        <path class="cv-pallet-strap-webbing"
+                                                                            d="M17 0h3v100h-3z" />
+                                                                        <rect class="cv-pallet-strap-buckle" x="14" y="60"
+                                                                            width="9" height="8" rx="1.5" />
+                                                                    </svg>
+                                                                    <svg class="cv-pallet-base" viewBox="0 0 100 14"
+                                                                        preserveAspectRatio="none" aria-hidden="true">
+                                                                        <path class="cv-pallet-base-shape"
+                                                                            d="M0 0h100v4H0zM5 4h14v7H5zM43 4h14v7H43zM81 4h14v7H81zM0 11h100v3H0z" />
+                                                                    </svg>
+                                                                @endif
                                                             </div>
                                                         @else
                                                             <div class="cv-flatbed-slot cv-flatbed-slot-empty">Open</div>

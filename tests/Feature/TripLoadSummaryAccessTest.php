@@ -2,12 +2,16 @@
 
 use App\Filament\Actions\TripLoadSummaryAction;
 use App\Filament\Resources\OrderResource\Pages\DeliveryCalendar;
+use App\Http\Controllers\TripLoadSummaryPrintController;
 use App\Livewire\OrderModal;
 use App\Models\Order;
 use App\Models\Trip;
 use App\Models\User;
+use App\Services\LoadPlanning\TripLoadPlanService;
 use Filament\Actions\Action;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 function tripWithDeliveryTagStates(bool ...$printedStates): Trip
 {
@@ -137,6 +141,30 @@ it('shows the team schedule load summary trigger only with permission', function
         ->and($allowedHtml)->toContain('Load summary');
 });
 
+it('restricts the standalone print view to admin-panel roles', function (): void {
+    $user = Mockery::mock(User::class);
+    $user->shouldReceive('hasAnyRole')
+        ->once()
+        ->with(['admin', 'super-admin'])
+        ->andReturnFalse();
+    $request = Request::create('/trips/42/load-summary/print');
+    $request->setUserResolver(fn () => $user);
+
+    try {
+        (new TripLoadSummaryPrintController)(
+            $request,
+            tripWithDeliveryTagStates(true),
+            app(TripLoadPlanService::class),
+        );
+    } catch (HttpException $exception) {
+        expect($exception->getStatusCode())->toBe(403);
+
+        return;
+    }
+
+    $this->fail('The print view should reject users without an admin-panel role.');
+});
+
 it('holds every load summary until all tags are printed unless the viewer has the bypass permission', function () {
     $user = loadSummaryViewer(true);
     auth()->setUser($user);
@@ -243,6 +271,27 @@ it('renders fallback flatbed pallets in the shared load summary', function () {
         'diagram' => $diagram,
         'fillAllocations' => [],
     ])->render();
+    $printButtonHtml = view('filament.resources.trip-resource.load-summary', [
+        'result' => $result,
+        'diagram' => $diagram,
+        'fillAllocations' => [],
+        'printUrl' => '/trips/42/load-summary/print?print=1',
+    ])->render();
+    $printTrip = tripWithDeliveryTagStates(true);
+    $printHtml = view('filament.resources.trip-resource.load-summary-print', [
+        'trip' => $printTrip,
+        'result' => $result,
+        'diagram' => $diagram,
+        'fillAllocations' => [],
+        'autoPrint' => true,
+    ])->render();
+    $directFlatbedDiagram = $diagram;
+    $directFlatbedDiagram['flatbed_pallets'][0]['is_direct_flatbed'] = true;
+    $directFlatbedHtml = view('filament.resources.trip-resource.load-summary', [
+        'result' => $result,
+        'diagram' => $directFlatbedDiagram,
+        'fillAllocations' => [],
+    ])->render();
 
     expect($html)->toContain('Flatbed fallback cargo')
         ->and($html)->toContain('4×UVM')
@@ -251,5 +300,15 @@ it('renders fallback flatbed pallets in the shared load summary', function () {
         ->and($html)->toContain('1,750 lb / vault')
         ->and($html)->not->toContain('lb each')
         ->and($html)->toContain('Compact cab-over truck tractor')
-        ->and($html)->toContain('Piggyback forklift suspended from rear of trailer');
+        ->and($html)->toContain('Piggyback forklift suspended from rear of trailer')
+        ->and($html)->toContain('<svg class="cv-pallet-base"')
+        ->and($html)->toContain('<svg class="cv-pallet-strap"')
+        ->and($directFlatbedHtml)->not->toContain('<svg class="cv-pallet-base"')
+        ->and($directFlatbedHtml)->not->toContain('<svg class="cv-pallet-strap"')
+        ->and($html)->not->toContain('Print load diagram')
+        ->and($printButtonHtml)->toContain('Print load diagram')
+        ->and($printButtonHtml)->toContain('/trips/42/load-summary/print?print=1')
+        ->and($printHtml)->toContain('size: Letter landscape')
+        ->and($printHtml)->toContain('cv-load-sheet-print')
+        ->and($printHtml)->toContain('window.print()');
 });

@@ -24,12 +24,17 @@ final class TripLoadSummaryAction
                 return "Load summary — {$trip->trip_number}";
             })
             ->modalContent(function (Model $record) {
-                $plan = app(TripLoadPlanService::class)->forTrip(self::authorizedTripFor($record));
+                $trip = self::authorizedTripFor($record);
+                $plan = app(TripLoadPlanService::class)->forTrip($trip);
 
                 return view('filament.resources.trip-resource.load-summary', [
                     'result' => $plan['demand']->toArray(),
                     'diagram' => $plan['diagram'],
                     'fillAllocations' => $plan['fill_allocations'],
+                    'printUrl' => route('trips.load-summary.print', [
+                        'trip' => $trip,
+                        'print' => 1,
+                    ]),
                 ]);
             })
             ->modalSubmitAction(false)
