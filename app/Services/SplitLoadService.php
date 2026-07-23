@@ -394,6 +394,7 @@ class SplitLoadService
             }
 
             $this->deliveryTrips->syncStopsFromLegacyOrders($trip);
+            $this->loadPlans->unlockFillPlan($trip);
             $this->loadPlans->lockFillPlan($trip->refresh());
 
             if (! $wasConfirmed || $oldDriverId !== $driverId || $oldStopOrder !== $orderedOrderIds->all()) {

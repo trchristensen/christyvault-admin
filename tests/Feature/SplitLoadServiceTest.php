@@ -484,7 +484,7 @@ it('lets dispatch update only the driver and stop order', function (): void {
         ->toThrow(ValidationException::class);
 });
 
-it('locks automatic Fill quantities at dispatch and recalculates them after a trip edit', function (): void {
+it('locks automatic Fill quantities and recalculates stale automatic plans when dispatch is reconfirmed', function (): void {
     DB::table('rack_types')->insert([
         'id' => 1,
         'code' => 'standard_3_high',
@@ -537,6 +537,20 @@ it('locks automatic Fill quantities at dispatch and recalculates them after a tr
     expect($lockedLine->planned_fill_quantity)->toBe(22)
         ->and($lockedLine->fill_plan_source)->toBe('automatic')
         ->and($lockedLine->fill_locked_at)->not->toBeNull();
+
+    DB::table('order_product')->where('id', 1)->update([
+        'planned_fill_quantity' => 8,
+        'fill_plan_source' => 'automatic',
+        'fill_locked_at' => now()->subHour(),
+    ]);
+
+    $service->updateDispatchPlan($trip->refresh(), [1], 7);
+
+    $recalculatedLine = DB::table('order_product')->find(1);
+
+    expect($recalculatedLine->planned_fill_quantity)->toBe(22)
+        ->and($recalculatedLine->fill_plan_source)->toBe('automatic')
+        ->and($recalculatedLine->fill_locked_at)->not->toBeNull();
 
     $service->updateTrip($trip, [
         ['order_id' => 1],

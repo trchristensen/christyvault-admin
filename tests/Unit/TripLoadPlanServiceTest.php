@@ -68,8 +68,12 @@ function fillPlanLine(
     return $line;
 }
 
-function fillPlanTrip(array $orders, int $rackSpots = 8, float $maxWeight = 38500): Trip
-{
+function fillPlanTrip(
+    array $orders,
+    int $rackSpots = 8,
+    float $maxWeight = 38500,
+    int $flatbedPalletCapacity = 0,
+): Trip {
     $stops = collect($orders)->values()->map(function (Order $order, int $index): TripStop {
         $stop = new TripStop([
             'order_id' => $order->getKey(),
@@ -83,6 +87,7 @@ function fillPlanTrip(array $orders, int $rackSpots = 8, float $maxWeight = 3850
         'name' => 'Rack trailer',
         'configuration_type' => VehicleConfiguration::TYPE_RACK_TRAILER,
         'rack_spot_count' => $rackSpots,
+        'flatbed_pallet_capacity' => $flatbedPalletCapacity,
         'max_product_weight_lbs' => $maxWeight,
         'piggyback_forklift_onboard' => true,
     ]);
@@ -144,6 +149,97 @@ it('calculates the largest safe fill quantity after fixed products', function ()
         'source' => 'automatic',
     ])->and($plan['demand']->summary['known_weight_lbs'])->toBe(37465.0)
         ->and($plan['demand']->summary['remaining_product_weight_lbs'])->toBe(1035.0)
+        ->and($plan['diagram']['unplaced'])->toBeEmpty();
+});
+
+it('moves eligible fixed products to the flatbed to maximize the reviewed V1 fill load', function (): void {
+    $twoHigh = new RackType([
+        'code' => 'standard_2_high',
+        'level_count' => 2,
+        'pallet_capable_levels' => 1,
+        'pallets_per_capable_level' => 2,
+    ]);
+    $twoHigh->id = 1;
+    $threeHigh = new RackType([
+        'code' => 'standard_3_high',
+        'level_count' => 3,
+        'pallet_capable_levels' => 2,
+        'pallets_per_capable_level' => 2,
+    ]);
+    $threeHigh->id = 2;
+    $bothRackTypes = new Collection([$twoHigh, $threeHigh]);
+
+    $v1Profile = fillPlanProfile('standard_three_high_box', $threeHigh, 22);
+    $v1Profile->setRelation('allowedRackTypes', $bothRackTypes);
+    $linerProfile = fillPlanProfile('ring_liner_three_high', $threeHigh, 22);
+    $linerProfile->setRelation('allowedRackTypes', $bothRackTypes);
+    $wilbertProfile = fillPlanProfile('regular_burial_vault', $twoHigh, 15);
+    $gardenProfile = fillPlanProfile(
+        'double_garden_crypt',
+        $twoHigh,
+        12,
+        LoadingProfile::PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR,
+    );
+    $coverProfile = fillPlanProfile(
+        'garden_crypt_cover_6_lower_bays',
+        $threeHigh,
+        0,
+        level: LoadingProfile::LEVEL_LOWER_NOT_TOP,
+    );
+    $coverProfile->units_per_rack_position = 6;
+    $coverProfile->full_load_units = null;
+    $coverProfile->setRelation('allowedRackTypes', $bothRackTypes);
+    $smallVaultProfile = fillPlanProfile(
+        'christy_1637_vault_lower_bays_flatbed',
+        $threeHigh,
+        0,
+        level: LoadingProfile::LEVEL_LOWER_NOT_TOP,
+    );
+    $smallVaultProfile->units_per_rack_position = 4;
+    $smallVaultProfile->flatbed_fallback_units_per_spot = 1;
+    $smallVaultProfile->full_load_units = null;
+    $smallVaultProfile->setRelation('allowedRackTypes', $bothRackTypes);
+    $smallCoverProfile = new LoadingProfile([
+        'code' => 'christy_1637_cover_4_per_pallet',
+        'name' => 'Christy cover pallet',
+        'handling_method' => LoadingProfile::HANDLING_PALLET,
+        'units_per_pallet' => 4,
+        'rack_requirement' => LoadingProfile::RACK_STANDARD,
+        'required_rack_level' => LoadingProfile::LEVEL_LOWER_NOT_TOP,
+        'required_rack_type_id' => $threeHigh->getKey(),
+        'placement_strategy' => LoadingProfile::PLACEMENT_ONE_PER_LEVEL,
+    ]);
+    $smallCoverProfile->setRelation('requiredRackType', $threeHigh);
+    $smallCoverProfile->setRelation('allowedRackTypes', $bothRackTypes);
+
+    $order = fillPlanOrder(1, 'ORD-02215', [
+        fillPlanLine(1, fillPlanProduct('V3086-1', 1288, $v1Profile), null, true, priority: 1),
+        fillPlanLine(2, fillPlanProduct('L3086-4', 1175, $linerProfile), 4),
+        fillPlanLine(3, fillPlanProduct('W3086-M', 2190, $wilbertProfile), 4),
+        fillPlanLine(4, fillPlanProduct('V1637-1', 300, $smallVaultProfile), 2),
+        fillPlanLine(5, fillPlanProduct('2-3086G5', 575, $coverProfile), 1),
+        fillPlanLine(6, fillPlanProduct('2-1637V1', 100, $smallCoverProfile), 1),
+        fillPlanLine(7, fillPlanProduct('G3086-4', 3455, $gardenProfile), 2),
+    ]);
+
+    $plan = fillPlanner()->forTrip(fillPlanTrip(
+        [$order],
+        flatbedPalletCapacity: 4,
+    ));
+
+    expect($plan['fill_allocations'][0])->toMatchArray([
+        'sku' => 'V3086-1',
+        'planned_quantity' => 9,
+        'resolved' => true,
+        'source' => 'automatic',
+    ])->and($plan['demand']->summary['known_weight_lbs'])->toBe(33237.0)
+        ->and($plan['demand']->summary['remaining_product_weight_lbs'])->toBe(5263.0)
+        ->and($plan['diagram']['flatbed_pallets_used'])->toBe(3)
+        ->and(collect($plan['diagram']['flatbed_pallets'])->pluck('sku')->all())->toBe([
+            'V1637-1',
+            'V1637-1',
+            '2-1637V1',
+        ])
         ->and($plan['diagram']['unplaced'])->toBeEmpty();
 });
 
