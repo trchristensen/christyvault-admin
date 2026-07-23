@@ -161,7 +161,13 @@ final class TripLoadPlanService
                 + $flatbedPalletCapacity)
                 * max(1, (int) ($item['units_per_pallet'] ?? 1)),
             $item['rack_requirement'] === LoadingProfile::RACK_SINGLE => $rackSpots,
-            default => $rackSpots * 3 * max(1, (int) ($item['units_per_rack_position'] ?? 1)),
+            default => ($rackSpots
+                * $this->eligibleRackLevels(
+                    (string) ($item['required_rack_level'] ?? LoadingProfile::LEVEL_ANY),
+                    (int) ($item['required_rack_level_count'] ?? 3),
+                )
+                * max(1, (int) ($item['units_per_rack_position'] ?? 1)))
+                + ($flatbedPalletCapacity * max(0, (int) ($item['flatbed_fallback_units_per_spot'] ?? 0))),
         };
         $profileLimit = (int) ($item['full_load_units'] ?? 0);
         $limit = max($physicalLimit, $profileLimit);
@@ -175,6 +181,15 @@ final class TripLoadPlanService
         }
 
         return min(self::MAX_AUTOMATIC_FILL_UNITS, max(0, $limit));
+    }
+
+    private function eligibleRackLevels(string $requiredRackLevel, int $rackLevelCount): int
+    {
+        return match ($requiredRackLevel) {
+            LoadingProfile::LEVEL_BOTTOM => 1,
+            LoadingProfile::LEVEL_LOWER_NOT_TOP => max(0, $rackLevelCount - 1),
+            default => max(1, $rackLevelCount),
+        };
     }
 
     private function fits(LoadDemandResult $demand, array $diagram): bool

@@ -244,9 +244,9 @@ it('renders fallback flatbed pallets in the shared load summary', function () {
         'fillAllocations' => [],
     ])->render();
 
-    expect($html)->toContain('Strapped flatbed fallback')
+    expect($html)->toContain('Flatbed fallback cargo')
         ->and($html)->toContain('4×UVM')
-        ->and($html)->toContain('Strap to deck')
+        ->and($html)->toContain('Strap pallet to deck')
         ->and($html)->toContain('P1')
         ->and($html)->toContain('1,750 lb / vault')
         ->and($html)->not->toContain('lb each')

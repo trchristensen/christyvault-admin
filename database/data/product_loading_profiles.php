@@ -33,6 +33,9 @@ return [
     ['sku' => 'G3086-4', 'profile_code' => 'double_garden_crypt'],
     ['sku' => 'G3086-5', 'profile_code' => 'double_garden_crypt'],
     ['sku' => '2-3690G5', 'profile_code' => 'garden_crypt_cover_4_high'],
+    ['sku' => '2-3086G5', 'profile_code' => 'garden_crypt_cover_6_lower_bays'],
+    ['sku' => 'V1637-1', 'profile_code' => 'christy_1637_vault_lower_bays_flatbed'],
+    ['sku' => '2-1637V1', 'profile_code' => 'christy_1637_cover_4_per_pallet'],
 
     // Products explicitly identified as oversized or grande.
     ['sku' => 'W3490-M', 'profile_code' => 'oversized_single_rack'],

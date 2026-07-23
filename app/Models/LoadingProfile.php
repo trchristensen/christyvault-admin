@@ -28,6 +28,8 @@ class LoadingProfile extends Model
 
     public const LEVEL_BOTTOM = 'bottom';
 
+    public const LEVEL_LOWER_NOT_TOP = 'lower_not_top';
+
     public const PLACEMENT_ONE_PER_LEVEL = 'one_per_level';
 
     public const PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR = 'full_top_split_bottom_pair';
@@ -38,6 +40,7 @@ class LoadingProfile extends Model
         'handling_method',
         'units_per_pallet',
         'units_per_rack_position',
+        'flatbed_fallback_units_per_spot',
         'full_load_units',
         'pallet_compatibility_group',
         'rack_requirement',
@@ -52,6 +55,7 @@ class LoadingProfile extends Model
     protected $casts = [
         'units_per_pallet' => 'integer',
         'units_per_rack_position' => 'integer',
+        'flatbed_fallback_units_per_spot' => 'integer',
         'full_load_units' => 'integer',
         'is_stackable' => 'boolean',
         'is_active' => 'boolean',
@@ -80,6 +84,7 @@ class LoadingProfile extends Model
         return [
             self::LEVEL_ANY => 'Any allowed level',
             self::LEVEL_BOTTOM => 'Bottom level only',
+            self::LEVEL_LOWER_NOT_TOP => 'Lower levels only (never top)',
         ];
     }
 

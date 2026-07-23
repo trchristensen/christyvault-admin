@@ -269,6 +269,7 @@ class LoadDemandService
             'placement_strategy' => $product?->loadingProfile?->placement_strategy
                 ?? LoadingProfile::PLACEMENT_ONE_PER_LEVEL,
             'units_per_rack_position' => $product?->loadingProfile?->units_per_rack_position ?? 1,
+            'flatbed_fallback_units_per_spot' => $product?->loadingProfile?->flatbed_fallback_units_per_spot,
             'full_load_units' => $product?->loadingProfile?->full_load_units,
             'unit_weight_lbs' => $product?->weight_lbs === null ? null : (float) $product->weight_lbs,
             'total_weight_lbs' => null,

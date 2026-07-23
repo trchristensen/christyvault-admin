@@ -21,16 +21,19 @@ it('keeps uncertain large-product families out of automatic assignment', functio
     $assignments = collect(require dirname(__DIR__, 2).'/database/data/product_loading_profiles.php')
         ->keyBy(fn (array $assignment): string => mb_strtoupper(trim($assignment['sku'])));
 
-    foreach (['3-3086G4', '2-3086G5', 'G2412NV'] as $sku) {
+    foreach (['3-3086G4', 'G2412NV'] as $sku) {
         expect($assignments)->not->toHaveKey($sku);
     }
 });
 
-it('assigns the confirmed G5 cover stack profile', function (): void {
+it('assigns the confirmed cover and 1637 loading profiles', function (): void {
     $assignments = collect(require dirname(__DIR__, 2).'/database/data/product_loading_profiles.php')
         ->keyBy(fn (array $assignment): string => mb_strtoupper(trim($assignment['sku'])));
 
-    expect($assignments['2-3690G5']['profile_code'])->toBe('garden_crypt_cover_4_high');
+    expect($assignments['2-3690G5']['profile_code'])->toBe('garden_crypt_cover_4_high')
+        ->and($assignments['2-3086G5']['profile_code'])->toBe('garden_crypt_cover_6_lower_bays')
+        ->and($assignments['V1637-1']['profile_code'])->toBe('christy_1637_vault_lower_bays_flatbed')
+        ->and($assignments['2-1637V1']['profile_code'])->toBe('christy_1637_cover_4_per_pallet');
 });
 
 it('assigns L2472-4 to its confirmed three-high profile', function (): void {

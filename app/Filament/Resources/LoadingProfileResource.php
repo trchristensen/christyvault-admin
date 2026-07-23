@@ -75,6 +75,13 @@ class LoadingProfileResource extends Resource
                         ->minValue(1)
                         ->required()
                         ->visible(fn (Get $get): bool => $get('handling_method') === LoadingProfile::HANDLING_INDIVIDUAL),
+                    TextInput::make('flatbed_fallback_units_per_spot')
+                        ->label('Direct Flatbed Products per Spot')
+                        ->helperText('Optional overflow after compatible rack bays are full. Leave blank when this product may not load directly on the flatbed.')
+                        ->numeric()
+                        ->integer()
+                        ->minValue(1)
+                        ->visible(fn (Get $get): bool => $get('handling_method') === LoadingProfile::HANDLING_INDIVIDUAL),
                     TextInput::make('full_load_units')
                         ->label('Physical Full-load Quantity')
                         ->helperText('Maximum when this is the only product profile on the truck. The vehicle weight limit always takes priority.')
@@ -151,6 +158,10 @@ class LoadingProfileResource extends Resource
                     ->label('Per Rack Position')
                     ->placeholder('1')
                     ->sortable(),
+                TextColumn::make('flatbed_fallback_units_per_spot')
+                    ->label('Direct Flatbed / Spot')
+                    ->placeholder('Not allowed')
+                    ->sortable(),
                 TextColumn::make('full_load_units')
                     ->label('Full Load')
                     ->placeholder('Placement based')
@@ -221,6 +232,9 @@ class LoadingProfileResource extends Resource
                     TextEntry::make('units_per_rack_position')
                         ->label('Products per Rack Position')
                         ->placeholder('1'),
+                    TextEntry::make('flatbed_fallback_units_per_spot')
+                        ->label('Direct Flatbed Products per Spot')
+                        ->placeholder('Not allowed'),
                     TextEntry::make('full_load_units')
                         ->label('Physical Full-load Quantity')
                         ->placeholder('Placement based'),

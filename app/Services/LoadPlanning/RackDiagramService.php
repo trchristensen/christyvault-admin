@@ -122,6 +122,7 @@ class RackDiagramService
                     'placement_strategy' => $item['placement_strategy']
                         ?? LoadingProfile::PLACEMENT_ONE_PER_LEVEL,
                     'units_per_rack_position' => $item['units_per_rack_position'] ?? 1,
+                    'flatbed_fallback_units_per_spot' => $item['flatbed_fallback_units_per_spot'] ?? null,
                 ];
 
                 if ($item['handling_method'] === LoadingProfile::HANDLING_LOOSE
@@ -164,6 +165,18 @@ class RackDiagramService
                             ? $this->placeSplitDoubleCompact($racks, $item, $stop, $code)
                             : $this->placeSplitDoubleWholeFirst($racks, $item, $stop, $code))
                         : $this->placeStandard($racks, $item, $stop, $code);
+
+                    if (($item['placement_strategy'] ?? null) !== LoadingProfile::PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR
+                        && $placed < (int) $item['quantity']) {
+                        $placed += $this->placeDirectFlatbedFallback(
+                            $flatbedPallets,
+                            $flatbedPalletTarget,
+                            $item,
+                            $stop,
+                            $code,
+                            (int) $item['quantity'] - $placed,
+                        );
+                    }
                 } else {
                     $unplaced[] = $this->unplaced($item, $stop, 'This product does not have a rack placement rule.');
 
@@ -178,6 +191,9 @@ class RackDiagramService
                         $item['handling_method'] === LoadingProfile::HANDLING_PALLET => 'Not enough compatible pallet rack or fallback flatbed positions.',
                         ($item['placement_strategy'] ?? null) === LoadingProfile::PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR => 'Not enough paired 2-high rack positions.',
                         $item['required_rack_level'] === LoadingProfile::LEVEL_BOTTOM => 'Not enough eligible bottom rack positions.',
+                        $item['required_rack_level'] === LoadingProfile::LEVEL_LOWER_NOT_TOP
+                            && (int) ($item['flatbed_fallback_units_per_spot'] ?? 0) > 0 => 'Not enough eligible lower rack positions or fallback flatbed spaces.',
+                        $item['required_rack_level'] === LoadingProfile::LEVEL_LOWER_NOT_TOP => 'Not enough eligible lower rack positions.',
                         default => 'Not enough compatible rack positions.',
                     };
                     $unplaced[] = $this->unplaced($item, $stop, $reason, $remaining);
@@ -319,6 +335,56 @@ class RackDiagramService
 
             $placedUnits += $palletUnits;
             $remainingUnits -= $palletUnits;
+        }
+
+        return $placedUnits;
+    }
+
+    private function placeDirectFlatbedFallback(
+        array &$flatbedPallets,
+        int $flatbedPalletTarget,
+        array $item,
+        array $stop,
+        string $code,
+        int $remainingUnits,
+    ): int {
+        $unitsPerSpot = max(0, (int) ($item['flatbed_fallback_units_per_spot'] ?? 0));
+        $placedUnits = 0;
+
+        if ($unitsPerSpot < 1) {
+            return 0;
+        }
+
+        while ($remainingUnits > 0 && count($flatbedPallets) < $flatbedPalletTarget) {
+            $spotUnits = min($unitsPerSpot, $remainingUnits);
+            $totalWeight = $item['unit_weight_lbs'] === null
+                ? null
+                : (float) $item['unit_weight_lbs'] * $spotUnits;
+            $flatbedPallets[] = [
+                'code' => $spotUnits > 1 ? $spotUnits.'×'.$code : $code,
+                'sku' => $item['sku'],
+                'name' => $item['name'],
+                'units' => $spotUnits,
+                'capacity' => $unitsPerSpot,
+                'capacity_used' => $spotUnits / $unitsPerSpot,
+                'compatibility_group' => null,
+                'products' => [[
+                    'code' => $spotUnits > 1 ? $spotUnits.'×'.$code : $code,
+                    'sku' => $item['sku'],
+                    'name' => $item['name'],
+                    'units' => $spotUnits,
+                    'capacity' => $unitsPerSpot,
+                    'total_weight_lbs' => $totalWeight,
+                ]],
+                'total_weight_lbs' => $totalWeight,
+                'spot_number' => count($flatbedPallets) + 1,
+                'stop_sequence' => (int) $stop['sequence'],
+                'order_number' => $stop['order_number'] ?? null,
+                'location_name' => $stop['location_name'] ?? null,
+                'is_direct_flatbed' => true,
+            ];
+            $placedUnits += $spotUnits;
+            $remainingUnits -= $spotUnits;
         }
 
         return $placedUnits;
@@ -730,9 +796,7 @@ class RackDiagramService
         int $unitsPerPosition,
         int $placed,
     ): int {
-        $allowedLevels = $item['required_rack_level'] === LoadingProfile::LEVEL_BOTTOM
-            ? [0]
-            : range(0, (int) $rack['level_count'] - 1);
+        $allowedLevels = $this->allowedRackLevelIndexes($rack, $item);
 
         foreach ($allowedLevels as $levelIndex) {
             if ($placed >= (int) $item['quantity']) {
@@ -1057,13 +1121,28 @@ class RackDiagramService
 
     private function rackHasOpenLevelForItem(array $rack, array $item): bool
     {
-        $allowedLevels = ($item['required_rack_level'] ?? LoadingProfile::LEVEL_ANY) === LoadingProfile::LEVEL_BOTTOM
-            ? [0]
-            : range(0, (int) $rack['level_count'] - 1);
+        $allowedLevels = $this->allowedRackLevelIndexes($rack, $item);
 
         return collect($allowedLevels)->contains(
             fn (int $levelIndex): bool => ($rack['cells'][$levelIndex] ?? null) === null,
         );
+    }
+
+    private function allowedRackLevelIndexes(array $rack, array $item): array
+    {
+        $levelCount = max(0, (int) ($rack['level_count'] ?? 0));
+
+        if ($levelCount === 0) {
+            return [];
+        }
+
+        return match ($item['required_rack_level'] ?? LoadingProfile::LEVEL_ANY) {
+            LoadingProfile::LEVEL_BOTTOM => [0],
+            LoadingProfile::LEVEL_LOWER_NOT_TOP => $levelCount > 1
+                ? range(0, $levelCount - 2)
+                : [],
+            default => range(0, $levelCount - 1),
+        };
     }
 
     private function configurePalletCapacity(array &$rack, array $item, string $rackType): void

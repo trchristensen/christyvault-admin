@@ -122,6 +122,96 @@ it('reserves bottom-only products for bottom rack positions', function (): void 
     }
 });
 
+it('loads six 2-3086G5 covers per lower bay and never uses the top bay', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [rackDiagramItem([
+            'sku' => '2-3086G5',
+            'name' => 'Cover (standard)',
+            'quantity' => 13,
+            'required_rack_level' => 'lower_not_top',
+            'required_rack_type' => 'standard_3_high',
+            'required_rack_level_count' => 3,
+            'allowed_rack_type_codes' => ['standard_2_high', 'standard_3_high'],
+            'units_per_rack_position' => 6,
+            'unit_weight_lbs' => 575,
+        ])]),
+    ], rackSpots: 2));
+
+    expect($diagram['placed_units'])->toBe(13)
+        ->and($diagram['used_rack_spots'])->toBe(2)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($diagram['racks'][0]['cells'][0]['code'])->toBe('6×23086G5')
+        ->and($diagram['racks'][0]['cells'][1]['code'])->toBe('6×23086G5')
+        ->and($diagram['racks'][0]['cells'][2])->toBeNull()
+        ->and($diagram['racks'][1]['cells'][0]['quantity'])->toBe(1)
+        ->and($diagram['racks'][1]['cells'][1])->toBeNull()
+        ->and($diagram['racks'][1]['cells'][2])->toBeNull();
+});
+
+it('uses direct flatbed spots for V1637-1 only after lower rack bays are full', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [rackDiagramItem([
+            'sku' => 'V1637-1',
+            'name' => 'Christy Vault (16 x 37)',
+            'quantity' => 10,
+            'required_rack_level' => 'lower_not_top',
+            'required_rack_type' => 'standard_3_high',
+            'required_rack_level_count' => 3,
+            'allowed_rack_type_codes' => ['standard_2_high', 'standard_3_high'],
+            'units_per_rack_position' => 4,
+            'flatbed_fallback_units_per_spot' => 1,
+            'unit_weight_lbs' => 300,
+        ])]),
+    ], rackSpots: 1, flatbedPalletCapacity: 2));
+
+    expect($diagram['placed_units'])->toBe(10)
+        ->and($diagram['racks'][0]['cells'][0]['quantity'])->toBe(4)
+        ->and($diagram['racks'][0]['cells'][1]['quantity'])->toBe(4)
+        ->and($diagram['racks'][0]['cells'][2])->toBeNull()
+        ->and($diagram['flatbed_pallets_used'])->toBe(2)
+        ->and($diagram['flatbed_pallets'][0])->toMatchArray([
+            'sku' => 'V1637-1',
+            'units' => 1,
+            'is_direct_flatbed' => true,
+        ])
+        ->and($diagram['flatbed_pallets'][1]['is_direct_flatbed'])->toBeTrue()
+        ->and($diagram['unplaced'])->toBeEmpty();
+});
+
+it('palletizes four 2-1637V1 covers and keeps those pallets below the top bay', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [rackDiagramItem([
+            'sku' => '2-1637V1',
+            'name' => '16 x 37 Christy Vault Cover',
+            'quantity' => 20,
+            'handling_method' => 'pallet',
+            'units_per_pallet' => 4,
+            'required_rack_level' => 'lower_not_top',
+            'required_rack_type' => 'standard_3_high',
+            'required_rack_level_count' => 3,
+            'allowed_rack_type_codes' => ['standard_2_high', 'standard_3_high'],
+            'allowed_rack_types' => [[
+                'code' => 'standard_3_high',
+                'level_count' => 3,
+                'pallet_capable_levels' => 2,
+                'pallets_per_capable_level' => 2,
+            ]],
+            'unit_weight_lbs' => 200,
+        ])]),
+    ], rackSpots: 1, flatbedPalletCapacity: 1));
+
+    expect($diagram['placed_units'])->toBe(20)
+        ->and($diagram['racks'][0]['cells'][0]['pallets'])->toHaveCount(2)
+        ->and($diagram['racks'][0]['cells'][1]['pallets'])->toHaveCount(2)
+        ->and($diagram['racks'][0]['cells'][2])->toBeNull()
+        ->and($diagram['flatbed_pallets_used'])->toBe(1)
+        ->and($diagram['flatbed_pallets'][0])->toMatchArray([
+            'sku' => '2-1637V1',
+            'units' => 4,
+        ])
+        ->and($diagram['unplaced'])->toBeEmpty();
+});
+
 it('loads no more than two regular Wilbert burial vaults in one rack', function (): void {
     $twoHigh = [
         'required_rack_type' => 'standard_2_high',

@@ -979,7 +979,7 @@
             <div class="cv-vehicle-meta">
                 @if ($vehicle)
                     {{ $vehicle['rack_spot_count'] ?? 'No' }} physical racks
-                    · {{ number_format($vehicle['flatbed_pallet_capacity'] ?? 0) }} fallback flatbed pallet spots
+                    · {{ number_format($vehicle['flatbed_pallet_capacity'] ?? 0) }} fallback flatbed cargo spots
                     · Piggyback forklift {{ $vehicle['piggyback_forklift_onboard'] ? 'onboard' : 'already at site' }}
                 @else
                     Select a vehicle on the trip to generate a loading diagram.
@@ -1040,7 +1040,7 @@
             <div class="cv-metric">
                 <span class="cv-metric-value">{{ number_format($summary['pallets']) }}</span>
                 <span class="cv-metric-label">
-                    Pallets · {{ number_format($diagram['flatbed_pallets_used'] ?? 0) }} strapped to flatbed
+                    Pallets · {{ number_format($diagram['flatbed_pallets_used'] ?? 0) }} flatbed spots used
                 </span>
             </div>
         </section>
@@ -1167,7 +1167,7 @@
 
                                     @if (($diagram['flatbed_pallets_used'] ?? 0) > 0)
                                         <div class="cv-flatbed-zone">
-                                            <div class="cv-flatbed-zone-label">Strapped flatbed fallback</div>
+                                            <div class="cv-flatbed-zone-label">Flatbed fallback cargo</div>
                                             <div class="cv-flatbed-slots"
                                                 style="grid-template-columns: repeat({{ $diagram['flatbed_pallet_capacity'] }}, minmax(66px, 1fr));">
                                                 @for ($spot = 1; $spot <= $diagram['flatbed_pallet_capacity']; $spot++)
@@ -1177,12 +1177,14 @@
                                                     <div class="cv-flatbed-position">
                                                         @if ($pallet)
                                                             <div class="cv-flatbed-slot cv-stop-{{ (($pallet['stop_sequence'] - 1) % 6) + 1 }}"
-                                                                title="Flatbed pallet {{ $spot }} · {{ $pallet['name'] }}">
+                                                                title="Flatbed spot {{ $spot }} · {{ $pallet['name'] }}">
                                                                 @if ($isMultiStop)
                                                                     <span class="cv-cell-stop-badge">S{{ $pallet['stop_sequence'] }}</span>
                                                                 @endif
                                                                 <span class="cv-cell-code cv-cell-code-pallet">{{ $pallet['code'] }}</span>
-                                                                <span class="cv-cell-meta">Strap to deck</span>
+                                                                <span class="cv-cell-meta">
+                                                                    {{ ($pallet['is_direct_flatbed'] ?? false) ? 'Secure to deck' : 'Strap pallet to deck' }}
+                                                                </span>
                                                             </div>
                                                         @else
                                                             <div class="cv-flatbed-slot cv-flatbed-slot-empty">Open</div>
