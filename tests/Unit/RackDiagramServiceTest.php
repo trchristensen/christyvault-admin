@@ -148,7 +148,7 @@ it('loads six 2-3086G5 covers per lower bay and never uses the top bay', functio
         ->and($diagram['racks'][1]['cells'][2])->toBeNull();
 });
 
-it('uses direct flatbed spots for V1637-1 only after lower rack bays are full', function (): void {
+it('palletizes two V1637-1 products per fallback flatbed spot after lower rack bays are full', function (): void {
     $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
         rackDiagramStop(1, [rackDiagramItem([
             'sku' => 'V1637-1',
@@ -159,7 +159,7 @@ it('uses direct flatbed spots for V1637-1 only after lower rack bays are full', 
             'required_rack_level_count' => 3,
             'allowed_rack_type_codes' => ['standard_2_high', 'standard_3_high'],
             'units_per_rack_position' => 4,
-            'flatbed_fallback_units_per_spot' => 1,
+            'flatbed_fallback_units_per_pallet' => 2,
             'unit_weight_lbs' => 300,
         ])]),
     ], rackSpots: 1, flatbedPalletCapacity: 2));
@@ -168,13 +168,40 @@ it('uses direct flatbed spots for V1637-1 only after lower rack bays are full', 
         ->and($diagram['racks'][0]['cells'][0]['quantity'])->toBe(4)
         ->and($diagram['racks'][0]['cells'][1]['quantity'])->toBe(4)
         ->and($diagram['racks'][0]['cells'][2])->toBeNull()
-        ->and($diagram['flatbed_pallets_used'])->toBe(2)
+        ->and($diagram['flatbed_pallets_used'])->toBe(1)
         ->and($diagram['flatbed_pallets'][0])->toMatchArray([
             'sku' => 'V1637-1',
+            'units' => 2,
+            'capacity' => 2,
+        ])
+        ->and($diagram['flatbed_pallets'])->toHaveCount(1)
+        ->and($diagram['flatbed_pallets'][0])->not->toHaveKey('is_direct_flatbed')
+        ->and($diagram['unplaced'])->toBeEmpty();
+});
+
+it('uses one direct flatbed spot per V2464-1 after rack bays are full', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [rackDiagramItem([
+            'sku' => 'V2464-1',
+            'name' => 'Christy Vault (24 x 64)',
+            'quantity' => 4,
+            'required_rack_type' => 'standard_3_high',
+            'required_rack_level_count' => 3,
+            'allowed_rack_type_codes' => ['standard_2_high', 'standard_3_high'],
+            'units_per_rack_position' => 1,
+            'flatbed_fallback_units_per_spot' => 1,
+            'unit_weight_lbs' => 736,
+        ])]),
+    ], rackSpots: 1, flatbedPalletCapacity: 1));
+
+    expect($diagram['placed_units'])->toBe(4)
+        ->and(collect($diagram['racks'][0]['cells'])->filter())->toHaveCount(3)
+        ->and($diagram['flatbed_pallets_used'])->toBe(1)
+        ->and($diagram['flatbed_pallets'][0])->toMatchArray([
+            'sku' => 'V2464-1',
             'units' => 1,
             'is_direct_flatbed' => true,
         ])
-        ->and($diagram['flatbed_pallets'][1]['is_direct_flatbed'])->toBeTrue()
         ->and($diagram['unplaced'])->toBeEmpty();
 });
 
@@ -264,7 +291,7 @@ it('rebalances the reviewed load before sending lower-bay products to the flatbe
                 'quantity' => 2,
                 'required_rack_level' => 'lower_not_top',
                 'units_per_rack_position' => 4,
-                'flatbed_fallback_units_per_spot' => 1,
+                'flatbed_fallback_units_per_pallet' => 2,
                 'unit_weight_lbs' => 300,
             ]]),
             rackDiagramItem([...$standardThreeHigh, ...[

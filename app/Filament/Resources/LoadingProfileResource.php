@@ -77,7 +77,14 @@ class LoadingProfileResource extends Resource
                         ->visible(fn (Get $get): bool => $get('handling_method') === LoadingProfile::HANDLING_INDIVIDUAL),
                     TextInput::make('flatbed_fallback_units_per_spot')
                         ->label('Direct Flatbed Products per Spot')
-                        ->helperText('Optional overflow after compatible rack bays are full. Leave blank when this product may not load directly on the flatbed.')
+                        ->helperText('Optional overflow after compatible rack bays are full. Use this only when the product is secured directly to the deck without a pallet.')
+                        ->numeric()
+                        ->integer()
+                        ->minValue(1)
+                        ->visible(fn (Get $get): bool => $get('handling_method') === LoadingProfile::HANDLING_INDIVIDUAL),
+                    TextInput::make('flatbed_fallback_units_per_pallet')
+                        ->label('Fallback Products per Pallet')
+                        ->helperText('Optional palletized overflow after compatible rack bays are full. Each pallet consumes one fallback flatbed spot.')
                         ->numeric()
                         ->integer()
                         ->minValue(1)
@@ -162,6 +169,10 @@ class LoadingProfileResource extends Resource
                     ->label('Direct Flatbed / Spot')
                     ->placeholder('Not allowed')
                     ->sortable(),
+                TextColumn::make('flatbed_fallback_units_per_pallet')
+                    ->label('Fallback / Pallet')
+                    ->placeholder('Not palletized')
+                    ->sortable(),
                 TextColumn::make('full_load_units')
                     ->label('Full Load')
                     ->placeholder('Placement based')
@@ -235,6 +246,9 @@ class LoadingProfileResource extends Resource
                     TextEntry::make('flatbed_fallback_units_per_spot')
                         ->label('Direct Flatbed Products per Spot')
                         ->placeholder('Not allowed'),
+                    TextEntry::make('flatbed_fallback_units_per_pallet')
+                        ->label('Fallback Products per Pallet')
+                        ->placeholder('Not palletized'),
                     TextEntry::make('full_load_units')
                         ->label('Physical Full-load Quantity')
                         ->placeholder('Placement based'),

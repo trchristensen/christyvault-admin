@@ -167,7 +167,11 @@ final class TripLoadPlanService
                     (int) ($item['required_rack_level_count'] ?? 3),
                 )
                 * max(1, (int) ($item['units_per_rack_position'] ?? 1)))
-                + ($flatbedPalletCapacity * max(0, (int) ($item['flatbed_fallback_units_per_spot'] ?? 0))),
+                + ($flatbedPalletCapacity * max(
+                    0,
+                    (int) ($item['flatbed_fallback_units_per_spot'] ?? 0),
+                    (int) ($item['flatbed_fallback_units_per_pallet'] ?? 0),
+                )),
         };
         $profileLimit = (int) ($item['full_load_units'] ?? 0);
         $limit = max($physicalLimit, $profileLimit);

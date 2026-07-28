@@ -35,6 +35,7 @@ return [
     ['sku' => '2-3690G5', 'profile_code' => 'garden_crypt_cover_4_high'],
     ['sku' => '2-3086G5', 'profile_code' => 'garden_crypt_cover_6_lower_bays'],
     ['sku' => 'V1637-1', 'profile_code' => 'christy_1637_vault_lower_bays_flatbed'],
+    ['sku' => 'V2464-1', 'profile_code' => 'christy_2464_vault_rack_flatbed'],
     ['sku' => '2-1637V1', 'profile_code' => 'christy_1637_cover_4_per_pallet'],
 
     // Products explicitly identified as oversized or grande.

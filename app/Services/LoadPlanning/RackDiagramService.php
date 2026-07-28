@@ -131,6 +131,7 @@ class RackDiagramService
                         ?? LoadingProfile::PLACEMENT_ONE_PER_LEVEL,
                     'units_per_rack_position' => $item['units_per_rack_position'] ?? 1,
                     'flatbed_fallback_units_per_spot' => $item['flatbed_fallback_units_per_spot'] ?? null,
+                    'flatbed_fallback_units_per_pallet' => $item['flatbed_fallback_units_per_pallet'] ?? null,
                 ];
 
                 if ($item['handling_method'] === LoadingProfile::HANDLING_LOOSE
@@ -176,14 +177,24 @@ class RackDiagramService
 
                     if (($item['placement_strategy'] ?? null) !== LoadingProfile::PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR
                         && $placed < (int) $item['quantity']) {
-                        $placed += $this->placeDirectFlatbedFallback(
-                            $flatbedPallets,
-                            $flatbedPalletTarget,
-                            $item,
-                            $stop,
-                            $code,
-                            (int) $item['quantity'] - $placed,
-                        );
+                        $remainingUnits = (int) $item['quantity'] - $placed;
+                        $placed += (int) ($item['flatbed_fallback_units_per_pallet'] ?? 0) > 0
+                            ? $this->placePalletizedFlatbedFallback(
+                                $flatbedPallets,
+                                $flatbedPalletTarget,
+                                $item,
+                                $stop,
+                                $code,
+                                $remainingUnits,
+                            )
+                            : $this->placeDirectFlatbedFallback(
+                                $flatbedPallets,
+                                $flatbedPalletTarget,
+                                $item,
+                                $stop,
+                                $code,
+                                $remainingUnits,
+                            );
                     }
                 } else {
                     $unplaced[] = $this->unplaced($item, $stop, 'This product does not have a rack placement rule.');
@@ -200,7 +211,10 @@ class RackDiagramService
                         ($item['placement_strategy'] ?? null) === LoadingProfile::PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR => 'Not enough paired 2-high rack positions.',
                         $item['required_rack_level'] === LoadingProfile::LEVEL_BOTTOM => 'Not enough eligible bottom rack positions.',
                         $item['required_rack_level'] === LoadingProfile::LEVEL_LOWER_NOT_TOP
-                            && (int) ($item['flatbed_fallback_units_per_spot'] ?? 0) > 0 => 'Not enough eligible lower rack positions or fallback flatbed spaces.',
+                            && max(
+                                (int) ($item['flatbed_fallback_units_per_spot'] ?? 0),
+                                (int) ($item['flatbed_fallback_units_per_pallet'] ?? 0),
+                            ) > 0 => 'Not enough eligible lower rack positions or fallback flatbed spaces.',
                         $item['required_rack_level'] === LoadingProfile::LEVEL_LOWER_NOT_TOP => 'Not enough eligible lower rack positions.',
                         default => 'Not enough compatible rack positions.',
                     };
@@ -405,6 +419,37 @@ class RackDiagramService
             ];
             $placedUnits += $spotUnits;
             $remainingUnits -= $spotUnits;
+        }
+
+        return $placedUnits;
+    }
+
+    private function placePalletizedFlatbedFallback(
+        array &$flatbedPallets,
+        int $flatbedPalletTarget,
+        array $item,
+        array $stop,
+        string $code,
+        int $remainingUnits,
+    ): int {
+        $unitsPerPallet = max(0, (int) ($item['flatbed_fallback_units_per_pallet'] ?? 0));
+        $placedUnits = 0;
+
+        if ($unitsPerPallet < 1) {
+            return 0;
+        }
+
+        while ($remainingUnits > 0 && count($flatbedPallets) < $flatbedPalletTarget) {
+            $palletUnits = min($unitsPerPallet, $remainingUnits);
+            $flatbedPallets[] = [
+                ...$this->pallet($item, $code, $palletUnits, $unitsPerPallet),
+                'spot_number' => count($flatbedPallets) + 1,
+                'stop_sequence' => (int) $stop['sequence'],
+                'order_number' => $stop['order_number'] ?? null,
+                'location_name' => $stop['location_name'] ?? null,
+            ];
+            $placedUnits += $palletUnits;
+            $remainingUnits -= $palletUnits;
         }
 
         return $placedUnits;

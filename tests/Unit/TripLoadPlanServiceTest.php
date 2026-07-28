@@ -196,7 +196,7 @@ it('moves eligible fixed products to the flatbed to maximize the reviewed V1 fil
         level: LoadingProfile::LEVEL_LOWER_NOT_TOP,
     );
     $smallVaultProfile->units_per_rack_position = 4;
-    $smallVaultProfile->flatbed_fallback_units_per_spot = 1;
+    $smallVaultProfile->flatbed_fallback_units_per_pallet = 2;
     $smallVaultProfile->full_load_units = null;
     $smallVaultProfile->setRelation('allowedRackTypes', $bothRackTypes);
     $smallCoverProfile = new LoadingProfile([
@@ -234,9 +234,8 @@ it('moves eligible fixed products to the flatbed to maximize the reviewed V1 fil
         'source' => 'automatic',
     ])->and($plan['demand']->summary['known_weight_lbs'])->toBe(33237.0)
         ->and($plan['demand']->summary['remaining_product_weight_lbs'])->toBe(5263.0)
-        ->and($plan['diagram']['flatbed_pallets_used'])->toBe(3)
+        ->and($plan['diagram']['flatbed_pallets_used'])->toBe(2)
         ->and(collect($plan['diagram']['flatbed_pallets'])->pluck('sku')->all())->toBe([
-            'V1637-1',
             'V1637-1',
             '2-1637V1',
         ])
