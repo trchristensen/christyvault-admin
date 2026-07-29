@@ -152,6 +152,57 @@ it('calculates the largest safe fill quantity after fixed products', function ()
         ->and($plan['diagram']['unplaced'])->toBeEmpty();
 });
 
+it('adds a fourth V1 after preferred-bottom Wilberts take priority over G5 and V1 pairing', function (): void {
+    $twoHigh = new RackType(['code' => 'standard_2_high', 'level_count' => 2]);
+    $twoHigh->id = 1;
+    $threeHigh = new RackType(['code' => 'standard_3_high', 'level_count' => 3]);
+    $threeHigh->id = 2;
+    $v1Profile = fillPlanProfile('standard_three_high_box', $threeHigh, 22);
+    $v1Profile->setRelation('allowedRackTypes', new Collection([$twoHigh, $threeHigh]));
+    $gardenProfile = fillPlanProfile(
+        'double_garden_crypt',
+        $twoHigh,
+        12,
+        LoadingProfile::PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR,
+    );
+    $wilbertProfile = fillPlanProfile('regular_burial_vault', $twoHigh, 15);
+    $wilbertProfile->preferred_rack_level = LoadingProfile::LEVEL_BOTTOM;
+
+    $stopOne = fillPlanOrder(1, 'ORD-02216', [
+        fillPlanLine(1, fillPlanProduct('G3086-5', 2520, $gardenProfile), 3),
+        fillPlanLine(2, fillPlanProduct('V3086-1', 1288, $v1Profile), 3),
+    ]);
+    $stopTwo = fillPlanOrder(2, 'ORD-02217', [
+        fillPlanLine(3, fillPlanProduct('W3086-C', 2460, $wilbertProfile), 1),
+        fillPlanLine(4, fillPlanProduct('G3086-5', 2520, $gardenProfile), 3),
+        fillPlanLine(5, fillPlanProduct('W3086-M', 2190, $wilbertProfile), 3),
+        fillPlanLine(6, fillPlanProduct('V3086-1', 1288, $v1Profile), null, true, priority: 1),
+    ]);
+
+    $plan = fillPlanner()->forTrip(fillPlanTrip([$stopOne, $stopTwo]));
+    $cells = collect($plan['diagram']['racks'])
+        ->flatMap(fn (array $rack): array => $rack['cells'])
+        ->filter();
+    $stopTwoWilberts = $cells
+        ->where('stop_sequence', 2)
+        ->filter(fn (array $cell): bool => str_starts_with($cell['sku'], 'W3086-'));
+
+    expect($plan['fill_allocations'][0])->toMatchArray([
+        'sku' => 'V3086-1',
+        'planned_quantity' => 4,
+        'resolved' => true,
+        'source' => 'automatic',
+    ])->and($plan['demand']->summary['known_weight_lbs'])->toBe(33166.0)
+        ->and($plan['demand']->summary['remaining_product_weight_lbs'])->toBe(5334.0)
+        ->and($plan['diagram']['used_rack_spots'])->toBe(8)
+        ->and($plan['diagram']['mixed_stop_racks'])->toBe(0)
+        ->and($plan['diagram']['split_products'])->toBe(0)
+        ->and($plan['diagram']['preferred_level_violations'])->toBe(0)
+        ->and($plan['diagram']['unplaced'])->toBeEmpty()
+        ->and($stopTwoWilberts)->toHaveCount(4)
+        ->and($stopTwoWilberts->pluck('level')->unique()->values()->all())->toBe([1]);
+});
+
 it('moves eligible fixed products to the flatbed to maximize the reviewed V1 fill load', function (): void {
     $twoHigh = new RackType([
         'code' => 'standard_2_high',

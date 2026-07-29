@@ -1201,10 +1201,9 @@ class RackDiagramService
                 return $placed;
             }
 
-            if ($this->rackPairingPriority($item, $racks[$rackIndex]) >= self::PAIRING_AVOID) {
-                continue;
-            }
-
+            // A preferred-bottom product may claim an otherwise discouraged
+            // compatible opening. For regular Wilbert vaults, protection on
+            // the lower level outranks preserving a G4/G5-over-V1 pairing.
             $placed = $this->fillStandardRack(
                 $racks[$rackIndex],
                 $item,
