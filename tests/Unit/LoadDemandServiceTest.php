@@ -246,6 +246,7 @@ it('carries preferred and alternate rack compatibility into planner items', func
         'code' => 'ring_liner_three_high',
         'handling_method' => LoadingProfile::HANDLING_INDIVIDUAL,
         'rack_requirement' => LoadingProfile::RACK_STANDARD,
+        'preferred_rack_level' => LoadingProfile::LEVEL_BOTTOM,
         'required_rack_type_id' => 2,
     ]);
     $profile->setRelation('requiredRackType', $threeHigh);
@@ -257,6 +258,7 @@ it('carries preferred and alternate rack compatibility into planner items', func
 
     expect($item['required_rack_type'])->toBe('standard_3_high')
         ->and($item['required_rack_level_count'])->toBe(3)
+        ->and($item['preferred_rack_level'])->toBe(LoadingProfile::LEVEL_BOTTOM)
         ->and($item['allowed_rack_type_codes'])->toBe([
             'standard_2_high',
             'standard_3_high',

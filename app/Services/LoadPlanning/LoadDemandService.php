@@ -262,6 +262,7 @@ class LoadDemandService
             'pallet_compatibility_group' => $product?->loadingProfile?->pallet_compatibility_group,
             'rack_requirement' => $product?->loadingProfile?->rack_requirement,
             'required_rack_level' => $product?->loadingProfile?->required_rack_level,
+            'preferred_rack_level' => $product?->loadingProfile?->preferred_rack_level,
             'required_rack_type' => $this->requiredRackTypeCode($product?->loadingProfile),
             'required_rack_level_count' => $this->requiredRackTypeLevelCount($product?->loadingProfile),
             'allowed_rack_type_codes' => $this->allowedRackTypeCodes($product?->loadingProfile),

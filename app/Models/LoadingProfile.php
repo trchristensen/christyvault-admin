@@ -46,6 +46,7 @@ class LoadingProfile extends Model
         'pallet_compatibility_group',
         'rack_requirement',
         'required_rack_level',
+        'preferred_rack_level',
         'required_rack_type_id',
         'placement_strategy',
         'is_stackable',
@@ -87,6 +88,13 @@ class LoadingProfile extends Model
             self::LEVEL_ANY => 'Any allowed level',
             self::LEVEL_BOTTOM => 'Bottom level only',
             self::LEVEL_LOWER_NOT_TOP => 'Lower levels only (never top)',
+        ];
+    }
+
+    public static function preferredRackLevelOptions(): array
+    {
+        return [
+            self::LEVEL_BOTTOM => 'Bottom level',
         ];
     }
 

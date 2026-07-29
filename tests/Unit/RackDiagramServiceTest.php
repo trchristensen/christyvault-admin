@@ -13,6 +13,7 @@ function rackDiagramItem(array $overrides = []): array
         'handling_method' => 'individual',
         'rack_requirement' => 'standard',
         'required_rack_level' => 'any',
+        'preferred_rack_level' => null,
         'required_rack_type' => 'standard_3_high',
         'required_rack_level_count' => 3,
         'unit_weight_lbs' => 1750,
@@ -368,6 +369,79 @@ it('loads no more than two regular Wilbert burial vaults in one rack', function 
     foreach (collect($diagram['racks'])->whereNotNull('type_code') as $rack) {
         expect(collect($rack['cells'])->filter())->toHaveCount(2);
     }
+});
+
+it('prefers separate bottom bays for regular Wilbert burial vaults when rack space permits', function (): void {
+    $twoHigh = [
+        'required_rack_type' => 'standard_2_high',
+        'required_rack_level_count' => 2,
+    ];
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem([...$twoHigh, ...[
+                'sku' => 'G2884-6',
+                'name' => 'Heavy standard product',
+                'quantity' => 1,
+                'unit_weight_lbs' => 3000,
+            ]]),
+            rackDiagramItem([...$twoHigh, ...[
+                'sku' => 'W3086-M',
+                'name' => 'Monticello',
+                'quantity' => 1,
+                'preferred_rack_level' => 'bottom',
+                'unit_weight_lbs' => 2190,
+                'loading_profile' => 'regular_burial_vault',
+            ]]),
+        ]),
+    ], rackSpots: 2));
+
+    expect($diagram['placed_units'])->toBe(2)
+        ->and($diagram['used_rack_spots'])->toBe(2)
+        ->and($diagram['preferred_level_violations'])->toBe(0)
+        ->and(collect($diagram['racks'])->pluck('cells.0.sku')->all())->toBe([
+            'G2884-6',
+            'W3086-M',
+        ])
+        ->and(collect($diagram['racks'])->pluck('cells.1')->filter())->toBeEmpty();
+});
+
+it('relaxes preferred Wilbert bottom placement rather than leaving products off a multi-stop load', function (): void {
+    $twoHigh = [
+        'required_rack_type' => 'standard_2_high',
+        'required_rack_level_count' => 2,
+    ];
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem([...$twoHigh, ...[
+                'sku' => 'G2884-6',
+                'name' => 'Standard product',
+                'quantity' => 2,
+                'unit_weight_lbs' => 1750,
+            ]]),
+        ]),
+        rackDiagramStop(2, [
+            rackDiagramItem([...$twoHigh, ...[
+                'sku' => 'W3086-M',
+                'name' => 'Monticello',
+                'quantity' => 2,
+                'preferred_rack_level' => 'bottom',
+                'unit_weight_lbs' => 2190,
+                'loading_profile' => 'regular_burial_vault',
+            ]]),
+        ]),
+    ], rackSpots: 2));
+    $wilbertRack = collect($diagram['racks'])->first(
+        fn (array $rack): bool => collect($rack['cells'])->filter()->contains('sku', 'W3086-M'),
+    );
+
+    expect($diagram['placed_units'])->toBe(4)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($diagram['mixed_stop_racks'])->toBe(0)
+        ->and($diagram['preferred_level_violations'])->toBe(1.0)
+        ->and(collect($wilbertRack['cells'])->filter()->pluck('sku')->all())->toBe([
+            'W3086-M',
+            'W3086-M',
+        ]);
 });
 
 it('uses one complete rack spot for each oversized product', function (): void {

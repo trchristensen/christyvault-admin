@@ -111,6 +111,12 @@ class LoadingProfileResource extends Resource
                         ->default(LoadingProfile::LEVEL_ANY)
                         ->required()
                         ->native(false),
+                    Select::make('preferred_rack_level')
+                        ->label('Preferred Rack Level')
+                        ->options(LoadingProfile::preferredRackLevelOptions())
+                        ->helperText('A soft preference. The planner may use another allowed level when needed to preserve load capacity.')
+                        ->placeholder('No level preference')
+                        ->native(false),
                     Select::make('required_rack_type_id')
                         ->label('Preferred Rack Type')
                         ->relationship('requiredRackType', 'name')
@@ -185,6 +191,10 @@ class LoadingProfileResource extends Resource
                     ->label('Rack')
                     ->formatStateUsing(fn (string $state): string => LoadingProfile::rackRequirementOptions()[$state] ?? $state)
                     ->wrap(),
+                TextColumn::make('preferred_rack_level')
+                    ->label('Preferred Level')
+                    ->formatStateUsing(fn (?string $state): string => LoadingProfile::preferredRackLevelOptions()[$state] ?? 'No preference')
+                    ->placeholder('No preference'),
                 TextColumn::make('placement_strategy')
                     ->label('Placement')
                     ->formatStateUsing(fn (string $state): string => LoadingProfile::placementStrategyOptions()[$state] ?? $state)
@@ -261,6 +271,10 @@ class LoadingProfileResource extends Resource
                     TextEntry::make('required_rack_level')
                         ->label('Required Rack Level')
                         ->formatStateUsing(fn (string $state): string => LoadingProfile::requiredRackLevelOptions()[$state] ?? $state),
+                    TextEntry::make('preferred_rack_level')
+                        ->label('Preferred Rack Level')
+                        ->formatStateUsing(fn (?string $state): string => LoadingProfile::preferredRackLevelOptions()[$state] ?? 'No preference')
+                        ->placeholder('No preference'),
                     TextEntry::make('requiredRackType.name')
                         ->label('Preferred Rack Type')
                         ->placeholder('No preferred rack'),
