@@ -5,6 +5,7 @@ namespace App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource;
 use App\Services\DeliveryTripService;
 use App\Services\LoadPlanning\TripLoadPlanService;
+use App\Services\TripVehicleConfigurationResolver;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +25,11 @@ class EditOrder extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
+        $data['load_preview_vehicle_configuration_id'] = $this->record->trip?->vehicle_configuration_id
+            ?? app(TripVehicleConfigurationResolver::class)
+                ->defaultForOrders([$this->record])
+                ?->getKey();
+
         // Load the existing order products for the edit form
         $data['orderProducts'] = $this->record->orderProducts->map(function ($orderProduct) {
             return [

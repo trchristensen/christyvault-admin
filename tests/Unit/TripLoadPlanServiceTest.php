@@ -8,9 +8,11 @@ use App\Models\RackType;
 use App\Models\Trip;
 use App\Models\TripStop;
 use App\Models\VehicleConfiguration;
+use App\Services\LoadPlanning\DraftOrderLoadPreviewService;
 use App\Services\LoadPlanning\LoadDemandService;
 use App\Services\LoadPlanning\RackDiagramService;
 use App\Services\LoadPlanning\TripLoadPlanService;
+use App\Services\TripVehicleConfigurationResolver;
 use Illuminate\Support\Collection;
 
 function fillPlanProfile(
@@ -113,6 +115,82 @@ function fillPlanner(): TripLoadPlanService
 {
     return new TripLoadPlanService(new LoadDemandService, new RackDiagramService);
 }
+
+function draftOrderPreviewer(): DraftOrderLoadPreviewService
+{
+    return new DraftOrderLoadPreviewService(
+        fillPlanner(),
+        new TripVehicleConfigurationResolver,
+    );
+}
+
+it('previews a standalone draft without persisting an order or trip', function (): void {
+    $threeHigh = new RackType(['code' => 'standard_3_high', 'level_count' => 3]);
+    $threeHigh->id = 1;
+    $profile = fillPlanProfile('standard_three_high_box', $threeHigh, 22);
+    $product = fillPlanProduct('V3086-1', 1288, $profile);
+    $draft = fillPlanOrder(-1, 'DRAFT ORDER', [
+        fillPlanLine(-10, $product, 3),
+    ]);
+    $vehicle = new VehicleConfiguration([
+        'name' => 'Rack trailer — forklift onboard',
+        'configuration_type' => VehicleConfiguration::TYPE_RACK_TRAILER,
+        'rack_spot_count' => 8,
+        'flatbed_pallet_capacity' => 4,
+        'max_product_weight_lbs' => 38500,
+    ]);
+
+    $preview = draftOrderPreviewer()->preview($draft, null, $vehicle);
+
+    expect($preview['status'])->toBe('fits')
+        ->and($preview['context'])->toMatchArray([
+            'trip_number' => null,
+            'existing_stops' => 0,
+            'draft_stop_sequence' => 1,
+        ])
+        ->and($preview['draft'])->toMatchArray([
+            'line_count' => 1,
+            'product_units' => 3,
+            'known_weight_lbs' => 3864.0,
+        ])
+        ->and($preview['weight']['existing'])->toBe(0.0)
+        ->and($preview['racks']['used'])->toBe(1)
+        ->and($preview['racks']['draft_touched'])->toBe(1)
+        ->and($draft->exists)->toBeFalse();
+});
+
+it('replaces the edited order inside an existing trip preview instead of counting it twice', function (): void {
+    $threeHigh = new RackType(['code' => 'standard_3_high', 'level_count' => 3]);
+    $threeHigh->id = 1;
+    $profile = fillPlanProfile('standard_three_high_box', $threeHigh, 22);
+    $product = fillPlanProduct('V3086-1', 1288, $profile);
+    $existingOrder = fillPlanOrder(1, 'ORD-EXISTING', [
+        fillPlanLine(1, $product, 1),
+    ]);
+    $savedVersion = fillPlanOrder(2, 'ORD-EDITING', [
+        fillPlanLine(2, $product, 1),
+    ]);
+    $draftVersion = fillPlanOrder(2, 'ORD-EDITING', [
+        fillPlanLine(-2, $product, 2),
+    ]);
+    $sourceTrip = fillPlanTrip([$existingOrder, $savedVersion], flatbedPalletCapacity: 4);
+    $sourceTrip->trip_number = 'TRIP-00049';
+    $vehicle = $sourceTrip->vehicleConfiguration;
+
+    $preview = draftOrderPreviewer()->preview($draftVersion, $sourceTrip, $vehicle);
+
+    expect($preview['status'])->toBe('fits')
+        ->and($preview['context'])->toMatchArray([
+            'trip_number' => 'TRIP-00049',
+            'existing_stops' => 1,
+            'draft_stop_sequence' => 2,
+        ])
+        ->and($preview['weight']['known'])->toBe(3864.0)
+        ->and($preview['weight']['existing'])->toBe(1288.0)
+        ->and($preview['weight']['draft'])->toBe(2576.0)
+        ->and($preview['draft']['product_units'])->toBe(2)
+        ->and($savedVersion->orderProducts->first()->quantity)->toBe(1);
+});
 
 it('calculates the largest safe fill quantity after fixed products', function (): void {
     $twoHigh = new RackType(['code' => 'standard_2_high', 'level_count' => 2]);
