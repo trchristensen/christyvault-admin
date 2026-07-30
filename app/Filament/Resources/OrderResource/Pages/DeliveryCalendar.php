@@ -350,7 +350,7 @@ class DeliveryCalendar extends Page
 
                     return $order;
                 })
-                ->modalWidth('7xl'),
+                ->modalWidth(Width::ScreenTwoExtraLarge),
             Action::make('Print Calendar')
                 ->url(route('delivery-calendar.print'))
                 ->icon('heroicon-o-printer')
