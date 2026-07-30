@@ -84,66 +84,69 @@ beforeEach(function (): void {
         ],
     ]);
 
-    DB::table('orders')->insert([
+    DB::table('orders')->insert(array_map(
+        fn (array $order): array => array_merge(['plant_location' => 'colma_main'], $order),
         [
-            'id' => 1,
-            'order_date' => '2026-01-15',
-            'location_id' => 1,
-            'status' => 'confirmed',
-            'created_at' => '2025-10-01 08:00:00',
-            'updated_at' => '2025-10-01 08:00:00',
+            [
+                'id' => 1,
+                'order_date' => '2026-01-15',
+                'location_id' => 1,
+                'status' => 'confirmed',
+                'created_at' => '2025-10-01 08:00:00',
+                'updated_at' => '2025-10-01 08:00:00',
+            ],
+            [
+                'id' => 2,
+                'order_date' => '2026-02-10',
+                'location_id' => 1,
+                'status' => 'cancelled',
+                'created_at' => '2026-02-10 08:00:00',
+                'updated_at' => '2026-02-10 08:00:00',
+            ],
+            [
+                'id' => 3,
+                'order_date' => '2026-03-05',
+                'location_id' => 1,
+                'status' => 'confirmed',
+                'created_at' => '2026-03-05 08:00:00',
+                'updated_at' => '2026-03-05 08:00:00',
+            ],
+            [
+                'id' => 4,
+                'order_date' => '2026-04-12',
+                'location_id' => 2,
+                'plant_location' => 'tulare_plant',
+                'status' => 'confirmed',
+                'created_at' => '2026-04-12 08:00:00',
+                'updated_at' => '2026-04-12 08:00:00',
+            ],
+            [
+                'id' => 5,
+                'order_date' => '2025-01-15',
+                'location_id' => 1,
+                'status' => 'confirmed',
+                'created_at' => '2025-01-15 08:00:00',
+                'updated_at' => '2025-01-15 08:00:00',
+            ],
+            [
+                'id' => 6,
+                'order_date' => '2025-03-05',
+                'location_id' => 1,
+                'status' => 'delivered',
+                'created_at' => '2025-03-05 08:00:00',
+                'updated_at' => '2025-03-05 08:00:00',
+            ],
+            [
+                'id' => 7,
+                'order_date' => '2026-06-20',
+                'location_id' => 1,
+                'plant_location' => 'colma_locals',
+                'status' => 'pending',
+                'created_at' => '2026-06-20 08:00:00',
+                'updated_at' => '2026-06-20 08:00:00',
+            ],
         ],
-        [
-            'id' => 2,
-            'order_date' => '2026-02-10',
-            'location_id' => 1,
-            'status' => 'cancelled',
-            'created_at' => '2026-02-10 08:00:00',
-            'updated_at' => '2026-02-10 08:00:00',
-        ],
-        [
-            'id' => 3,
-            'order_date' => '2026-03-05',
-            'location_id' => 1,
-            'status' => 'confirmed',
-            'created_at' => '2026-03-05 08:00:00',
-            'updated_at' => '2026-03-05 08:00:00',
-        ],
-        [
-            'id' => 4,
-            'order_date' => '2026-04-12',
-            'location_id' => 2,
-            'plant_location' => 'tulare_plant',
-            'status' => 'confirmed',
-            'created_at' => '2026-04-12 08:00:00',
-            'updated_at' => '2026-04-12 08:00:00',
-        ],
-        [
-            'id' => 5,
-            'order_date' => '2025-01-15',
-            'location_id' => 1,
-            'status' => 'confirmed',
-            'created_at' => '2025-01-15 08:00:00',
-            'updated_at' => '2025-01-15 08:00:00',
-        ],
-        [
-            'id' => 6,
-            'order_date' => '2025-03-05',
-            'location_id' => 1,
-            'status' => 'delivered',
-            'created_at' => '2025-03-05 08:00:00',
-            'updated_at' => '2025-03-05 08:00:00',
-        ],
-        [
-            'id' => 7,
-            'order_date' => '2026-06-20',
-            'location_id' => 1,
-            'plant_location' => 'colma_locals',
-            'status' => 'pending',
-            'created_at' => '2026-06-20 08:00:00',
-            'updated_at' => '2026-06-20 08:00:00',
-        ],
-    ]);
+    ));
 
     $orderProductDefaults = [
         'product_id' => null,
@@ -297,21 +300,29 @@ it('supports all locations, revenue, and product-level category drill-down', fun
         ->and($products['W3086-M']['previous'])->toBe(4.0);
 });
 
-it('filters every sales metric by the selected plant groups', function (): void {
+it('filters every sales metric by each explicit plant location', function (): void {
     $colma = app(SalesPerformanceReport::class)->build(
         locationId: 'all',
-        plants: ['colma'],
+        plants: ['colma_main'],
+        asOf: CarbonImmutable::parse('2026-07-30 12:00:00'),
+    );
+    $locals = app(SalesPerformanceReport::class)->build(
+        locationId: 'all',
+        plants: ['colma_locals'],
         asOf: CarbonImmutable::parse('2026-07-30 12:00:00'),
     );
     $tulare = app(SalesPerformanceReport::class)->build(
         locationId: 'all',
-        plants: ['tulare'],
+        plants: ['tulare_plant'],
         asOf: CarbonImmutable::parse('2026-07-30 12:00:00'),
     );
 
-    expect($colma['summary']['currentValue'])->toBe(9.0)
-        ->and($colma['summary']['currentOrders'])->toBe(3)
+    expect($colma['summary']['currentValue'])->toBe(7.0)
+        ->and($colma['summary']['currentOrders'])->toBe(2)
         ->and($colma['summary']['completedVisits'])->toBe(1)
+        ->and($locals['summary']['currentValue'])->toBe(2.0)
+        ->and($locals['summary']['currentOrders'])->toBe(1)
+        ->and($locals['summary']['completedVisits'])->toBe(0)
         ->and($tulare['summary']['currentValue'])->toBe(3.0)
         ->and($tulare['summary']['currentOrders'])->toBe(1)
         ->and($tulare['summary']['completedVisits'])->toBe(1)

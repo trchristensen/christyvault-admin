@@ -2,6 +2,7 @@
 
 namespace App\Filament\Sales\Pages;
 
+use App\Enums\PlantLocation;
 use App\Models\Location;
 use App\Models\Product;
 use App\Services\SalesPerformanceReport;
@@ -27,7 +28,7 @@ class SalesPerformance extends Page implements HasForms
 
     public ?string $locationId = 'all';
 
-    public array $plants = ['colma', 'tulare'];
+    public array $plants = ['colma_main', 'colma_locals', 'tulare_plant'];
 
     public ?string $timeframe = 'year_over_year';
 
@@ -75,10 +76,13 @@ class SalesPerformance extends Page implements HasForms
                     ->required(),
                 Select::make('plants')
                     ->label('Plant')
-                    ->options([
-                        'colma' => 'Colma',
-                        'tulare' => 'Tulare',
-                    ])
+                    ->options(
+                        collect(PlantLocation::cases())
+                            ->mapWithKeys(fn (PlantLocation $plant): array => [
+                                $plant->value => $plant->getLabel(),
+                            ])
+                            ->all(),
+                    )
                     ->multiple()
                     ->minItems(1)
                     ->live()

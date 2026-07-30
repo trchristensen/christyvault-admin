@@ -17,7 +17,7 @@ class SalesPerformanceReport
         string $timeframe = 'year_over_year',
         string $metric = 'units',
         string $productType = 'all',
-        array $plants = ['colma', 'tulare'],
+        array $plants = ['colma_main', 'colma_locals', 'tulare_plant'],
         ?CarbonInterface $asOf = null,
     ): array {
         $metric = in_array($metric, ['units', 'revenue'], true) ? $metric : 'units';
@@ -381,9 +381,9 @@ class SalesPerformanceReport
     ): int {
         $query = DB::table('sales_visits')
             ->join('locations', 'sales_visits.location_id', '=', 'locations.id')
-            ->where('status', SalesVisitStatus::COMPLETED->value)
-            ->whereNotNull('completed_at')
-            ->whereBetween('completed_at', [$start, $end])
+            ->where('sales_visits.status', SalesVisitStatus::COMPLETED->value)
+            ->whereNotNull('sales_visits.completed_at')
+            ->whereBetween('sales_visits.completed_at', [$start, $end])
             ->when(
                 $locationId !== 'all',
                 fn (Builder $query): Builder => $query->where('sales_visits.location_id', $locationId),
@@ -447,19 +447,16 @@ class SalesPerformanceReport
 
     private function plantLocations(array $plants): array
     {
-        $plants = array_values(array_intersect(['colma', 'tulare'], $plants));
+        $plants = array_values(array_intersect([
+            'colma_main',
+            'colma_locals',
+            'tulare_plant',
+        ], $plants));
 
         if ($plants === []) {
-            $plants = ['colma', 'tulare'];
+            return ['colma_main', 'colma_locals', 'tulare_plant'];
         }
 
-        return collect($plants)
-            ->flatMap(fn (string $plant): array => match ($plant) {
-                'tulare' => ['tulare_plant'],
-                default => ['colma_main', 'colma_locals'],
-            })
-            ->unique()
-            ->values()
-            ->all();
+        return $plants;
     }
 }
