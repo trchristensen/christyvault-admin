@@ -2,17 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
-use Spatie\LaravelData\Data;
-use Sushi\Sushi;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use Sushi\Sushi;
 
 class Backup extends Model
 {
     use Sushi;
 
-    public function getRows()
+    public function getRows(): array
     {
         $disk = Storage::disk('r2');
         $files = $disk->files('laravel-backup');
@@ -22,6 +21,7 @@ class Backup extends Model
             if (str_ends_with($file, '.zip')) {
                 $backups[] = [
                     'filename' => basename($file),
+                    'path' => $file,
                     'size' => $disk->size($file),
                     'date' => Carbon::createFromTimestamp($disk->lastModified($file))->toDateTimeString(),
                 ];

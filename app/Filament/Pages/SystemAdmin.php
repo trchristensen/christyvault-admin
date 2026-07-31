@@ -2,29 +2,32 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Backup;
 use Exception;
-use Filament\Pages\Page;
 use Filament\Actions\Action;
-use Filament\Tables\Table;
+use Filament\Notifications\Notification;
+use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
-use Filament\Notifications\Notification;
-use App\Models\Backup;
-use Illuminate\Support\Facades\Response;
 
 class SystemAdmin extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cog-6-tooth';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cog-6-tooth';
+
     protected static ?string $navigationLabel = 'System Admin';
+
     protected static ?string $title = 'System Administration';
+
     protected static ?int $navigationSort = 100;
-    protected static string | \UnitEnum | null $navigationGroup = 'System';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'System';
+
     protected string $view = 'filament.pages.system-admin';
 
     public static function canAccess(): bool
@@ -67,7 +70,7 @@ class SystemAdmin extends Page implements HasTable
                     ->searchable(),
                 TextColumn::make('size')
                     ->label('Size')
-                    ->formatStateUsing(fn($state) => number_format($state / 1048576, 2) . ' MB'),
+                    ->formatStateUsing(fn ($state) => number_format($state / 1048576, 2).' MB'),
                 TextColumn::make('date')
                     ->label('Date')
                     ->dateTime('M j, Y g:i A')
@@ -77,14 +80,17 @@ class SystemAdmin extends Page implements HasTable
                 Action::make('download')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->action(function ($record) {
-                        return Storage::disk('r2')->download($record->filename);
+                        return Storage::disk('r2')->download(
+                            $record->path,
+                            $record->filename,
+                        );
                     }),
                 Action::make('delete')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->requiresConfirmation()
                     ->action(function ($record) {
-                        Storage::disk('r2')->delete($record->filename);
+                        Storage::disk('r2')->delete($record->path);
                         Notification::make()
                             ->title('Backup deleted')
                             ->success()
