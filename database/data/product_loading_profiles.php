@@ -7,7 +7,7 @@
 |
 | These mappings intentionally contain only products whose physical loading
 | behavior is known well enough to support planning. Components, companion
-| crypt assemblies, liners, and marker bases remain unassigned for review.
+| crypt assemblies, and uncertain liners remain unassigned for review.
 |
 */
 
@@ -72,4 +72,31 @@ return [
     ['sku' => 'P400', 'profile_code' => 'boxed_urn_products_9_per_pallet'],
     ['sku' => 'P410', 'profile_code' => 'boxed_urn_products_9_per_pallet'],
     ['sku' => 'P400WS', 'profile_code' => 'boxed_urn_products_9_per_pallet'],
+
+    // Granite marker bases: three products per pallet.
+    ['sku' => 'G1814V2-3.75', 'profile_code' => 'granite_marker_bases_3_per_pallet'],
+    ['sku' => 'G2412V2-4', 'profile_code' => 'granite_marker_bases_3_per_pallet'],
+    ['sku' => 'G2412V2-3.75', 'profile_code' => 'granite_marker_bases_3_per_pallet'],
+    ['sku' => 'G2412V2-3.75 (deep)', 'profile_code' => 'granite_marker_bases_3_per_pallet'],
+    ['sku' => 'G1814SV2-3.75', 'profile_code' => 'granite_marker_bases_3_per_pallet'],
+    ['sku' => 'G2412NV', 'profile_code' => 'granite_marker_bases_3_per_pallet'],
+    ['sku' => 'G2816NV', 'profile_code' => 'granite_marker_bases_3_per_pallet'],
+    ['sku' => 'G2412SV-4', 'profile_code' => 'granite_marker_bases_3_per_pallet'],
+    ['sku' => 'G1810V1-4', 'profile_code' => 'granite_marker_bases_3_per_pallet'],
+    ['sku' => 'G2412V1-5', 'profile_code' => 'granite_marker_bases_3_per_pallet'],
+    ['sku' => 'G2412V1-4', 'profile_code' => 'granite_marker_bases_3_per_pallet'],
+
+    // Bronze marker bases: six products per pallet.
+    ['sku' => 'B2211NV', 'profile_code' => 'bronze_marker_bases_6_per_pallet'],
+    ['sku' => 'B2413NV', 'profile_code' => 'bronze_marker_bases_6_per_pallet'],
+    ['sku' => 'B2414NV', 'profile_code' => 'bronze_marker_bases_6_per_pallet'],
+    ['sku' => 'B3613V1-6', 'profile_code' => 'bronze_marker_bases_6_per_pallet'],
+    ['sku' => 'B2412V1-5SL', 'profile_code' => 'bronze_marker_bases_6_per_pallet'],
+    ['sku' => 'B2416V1-6', 'profile_code' => 'bronze_marker_bases_6_per_pallet'],
+    ['sku' => 'B2412V2-3.75', 'profile_code' => 'bronze_marker_bases_6_per_pallet'],
+    ['sku' => 'B2412V2-4', 'profile_code' => 'bronze_marker_bases_6_per_pallet'],
+    ['sku' => 'B2816V2-4', 'profile_code' => 'bronze_marker_bases_6_per_pallet'],
+    ['sku' => 'B2412V1-4', 'profile_code' => 'bronze_marker_bases_6_per_pallet'],
+    ['sku' => 'B2412V1-5', 'profile_code' => 'bronze_marker_bases_6_per_pallet'],
+    ['sku' => 'B2816V1-4', 'profile_code' => 'bronze_marker_bases_6_per_pallet'],
 ];

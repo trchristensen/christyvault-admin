@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Sushi\Sushi;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 
 class Backup extends Model
 {
@@ -29,5 +30,21 @@ class Backup extends Model
         }
 
         return $backups;
+    }
+
+    public function temporaryDownloadUrl(): string
+    {
+        return Storage::disk('r2')->temporaryUrl(
+            $this->path,
+            now()->addMinutes(10),
+            [
+                'ResponseContentDisposition' => HeaderUtils::makeDisposition(
+                    'attachment',
+                    $this->filename,
+                    $this->filename,
+                ),
+                'ResponseContentType' => 'application/zip',
+            ],
+        );
     }
 }

@@ -21,7 +21,7 @@ it('keeps uncertain large-product families out of automatic assignment', functio
     $assignments = collect(require dirname(__DIR__, 2).'/database/data/product_loading_profiles.php')
         ->keyBy(fn (array $assignment): string => mb_strtoupper(trim($assignment['sku'])));
 
-    foreach (['3-3086G4', 'G2412NV'] as $sku) {
+    foreach (['3-3086G4'] as $sku) {
         expect($assignments)->not->toHaveKey($sku);
     }
 });
@@ -54,5 +54,18 @@ it('assigns the confirmed P-series pallet capacities', function (): void {
 
     foreach (['P400', 'P410', 'P400WS'] as $sku) {
         expect($assignments[$sku]['profile_code'])->toBe('boxed_urn_products_9_per_pallet');
+    }
+});
+
+it('assigns the confirmed granite and bronze marker base pallet capacities', function (): void {
+    $assignments = collect(require dirname(__DIR__, 2).'/database/data/product_loading_profiles.php')
+        ->keyBy(fn (array $assignment): string => mb_strtoupper(trim($assignment['sku'])));
+
+    foreach (['G1814V2-3.75', 'G2412NV', 'G2412V1-4'] as $sku) {
+        expect($assignments[$sku]['profile_code'])->toBe('granite_marker_bases_3_per_pallet');
+    }
+
+    foreach (['B2211NV', 'B2412V2-4', 'B2816V1-4'] as $sku) {
+        expect($assignments[$sku]['profile_code'])->toBe('bronze_marker_bases_6_per_pallet');
     }
 });

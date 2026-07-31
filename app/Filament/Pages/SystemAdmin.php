@@ -79,12 +79,7 @@ class SystemAdmin extends Page implements HasTable
             ->recordActions([
                 Action::make('download')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->action(function ($record) {
-                        return Storage::disk('r2')->download(
-                            $record->path,
-                            $record->filename,
-                        );
-                    }),
+                    ->url(fn (Backup $record): string => $record->temporaryDownloadUrl()),
                 Action::make('delete')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
