@@ -195,6 +195,42 @@
         font-weight: 400;
     }
 
+    .cv-print-rack-cell-pallet {
+        font-size: 13px;
+        line-height: 1;
+        padding-left: 15px;
+        padding-right: 2px;
+    }
+
+    .cv-print-rack-cell-pallet-multiple {
+        font-size: 10px;
+    }
+
+    .cv-print-pallet-lines {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        max-width: 100%;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .cv-print-pallet-line {
+        display: block;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+
+    .cv-print-rack-cell-pallet .cv-print-cell-meta {
+        font-size: 8px;
+        margin-top: 1px;
+    }
+
+    .cv-print-rack-cell-pallet .cv-print-cell-stop {
+        font-size: 8px;
+    }
+
     .cv-print-cell-meta {
         font-size: 9px;
         font-weight: 700;
@@ -533,16 +569,32 @@
                                 style="grid-template-rows: repeat({{ $rack['level_count'] }}, 42px);">
                                 @foreach (array_reverse($rack['cells'], true) as $cell)
                                     @if ($cell)
-                                        <div class="cv-print-rack-cell">
+                                        @php
+                                            $isPalletLevel = (bool) ($cell['is_pallet_level'] ?? false);
+                                            $cellPallets = collect($cell['pallets'] ?? []);
+                                        @endphp
+                                        <div @class([
+                                            'cv-print-rack-cell',
+                                            'cv-print-rack-cell-pallet' => $isPalletLevel,
+                                            'cv-print-rack-cell-pallet-multiple' => $isPalletLevel && $cellPallets->count() > 1,
+                                        ])>
                                             @if ($isMultiStop)
                                                 <span class="cv-print-cell-stop">S{{ $cell['stop_sequence'] }}</span>
                                             @endif
-                                            <span>{{ $cell['code'] }}</span>
-                                            @if (($cell['is_pallet_level'] ?? false) || ($cell['component'] ?? null) === 'half')
+                                            @if ($isPalletLevel)
+                                                <span class="cv-print-pallet-lines">
+                                                    @foreach ($cellPallets as $pallet)
+                                                        <span class="cv-print-pallet-line">{{ $pallet['code'] }}</span>
+                                                    @endforeach
+                                                </span>
+                                            @else
+                                                <span>{{ $cell['code'] }}</span>
+                                            @endif
+                                            @if ($isPalletLevel || ($cell['component'] ?? null) === 'half')
                                                 <span class="cv-print-cell-meta">
-                                                    @if ($cell['is_pallet_level'] ?? false)
-                                                        {{ count($cell['pallets']) }}
-                                                        {{ Str::plural('pallet', count($cell['pallets'])) }}
+                                                    @if ($isPalletLevel)
+                                                        {{ $cellPallets->count() }}
+                                                        {{ Str::plural('pallet', $cellPallets->count()) }}
                                                     @endif
                                                     @if (($cell['component'] ?? null) === 'half')
                                                         Pair {{ $cell['split_pair'] }}
