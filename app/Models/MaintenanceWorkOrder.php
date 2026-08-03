@@ -14,7 +14,7 @@ class MaintenanceWorkOrder extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'number', 'asset_id', 'request_id', 'plan_id', 'assigned_to_user_id', 'created_by_user_id',
+        'number', 'asset_id', 'request_id', 'plan_id', 'fleet_service_run_id', 'assigned_to_user_id', 'created_by_user_id',
         'verified_by_user_id', 'title', 'description', 'type', 'priority', 'status', 'safety_related',
         'estimated_hours', 'scheduled_at', 'due_at', 'started_at', 'completed_at', 'verified_at',
         'downtime_started_at', 'downtime_ended_at', 'downtime_minutes', 'checklist', 'findings',
@@ -60,6 +60,11 @@ class MaintenanceWorkOrder extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(MaintenancePlan::class, 'plan_id');
+    }
+
+    public function fleetServiceRun(): BelongsTo
+    {
+        return $this->belongsTo(MaintenanceFleetServiceRun::class, 'fleet_service_run_id');
     }
 
     public function assignedTo(): BelongsTo

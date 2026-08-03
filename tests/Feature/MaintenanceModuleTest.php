@@ -2,6 +2,7 @@
 
 use App\Models\Location;
 use App\Models\MaintenanceAsset;
+use App\Models\MaintenanceFleetPlan;
 use App\Models\MaintenanceMeterReading;
 use App\Models\MaintenancePlan;
 use App\Models\MaintenanceRequest;
@@ -9,6 +10,7 @@ use App\Models\MaintenanceWorkOrder;
 use App\Models\User;
 use App\Notifications\MaintenanceRequestSubmitted;
 use App\Services\Maintenance\MaintenancePlanScheduler;
+use App\Services\Maintenance\MaintenanceFleetPlanScheduler;
 use App\Services\Maintenance\MaintenanceRequestConverter;
 use Database\Seeders\MaintenanceAssetImportSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -154,6 +156,22 @@ it('renders every maintenance panel workflow for an authorized manager', functio
     $manager = User::factory()->create();
     $manager->assignRole(Role::findOrCreate('maintenance-manager', 'web'));
     $asset = MaintenanceAsset::create(['asset_tag' => 'TEST-UI-'.uniqid(), 'name' => 'UI test asset', 'category' => 'other']);
+    $plant = Location::create([
+        'name' => 'UI fleet plant '.uniqid(),
+        'address_line1' => '1 UI Way',
+        'city' => 'Test City',
+        'state' => 'CA',
+        'postal_code' => '94000',
+        'location_type' => 'christy_vault',
+    ]);
+    $fleetPlan = MaintenanceFleetPlan::create([
+        'location_id' => $plant->id,
+        'name' => 'UI fleet plan',
+        'manufacturer' => 'Hyster',
+        'asset_category' => 'forklift',
+        'meter_type' => 'hours',
+        'meter_interval' => 250,
+    ]);
 
     $this->actingAs($manager);
 
@@ -168,6 +186,9 @@ it('renders every maintenance panel workflow for an authorized manager', functio
         '/maintenance/work-orders/create',
         '/maintenance/preventive-maintenance',
         '/maintenance/preventive-maintenance/create',
+        '/maintenance/fleet-preventive-maintenance',
+        '/maintenance/fleet-preventive-maintenance/create',
+        "/maintenance/fleet-preventive-maintenance/{$fleetPlan->id}/edit",
         '/maintenance/meter-readings',
         '/maintenance/meter-readings/create',
     ] as $path) {
@@ -210,4 +231,162 @@ it('imports the equipment register idempotently with plant and registration data
         ->and(MaintenanceAsset::where('asset_tag', '71')->value('name'))->toBe('2018 Princeton PB55.3 Piggyback')
         ->and(MaintenanceAsset::where('asset_tag', '26')->value('license_plate'))->toBe('60923M3')
         ->and(MaintenanceAsset::where('asset_tag', '43')->firstOrFail()->location->name)->toBe('Christy Vault - Tulare');
+});
+
+it('dynamically groups matching fleet assets and honors low-use exclusions', function (): void {
+    $location = Location::create([
+        'name' => 'Fleet test plant '.uniqid(),
+        'address_line1' => '1 Fleet Way',
+        'city' => 'Test City',
+        'state' => 'CA',
+        'postal_code' => '94000',
+        'location_type' => 'christy_vault',
+    ]);
+    $included = MaintenanceAsset::create([
+        'asset_tag' => 'FLEET-A-'.uniqid(),
+        'name' => 'Included Hyster',
+        'category' => 'forklift',
+        'manufacturer' => 'Hyster',
+        'location_id' => $location->id,
+        'meter_type' => 'hours',
+        'current_meter' => 100,
+    ]);
+    $lowUse = MaintenanceAsset::create([
+        'asset_tag' => 'FLEET-B-'.uniqid(),
+        'name' => 'Low-use Hyster',
+        'category' => 'forklift',
+        'manufacturer' => 'HYSTER',
+        'location_id' => $location->id,
+        'meter_type' => 'hours',
+        'current_meter' => 200,
+    ]);
+    MaintenanceAsset::create([
+        'asset_tag' => 'FLEET-C-'.uniqid(),
+        'name' => 'Different manufacturer',
+        'category' => 'forklift',
+        'manufacturer' => 'Toyota',
+        'location_id' => $location->id,
+        'meter_type' => 'hours',
+        'current_meter' => 300,
+    ]);
+    $plan = MaintenanceFleetPlan::create([
+        'location_id' => $location->id,
+        'name' => 'Group Service B',
+        'manufacturer' => 'Hyster',
+        'asset_category' => 'forklift',
+        'meter_type' => 'hours',
+        'meter_interval' => 250,
+        'active' => true,
+    ]);
+
+    $scheduler = app(MaintenanceFleetPlanScheduler::class);
+    $scheduler->syncMatchingAssets($plan);
+    $plan->members()->where('asset_id', $lowUse->id)->update(['included' => false]);
+
+    $newMatch = MaintenanceAsset::create([
+        'asset_tag' => 'FLEET-D-'.uniqid(),
+        'name' => 'New Hyster',
+        'category' => 'forklift',
+        'manufacturer' => 'Hyster',
+        'location_id' => $location->id,
+        'meter_type' => 'hours',
+        'current_meter' => 400,
+    ]);
+    $scheduler->syncMatchingAssets($plan);
+
+    expect($plan->members()->where('matches_filter', true)->count())->toBe(3)
+        ->and($plan->members()->where('asset_id', $included->id)->value('included'))->toBeTrue()
+        ->and($plan->members()->where('asset_id', $lowUse->id)->value('included'))->toBeFalse()
+        ->and($plan->members()->where('asset_id', $newMatch->id)->value('included'))->toBeTrue();
+});
+
+it('creates one traceable work order per included asset when any fleet unit reaches its threshold', function (): void {
+    $location = Location::create([
+        'name' => 'Fleet trigger plant '.uniqid(),
+        'address_line1' => '2 Fleet Way',
+        'city' => 'Test City',
+        'state' => 'CA',
+        'postal_code' => '94000',
+        'location_type' => 'christy_vault',
+    ]);
+    $assets = collect([1000, 500, 50])->map(fn (int $meter, int $index) => MaintenanceAsset::create([
+        'asset_tag' => 'TRIGGER-'.$index.'-'.uniqid(),
+        'name' => "Hyster {$index}",
+        'category' => 'forklift',
+        'manufacturer' => 'Hyster',
+        'location_id' => $location->id,
+        'meter_type' => 'hours',
+        'current_meter' => $meter,
+    ]));
+    $plan = MaintenanceFleetPlan::create([
+        'location_id' => $location->id,
+        'name' => 'Papé Service B',
+        'manufacturer' => 'Hyster',
+        'asset_category' => 'forklift',
+        'meter_type' => 'hours',
+        'meter_interval' => 250,
+        'service_provider' => 'Papé',
+        'priority' => 'normal',
+        'active' => true,
+        'checklist' => [['task' => 'Record service meter']],
+    ]);
+    $scheduler = app(MaintenanceFleetPlanScheduler::class);
+    $scheduler->syncMatchingAssets($plan);
+    $plan->members()->where('asset_id', $assets[0]->id)->update(['baseline_meter' => 750, 'next_due_meter' => 1000]);
+    $plan->members()->where('asset_id', $assets[1]->id)->update(['baseline_meter' => 300, 'next_due_meter' => 550]);
+    $plan->members()->where('asset_id', $assets[2]->id)->update(['included' => false]);
+
+    $generated = $scheduler->generateDue($assets[0]->id);
+    $run = $plan->serviceRuns()->firstOrFail();
+
+    expect($generated)->toBe(2)
+        ->and($run->triggered_by_asset_id)->toBe($assets[0]->id)
+        ->and($run->workOrders)->toHaveCount(2)
+        ->and($run->workOrders->pluck('asset_id')->all())->toEqualCanonicalizing([$assets[0]->id, $assets[1]->id])
+        ->and($run->workOrders->first()->description)->toContain('Papé')
+        ->and($scheduler->generateDue())->toBe(0)
+        ->and($plan->serviceRuns()->count())->toBe(1);
+});
+
+it('resets each fleet baseline when its grouped work order is verified', function (): void {
+    $manager = User::factory()->create();
+    $location = Location::create([
+        'name' => 'Fleet completion plant '.uniqid(),
+        'address_line1' => '3 Fleet Way',
+        'city' => 'Test City',
+        'state' => 'CA',
+        'postal_code' => '94000',
+        'location_type' => 'christy_vault',
+    ]);
+    $asset = MaintenanceAsset::create([
+        'asset_tag' => 'COMPLETE-'.uniqid(),
+        'name' => 'Completion Hyster',
+        'category' => 'forklift',
+        'manufacturer' => 'Hyster',
+        'location_id' => $location->id,
+        'meter_type' => 'hours',
+        'current_meter' => 1250,
+    ]);
+    $plan = MaintenanceFleetPlan::create([
+        'location_id' => $location->id,
+        'name' => 'Completion Service B',
+        'manufacturer' => 'Hyster',
+        'asset_category' => 'forklift',
+        'meter_type' => 'hours',
+        'meter_interval' => 250,
+        'active' => true,
+    ]);
+    $scheduler = app(MaintenanceFleetPlanScheduler::class);
+    $scheduler->syncMatchingAssets($plan);
+    $plan->members()->where('asset_id', $asset->id)->update(['baseline_meter' => 1000, 'next_due_meter' => 1250]);
+    $run = $scheduler->generate($plan);
+    $asset->update(['current_meter' => 1262]);
+    $run->workOrders()->firstOrFail()->verify($manager);
+    $member = $plan->members()->where('asset_id', $asset->id)->firstOrFail();
+
+    expect($member->baseline_meter)->toBe('1262.00')
+        ->and($member->next_due_meter)->toBe('1512.00')
+        ->and($member->last_serviced_at)->not->toBeNull()
+        ->and($run->fresh()->status)->toBe('completed')
+        ->and($plan->fresh()->last_completed_at)->not->toBeNull();
 });

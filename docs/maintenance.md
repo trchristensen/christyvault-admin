@@ -26,6 +26,20 @@ Assign those roles through the existing Filament roles and permissions interface
 5. A manager verifies the repair and returns the asset to operational status.
 6. Calendar and meter-based PM plans create work orders automatically.
 
+## Fleet PM plans
+
+Fleet PM plans dynamically match equipment by home plant, manufacturer, category, and meter type. Matching equipment is added automatically, while individual low-use units can be excluded from the plan's **Fleet assets and service baselines** section.
+
+When any included asset reaches its next-due meter, the plan creates one grouped service run and a separate work order for every included asset. This preserves each asset's service history while allowing an outside provider to service the fleet together. No second run is generated while the current grouped service remains open. When each work order is verified, that asset's current meter becomes its new service baseline.
+
+Create the initial Colma Hyster Service B plan after importing the asset register with:
+
+```bash
+php artisan db:seed --class='Database\Seeders\ColmaHysterServiceBPlanSeeder' --force
+```
+
+The setup includes all Colma Hyster forklifts automatically. Units 8, 9, 12, and 16 receive their readable July 22, 2026 service baselines from the handwritten record. Units 11 and 18 remain included but require a confirmed baseline in the plan before they can trigger service.
+
 The hourly scheduler runs `maintenance:generate-work-orders`. It may also be run manually:
 
 ```bash

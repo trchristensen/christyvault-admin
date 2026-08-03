@@ -75,6 +75,11 @@ class MaintenanceAsset extends Model
         return $this->hasMany(MaintenancePlan::class, 'asset_id');
     }
 
+    public function fleetPlanMemberships(): HasMany
+    {
+        return $this->hasMany(MaintenanceFleetPlanAsset::class, 'asset_id');
+    }
+
     public function meterReadings(): HasMany
     {
         return $this->hasMany(MaintenanceMeterReading::class, 'asset_id');

@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\MaintenanceMeterReading;
+use App\Services\Maintenance\MaintenanceFleetPlanScheduler;
 use App\Services\Maintenance\MaintenancePlanScheduler;
 
 class MaintenanceMeterReadingObserver
@@ -19,5 +20,6 @@ class MaintenanceMeterReadingObserver
         }
 
         app(MaintenancePlanScheduler::class)->generateDue($reading->asset_id);
+        app(MaintenanceFleetPlanScheduler::class)->generateDue($reading->asset_id);
     }
 }
