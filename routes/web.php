@@ -7,6 +7,7 @@ use App\Http\Controllers\LeaveCalendarFeedController;
 use App\Http\Controllers\KanbanCardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\MaintenanceAssetPortalController;
+use App\Http\Controllers\MaintenanceWorkOrderPrintController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderCalendarController;
@@ -30,6 +31,10 @@ Route::prefix('asset')->middleware('throttle:30,1')->group(function (): void {
     Route::get('{token}/qr.svg', [MaintenanceAssetPortalController::class, 'qr'])->name('maintenance.assets.qr');
     Route::get('{token}/label', [MaintenanceAssetPortalController::class, 'label'])->name('maintenance.assets.label');
 });
+
+Route::get('/maintenance/work-orders/{workOrder}/print', MaintenanceWorkOrderPrintController::class)
+    ->name('maintenance.work-orders.print')
+    ->middleware('auth');
 
 
 // Secure delivery link generator

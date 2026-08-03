@@ -7,6 +7,8 @@ use App\Filament\Maintenance\Resources\MaintenanceWorkOrderResource\Pages\EditMa
 use App\Filament\Maintenance\Resources\MaintenanceWorkOrderResource\Pages\ListMaintenanceWorkOrders;
 use App\Filament\Maintenance\Resources\MaintenanceWorkOrderResource\RelationManagers\LaborEntriesRelationManager;
 use App\Filament\Maintenance\Resources\MaintenanceWorkOrderResource\RelationManagers\PartsRelationManager;
+use App\Models\MaintenanceAsset;
+use App\Models\MaintenanceVendor;
 use App\Models\MaintenanceWorkOrder;
 use App\Support\MaintenanceOptions;
 use Filament\Actions\Action;
@@ -21,6 +23,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -48,12 +51,16 @@ class MaintenanceWorkOrderResource extends Resource
         return $schema->components([
             Section::make('Work order')->schema([
                 TextInput::make('number')->disabled()->dehydrated(false)->placeholder('Assigned after creation'),
-                Select::make('asset_id')->relationship('asset', 'name')->searchable()->preload(),
+                Select::make('asset_id')
+                    ->relationship('asset', 'name')
+                    ->getOptionLabelFromRecordUsing(fn (MaintenanceAsset $record): string => $record->display_name)
+                    ->searchable(['asset_tag', 'name'])
+                    ->preload(),
                 TextInput::make('title')->required()->maxLength(255)->columnSpan(2),
                 Select::make('type')->options(MaintenanceOptions::workOrderTypes())->default('reactive')->required(),
                 Select::make('priority')->options(MaintenanceOptions::priorities())->default('normal')->required(),
                 Select::make('status')->options(MaintenanceOptions::workOrderStatuses())->default('approved')->required(),
-                Select::make('assigned_to_user_id')->relationship('assignedTo', 'name')->label('Assigned technician')->searchable()->preload(),
+                Select::make('assigned_to_user_id')->relationship('assignedTo', 'name')->label('Assigned owner / technician')->searchable()->preload(),
                 Toggle::make('safety_related')->label('Safety-related'),
                 TextInput::make('estimated_hours')->numeric()->minValue(0)->suffix('hours'),
                 Textarea::make('description')->columnSpanFull(),
@@ -64,6 +71,34 @@ class MaintenanceWorkOrderResource extends Resource
                 DateTimePicker::make('downtime_started_at'),
                 DateTimePicker::make('downtime_ended_at'),
             ])->columns(4),
+            Section::make('Outside service provider')->description('Optional details included on the vendor printout.')->schema([
+                Select::make('maintenance_vendor_id')
+                    ->label('Saved service vendor')
+                    ->relationship(
+                        name: 'maintenanceVendor',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn ($query) => $query->where('active', true)->orderBy('name'),
+                    )
+                    ->helperText('Select a saved vendor to fill the contact details below, or type a one-time company manually.')
+                    ->searchable()
+                    ->preload()
+                    ->live()
+                    ->afterStateUpdated(function ($state, Set $set): void {
+                        $vendor = $state ? MaintenanceVendor::find($state) : null;
+
+                        if ($vendor) {
+                            foreach ($vendor->snapshot() as $field => $value) {
+                                $set($field, $value);
+                            }
+                        }
+                    }),
+                TextInput::make('service_provider')->label('Company')->maxLength(255),
+                TextInput::make('service_contact_name')->label('Contact name')->maxLength(255),
+                TextInput::make('service_phone')->label('Phone')->tel()->maxLength(255),
+                TextInput::make('vendor_reference')->label('Vendor ticket / reference')->maxLength(255),
+                TextInput::make('purchase_order_number')->label('Purchase order')->maxLength(255),
+                TextInput::make('authorization_limit')->label('Do not exceed')->numeric()->prefix('$')->minValue(0),
+            ])->columns(3)->collapsible(),
             Section::make('Procedure checklist')->schema([
                 Repeater::make('checklist')->schema([
                     TextInput::make('task')->required()->columnSpan(2),
@@ -99,6 +134,11 @@ class MaintenanceWorkOrderResource extends Resource
             SelectFilter::make('type')->options(MaintenanceOptions::workOrderTypes()),
             SelectFilter::make('assigned_to_user_id')->relationship('assignedTo', 'name')->label('Technician'),
         ])->recordActions([
+            Action::make('print_for_vendor')
+                ->label('Print for vendor')
+                ->icon('heroicon-o-printer')
+                ->url(fn (MaintenanceWorkOrder $record): string => route('maintenance.work-orders.print', $record))
+                ->openUrlInNewTab(),
             Action::make('start')->icon('heroicon-o-play')->color('success')->visible(fn (MaintenanceWorkOrder $record) => in_array($record->status, ['approved', 'scheduled', 'on_hold', 'waiting_on_parts']))->action(function (MaintenanceWorkOrder $record): void {
                 $record->start(auth()->user());
                 Notification::make()->title('Work started')->success()->send();

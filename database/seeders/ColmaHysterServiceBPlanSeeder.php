@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Location;
 use App\Models\MaintenanceFleetPlan;
+use App\Models\MaintenanceVendor;
 use App\Services\Maintenance\MaintenanceFleetPlanScheduler;
 use Illuminate\Database\Seeder;
 
@@ -20,6 +21,16 @@ class ColmaHysterServiceBPlanSeeder extends Seeder
             throw new \RuntimeException('The Christy Vault - Colma plant location is required.');
         }
 
+        $vendor = MaintenanceVendor::firstOrCreate(
+            ['name' => 'Papé'],
+            [
+                'contact_person' => 'Brenda',
+                'phone' => '510-661-5700',
+                'services_provided' => 'Hyster forklift preventive maintenance and Service B',
+                'active' => true,
+            ],
+        );
+
         $plan = MaintenanceFleetPlan::firstOrCreate(
             [
                 'location_id' => $colmaId,
@@ -27,6 +38,7 @@ class ColmaHysterServiceBPlanSeeder extends Seeder
             ],
             [
                 'description' => 'When any included Colma Hyster forklift accumulates 250 hours after the last group service, request Service B from Papé for every included forklift.',
+                'maintenance_vendor_id' => $vendor->id,
                 'manufacturer' => 'Hyster',
                 'asset_category' => 'forklift',
                 'meter_type' => 'hours',
@@ -48,6 +60,10 @@ class ColmaHysterServiceBPlanSeeder extends Seeder
                 ],
             ],
         );
+
+        if ($plan->maintenance_vendor_id === null) {
+            $plan->update(['maintenance_vendor_id' => $vendor->id]);
+        }
 
         app(MaintenanceFleetPlanScheduler::class)->syncMatchingAssets($plan);
 

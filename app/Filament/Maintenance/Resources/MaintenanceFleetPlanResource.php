@@ -8,18 +8,17 @@ use App\Filament\Maintenance\Resources\MaintenanceFleetPlanResource\Pages\ListMa
 use App\Filament\Maintenance\Resources\MaintenanceFleetPlanResource\RelationManagers\AssetsRelationManager;
 use App\Filament\Maintenance\Resources\MaintenanceFleetPlanResource\RelationManagers\ServiceRunsRelationManager;
 use App\Models\MaintenanceFleetPlan;
-use App\Services\Maintenance\MaintenanceFleetPlanScheduler;
+use App\Models\MaintenanceVendor;
 use App\Support\MaintenanceOptions;
-use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -47,7 +46,7 @@ class MaintenanceFleetPlanResource extends Resource
         return $schema->components([
             Section::make('Fleet service plan')->schema([
                 TextInput::make('name')->required()->maxLength(255),
-                Select::make('default_assignee_id')->relationship('defaultAssignee', 'name')->label('Default technician')->searchable()->preload(),
+                Select::make('default_assignee_id')->relationship('defaultAssignee', 'name')->label('Internal coordinator')->searchable()->preload(),
                 Select::make('priority')->options(MaintenanceOptions::priorities())->default('normal')->required(),
                 Toggle::make('active')->default(true),
                 Textarea::make('description')->helperText('Explain what service to request and that every included asset is serviced together.')->columnSpanFull(),
@@ -69,10 +68,29 @@ class MaintenanceFleetPlanResource extends Resource
                 TextInput::make('meter_interval')->label('Service every')->numeric()->minValue(0.01)->suffix('meter units')->default(250)->required(),
             ])->columns(5),
             Section::make('Outside service provider')->schema([
+                Select::make('maintenance_vendor_id')
+                    ->label('Saved service vendor')
+                    ->relationship(
+                        name: 'maintenanceVendor',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn ($query) => $query->where('active', true)->orderBy('name'),
+                    )
+                    ->searchable()
+                    ->preload()
+                    ->live()
+                    ->afterStateUpdated(function ($state, Set $set): void {
+                        $vendor = $state ? MaintenanceVendor::find($state) : null;
+
+                        if ($vendor) {
+                            foreach ($vendor->snapshot() as $field => $value) {
+                                $set($field, $value);
+                            }
+                        }
+                    }),
                 TextInput::make('service_provider')->placeholder('Papé'),
                 TextInput::make('service_contact_name')->label('Contact name'),
                 TextInput::make('service_phone')->label('Phone')->tel(),
-            ])->columns(3),
+            ])->columns(4),
             Section::make('Standard procedure')->schema([
                 Repeater::make('checklist')->schema([
                     TextInput::make('task')->required(),
@@ -99,31 +117,7 @@ class MaintenanceFleetPlanResource extends Resource
                     : 'Needs baseline';
             }),
             IconColumn::make('active')->boolean(),
-        ])->recordActions([
-            Action::make('sync')
-                ->label('Sync assets')
-                ->icon('heroicon-o-arrow-path')
-                ->authorize('update')
-                ->action(function (MaintenanceFleetPlan $record): void {
-                    app(MaintenanceFleetPlanScheduler::class)->syncMatchingAssets($record);
-                    Notification::make()->title('Matching fleet assets synchronized')->success()->send();
-                }),
-            Action::make('generate')
-                ->label('Generate group service')
-                ->icon('heroicon-o-bolt')
-                ->authorize('update')
-                ->requiresConfirmation()
-                ->modalDescription('Create one work order for every currently included fleet asset, even if no unit is due yet?')
-                ->action(function (MaintenanceFleetPlan $record): void {
-                    $run = app(MaintenanceFleetPlanScheduler::class)->generate($record, force: true);
-                    $count = $run?->workOrders()->count() ?? 0;
-                    Notification::make()
-                        ->title($run ? "Created {$count} fleet work orders" : 'An open fleet service already exists or no assets are included')
-                        ->color($run ? 'success' : 'warning')
-                        ->send();
-                }),
-            EditAction::make(),
-        ]);
+        ])->recordActions([EditAction::make()]);
     }
 
     public static function getRelations(): array

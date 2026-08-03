@@ -4,6 +4,7 @@ namespace App\Filament\Maintenance\Resources;
 
 use App\Filament\Maintenance\Resources\MaintenanceMeterReadingResource\Pages\CreateMaintenanceMeterReading;
 use App\Filament\Maintenance\Resources\MaintenanceMeterReadingResource\Pages\ListMaintenanceMeterReadings;
+use App\Models\MaintenanceAsset;
 use App\Models\MaintenanceMeterReading;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
@@ -34,7 +35,12 @@ class MaintenanceMeterReadingResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([Section::make('Meter reading')->schema([
-            Select::make('asset_id')->relationship('asset', 'name')->searchable()->preload()->required(),
+            Select::make('asset_id')
+                ->relationship('asset', 'name')
+                ->getOptionLabelFromRecordUsing(fn (MaintenanceAsset $record): string => $record->display_name)
+                ->searchable(['asset_tag', 'name'])
+                ->preload()
+                ->required(),
             TextInput::make('reading')->numeric()->minValue(0)->required(),
             DateTimePicker::make('recorded_at')->default(now())->required(),
             Select::make('source')->options(['manual' => 'Manual', 'inspection' => 'Inspection', 'telematics' => 'Telematics / import'])->default('manual')->required(),

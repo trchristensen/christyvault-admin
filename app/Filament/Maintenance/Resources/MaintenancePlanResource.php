@@ -5,6 +5,7 @@ namespace App\Filament\Maintenance\Resources;
 use App\Filament\Maintenance\Resources\MaintenancePlanResource\Pages\CreateMaintenancePlan;
 use App\Filament\Maintenance\Resources\MaintenancePlanResource\Pages\EditMaintenancePlan;
 use App\Filament\Maintenance\Resources\MaintenancePlanResource\Pages\ListMaintenancePlans;
+use App\Models\MaintenanceAsset;
 use App\Models\MaintenancePlan;
 use App\Services\Maintenance\MaintenancePlanScheduler;
 use App\Support\MaintenanceOptions;
@@ -46,7 +47,12 @@ class MaintenancePlanResource extends Resource
     {
         return $schema->components([
             Section::make('Preventive maintenance plan')->schema([
-                Select::make('asset_id')->relationship('asset', 'name')->searchable()->preload()->required(),
+                Select::make('asset_id')
+                    ->relationship('asset', 'name')
+                    ->getOptionLabelFromRecordUsing(fn (MaintenanceAsset $record): string => $record->display_name)
+                    ->searchable(['asset_tag', 'name'])
+                    ->preload()
+                    ->required(),
                 TextInput::make('name')->required()->maxLength(255),
                 Select::make('default_assignee_id')->relationship('defaultAssignee', 'name')->label('Default technician')->searchable()->preload(),
                 Select::make('priority')->options(MaintenanceOptions::priorities())->default('normal')->required(),

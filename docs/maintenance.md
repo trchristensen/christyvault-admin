@@ -40,6 +40,12 @@ php artisan db:seed --class='Database\Seeders\ColmaHysterServiceBPlanSeeder' --f
 
 The setup includes all Colma Hyster forklifts automatically. Units 8, 9, 12, and 16 receive their readable July 22, 2026 service baselines from the handwritten record. Units 11 and 18 remain included but require a confirmed baseline in the plan before they can trigger service.
 
+## Service vendors and printable work orders
+
+Maintain recurring outside service companies under **Maintenance Setup → Service Vendors**. A work order or fleet PM plan can select a saved vendor to fill its company, contact, and phone automatically. The copied fields remain on the work order as a historical snapshot, so changing a vendor's contact later does not alter old service records.
+
+Use **Print for vendor** on a work order to open an authenticated, vendor-facing service request with the asset, requested scope, checklist, schedule, purchase order, authorization limit, and blank completion fields. Internal labor and parts details are not included. One-time companies may still be entered directly on a work order without creating a saved vendor.
+
 The hourly scheduler runs `maintenance:generate-work-orders`. It may also be run manually:
 
 ```bash

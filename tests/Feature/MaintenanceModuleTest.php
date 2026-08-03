@@ -6,6 +6,7 @@ use App\Models\MaintenanceFleetPlan;
 use App\Models\MaintenanceMeterReading;
 use App\Models\MaintenancePlan;
 use App\Models\MaintenanceRequest;
+use App\Models\MaintenanceVendor;
 use App\Models\MaintenanceWorkOrder;
 use App\Models\User;
 use App\Notifications\MaintenanceRequestSubmitted;
@@ -152,6 +153,89 @@ it('renders the asset QR portal and an SVG label', function (): void {
         ->assertHeader('Content-Type', 'image/svg+xml');
 });
 
+it('prints a vendor-facing work order without exposing it publicly', function (): void {
+    $manager = User::factory()->create();
+    $manager->assignRole(Role::findOrCreate('maintenance-manager', 'web'));
+    $location = Location::create([
+        'name' => 'Vendor print plant '.uniqid(),
+        'address_line1' => '100 Service Road',
+        'city' => 'Colma',
+        'state' => 'CA',
+        'postal_code' => '94014',
+        'location_type' => 'christy_vault',
+    ]);
+    $asset = MaintenanceAsset::create([
+        'asset_tag' => 'PRINT-'.uniqid(),
+        'name' => 'Vendor service truck',
+        'category' => 'truck',
+        'manufacturer' => 'Freightliner',
+        'model' => 'M2',
+        'serial_number' => 'PRINTVIN123',
+        'license_plate' => 'PRINT123',
+        'location_id' => $location->id,
+        'meter_type' => 'miles',
+        'current_meter' => 48250,
+    ]);
+    $workOrder = MaintenanceWorkOrder::create([
+        'asset_id' => $asset->id,
+        'title' => 'Inspect brake warning light',
+        'description' => 'Warning light remains on after startup.',
+        'service_provider' => 'Example Truck Service',
+        'service_contact_name' => 'Service Desk',
+        'service_phone' => '555-0100',
+        'purchase_order_number' => 'PO-1001',
+        'authorization_limit' => 500,
+        'checklist' => [['task' => 'Inspect brake warning system']],
+    ]);
+
+    $this->get(route('maintenance.work-orders.print', $workOrder))->assertRedirect(route('login'));
+
+    $this->actingAs($manager)
+        ->get(route('maintenance.work-orders.print', $workOrder))
+        ->assertOk()
+        ->assertSee($workOrder->number)
+        ->assertSee($asset->asset_tag)
+        ->assertSee('Example Truck Service')
+        ->assertSee('PO-1001')
+        ->assertSee('Inspect brake warning system')
+        ->assertSee('window.print()', false);
+
+    $unauthorized = User::factory()->create();
+    $this->actingAs($unauthorized)
+        ->get(route('maintenance.work-orders.print', $workOrder))
+        ->assertForbidden();
+});
+
+it('fills saved vendor details while preserving the work order snapshot', function (): void {
+    $vendor = MaintenanceVendor::create([
+        'name' => 'Snapshot Vendor '.uniqid(),
+        'contact_person' => 'Original Contact',
+        'phone' => '555-1000',
+        'email' => 'service@example.test',
+        'services_provided' => 'Truck and equipment service',
+    ]);
+    $asset = MaintenanceAsset::create([
+        'asset_tag' => 'VENDOR-'.uniqid(),
+        'name' => 'Vendor test asset',
+        'category' => 'truck',
+    ]);
+    $workOrder = MaintenanceWorkOrder::create([
+        'asset_id' => $asset->id,
+        'maintenance_vendor_id' => $vendor->id,
+        'title' => 'Vendor snapshot test',
+    ]);
+
+    expect($workOrder->service_provider)->toBe($vendor->name)
+        ->and($workOrder->service_contact_name)->toBe('Original Contact')
+        ->and($workOrder->service_phone)->toBe('555-1000');
+
+    $vendor->update(['contact_person' => 'New Contact', 'phone' => '555-2000']);
+    $workOrder->update(['title' => 'Updated without changing vendor']);
+
+    expect($workOrder->fresh()->service_contact_name)->toBe('Original Contact')
+        ->and($workOrder->fresh()->service_phone)->toBe('555-1000');
+});
+
 it('renders every maintenance panel workflow for an authorized manager', function (): void {
     $manager = User::factory()->create();
     $manager->assignRole(Role::findOrCreate('maintenance-manager', 'web'));
@@ -172,6 +256,7 @@ it('renders every maintenance panel workflow for an authorized manager', functio
         'meter_type' => 'hours',
         'meter_interval' => 250,
     ]);
+    $vendor = MaintenanceVendor::create(['name' => 'UI service vendor '.uniqid()]);
 
     $this->actingAs($manager);
 
@@ -189,6 +274,9 @@ it('renders every maintenance panel workflow for an authorized manager', functio
         '/maintenance/fleet-preventive-maintenance',
         '/maintenance/fleet-preventive-maintenance/create',
         "/maintenance/fleet-preventive-maintenance/{$fleetPlan->id}/edit",
+        '/maintenance/service-vendors',
+        '/maintenance/service-vendors/create',
+        "/maintenance/service-vendors/{$vendor->id}/edit",
         '/maintenance/meter-readings',
         '/maintenance/meter-readings/create',
     ] as $path) {
@@ -318,8 +406,14 @@ it('creates one traceable work order per included asset when any fleet unit reac
         'meter_type' => 'hours',
         'current_meter' => $meter,
     ]));
+    $vendor = MaintenanceVendor::create([
+        'name' => 'Fleet vendor '.uniqid(),
+        'contact_person' => 'Fleet Contact',
+        'phone' => '555-3000',
+    ]);
     $plan = MaintenanceFleetPlan::create([
         'location_id' => $location->id,
+        'maintenance_vendor_id' => $vendor->id,
         'name' => 'Papé Service B',
         'manufacturer' => 'Hyster',
         'asset_category' => 'forklift',
@@ -343,7 +437,9 @@ it('creates one traceable work order per included asset when any fleet unit reac
         ->and($run->triggered_by_asset_id)->toBe($assets[0]->id)
         ->and($run->workOrders)->toHaveCount(2)
         ->and($run->workOrders->pluck('asset_id')->all())->toEqualCanonicalizing([$assets[0]->id, $assets[1]->id])
-        ->and($run->workOrders->first()->description)->toContain('Papé')
+        ->and($run->workOrders->first()->description)->toContain($vendor->name)
+        ->and($run->workOrders->first()->maintenance_vendor_id)->toBe($vendor->id)
+        ->and($run->workOrders->first()->service_contact_name)->toBe('Fleet Contact')
         ->and($scheduler->generateDue())->toBe(0)
         ->and($plan->serviceRuns()->count())->toBe(1);
 });

@@ -14,7 +14,9 @@ class MaintenanceWorkOrder extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'number', 'asset_id', 'request_id', 'plan_id', 'fleet_service_run_id', 'assigned_to_user_id', 'created_by_user_id',
+        'number', 'asset_id', 'request_id', 'plan_id', 'fleet_service_run_id', 'assigned_to_user_id', 'maintenance_vendor_id',
+        'service_provider', 'service_contact_name', 'service_phone', 'vendor_reference',
+        'purchase_order_number', 'authorization_limit', 'created_by_user_id',
         'verified_by_user_id', 'title', 'description', 'type', 'priority', 'status', 'safety_related',
         'estimated_hours', 'scheduled_at', 'due_at', 'started_at', 'completed_at', 'verified_at',
         'downtime_started_at', 'downtime_ended_at', 'downtime_minutes', 'checklist', 'findings',
@@ -26,6 +28,7 @@ class MaintenanceWorkOrder extends Model
         return [
             'safety_related' => 'boolean',
             'estimated_hours' => 'decimal:2',
+            'authorization_limit' => 'decimal:2',
             'scheduled_at' => 'datetime',
             'due_at' => 'datetime',
             'started_at' => 'datetime',
@@ -40,6 +43,20 @@ class MaintenanceWorkOrder extends Model
 
     protected static function booted(): void
     {
+        static::saving(function (self $workOrder): void {
+            if ($workOrder->isDirty('maintenance_vendor_id') && $workOrder->maintenance_vendor_id) {
+                $vendor = MaintenanceVendor::find($workOrder->maintenance_vendor_id);
+
+                if ($vendor) {
+                    foreach ($vendor->snapshot() as $field => $value) {
+                        if (blank($workOrder->{$field}) || ($workOrder->exists && ! $workOrder->isDirty($field))) {
+                            $workOrder->{$field} = $value;
+                        }
+                    }
+                }
+            }
+        });
+
         static::created(function (self $workOrder): void {
             if ($workOrder->number === null) {
                 $workOrder->updateQuietly(['number' => sprintf('MWO-%06d', $workOrder->id)]);
@@ -70,6 +87,11 @@ class MaintenanceWorkOrder extends Model
     public function assignedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to_user_id');
+    }
+
+    public function maintenanceVendor(): BelongsTo
+    {
+        return $this->belongsTo(MaintenanceVendor::class, 'maintenance_vendor_id');
     }
 
     public function createdBy(): BelongsTo

@@ -50,7 +50,12 @@ class MaintenanceAssetResource extends Resource
                 TextInput::make('asset_tag')->label('Asset number / tag')->required()->unique(ignoreRecord: true)->maxLength(255),
                 TextInput::make('name')->required()->maxLength(255),
                 Select::make('category')->options(MaintenanceOptions::assetCategories())->required()->searchable(),
-                Select::make('parent_id')->label('Parent asset')->relationship('parent', 'name')->searchable()->preload(),
+                Select::make('parent_id')
+                    ->label('Parent asset')
+                    ->relationship('parent', 'name')
+                    ->getOptionLabelFromRecordUsing(fn (MaintenanceAsset $record): string => $record->display_name)
+                    ->searchable(['asset_tag', 'name'])
+                    ->preload(),
                 Select::make('location_id')
                     ->label('Home plant')
                     ->relationship(

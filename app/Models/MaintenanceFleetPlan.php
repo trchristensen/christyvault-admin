@@ -13,7 +13,7 @@ class MaintenanceFleetPlan extends Model
     use HasFactory;
 
     protected $fillable = [
-        'location_id', 'default_assignee_id', 'name', 'description', 'manufacturer',
+        'location_id', 'default_assignee_id', 'maintenance_vendor_id', 'name', 'description', 'manufacturer',
         'asset_category', 'meter_type', 'meter_interval', 'service_provider',
         'service_contact_name', 'service_phone', 'priority', 'checklist', 'active',
         'last_generated_at', 'last_completed_at',
@@ -30,6 +30,23 @@ class MaintenanceFleetPlan extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::saving(function (self $plan): void {
+            if ($plan->isDirty('maintenance_vendor_id') && $plan->maintenance_vendor_id) {
+                $vendor = MaintenanceVendor::find($plan->maintenance_vendor_id);
+
+                if ($vendor) {
+                    foreach ($vendor->snapshot() as $field => $value) {
+                        if (blank($plan->{$field}) || ($plan->exists && ! $plan->isDirty($field))) {
+                            $plan->{$field} = $value;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
@@ -38,6 +55,11 @@ class MaintenanceFleetPlan extends Model
     public function defaultAssignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'default_assignee_id');
+    }
+
+    public function maintenanceVendor(): BelongsTo
+    {
+        return $this->belongsTo(MaintenanceVendor::class, 'maintenance_vendor_id');
     }
 
     public function members(): HasMany
@@ -68,10 +90,12 @@ class MaintenanceFleetPlan extends Model
 
     public function serviceContactSummary(): string
     {
+        $vendor = $this->maintenanceVendor;
+
         return collect([
-            $this->service_provider,
-            $this->service_contact_name ? "Contact: {$this->service_contact_name}" : null,
-            $this->service_phone ? "Phone: {$this->service_phone}" : null,
+            $vendor?->name ?? $this->service_provider,
+            ($vendor?->contact_person ?? $this->service_contact_name) ? 'Contact: '.($vendor?->contact_person ?? $this->service_contact_name) : null,
+            ($vendor?->phone ?? $this->service_phone) ? 'Phone: '.($vendor?->phone ?? $this->service_phone) : null,
         ])->filter()->join("\n");
     }
 }

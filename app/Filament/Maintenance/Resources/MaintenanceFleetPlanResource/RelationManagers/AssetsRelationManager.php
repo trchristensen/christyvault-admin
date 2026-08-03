@@ -3,12 +3,9 @@
 namespace App\Filament\Maintenance\Resources\MaintenanceFleetPlanResource\RelationManagers;
 
 use App\Models\MaintenanceFleetPlanAsset;
-use App\Services\Maintenance\MaintenanceFleetPlanScheduler;
-use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
@@ -52,14 +49,6 @@ class AssetsRelationManager extends RelationManager
                 : null)->numeric(decimalPlaces: 1)->placeholder('—')->color(fn ($state) => $state !== null && $state <= 0 ? 'danger' : null),
             IconColumn::make('included')->boolean(),
             IconColumn::make('matches_filter')->label('Matches rules')->boolean(),
-        ])->headerActions([
-            Action::make('sync')
-                ->label('Sync matching assets')
-                ->icon('heroicon-o-arrow-path')
-                ->action(function (): void {
-                    app(MaintenanceFleetPlanScheduler::class)->syncMatchingAssets($this->getOwnerRecord());
-                    Notification::make()->title('Matching assets synchronized')->success()->send();
-                }),
         ])->recordActions([EditAction::make()]);
     }
 }

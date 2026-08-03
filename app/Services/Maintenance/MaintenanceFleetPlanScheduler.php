@@ -157,6 +157,7 @@ class MaintenanceFleetPlanScheduler
         ?MaintenanceFleetPlanAsset $trigger,
     ): void {
         $plan = $run->plan;
+        $vendor = $plan->maintenanceVendor;
         $triggerText = $trigger?->asset
             ? "Triggered by {$trigger->asset->display_name} reaching its fleet-service threshold."
             : 'Fleet service was generated manually.';
@@ -172,6 +173,10 @@ class MaintenanceFleetPlanScheduler
             'asset_id' => $member->asset_id,
             'fleet_service_run_id' => $run->id,
             'assigned_to_user_id' => $plan->default_assignee_id,
+            'maintenance_vendor_id' => $vendor?->id,
+            'service_provider' => $vendor?->name ?? $plan->service_provider,
+            'service_contact_name' => $vendor?->contact_person ?? $plan->service_contact_name,
+            'service_phone' => $vendor?->phone ?? $plan->service_phone,
             'title' => $plan->name,
             'description' => $description,
             'type' => 'preventive',

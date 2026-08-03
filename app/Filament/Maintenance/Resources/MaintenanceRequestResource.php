@@ -5,6 +5,7 @@ namespace App\Filament\Maintenance\Resources;
 use App\Filament\Maintenance\Resources\MaintenanceRequestResource\Pages\CreateMaintenanceRequest;
 use App\Filament\Maintenance\Resources\MaintenanceRequestResource\Pages\EditMaintenanceRequest;
 use App\Filament\Maintenance\Resources\MaintenanceRequestResource\Pages\ListMaintenanceRequests;
+use App\Models\MaintenanceAsset;
 use App\Models\MaintenanceRequest;
 use App\Models\User;
 use App\Services\Maintenance\MaintenanceRequestConverter;
@@ -45,7 +46,11 @@ class MaintenanceRequestResource extends Resource
     {
         return $schema->components([
             Section::make('Request')->schema([
-                Select::make('asset_id')->relationship('asset', 'name')->searchable()->preload(),
+                Select::make('asset_id')
+                    ->relationship('asset', 'name')
+                    ->getOptionLabelFromRecordUsing(fn (MaintenanceAsset $record): string => $record->display_name)
+                    ->searchable(['asset_tag', 'name'])
+                    ->preload(),
                 Select::make('location_id')
                     ->label('Plant')
                     ->relationship(
