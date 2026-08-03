@@ -60,7 +60,10 @@ class OperationsPanelProvider extends PanelProvider
                 NavigationItem::make('Sales Panel')
                     ->url('/sales')
                     ->icon('heroicon-o-presentation-chart-line')
-                    ->visible(fn(): bool => auth()->user()?->email === 'tchristensen@christyvault.com')
+                    ->visible(fn(): bool => auth()->user()?->email === 'tchristensen@christyvault.com'),
+                NavigationItem::make('Maintenance Panel')
+                    ->url('/maintenance')
+                    ->icon('heroicon-o-wrench-screwdriver')
             ])
 
             ->discoverResources(in: app_path('Filament/Operations/Resources'), for: 'App\\Filament\\Operations\\Resources')

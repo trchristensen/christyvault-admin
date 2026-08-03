@@ -6,6 +6,7 @@ use App\Http\Controllers\DeliveryTagController;
 use App\Http\Controllers\LeaveCalendarFeedController;
 use App\Http\Controllers\KanbanCardController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\MaintenanceAssetPortalController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderCalendarController;
@@ -22,6 +23,13 @@ use Illuminate\Http\Request;
 Route::get('/auth/login', function () {
     return redirect('/login');
 })->name('login');
+
+Route::prefix('asset')->middleware('throttle:30,1')->group(function (): void {
+    Route::get('{token}', [MaintenanceAssetPortalController::class, 'show'])->name('maintenance.assets.portal');
+    Route::post('{token}/requests', [MaintenanceAssetPortalController::class, 'store'])->name('maintenance.assets.request');
+    Route::get('{token}/qr.svg', [MaintenanceAssetPortalController::class, 'qr'])->name('maintenance.assets.qr');
+    Route::get('{token}/label', [MaintenanceAssetPortalController::class, 'label'])->name('maintenance.assets.label');
+});
 
 
 // Secure delivery link generator

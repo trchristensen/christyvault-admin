@@ -81,7 +81,10 @@ class AdminPanelProvider extends PanelProvider
                     ->visible(fn(): bool => auth()->user()?->can('view sales panel')),
                 NavigationItem::make('Team Panel')
                     ->url('/team')
-                    ->icon('heroicon-o-users')
+                    ->icon('heroicon-o-users'),
+                NavigationItem::make('Maintenance Panel')
+                    ->url('/maintenance')
+                    ->icon('heroicon-o-wrench-screwdriver')
             ])
             ->databaseNotifications()
             ->sidebarCollapsibleOnDesktop()

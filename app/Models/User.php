@@ -29,6 +29,8 @@ class User extends Authenticatable implements FilamentUser
             return $this->hasRole(['admin', 'super-admin']);
         } else if ($panel->getId() === 'sales') {
             return $this->hasRole(['admin', 'super-admin', 'sales']);
+        } else if ($panel->getId() === 'maintenance') {
+            return $this->hasRole(['admin', 'super-admin', 'maintenance-manager', 'maintenance-technician']);
         }
 
         return false;
@@ -80,6 +82,11 @@ class User extends Authenticatable implements FilamentUser
     public function driver()
     {
         return $this->hasOneThrough(Driver::class, Employee::class);
+    }
+
+    public function assignedMaintenanceWorkOrders()
+    {
+        return $this->hasMany(MaintenanceWorkOrder::class, 'assigned_to_user_id');
     }
 
     public function getCalendarFeedUrl(): string

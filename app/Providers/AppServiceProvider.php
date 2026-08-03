@@ -3,10 +3,16 @@
 namespace App\Providers;
 
 use App\Models\Location;
+use App\Models\MaintenanceMeterReading;
+use App\Models\MaintenanceRequest;
+use App\Models\MaintenanceWorkOrder;
 use App\Models\Order;
 use App\Models\PurchaseOrder;
 use App\Models\User;
 use App\Observers\LocationObserver;
+use App\Observers\MaintenanceMeterReadingObserver;
+use App\Observers\MaintenanceRequestObserver;
+use App\Observers\MaintenanceWorkOrderObserver;
 use App\Observers\OrderObserver;
 use App\Observers\PurchaseOrderObserver;
 // use App\Livewire\NotificationsDropdown;
@@ -57,5 +63,8 @@ class AppServiceProvider extends ServiceProvider
         PurchaseOrder::observe(PurchaseOrderObserver::class);
         Location::observe(LocationObserver::class);
         Order::observe(OrderObserver::class);
+        MaintenanceMeterReading::observe(MaintenanceMeterReadingObserver::class);
+        MaintenanceRequest::observe(MaintenanceRequestObserver::class);
+        MaintenanceWorkOrder::observe(MaintenanceWorkOrderObserver::class);
     }
 }

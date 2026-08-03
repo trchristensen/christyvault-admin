@@ -2,16 +2,17 @@
 
 namespace App\Models;
 
-use App\Enums\PlantLocation;
-use Exception;
 use App\Enums\OrderStatus;
+use App\Enums\PlantLocation;
+use App\Services\DeliveryRateService;
+use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Services\DeliveryRateService;
 use Propaganistas\LaravelPhone\PhoneNumber;
 
 class Location extends Model
@@ -65,17 +66,23 @@ class Location extends Model
         'default_plant_location' => PlantLocation::class,
     ];
 
+    public function scopeChristyVault(Builder $query): Builder
+    {
+        return $query->where('location_type', 'christy_vault');
+    }
+
     public function getCoordinatesAttribute(): ?string
     {
         if ($this->latitude && $this->longitude) {
             return "{$this->latitude}, {$this->longitude}";
         }
+
         return null;
     }
 
     public function hasCoordinates(): bool
     {
-        return !is_null($this->latitude) && !is_null($this->longitude);
+        return ! is_null($this->latitude) && ! is_null($this->longitude);
     }
 
     public function hasAddressForGeocoding(): bool
@@ -179,7 +186,7 @@ class Location extends Model
 
     public function getFullAddressAttribute(): string
     {
-        if (!$this->address_line1) {
+        if (! $this->address_line1) {
             return '';
         }
 
@@ -196,7 +203,6 @@ class Location extends Model
     {
         return $this->hasMany(Order::class);
     }
-
 
     public function getFormattedPreferredPhoneAttribute(): string
     {
@@ -231,6 +237,7 @@ class Location extends Model
             if ($this->phone_extension) {
                 $phone .= " x{$this->phone_extension}";
             }
+
             return $phone;
         }
 
@@ -239,7 +246,7 @@ class Location extends Model
 
     public function getFormattedOfficePhoneAttribute(): string
     {
-        if (!$this->phone) {
+        if (! $this->phone) {
             return '';
         }
 
@@ -248,7 +255,7 @@ class Location extends Model
 
     public function getFormattedPreferredContactPhoneAttribute(): string
     {
-        if (!$this->preferredDeliveryContact) {
+        if (! $this->preferredDeliveryContact) {
             return '';
         }
 
@@ -275,12 +282,12 @@ class Location extends Model
             return '';
         }
 
-        return "Contact: {$contact->name} - " . implode(' • ', $parts);
+        return "Contact: {$contact->name} - ".implode(' • ', $parts);
     }
 
     private function formatPhone(?string $number): ?string
     {
-        if (!$number) {
+        if (! $number) {
             return null;
         }
 
@@ -291,8 +298,6 @@ class Location extends Model
             return $number; // fallback to raw
         }
     }
-
-
 
     // junk, below this.
 
@@ -357,7 +362,7 @@ class Location extends Model
 
                 $productId = $product->product_id;
 
-                if (!isset($productCounts[$productId])) {
+                if (! isset($productCounts[$productId])) {
                     $productCounts[$productId] = [
                         'count' => 0,
                         'sku' => $sku,
@@ -383,13 +388,13 @@ class Location extends Model
 
     public function getOrderStatusAttribute(): string
     {
-        if (!$this->last_order_at) {
+        if (! $this->last_order_at) {
             return 'No Orders';
         }
 
         $daysSinceLastOrder = now()->diffInDays($this->last_order_at, true);
 
-        if (!$this->average_order_frequency_days) {
+        if (! $this->average_order_frequency_days) {
             return 'New Customer';
         }
 

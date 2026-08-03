@@ -34,3 +34,8 @@ Schedule::command('locations:update-plant-distances --limit=10')
     ->timezone(config('app.timezone', 'America/Los_Angeles'))
     ->withoutOverlapping()
     ->when(fn(): bool => filled(config('services.openrouteservice.api_key')));
+
+Schedule::command('maintenance:generate-work-orders')
+    ->hourlyAt(15)
+    ->timezone(config('app.timezone', 'America/Los_Angeles'))
+    ->withoutOverlapping();

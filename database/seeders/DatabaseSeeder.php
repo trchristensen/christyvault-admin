@@ -32,10 +32,14 @@ class DatabaseSeeder extends Seeder
             // InventoryTransactionSeeder::class,
         ]);
 
-        User::factory()->create([
-            'name' => 'Todd',
-            'email' => 'tchristensen@christyvault.com',
-            'password' => bcrypt('badP@nda40')
-        ]);
+        if (app()->environment('local') && env('LOCAL_ADMIN_PASSWORD')) {
+            User::updateOrCreate(
+                ['email' => env('LOCAL_ADMIN_EMAIL', 'tchristensen@christyvault.com')],
+                [
+                    'name' => env('LOCAL_ADMIN_NAME', 'Todd'),
+                    'password' => bcrypt(env('LOCAL_ADMIN_PASSWORD')),
+                ],
+            );
+        }
     }
 }
