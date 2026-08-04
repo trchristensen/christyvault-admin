@@ -69,7 +69,7 @@ class MaintenanceAssetResource extends Resource
                 Select::make('criticality')->options(MaintenanceOptions::criticalities())->default('medium')->required(),
                 Select::make('status')->options(MaintenanceOptions::assetStatuses())->default('operational')->required(),
                 Textarea::make('description')->columnSpanFull(),
-            ])->columns(3),
+            ])->columns(['default' => 1, 'xl' => 2]),
             Section::make('Equipment details')->schema([
                 TextInput::make('manufacturer')->maxLength(255),
                 TextInput::make('model')->maxLength(255),
@@ -84,7 +84,7 @@ class MaintenanceAssetResource extends Resource
                 FileUpload::make('photo_path')->label('Photo')->disk('public')->directory('maintenance/assets')->image(),
                 FileUpload::make('manual_path')->label('Manual / document')->disk('public')->directory('maintenance/manuals'),
                 Textarea::make('notes')->columnSpanFull(),
-            ])->columns(3),
+            ])->columns(['default' => 1, 'xl' => 2]),
         ]);
     }
 

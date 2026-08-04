@@ -69,10 +69,11 @@ final class MaintenanceOptions
     public static function workOrderTypes(): array
     {
         return [
-            'reactive' => 'Reactive',
-            'preventive' => 'Preventive',
-            'inspection' => 'Inspection',
-            'emergency' => 'Emergency',
+            'reactive' => 'Unplanned repair',
+            'preventive' => 'Preventive service',
+            'bit_inspection' => 'BIT / safety inspection',
+            'inspection' => 'Other inspection',
+            'emergency' => 'Emergency repair',
             'corrective' => 'Corrective follow-up',
         ];
     }

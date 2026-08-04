@@ -56,21 +56,32 @@ class MaintenanceWorkOrderResource extends Resource
                     ->getOptionLabelFromRecordUsing(fn (MaintenanceAsset $record): string => $record->display_name)
                     ->searchable(['asset_tag', 'name'])
                     ->preload(),
-                TextInput::make('title')->required()->maxLength(255)->columnSpan(2),
-                Select::make('type')->options(MaintenanceOptions::workOrderTypes())->default('reactive')->required(),
+                TextInput::make('title')
+                    ->label('Work summary')
+                    ->placeholder('BIT inspection and rear suspension repair')
+                    ->helperText('A short, searchable description shown in lists, notifications, and the vendor work order.')
+                    ->required()
+                    ->maxLength(255)
+                    ->columnSpanFull(),
+                Select::make('type')
+                    ->label('Primary work type')
+                    ->options(MaintenanceOptions::workOrderTypes())
+                    ->helperText('Choose the main reason for the order. Put any additional inspection, service, or repair tasks in the description or checklist.')
+                    ->default('reactive')
+                    ->required(),
                 Select::make('priority')->options(MaintenanceOptions::priorities())->default('normal')->required(),
                 Select::make('status')->options(MaintenanceOptions::workOrderStatuses())->default('approved')->required(),
                 Select::make('assigned_to_user_id')->relationship('assignedTo', 'name')->label('Assigned owner / technician')->searchable()->preload(),
                 Toggle::make('safety_related')->label('Safety-related'),
                 TextInput::make('estimated_hours')->numeric()->minValue(0)->suffix('hours'),
                 Textarea::make('description')->columnSpanFull(),
-            ])->columns(4),
+            ])->columns(['default' => 1, 'xl' => 2]),
             Section::make('Schedule and downtime')->schema([
                 DateTimePicker::make('scheduled_at'),
                 DateTimePicker::make('due_at'),
                 DateTimePicker::make('downtime_started_at'),
                 DateTimePicker::make('downtime_ended_at'),
-            ])->columns(4),
+            ])->columns(['default' => 1, 'xl' => 2]),
             Section::make('Outside service provider')->description('Optional details included on the vendor printout.')->schema([
                 Select::make('maintenance_vendor_id')
                     ->label('Saved service vendor')
@@ -83,6 +94,7 @@ class MaintenanceWorkOrderResource extends Resource
                     ->searchable()
                     ->preload()
                     ->live()
+                    ->columnSpanFull()
                     ->afterStateUpdated(function ($state, Set $set): void {
                         $vendor = $state ? MaintenanceVendor::find($state) : null;
 
@@ -98,20 +110,20 @@ class MaintenanceWorkOrderResource extends Resource
                 TextInput::make('vendor_reference')->label('Vendor ticket / reference')->maxLength(255),
                 TextInput::make('purchase_order_number')->label('Purchase order')->maxLength(255),
                 TextInput::make('authorization_limit')->label('Do not exceed')->numeric()->prefix('$')->minValue(0),
-            ])->columns(3)->collapsible(),
+            ])->columns(['default' => 1, 'xl' => 2])->collapsible(),
             Section::make('Procedure checklist')->schema([
                 Repeater::make('checklist')->schema([
-                    TextInput::make('task')->required()->columnSpan(2),
+                    TextInput::make('task')->required()->columnSpanFull(),
                     Toggle::make('completed'),
-                    TextInput::make('notes'),
-                ])->columns(4)->addActionLabel('Add checklist item')->columnSpanFull(),
+                    TextInput::make('notes')->columnSpanFull(),
+                ])->columns(['default' => 1, 'xl' => 2])->addActionLabel('Add checklist item')->columnSpanFull(),
             ]),
             Section::make('Completion record')->schema([
                 Textarea::make('findings')->rows(4),
                 Textarea::make('work_performed')->rows(4),
                 Textarea::make('completion_notes')->rows(4)->columnSpanFull(),
                 FileUpload::make('attachment_paths')->label('Photos and documents')->disk('public')->directory('maintenance/work-orders')->multiple()->columnSpanFull(),
-            ])->columns(2),
+            ])->columns(['default' => 1, 'xl' => 2]),
         ]);
     }
 
@@ -121,6 +133,11 @@ class MaintenanceWorkOrderResource extends Resource
             TextColumn::make('number')->searchable()->sortable(),
             TextColumn::make('asset.display_name')->label('Asset')->searchable(['asset_tag', 'name'])->wrap(),
             TextColumn::make('title')->searchable()->wrap(),
+            TextColumn::make('type')
+                ->label('Work type')
+                ->formatStateUsing(fn ($state) => MaintenanceOptions::workOrderTypes()[$state] ?? $state)
+                ->badge()
+                ->toggleable(),
             TextColumn::make('priority')->badge()->color(fn ($state) => MaintenanceOptions::colorForPriority($state)),
             TextColumn::make('status')->formatStateUsing(fn ($state) => MaintenanceOptions::workOrderStatuses()[$state] ?? $state)->badge()->color(fn ($state) => match ($state) {
                 'completed' => 'success', 'in_progress' => 'info', 'waiting_on_parts', 'on_hold' => 'warning', 'canceled' => 'gray', default => 'primary'

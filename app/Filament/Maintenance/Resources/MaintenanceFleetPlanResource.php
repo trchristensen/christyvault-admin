@@ -50,7 +50,7 @@ class MaintenanceFleetPlanResource extends Resource
                 Select::make('priority')->options(MaintenanceOptions::priorities())->default('normal')->required(),
                 Toggle::make('active')->default(true),
                 Textarea::make('description')->helperText('Explain what service to request and that every included asset is serviced together.')->columnSpanFull(),
-            ])->columns(4),
+            ])->columns(['default' => 1, 'xl' => 2]),
             Section::make('Automatically included assets')->description('Matching assets join this plan automatically. Use the Fleet assets section after saving to exclude low-use units.')->schema([
                 Select::make('location_id')
                     ->label('Home plant')
@@ -61,12 +61,13 @@ class MaintenanceFleetPlanResource extends Resource
                     )
                     ->searchable()
                     ->preload()
+                    ->columnSpanFull()
                     ->required(),
                 TextInput::make('manufacturer')->placeholder('Hyster')->required()->maxLength(255),
                 Select::make('asset_category')->label('Category')->options(MaintenanceOptions::assetCategories())->searchable()->required(),
                 Select::make('meter_type')->options(MaintenanceOptions::meterTypes())->default('hours')->required(),
                 TextInput::make('meter_interval')->label('Service every')->numeric()->minValue(0.01)->suffix('meter units')->default(250)->required(),
-            ])->columns(5),
+            ])->columns(['default' => 1, 'xl' => 2]),
             Section::make('Outside service provider')->schema([
                 Select::make('maintenance_vendor_id')
                     ->label('Saved service vendor')
@@ -78,6 +79,7 @@ class MaintenanceFleetPlanResource extends Resource
                     ->searchable()
                     ->preload()
                     ->live()
+                    ->columnSpanFull()
                     ->afterStateUpdated(function ($state, Set $set): void {
                         $vendor = $state ? MaintenanceVendor::find($state) : null;
 
@@ -90,7 +92,7 @@ class MaintenanceFleetPlanResource extends Resource
                 TextInput::make('service_provider')->placeholder('Papé'),
                 TextInput::make('service_contact_name')->label('Contact name'),
                 TextInput::make('service_phone')->label('Phone')->tel(),
-            ])->columns(4),
+            ])->columns(['default' => 1, 'xl' => 2]),
             Section::make('Standard procedure')->schema([
                 Repeater::make('checklist')->schema([
                     TextInput::make('task')->required(),

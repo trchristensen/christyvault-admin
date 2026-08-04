@@ -58,7 +58,7 @@ class MaintenancePlanResource extends Resource
                 Select::make('priority')->options(MaintenanceOptions::priorities())->default('normal')->required(),
                 Textarea::make('description')->columnSpanFull(),
                 Toggle::make('active')->default(true),
-            ])->columns(4),
+            ])->columns(['default' => 1, 'xl' => 2]),
             Section::make('Trigger')->schema([
                 Select::make('trigger_type')->options(MaintenanceOptions::triggerTypes())->default('calendar')->required()->live(),
                 TextInput::make('interval_value')->label('Every')->numeric()->integer()->minValue(1)->default(1)->visible(fn (Get $get) => $get('trigger_type') === 'calendar')->required(fn (Get $get) => $get('trigger_type') === 'calendar'),
@@ -67,7 +67,7 @@ class MaintenancePlanResource extends Resource
                 TextInput::make('meter_interval')->label('Every meter units')->numeric()->minValue(0.01)->visible(fn (Get $get) => $get('trigger_type') === 'meter')->required(fn (Get $get) => $get('trigger_type') === 'meter'),
                 TextInput::make('next_due_meter')->label('Next due reading')->numeric()->minValue(0)->visible(fn (Get $get) => $get('trigger_type') === 'meter')->required(fn (Get $get) => $get('trigger_type') === 'meter'),
                 TextInput::make('lead_days')->label('Generate this many days early')->numeric()->integer()->minValue(0)->default(7)->visible(fn (Get $get) => $get('trigger_type') === 'calendar'),
-            ])->columns(4),
+            ])->columns(['default' => 1, 'xl' => 2]),
             Section::make('Standard procedure')->schema([
                 Repeater::make('checklist')->schema([TextInput::make('task')->required()])->addActionLabel('Add procedure step')->columnSpanFull(),
             ]),

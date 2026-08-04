@@ -40,12 +40,13 @@ class MaintenanceMeterReadingResource extends Resource
                 ->getOptionLabelFromRecordUsing(fn (MaintenanceAsset $record): string => $record->display_name)
                 ->searchable(['asset_tag', 'name'])
                 ->preload()
+                ->columnSpanFull()
                 ->required(),
             TextInput::make('reading')->numeric()->minValue(0)->required(),
             DateTimePicker::make('recorded_at')->default(now())->required(),
             Select::make('source')->options(['manual' => 'Manual', 'inspection' => 'Inspection', 'telematics' => 'Telematics / import'])->default('manual')->required(),
             Textarea::make('notes')->columnSpanFull(),
-        ])->columns(4)]);
+        ])->columns(['default' => 1, 'xl' => 2])]);
     }
 
     public static function table(Table $table): Table

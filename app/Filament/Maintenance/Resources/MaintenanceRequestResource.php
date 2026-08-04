@@ -62,16 +62,16 @@ class MaintenanceRequestResource extends Resource
                     ->preload(),
                 TextInput::make('requester_name')->maxLength(255),
                 TextInput::make('requester_contact')->maxLength(255),
-                TextInput::make('title')->required()->maxLength(255)->columnSpan(2),
+                TextInput::make('title')->required()->maxLength(255)->columnSpanFull(),
                 Select::make('priority')->options(MaintenanceOptions::priorities())->default('normal')->required(),
                 Toggle::make('safety_related')->label('Safety-related issue'),
                 Textarea::make('description')->required()->columnSpanFull(),
                 FileUpload::make('photo_paths')->label('Photos')->disk('public')->directory('maintenance/requests')->image()->multiple()->columnSpanFull(),
-            ])->columns(4),
+            ])->columns(['default' => 1, 'xl' => 2]),
             Section::make('Triage')->schema([
                 Select::make('status')->options(MaintenanceOptions::requestStatuses())->default('new')->required(),
                 Textarea::make('triage_notes')->columnSpanFull(),
-            ])->columns(2),
+            ])->columns(['default' => 1, 'xl' => 2]),
         ]);
     }
 

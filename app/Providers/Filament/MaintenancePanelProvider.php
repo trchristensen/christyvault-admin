@@ -21,6 +21,7 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
+use SpykApp\FilamentPasswordlessLogin\FilamentPasswordlessLoginPlugin;
 
 class MaintenancePanelProvider extends PanelProvider
 {
@@ -53,7 +54,10 @@ class MaintenancePanelProvider extends PanelProvider
                 for: 'App\\Filament\\Maintenance\\Widgets',
             )
             ->widgets([MaintenanceStatsWidget::class, OpenWorkOrdersWidget::class, AssetReliabilityWidget::class])
-            ->plugins([BreezyCore::make()->myProfile()])
+            ->plugins([
+                FilamentPasswordlessLoginPlugin::make(),
+                BreezyCore::make()->myProfile(),
+            ])
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
             ->middleware([

@@ -72,6 +72,7 @@
                 <div class="label">Phone</div><div>{{ $workOrder->service_phone ?: '—' }}</div>
                 <div class="label">Vendor reference</div><div>{{ $workOrder->vendor_reference ?: '—' }}</div>
                 <div class="label">Purchase order</div><div>{{ $workOrder->purchase_order_number ?: '—' }}</div>
+                <div class="label">Work type</div><div>{{ \App\Support\MaintenanceOptions::workOrderTypes()[$workOrder->type] ?? $workOrder->type }}</div>
             </div>
         </section>
 

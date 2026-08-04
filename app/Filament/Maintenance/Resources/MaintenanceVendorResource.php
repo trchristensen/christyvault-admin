@@ -42,10 +42,10 @@ class MaintenanceVendorResource extends Resource
                 TextInput::make('phone')->tel()->maxLength(255),
                 TextInput::make('email')->email()->maxLength(255),
                 Toggle::make('active')->default(true),
-                Textarea::make('address')->rows(3)->columnSpan(2),
-                Textarea::make('services_provided')->label('Services provided')->placeholder('Forklift maintenance, Service B, emergency repairs')->rows(3)->columnSpan(2),
+                Textarea::make('address')->rows(3)->columnSpanFull(),
+                Textarea::make('services_provided')->label('Services provided')->placeholder('Forklift maintenance, Service B, emergency repairs')->rows(3)->columnSpanFull(),
                 Textarea::make('notes')->rows(3)->columnSpanFull(),
-            ])->columns(2),
+            ])->columns(['default' => 1, 'xl' => 2]),
         ]);
     }
 

@@ -10,8 +10,8 @@ use App\Models\MaintenanceVendor;
 use App\Models\MaintenanceWorkOrder;
 use App\Models\User;
 use App\Notifications\MaintenanceRequestSubmitted;
-use App\Services\Maintenance\MaintenancePlanScheduler;
 use App\Services\Maintenance\MaintenanceFleetPlanScheduler;
+use App\Services\Maintenance\MaintenancePlanScheduler;
 use App\Services\Maintenance\MaintenanceRequestConverter;
 use Database\Seeders\MaintenanceAssetImportSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -21,6 +21,13 @@ use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 
 uses(DatabaseTransactions::class);
+
+it('uses the magic-link login for the maintenance panel', function (): void {
+    $this->get('/maintenance/login')
+        ->assertOk()
+        ->assertSee('Enter your email and we&#039;ll send you a secure login link.', false)
+        ->assertSee('Send Magic Link');
+});
 
 it('generates a preventive work order when a meter threshold is reached', function (): void {
     $asset = MaintenanceAsset::create([
@@ -180,6 +187,7 @@ it('prints a vendor-facing work order without exposing it publicly', function ()
         'asset_id' => $asset->id,
         'title' => 'Inspect brake warning light',
         'description' => 'Warning light remains on after startup.',
+        'type' => 'bit_inspection',
         'service_provider' => 'Example Truck Service',
         'service_contact_name' => 'Service Desk',
         'service_phone' => '555-0100',
@@ -197,6 +205,7 @@ it('prints a vendor-facing work order without exposing it publicly', function ()
         ->assertSee($asset->asset_tag)
         ->assertSee('Example Truck Service')
         ->assertSee('PO-1001')
+        ->assertSee('BIT / safety inspection')
         ->assertSee('Inspect brake warning system')
         ->assertSee('window.print()', false);
 
