@@ -12,6 +12,7 @@ use App\Models\MaintenanceVendor;
 use App\Models\MaintenanceWorkOrder;
 use App\Support\MaintenanceOptions;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
@@ -144,35 +145,45 @@ class MaintenanceWorkOrderResource extends Resource
             }),
             TextColumn::make('assignedTo.name')->label('Assigned to')->placeholder('Unassigned')->sortable(),
             TextColumn::make('due_at')->label('Due')->dateTime('M j, Y')->sortable()->color(fn (MaintenanceWorkOrder $record) => $record->due_at?->isPast() && ! in_array($record->status, ['completed', 'canceled']) ? 'danger' : null),
+            TextColumn::make('created_at')
+                ->label('Created')
+                ->dateTime('M j, Y g:i A')
+                ->sortable()
+                ->toggleable(),
             IconColumn::make('safety_related')->label('Safety')->boolean(),
-        ])->defaultSort('due_at')->filters([
+        ])->defaultSort('created_at', 'desc')->filters([
             SelectFilter::make('status')->multiple()->options(MaintenanceOptions::workOrderStatuses()),
             SelectFilter::make('priority')->options(MaintenanceOptions::priorities()),
             SelectFilter::make('type')->options(MaintenanceOptions::workOrderTypes()),
             SelectFilter::make('assigned_to_user_id')->relationship('assignedTo', 'name')->label('Technician'),
         ])->recordActions([
-            Action::make('print_for_vendor')
-                ->label('Print for vendor')
-                ->icon('heroicon-o-printer')
-                ->url(fn (MaintenanceWorkOrder $record): string => route('maintenance.work-orders.print', $record))
-                ->openUrlInNewTab(),
-            Action::make('start')->icon('heroicon-o-play')->color('success')->visible(fn (MaintenanceWorkOrder $record) => in_array($record->status, ['approved', 'scheduled', 'on_hold', 'waiting_on_parts']))->action(function (MaintenanceWorkOrder $record): void {
-                $record->start(auth()->user());
-                Notification::make()->title('Work started')->success()->send();
-            }),
-            Action::make('pause')->icon('heroicon-o-pause')->color('warning')->visible(fn (MaintenanceWorkOrder $record) => $record->status === 'in_progress')->schema([Select::make('status')->options(['on_hold' => 'On hold', 'waiting_on_parts' => 'Waiting on parts'])->default('on_hold')->required()])->action(fn (MaintenanceWorkOrder $record, array $data) => $record->pause($data['status'])),
-            Action::make('complete')->icon('heroicon-o-check-circle')->color('success')->visible(fn (MaintenanceWorkOrder $record) => in_array($record->status, ['in_progress', 'on_hold', 'waiting_on_parts']))->requiresConfirmation()->action(fn (MaintenanceWorkOrder $record) => $record->complete(auth()->user())),
-            Action::make('verify')->label('Verify & close')->icon('heroicon-o-shield-check')->color('success')->visible(fn (MaintenanceWorkOrder $record) => $record->status === 'pending_verification' && auth()->user()?->hasRole(['admin', 'super-admin', 'maintenance-manager']))->requiresConfirmation()->action(function (MaintenanceWorkOrder $record): void {
-                $record->verify(auth()->user());
-                if ($record->asset?->status !== 'retired') {
-                    $record->asset?->update(['status' => 'operational']);
-                } Notification::make()->title('Work order closed')->success()->send();
-            }),
-            Action::make('out_of_service')->label('Take out of service')->icon('heroicon-o-no-symbol')->color('danger')->visible(fn (MaintenanceWorkOrder $record) => $record->asset && $record->asset->status !== 'out_of_service')->requiresConfirmation()->action(function (MaintenanceWorkOrder $record): void {
-                $record->asset->update(['status' => 'out_of_service']);
-                $record->update(['downtime_started_at' => $record->downtime_started_at ?? now()]);
-            }),
             EditAction::make(),
+            ActionGroup::make([
+                Action::make('print_for_vendor')
+                    ->label('Print for vendor')
+                    ->icon('heroicon-o-printer')
+                    ->url(fn (MaintenanceWorkOrder $record): string => route('maintenance.work-orders.print', $record))
+                    ->openUrlInNewTab(),
+                Action::make('start')->icon('heroicon-o-play')->color('success')->visible(fn (MaintenanceWorkOrder $record) => in_array($record->status, ['approved', 'scheduled', 'on_hold', 'waiting_on_parts']))->action(function (MaintenanceWorkOrder $record): void {
+                    $record->start(auth()->user());
+                    Notification::make()->title('Work started')->success()->send();
+                }),
+                Action::make('pause')->icon('heroicon-o-pause')->color('warning')->visible(fn (MaintenanceWorkOrder $record) => $record->status === 'in_progress')->schema([Select::make('status')->options(['on_hold' => 'On hold', 'waiting_on_parts' => 'Waiting on parts'])->default('on_hold')->required()])->action(fn (MaintenanceWorkOrder $record, array $data) => $record->pause($data['status'])),
+                Action::make('complete')->icon('heroicon-o-check-circle')->color('success')->visible(fn (MaintenanceWorkOrder $record) => in_array($record->status, ['in_progress', 'on_hold', 'waiting_on_parts']))->requiresConfirmation()->action(fn (MaintenanceWorkOrder $record) => $record->complete(auth()->user())),
+                Action::make('verify')->label('Verify & close')->icon('heroicon-o-shield-check')->color('success')->visible(fn (MaintenanceWorkOrder $record) => $record->status === 'pending_verification' && auth()->user()?->hasRole(['admin', 'super-admin', 'maintenance-manager']))->requiresConfirmation()->action(function (MaintenanceWorkOrder $record): void {
+                    $record->verify(auth()->user());
+                    if ($record->asset?->status !== 'retired') {
+                        $record->asset?->update(['status' => 'operational']);
+                    } Notification::make()->title('Work order closed')->success()->send();
+                }),
+                Action::make('out_of_service')->label('Take out of service')->icon('heroicon-o-no-symbol')->color('danger')->visible(fn (MaintenanceWorkOrder $record) => $record->asset && $record->asset->status !== 'out_of_service')->requiresConfirmation()->action(function (MaintenanceWorkOrder $record): void {
+                    $record->asset->update(['status' => 'out_of_service']);
+                    $record->update(['downtime_started_at' => $record->downtime_started_at ?? now()]);
+                }),
+            ])
+                ->icon('heroicon-o-ellipsis-vertical')
+                ->iconButton()
+                ->tooltip('More actions'),
         ]);
     }
 
