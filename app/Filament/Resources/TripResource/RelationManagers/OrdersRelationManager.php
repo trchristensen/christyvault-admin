@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\TripResource\RelationManagers;
 
+use App\Enums\PlantLocation;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
@@ -43,6 +44,15 @@ class OrdersRelationManager extends RelationManager
     {
         return $table
             ->columns([
+                TextColumn::make('plant_location')
+                    ->label('Plant')
+                    ->formatStateUsing(fn ($state): string => match (PlantLocation::tryFrom((string) $state)) {
+                        PlantLocation::TULARE_PLANT => 'Tulare',
+                        PlantLocation::COLMA_MAIN => 'Colma',
+                        PlantLocation::COLMA_LOCALS => 'Colma Locals',
+                        default => 'Not set',
+                    })
+                    ->badge(),
                 TextColumn::make('order_details')
                     ->label('Order Details')
                     ->html()
