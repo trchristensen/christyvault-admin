@@ -36,6 +36,8 @@ class CalendarDayResource extends Resource
 
     protected static string | \UnitEnum | null $navigationGroup = 'Delivery Management';
 
+    protected static ?string $navigationParentItem = 'Delivery Setup';
+
     protected static ?string $navigationLabel = 'Calendar Days';
 
     protected static ?int $navigationSort = 20;

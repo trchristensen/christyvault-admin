@@ -2,24 +2,22 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Support\Enums\Width;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\SystemAdmin;
-use Althinect\FilamentSpatieRolesPermissions\FilamentSpatieRolesPermissionsPlugin;
-use App\Filament\Pages\TestCalendar;
 use App\Filament\Resources\OrderResource\Pages\DeliveryCalendar;
-// use App\Filament\Widgets\OrderStatisticsWidget; // Removed widget
-use App\Filament\Widgets\RecentOrdersWidget;
-use App\Filament\Widgets\TodaysWeatherWidget;
+use App\Filament\Widgets\OfficeManagerAttentionWidget;
+use App\Filament\Widgets\PlanningOpportunitiesWidget;
+use App\Filament\Widgets\TodayTomorrowBriefingWidget;
+use Althinect\FilamentSpatieRolesPermissions\FilamentSpatieRolesPermissionsPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
-use Filament\Pages;
+use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets;
+use Filament\Support\Enums\Width;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -29,9 +27,6 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
-use App\Filament\Resources\OrderResource\Widgets\CalendarWidget;
-use App\Filament\Widgets\CalendarWidget as WidgetsCalendarWidget;
-use Filament\Navigation\NavigationItem;
 use SpykApp\FilamentPasswordlessLogin\FilamentPasswordlessLoginPlugin;
 
 class AdminPanelProvider extends PanelProvider
@@ -61,37 +56,33 @@ class AdminPanelProvider extends PanelProvider
                 SystemAdmin::class,
             ])
             ->navigationGroups([
-                // NavigationGroup::make()
-                //     ->label('Human Resources'),
                 NavigationGroup::make()
-                    ->label('Delivery Management'),
+                    ->label('Delivery Management')
+                    ->collapsible(),
                 NavigationGroup::make()
-                    ->label('Directories'),
+                    ->label('Directories')
+                    ->collapsed(),
                 NavigationGroup::make()
-                    ->label('System'),
+                    ->label('System')
+                    ->collapsed(),
             ])
             ->navigationItems([
-                NavigationItem::make('Operations Panel')
-                    ->url('/operations')
-                    ->icon('heroicon-o-briefcase')
-                    ->visible(fn(): bool => auth()->user()?->can('view operations panel')),
-                NavigationItem::make('Sales Panel')
-                    ->url('/sales')
-                    ->icon('heroicon-o-presentation-chart-line')
-                    ->visible(fn(): bool => auth()->user()?->can('view sales panel')),
-                NavigationItem::make('Team Panel')
-                    ->url('/team')
-                    ->icon('heroicon-o-users'),
-                NavigationItem::make('Maintenance Panel')
-                    ->url('/maintenance')
-                    ->icon('heroicon-o-wrench-screwdriver')
+                NavigationItem::make('Delivery Setup')
+                    ->group('Delivery Management')
+                    ->icon('heroicon-o-adjustments-horizontal')
+                    ->sort(40),
+                NavigationItem::make('People')
+                    ->group('Directories')
+                    ->icon('heroicon-o-user-group')
+                    ->sort(20),
             ])
             ->databaseNotifications()
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('13rem')
             // ->collapsedSidebarWidth('5rem')
             ->plugins([
-                FilamentPasswordlessLoginPlugin::make(),
+                FilamentPasswordlessLoginPlugin::make()
+                    ->navigationGroup('System'),
                 FilamentSpatieRolesPermissionsPlugin::make(),
                 BreezyCore::make()
                     ->myProfile(),
@@ -114,14 +105,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             // ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                // TodaysWeatherWidget::class,
-                // OrderStatisticsWidget::class, // Removed - basic order counts aren't useful
-                // CalendarWidget::class,
-                // Widgets\AccountWidget::class,
-                // Widgets\FilamentInfoWidget::class,
-                // WidgetsCalendarWidget::class,
-                // RecentOrdersWidget::class,
-                // SalesStatsWidget::class,
+                OfficeManagerAttentionWidget::class,
+                TodayTomorrowBriefingWidget::class,
+                PlanningOpportunitiesWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

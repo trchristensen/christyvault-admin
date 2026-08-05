@@ -30,6 +30,9 @@ class ContactResource extends Resource
     protected static ?string $model = Contact::class;
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
     protected static string | \UnitEnum | null $navigationGroup = 'Directories';
+
+    protected static ?string $navigationParentItem = 'Locations';
+
     protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema

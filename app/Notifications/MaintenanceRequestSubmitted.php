@@ -20,6 +20,7 @@ class MaintenanceRequestSubmitted extends Notification
     public function toArray(object $notifiable): array
     {
         return [
+            'panel' => 'maintenance',
             'title' => 'New maintenance request',
             'message' => $this->request->title,
             'request_id' => $this->request->id,

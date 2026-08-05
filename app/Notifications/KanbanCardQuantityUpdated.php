@@ -2,10 +2,10 @@
 
 namespace App\Notifications;
 
+use App\Models\KanbanCard;
+use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Filament\Notifications\Notification as FilamentNotification;
-use App\Models\KanbanCard;
 
 class KanbanCardQuantityUpdated extends Notification
 {
@@ -18,15 +18,18 @@ class KanbanCardQuantityUpdated extends Notification
 
     public function toDatabase($notifiable): array
     {
-        return FilamentNotification::make()
-            ->title('Kanban Card Quantity Updated')
-            ->body("Quantity updated for {$this->kanbanCard->inventoryItem->name} to {$this->quantity} {$this->kanbanCard->unit_of_measure}")
-            ->success()
-            ->getDatabaseMessage();
+        return [
+            ...FilamentNotification::make()
+                ->title('Kanban Card Quantity Updated')
+                ->body("Quantity updated for {$this->kanbanCard->inventoryItem->name} to {$this->quantity} {$this->kanbanCard->unit_of_measure}")
+                ->success()
+                ->getDatabaseMessage(),
+            'panel' => 'operations',
+        ];
     }
 
     public function via($notifiable): array
     {
         return ['database'];
     }
-} 
+}

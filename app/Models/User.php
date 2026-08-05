@@ -20,20 +20,18 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
+        return $this->canAccessPanelById($panel->getId());
+    }
 
-        if ($panel->getId() === 'admin') {
-            return $this->hasRole(['admin', 'super-admin']);
-        } else if ($panel->getId() === 'team') {
-            return $this->hasRole(['admin', 'super-admin', 'employee', 'foreman', 'driver']);
-        } else if ($panel->getId() === 'operations') {
-            return $this->hasRole(['admin', 'super-admin']);
-        } else if ($panel->getId() === 'sales') {
-            return $this->hasRole(['admin', 'super-admin', 'sales']);
-        } else if ($panel->getId() === 'maintenance') {
-            return $this->hasRole(['admin', 'super-admin', 'maintenance-manager', 'maintenance-technician']);
-        }
-
-        return false;
+    public function canAccessPanelById(string $panelId): bool
+    {
+        return match ($panelId) {
+            'admin', 'operations' => $this->hasRole(['admin', 'super-admin']),
+            'team' => $this->hasRole(['admin', 'super-admin', 'employee', 'foreman', 'driver']),
+            'sales' => $this->hasRole(['admin', 'super-admin', 'sales']),
+            'maintenance' => $this->hasRole(['admin', 'super-admin', 'maintenance-manager', 'maintenance-technician']),
+            default => false,
+        };
     }
 
     /**

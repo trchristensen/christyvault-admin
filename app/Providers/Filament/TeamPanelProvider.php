@@ -42,7 +42,7 @@ class TeamPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->plugins([
-                FilamentPasswordlessLoginPlugin::make(),
+                FilamentPasswordlessLoginPlugin::make()->resource(false),
                 FilamentFullCalendarPlugin::make()
                     ->selectable()
                     ->editable()
@@ -51,6 +51,8 @@ class TeamPanelProvider extends PanelProvider
             ->widgets([
                 TodaysDeliveriesWidget::class,
             ])
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

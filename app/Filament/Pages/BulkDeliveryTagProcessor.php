@@ -37,6 +37,8 @@ class BulkDeliveryTagProcessor extends Page implements HasForms
 
     protected static string | \UnitEnum | null $navigationGroup = 'Delivery Management';
 
+    protected static ?string $navigationParentItem = 'Orders';
+
     protected static ?int $navigationSort = 10;
 
     public ?array $data = [];

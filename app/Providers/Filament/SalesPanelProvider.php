@@ -2,7 +2,6 @@
 
 namespace App\Providers\Filament;
 
-
 use Filament\Pages\Dashboard;
 use Filament\Support\Enums\Width;
 use Filament\Http\Middleware\Authenticate;
@@ -20,7 +19,6 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\Navigation\NavigationItem;
 
 class SalesPanelProvider extends PanelProvider
 {
@@ -51,16 +49,6 @@ class SalesPanelProvider extends PanelProvider
 
                 // Widgets\AccountWidget::class,
                 // Widgets\FilamentInfoWidget::class,
-            ])
-            ->navigationItems([
-                NavigationItem::make('Admin Panel')
-                    ->url('/')
-                    ->icon('heroicon-o-building-office'),
-                NavigationItem::make('Operations Panel')
-                    ->url('/operations')
-                    ->icon('heroicon-o-briefcase')
-                    ->visible(fn(): bool => auth()->user()?->email === 'tchristensen@christyvault.com'),
-
             ])
             ->maxContentWidth(Width::Full)
             ->sidebarCollapsibleOnDesktop()

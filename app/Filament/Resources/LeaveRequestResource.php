@@ -2,42 +2,36 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Actions\EditAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\LeaveRequestResource\Pages\ListLeaveRequests;
 use App\Filament\Resources\LeaveRequestResource\Pages\CreateLeaveRequest;
 use App\Filament\Resources\LeaveRequestResource\Pages\EditLeaveRequest;
-use App\Filament\Resources\LeaveRequestResource\Pages;
-use App\Filament\Resources\LeaveRequestResource\RelationManagers;
-use App\Models\Employee;
+use App\Filament\Resources\LeaveRequestResource\Pages\ListLeaveRequests;
 use App\Models\LeaveRequest;
-use Filament\Forms;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class LeaveRequestResource extends Resource
 {
     protected static ?string $model = LeaveRequest::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Human Resources';
+    protected static string|\UnitEnum|null $navigationGroup = 'Directories';
 
-     public static function canAccess(): bool
+    protected static ?string $navigationParentItem = 'People';
+
+    public static function canAccess(): bool
     {
-        return auth()->user()->email === 'tchristensen@christyvault.com';
+        return auth()->user()?->hasRole(['admin', 'super-admin']) ?? false;
     }
-
 
     public static function form(Schema $schema): Schema
     {
@@ -64,7 +58,7 @@ class LeaveRequestResource extends Resource
                     ->options([
                         'pending' => 'Pending',
                         'approved' => 'Approved',
-                        'rejected' => 'Rejected'
+                        'rejected' => 'Rejected',
                     ])
                     ->required(),
                 TextInput::make('reviewed_by')

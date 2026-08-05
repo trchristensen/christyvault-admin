@@ -53,6 +53,8 @@ class EmployeeResource extends Resource
 
     protected static string | \UnitEnum | null $navigationGroup = 'Directories';
 
+    protected static ?string $navigationParentItem = 'People';
+
     public static function form(Schema $schema): Schema
     {
         return $schema

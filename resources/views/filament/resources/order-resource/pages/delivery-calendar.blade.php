@@ -58,6 +58,7 @@
         // 2. Initialize FullCalendar
         var calendarEl = document.getElementById('calendar');
         calendar = new FullCalendar.Calendar(calendarEl, {
+            initialDate: @js($initialCalendarDate),
             initialView: 'dayGridWeek',
             headerToolbar: {
                 left: 'prev,next today',

@@ -31,6 +31,8 @@ class VehicleConfigurationResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Delivery Management';
 
+    protected static ?string $navigationParentItem = 'Delivery Setup';
+
     protected static ?int $navigationSort = 42;
 
     public static function form(Schema $schema): Schema

@@ -22,6 +22,8 @@ use App\Policies\PermissionPolicy;
 use App\Policies\RolePolicy;
 use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
+use Filament\Support\Facades\FilamentView;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -56,7 +58,13 @@ class AppServiceProvider extends ServiceProvider
 
         FilamentAsset::register([
             Css::make('calendar-styles', resource_path('css/calendar.css')),
+            Css::make('office-manager-dashboard-styles', resource_path('css/office-manager-dashboard.css')),
         ]);
+
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::SIDEBAR_NAV_START,
+            fn () => view('filament.components.panel-switcher'),
+        );
 
         // Livewire::component('notifications-dropdown', NotificationsDropdown::class);
 

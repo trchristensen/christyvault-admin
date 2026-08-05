@@ -28,6 +28,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
+use Illuminate\Support\Carbon;
 use Throwable;
 
 class DeliveryCalendar extends Page
@@ -42,7 +43,7 @@ class DeliveryCalendar extends Page
 
     protected static ?string $navigationLabel = 'Delivery Calendar';
 
-    // protected static ?int $navigationSort = ; // Adjust this number to change the order in the sidebar
+    protected static ?int $navigationSort = -100;
     protected static ?string $slug = 'delivery-calendar';
 
     protected string $view = 'filament.resources.order-resource.pages.delivery-calendar';
@@ -54,9 +55,20 @@ class DeliveryCalendar extends Page
 
     public ?string $selectedDate = null;
 
+    public string $initialCalendarDate = '';
+
     public ?int $editingTripId = null;
 
     public ?int $editingTripStopCount = null;
+
+    public function mount(): void
+    {
+        try {
+            $this->initialCalendarDate = Carbon::parse(request()->query('date', today()))->toDateString();
+        } catch (Throwable) {
+            $this->initialCalendarDate = today()->toDateString();
+        }
+    }
 
     public function getTitle(): string
     {

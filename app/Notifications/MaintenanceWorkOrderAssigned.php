@@ -20,6 +20,7 @@ class MaintenanceWorkOrderAssigned extends Notification
     public function toArray(object $notifiable): array
     {
         return [
+            'panel' => 'maintenance',
             'title' => "Maintenance work order {$this->workOrder->number}",
             'message' => $this->workOrder->title,
             'work_order_id' => $this->workOrder->id,

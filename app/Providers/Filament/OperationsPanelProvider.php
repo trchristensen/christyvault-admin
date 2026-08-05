@@ -19,7 +19,6 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\Navigation\NavigationItem;
 use App\Filament\Operations\Pages\Notifications;
 use App\Livewire\NotificationsDropdown;
 use Illuminate\Support\Facades\Blade;
@@ -53,19 +52,6 @@ class OperationsPanelProvider extends PanelProvider
                 BreezyCore::make()
                     ->myProfile(),
             ])
-            ->navigationItems([
-                NavigationItem::make('Admin Panel')
-                    ->url('/')
-                    ->icon('heroicon-o-building-office'),
-                NavigationItem::make('Sales Panel')
-                    ->url('/sales')
-                    ->icon('heroicon-o-presentation-chart-line')
-                    ->visible(fn(): bool => auth()->user()?->email === 'tchristensen@christyvault.com'),
-                NavigationItem::make('Maintenance Panel')
-                    ->url('/maintenance')
-                    ->icon('heroicon-o-wrench-screwdriver')
-            ])
-
             ->discoverResources(in: app_path('Filament/Operations/Resources'), for: 'App\\Filament\\Operations\\Resources')
             ->discoverPages(in: app_path('Filament/Operations/Pages'), for: 'App\\Filament\\Operations\\Pages')
             ->pages([

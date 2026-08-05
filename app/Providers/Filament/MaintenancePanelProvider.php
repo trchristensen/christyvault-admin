@@ -55,7 +55,7 @@ class MaintenancePanelProvider extends PanelProvider
             )
             ->widgets([MaintenanceStatsWidget::class, OpenWorkOrdersWidget::class, AssetReliabilityWidget::class])
             ->plugins([
-                FilamentPasswordlessLoginPlugin::make(),
+                FilamentPasswordlessLoginPlugin::make()->resource(false),
                 BreezyCore::make()->myProfile(),
             ])
             ->databaseNotifications()

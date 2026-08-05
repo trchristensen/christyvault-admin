@@ -2,25 +2,31 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Pages\Dashboard as BaseDashboard;
 use App\Filament\Resources\OrderResource;
+use Filament\Actions\Action;
+use Filament\Pages\Dashboard as BaseDashboard;
 
 class Dashboard extends BaseDashboard
 {
-    public function mount(): void
+    protected ?string $subheading = 'Your daily briefing across deliveries, employees, and customer follow-up.';
+
+    protected function getHeaderActions(): array
     {
-        redirect(OrderResource::getUrl('calendar'));
+        return [
+            Action::make('deliveryCalendar')
+                ->label('Delivery calendar')
+                ->icon('heroicon-m-calendar-days')
+                ->color('gray')
+                ->url(OrderResource::getUrl('calendar')),
+            Action::make('newOrder')
+                ->label('New order')
+                ->icon('heroicon-m-plus')
+                ->url(OrderResource::getUrl('create')),
+        ];
     }
 
     public function getColumns(): int|array
     {
-        return [
-            'default' => 1,
-            'sm' => 2,
-            'md' => 3,
-            'lg' => 4,
-            'xl' => 6,
-            '2xl' => 8,
-        ];
+        return 1;
     }
 }
