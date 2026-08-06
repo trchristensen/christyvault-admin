@@ -71,18 +71,20 @@
             {{ $statusLabel }}
         </span>
 
-        <span
-            class="delivery-tag-badge {{ $order->is_printed ? 'delivery-tag-printed' : 'delivery-tag-not-printed' }}"
-            title="{{ $order->is_printed ? 'Delivery tag has been printed' : 'Delivery tag has not been printed yet' }}"
-        >
-            @if ($order->is_printed)
-                <x-heroicon-o-printer />
-                <span>Tag printed</span>
-            @else
-                <x-heroicon-o-exclamation-triangle />
-                <span>Tag not printed</span>
-            @endif
-        </span>
+        @if ($order->is_printed || $order->requiresPrintedDeliveryTag())
+            <span
+                class="delivery-tag-badge {{ $order->is_printed ? 'delivery-tag-printed' : 'delivery-tag-not-printed' }}"
+                title="{{ $order->is_printed ? 'Delivery tag has been printed' : 'Delivery tag has not been printed yet' }}"
+            >
+                @if ($order->is_printed)
+                    <x-heroicon-o-printer />
+                    <span>Tag printed</span>
+                @else
+                    <x-heroicon-o-exclamation-triangle />
+                    <span>Tag not printed</span>
+                @endif
+            </span>
+        @endif
 
         @if ($order->delivery_photos_count > 0)
             <span

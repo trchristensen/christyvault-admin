@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use App\Enums\PlantLocation;
 use App\Services\DeliveryCalendarAvailability;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -113,6 +114,11 @@ class Order extends Model
     {
         return $this->is_printed
             || ($user?->can(self::VIEW_UNPRINTED_PRODUCT_LINES_PERMISSION) ?? false);
+    }
+
+    public function requiresPrintedDeliveryTag(): bool
+    {
+        return $this->plant_location !== PlantLocation::TULARE_PLANT->value;
     }
 
     public function deliveryPhotos(): HasMany
