@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Test Delivery Links</title>
+    @include('components.site-icons')
     <style>
         body { font-family: Arial, sans-serif; margin: 40px; }
         .link-item { 
@@ -40,4 +41,4 @@
         <p>No orders found. Create some orders in your admin panel first.</p>
     @endif
 </body>
-</html> 
+</html>

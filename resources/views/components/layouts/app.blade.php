@@ -10,6 +10,8 @@
 
     <title>{{ config('app.name') }}</title>
 
+    @include('components.site-icons')
+
     <style>
         [x-cloak] {
             display: none !important;

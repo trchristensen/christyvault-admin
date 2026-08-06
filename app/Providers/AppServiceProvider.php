@@ -68,6 +68,11 @@ class AppServiceProvider extends ServiceProvider
             fn () => view('filament.components.panel-switcher'),
         );
 
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::HEAD_END,
+            fn () => view('components.site-icons'),
+        );
+
         Livewire::component('profile-account-information', AccountInformation::class);
         Livewire::component('profile-employee-information', EmployeeInformation::class);
 

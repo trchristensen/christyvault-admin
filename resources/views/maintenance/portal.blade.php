@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $asset->asset_tag }} · Maintenance</title>
+    @include('components.site-icons')
     <style>
         :root { color-scheme: light; --ink:#172033; --muted:#64748b; --line:#dbe2ea; --brand:#c25516; --paper:#fff; --bg:#f4f6f8; --danger:#b42318; --success:#157f3b; }
         * { box-sizing:border-box; }

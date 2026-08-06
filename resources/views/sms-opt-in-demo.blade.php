@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Christy Vault - Employee SMS Notifications</title>
+    @include('components.site-icons')
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -311,4 +312,4 @@
         });
     </script>
 </body>
-</html> 
+</html>
