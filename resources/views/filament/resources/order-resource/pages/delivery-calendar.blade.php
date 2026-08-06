@@ -4,39 +4,61 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     
 
-    <div class="flex gap-3">
-        <div class="w-1/6 mt-[4.45rem]"
+    <div class="delivery-calendar-layout flex gap-3">
+        <div class="delivery-calendar-unassigned w-1/6 mt-[4.45rem]"
             id="unassigned-orders" 
         >
-            <h3 class="font-bold mb-2">Unassigned Orders</h3>
-            @foreach($unassignedOrders as $order)
-                <div
-                    class="fc-draggable-order"
-                    data-order-id="{{ $order->id }}"
-                    draggable="true"
-                    wire:click="openOrderModal({{ $order->id }})"
-                    style="margin-bottom: 4px; cursor: grab;"
-                >
-                    <div class="order-container status-{{ strtolower($order->status) }}">
-                        <div class="order-title">{{ $order->location->name ?? $order->order_number }}</div>
-                        @if($order->location)
-                            <div class="order-address">{{ $order->location->city }}, {{ $order->location->state }}</div>
-                        @endif
-                        <div class="order-status">
-                            <span>{{ \App\Enums\OrderStatus::tryFrom($order->status)?->label() ?? ucfirst(str_replace('_', ' ', $order->status)) }}</span>
-                            @if($order->order_number)
-                                <span class="order-number">#{{ ltrim($order->order_number, 'ORD-') }}</span>
+            <button
+                type="button"
+                id="unassigned-orders-toggle"
+                class="delivery-calendar-unassigned-toggle"
+                aria-expanded="false"
+                aria-controls="unassigned-orders-list"
+            >
+                <span>
+                    <span class="delivery-calendar-unassigned-toggle-title">Unassigned Orders</span>
+                    <span class="delivery-calendar-unassigned-toggle-hint">Tap an order to view or schedule it</span>
+                </span>
+                <span class="delivery-calendar-unassigned-toggle-meta">
+                    <span class="delivery-calendar-unassigned-count">{{ $unassignedOrders->count() }}</span>
+                    <svg class="delivery-calendar-unassigned-chevron" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
+                    </svg>
+                </span>
+            </button>
+
+            <h3 class="delivery-calendar-unassigned-heading font-bold mb-2">Unassigned Orders</h3>
+            <div id="unassigned-orders-list" class="delivery-calendar-unassigned-list">
+                @forelse($unassignedOrders as $order)
+                    <div
+                        class="fc-draggable-order"
+                        data-order-id="{{ $order->id }}"
+                        draggable="true"
+                        wire:click="openOrderModal({{ $order->id }})"
+                        style="margin-bottom: 4px; cursor: grab;"
+                    >
+                        <div class="order-container status-{{ strtolower($order->status) }}">
+                            <div class="order-title">{{ $order->location->name ?? $order->order_number }}</div>
+                            @if($order->location)
+                                <div class="order-address">{{ $order->location->city }}, {{ $order->location->state }}</div>
                             @endif
+                            <div class="order-status">
+                                <span>{{ \App\Enums\OrderStatus::tryFrom($order->status)?->label() ?? ucfirst(str_replace('_', ' ', $order->status)) }}</span>
+                                @if($order->order_number)
+                                    <span class="order-number">#{{ ltrim($order->order_number, 'ORD-') }}</span>
+                                @endif
+                            </div>
+                            <div class="order-status mt-2">Order Date: {{ $order->order_date->format('m/d') }}</div>
+                            {{-- requested date --}}
+                            <div class="order-status">Requested by: {{ $order->order_date->format('m/d') }}</div>
                         </div>
-                        <div class="order-status mt-2">Order Date: {{ $order->order_date->format('m/d') }}</div>
-                        {{-- requested date --}}
-                        <div class="order-status">Requested by: {{ $order->order_date->format('m/d') }}</div>
-                        
                     </div>
-                </div>
-            @endforeach
+                @empty
+                    <p class="delivery-calendar-unassigned-empty">No unassigned orders.</p>
+                @endforelse
+            </div>
         </div>
-        <div class="flex-1" wire:ignore>
+        <div class="delivery-calendar-main flex-1" wire:ignore>
             <div id="calendar"></div>
         </div>
     </div>
@@ -51,20 +73,33 @@
     let pendingSplitLoadDrop = false;
     let calendar; // Store calendar reference globally
 
+    const compactCalendarMedia = window.matchMedia('(max-width: 767px), (pointer: coarse) and (max-width: 1024px)');
+    const coarsePointerMedia = window.matchMedia('(pointer: coarse)');
+    const isCompactCalendar = compactCalendarMedia.matches;
+    const calendarDragEnabled = !coarsePointerMedia.matches
+        && !(isCompactCalendar && navigator.maxTouchPoints > 0);
+
     document.addEventListener('DOMContentLoaded', function() {
         // 1. Make existing sidebar orders draggable individually
         initializeSidebarDragging();
+        initializeUnassignedOrdersToggle();
 
         // 2. Initialize FullCalendar
         var calendarEl = document.getElementById('calendar');
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialDate: @js($initialCalendarDate),
-            initialView: 'dayGridWeek',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,dayGridWeek,dayGridDay'
-            },
+            initialView: isCompactCalendar ? 'dayGridDay' : 'dayGridWeek',
+            headerToolbar: isCompactCalendar
+                ? {
+                    left: 'prev,next',
+                    center: 'title',
+                    right: 'today'
+                }
+                : {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,dayGridWeek,dayGridDay'
+                },
             views: {
                 dayGridMonth: {
                     titleFormat: { year: 'numeric', month: 'long' }
@@ -74,8 +109,8 @@
                 }
             },
             weekends: false,
-            editable: true,
-            droppable: true,
+            editable: calendarDragEnabled,
+            droppable: calendarDragEnabled,
             events: '/calendar-events',
             eventDrop: handleEventReceive,
             eventReceive: handleEventReceive,
@@ -270,6 +305,17 @@
     // Function to initialize dragging for all sidebar orders
     function initializeSidebarDragging() {
         const orderElements = document.querySelectorAll('.fc-draggable-order');
+
+        if (!calendarDragEnabled) {
+            orderElements.forEach(orderEl => {
+                orderEl.draggable = false;
+                orderEl.removeAttribute('draggable');
+                orderEl.style.cursor = 'pointer';
+            });
+
+            return;
+        }
+
         orderElements.forEach(orderEl => {
             if (window.FullCalendar && FullCalendar.Draggable) {
                 new FullCalendar.Draggable(orderEl, {
@@ -280,6 +326,20 @@
                     }
                 });
             }
+        });
+    }
+
+    function initializeUnassignedOrdersToggle() {
+        const sidebarEl = document.getElementById('unassigned-orders');
+        const toggleEl = document.getElementById('unassigned-orders-toggle');
+
+        if (!sidebarEl || !toggleEl) {
+            return;
+        }
+
+        toggleEl.addEventListener('click', () => {
+            const isOpen = sidebarEl.classList.toggle('is-open');
+            toggleEl.setAttribute('aria-expanded', String(isOpen));
         });
     }
 

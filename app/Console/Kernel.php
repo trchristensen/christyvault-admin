@@ -5,6 +5,7 @@ namespace App\Console;
 use App\Console\Commands\GenerateMaintenanceWorkOrders;
 use App\Console\Commands\GeocodeLocations;
 use App\Console\Commands\SeedDemoProcedures;
+use App\Console\Commands\SeedDemoPrograms;
 use App\Console\Commands\UpdateLocationOrderAnalytics;
 use App\Console\Commands\UpdateLocationPlantDistances;
 use Illuminate\Console\Scheduling\Schedule;
@@ -18,6 +19,7 @@ class Kernel extends ConsoleKernel
         UpdateLocationPlantDistances::class,
         GenerateMaintenanceWorkOrders::class,
         SeedDemoProcedures::class,
+        SeedDemoPrograms::class,
     ];
 
     protected function schedule(Schedule $schedule): void

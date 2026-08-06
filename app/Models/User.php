@@ -37,6 +37,10 @@ class User extends Authenticatable implements FilamentUser
 
     public const MANAGE_PROCEDURES_PERMISSION = 'manage procedures';
 
+    public const VIEW_PROGRAMS_PERMISSION = 'view programs';
+
+    public const MANAGE_PROGRAMS_PERMISSION = 'manage programs';
+
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->canAccessPanelById($panel->getId());
@@ -73,6 +77,17 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->canViewProcedures()
             && $this->can(self::MANAGE_PROCEDURES_PERMISSION);
+    }
+
+    public function canViewPrograms(): bool
+    {
+        return $this->can(self::VIEW_PROGRAMS_PERMISSION);
+    }
+
+    public function canManagePrograms(): bool
+    {
+        return $this->canViewPrograms()
+            && $this->can(self::MANAGE_PROGRAMS_PERMISSION);
     }
 
     /**

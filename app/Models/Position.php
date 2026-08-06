@@ -20,4 +20,14 @@ class Position extends Model
     {
         return $this->belongsToMany(StandardOperatingProcedure::class)->withTimestamps();
     }
+
+    public function employeePrograms()
+    {
+        return $this->belongsToMany(
+            EmployeeProgram::class,
+            'employee_program_position',
+            'position_id',
+            'employee_program_id',
+        )->withTimestamps();
+    }
 }

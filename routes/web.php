@@ -3,6 +3,7 @@
 use App\Http\Controllers\CalendarFeedController;
 use App\Http\Controllers\DeliveryCalendarPrintController;
 use App\Http\Controllers\DeliveryTagController;
+use App\Http\Controllers\EmployeeProgramMaterialController;
 use App\Http\Controllers\KanbanCardController;
 use App\Http\Controllers\LeaveCalendarFeedController;
 use App\Http\Controllers\MaintenanceAssetPortalController;
@@ -42,6 +43,10 @@ Route::prefix('procedures')->middleware('throttle:60,1')->group(function (): voi
 Route::get('procedure-attachments/{procedure}/{attachment}', [ProcedurePortalController::class, 'attachment'])
     ->middleware('auth')
     ->name('procedures.attachments.show');
+
+Route::get('program-materials/{item}', EmployeeProgramMaterialController::class)
+    ->middleware('auth')
+    ->name('programs.materials.show');
 
 Route::get('/maintenance/work-orders/{workOrder}/print', MaintenanceWorkOrderPrintController::class)
     ->name('maintenance.work-orders.print')
