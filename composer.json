@@ -18,6 +18,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "league/flysystem-aws-s3-v3": "^3.29",
+        "malzariey/filament-daterangepicker-filter": "^5.0",
         "opcodesio/log-viewer": "^3.12",
         "resend/resend-laravel": "^1.4",
         "resend/resend-php": "^1.4",

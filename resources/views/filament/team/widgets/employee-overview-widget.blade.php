@@ -61,9 +61,13 @@
         </x-filament::section>
 
         <x-filament::section>
-            <x-slot name="heading">My Time Off</x-slot>
+            <x-slot name="heading">{{ $showsTeamTimeOff ? 'Team Time Off' : 'My Time Off' }}</x-slot>
 
-            <x-slot name="description">Your upcoming approved and pending requests.</x-slot>
+            <x-slot name="description">
+                {{ $showsTeamTimeOff
+                    ? 'Pending requests and approved upcoming absences for all active employees.'
+                    : 'Your upcoming approved and pending requests.' }}
+            </x-slot>
 
             @if ($timeOffRequestUrl)
                 <x-slot name="afterHeader">
@@ -76,7 +80,7 @@
                 </x-slot>
             @endif
 
-            @if (! $employee)
+            @if (! $showsTeamTimeOff && ! $employee)
                 <div class="rounded-lg border border-dashed border-gray-300 px-4 py-7 text-center dark:border-gray-700">
                     <x-filament::icon
                         icon="heroicon-o-identification"
@@ -95,28 +99,63 @@
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Approved or pending requests will appear here.</p>
                 </div>
             @else
-                <div class="divide-y divide-gray-200 dark:divide-white/10">
-                    @foreach ($leaveRequests as $leaveRequest)
-                        <div class="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
-                            <div class="min-w-0">
-                                <p class="font-semibold text-gray-950 dark:text-white">
-                                    {{ str($leaveRequest->type)->headline() }}
-                                </p>
-                                <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                                    @if ($leaveRequest->start_date->isSameDay($leaveRequest->end_date))
-                                        {{ $leaveRequest->start_date->format('l, F j, Y') }}
-                                    @else
-                                        {{ $leaveRequest->start_date->format('M j') }}–{{ $leaveRequest->end_date->format('M j, Y') }}
-                                    @endif
-                                </p>
-                            </div>
+                @if ($showsTeamTimeOff)
+                    <div class="space-y-5">
+                        @foreach (['pending' => 'Pending requests', 'approved' => 'Approved time off'] as $status => $label)
+                            @php($requestsForStatus = $leaveRequests->where('status', $status))
 
-                            <x-filament::badge :color="$leaveRequest->status === 'approved' ? 'success' : 'warning'">
-                                {{ str($leaveRequest->status)->headline() }}
-                            </x-filament::badge>
-                        </div>
-                    @endforeach
-                </div>
+                            @if ($requestsForStatus->isNotEmpty())
+                                <section>
+                                    <div class="mb-2 flex items-center justify-between gap-3">
+                                        <h3 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ $label }}</h3>
+                                        <span class="text-xs font-semibold tabular-nums text-gray-400 dark:text-gray-500">{{ $requestsForStatus->count() }}</span>
+                                    </div>
+
+                                    <div class="divide-y divide-gray-200 dark:divide-white/10">
+                                        @foreach ($requestsForStatus as $leaveRequest)
+                                            <div class="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                                                <div class="min-w-0">
+                                                    <p class="font-semibold text-gray-950 dark:text-white">
+                                                        {{ $leaveRequest->employee?->name ?? 'Former employee' }}
+                                                    </p>
+                                                    <p class="mt-0.5 text-sm text-gray-600 dark:text-gray-300">
+                                                        {{ str($leaveRequest->type)->headline() }}
+                                                    </p>
+                                                    <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                                                        {{ $leaveRequest->dateSummary() }}
+                                                    </p>
+                                                </div>
+
+                                                <x-filament::badge :color="$status === 'approved' ? 'success' : 'warning'">
+                                                    {{ str($status)->headline() }}
+                                                </x-filament::badge>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </section>
+                            @endif
+                        @endforeach
+                    </div>
+                @else
+                    <div class="divide-y divide-gray-200 dark:divide-white/10">
+                        @foreach ($leaveRequests as $leaveRequest)
+                            <div class="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                                <div class="min-w-0">
+                                    <p class="font-semibold text-gray-950 dark:text-white">
+                                        {{ str($leaveRequest->type)->headline() }}
+                                    </p>
+                                    <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $leaveRequest->dateSummary() }}
+                                    </p>
+                                </div>
+
+                                <x-filament::badge :color="$leaveRequest->status === 'approved' ? 'success' : 'warning'">
+                                    {{ str($leaveRequest->status)->headline() }}
+                                </x-filament::badge>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             @endif
         </x-filament::section>
     </div>

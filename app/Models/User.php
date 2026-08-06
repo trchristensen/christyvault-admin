@@ -33,6 +33,13 @@ class User extends Authenticatable implements FilamentUser
         'manager',
     ];
 
+    public const TEAM_TIME_OFF_OVERVIEW_ROLES = [
+        'admin',
+        'super-admin',
+        'manager',
+        'foreman',
+    ];
+
     public const VIEW_PROCEDURES_PERMISSION = 'view procedures';
 
     public const MANAGE_PROCEDURES_PERMISSION = 'manage procedures';
@@ -66,6 +73,11 @@ class User extends Authenticatable implements FilamentUser
     public function canManageTeamContent(): bool
     {
         return $this->hasAnyRole(self::TEAM_CONTENT_MANAGER_ROLES);
+    }
+
+    public function canViewTeamTimeOffOverview(): bool
+    {
+        return $this->hasAnyRole(self::TEAM_TIME_OFF_OVERVIEW_ROLES);
     }
 
     public function canViewProcedures(): bool

@@ -1,0 +1,7 @@
+/* Our range pickers start weeks on Sunday, so the first and last cells are weekends. */
+.fi-daterangepicker-week > .fi-daterangepicker-day:first-of-type,
+.fi-daterangepicker-week > .fi-daterangepicker-day:last-of-type {
+    pointer-events: none;
+    cursor: not-allowed;
+    opacity: 0.4;
+}

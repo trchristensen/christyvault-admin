@@ -1,12 +1,18 @@
 <?php
 
+use App\Filament\Resources\LeaveRequestResource as AdminLeaveRequestResource;
 use App\Filament\Team\Resources\LeaveRequestResource;
 use App\Filament\Team\Resources\LeaveRequestResource\Pages\CreateLeaveRequest;
+use App\Filament\Team\Resources\LeaveRequestResource\Pages\EditLeaveRequest;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Models\User;
+use App\Notifications\LeaveRequestSubmitted;
+use Carbon\CarbonInterface;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
 uses(DatabaseTransactions::class);
@@ -43,6 +49,20 @@ function insertLeaveRequest(int $employeeId, string $status = 'pending'): LeaveR
     ]);
 
     return LeaveRequest::findOrFail($id);
+}
+
+function formatLeaveDateRange(CarbonInterface $startDate, CarbonInterface $endDate): string
+{
+    return $startDate->format(LeaveRequest::DATE_RANGE_FORMAT)
+        .LeaveRequest::DATE_RANGE_SEPARATOR
+        .$endDate->format(LeaveRequest::DATE_RANGE_FORMAT);
+}
+
+function formatLeaveDateTimeRange(CarbonInterface $startDate, CarbonInterface $endDate): string
+{
+    return $startDate->format(LeaveRequest::DATE_TIME_RANGE_FORMAT)
+        .LeaveRequest::DATE_RANGE_SEPARATOR
+        .$endDate->format(LeaveRequest::DATE_TIME_RANGE_FORMAT);
 }
 
 it('shows time off requests in the team sidebar for linked employees', function (): void {
@@ -122,4 +142,193 @@ it('forces new requests to the signed in employee with pending status', function
         ->and($data['status'])->toBe('pending')
         ->and($data['reviewed_by'])->toBeNull()
         ->and($data['review_notes'])->toBeNull();
+});
+
+it('creates a time off request from the combined date range field', function (): void {
+    [$user, $employee] = teamUserWithEmployee('Range Picker Employee');
+    $startDate = today()->next(CarbonInterface::MONDAY);
+    $endDate = $startDate->copy()->addDays(4);
+
+    $this->actingAs($user);
+    Filament::setCurrentPanel('team');
+
+    Livewire::test(CreateLeaveRequest::class)
+        ->fillForm([
+            'type' => 'vacation',
+            'date_range' => formatLeaveDateRange($startDate, $endDate),
+            'reason' => 'Family plans',
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $request = LeaveRequest::query()
+        ->where('employee_id', $employee->getKey())
+        ->latest('id')
+        ->firstOrFail();
+
+    expect($request->start_date->toDateString())->toBe($startDate->toDateString())
+        ->and($request->end_date->toDateString())->toBe($endDate->toDateString())
+        ->and($request->date_range)->toBe(formatLeaveDateRange($startDate, $endDate));
+});
+
+it('creates a specific-hours request from the timed range field', function (): void {
+    [$user, $employee] = teamUserWithEmployee('Specific Hours Employee');
+    $startDate = today()->next(CarbonInterface::MONDAY)->setTime(9, 30);
+    $endDate = $startDate->copy()->setTime(13, 0);
+    $range = formatLeaveDateTimeRange($startDate, $endDate);
+
+    $this->actingAs($user);
+    Filament::setCurrentPanel('team');
+
+    Livewire::test(CreateLeaveRequest::class)
+        ->fillForm([
+            'type' => 'vacation',
+            'duration' => 'specific_hours',
+            'date_time_range' => $range,
+            'reason' => 'Appointment',
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $request = LeaveRequest::query()
+        ->where('employee_id', $employee->getKey())
+        ->latest('id')
+        ->firstOrFail();
+
+    expect($request->start_date->format('Y-m-d H:i'))->toBe($startDate->format('Y-m-d H:i'))
+        ->and($request->end_date->format('Y-m-d H:i'))->toBe($endDate->format('Y-m-d H:i'))
+        ->and($request->hasSpecificTimes())->toBeTrue()
+        ->and($request->date_time_range)->toBe($range)
+        ->and($request->dateSummary())->toContain('9:30 AM', '1:00 PM');
+});
+
+it('requires a specific-hours request to end after it starts', function (): void {
+    [$user] = teamUserWithEmployee('Invalid Hours Employee');
+    $startDate = today()->next(CarbonInterface::MONDAY)->setTime(14, 0);
+    $endDate = $startDate->copy()->setTime(9, 0);
+
+    $this->actingAs($user);
+    Filament::setCurrentPanel('team');
+
+    Livewire::test(CreateLeaveRequest::class)
+        ->fillForm([
+            'type' => 'vacation',
+            'duration' => 'specific_hours',
+            'date_time_range' => formatLeaveDateTimeRange($startDate, $endDate),
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['date_time_range']);
+});
+
+it('rejects weekend endpoints even when picker restrictions are bypassed', function (): void {
+    [$user] = teamUserWithEmployee('Weekend Validation Employee');
+    $startDate = today()->next(CarbonInterface::SATURDAY);
+    $endDate = $startDate->copy()->addDays(2);
+
+    $this->actingAs($user);
+    Filament::setCurrentPanel('team');
+
+    Livewire::test(CreateLeaveRequest::class)
+        ->fillForm([
+            'type' => 'vacation',
+            'date_range' => formatLeaveDateRange($startDate, $endDate),
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['date_range']);
+});
+
+it('hydrates and updates the combined date range on pending requests', function (): void {
+    [$user, $employee] = teamUserWithEmployee('Range Editor Employee');
+    $request = insertLeaveRequest($employee->getKey());
+    $startDate = today()->next(CarbonInterface::MONDAY);
+    $endDate = $startDate->copy()->addDays(2);
+    $range = formatLeaveDateRange($startDate, $endDate);
+
+    $this->actingAs($user);
+    Filament::setCurrentPanel('team');
+
+    Livewire::test(EditLeaveRequest::class, ['record' => $request->getRouteKey()])
+        ->assertFormSet([
+            'duration' => 'full_day',
+            'date_range' => $request->date_range,
+        ])
+        ->fillForm([
+            'date_range' => $range,
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $request->refresh();
+
+    expect($request->start_date->toDateString())->toBe($startDate->toDateString())
+        ->and($request->end_date->toDateString())->toBe($endDate->toDateString())
+        ->and($request->date_range)->toBe($range);
+});
+
+it('hydrates specific hours when editing a pending request', function (): void {
+    [$user, $employee] = teamUserWithEmployee('Specific Hours Editor');
+    $request = insertLeaveRequest($employee->getKey());
+    $request->update([
+        'start_date' => today()->next(CarbonInterface::TUESDAY)->setTime(8, 0),
+        'end_date' => today()->next(CarbonInterface::TUESDAY)->setTime(12, 30),
+    ]);
+
+    $this->actingAs($user);
+    Filament::setCurrentPanel('team');
+
+    Livewire::test(EditLeaveRequest::class, ['record' => $request->getRouteKey()])
+        ->assertFormSet([
+            'duration' => 'specific_hours',
+            'date_time_range' => $request->date_time_range,
+        ]);
+});
+
+it('notifies admin panel users when an employee submits time off', function (): void {
+    $admin = User::factory()->create();
+    $admin->assignRole(Role::findOrCreate('admin', 'web'));
+    $superAdmin = User::factory()->create();
+    $superAdmin->assignRole(Role::findOrCreate('super-admin', 'web'));
+    $manager = User::factory()->create();
+    $manager->assignRole(Role::findOrCreate('manager', 'web'));
+    [$employeeUser, $employee] = teamUserWithEmployee('Notification Employee');
+    $startDate = today()->next(CarbonInterface::MONDAY);
+    $endDate = $startDate->copy()->addDays(2);
+
+    $this->actingAs($employeeUser);
+    Filament::setCurrentPanel('team');
+
+    Livewire::test(CreateLeaveRequest::class)
+        ->fillForm([
+            'type' => 'vacation',
+            'date_range' => formatLeaveDateRange($startDate, $endDate),
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $request = LeaveRequest::query()
+        ->where('employee_id', $employee->getKey())
+        ->latest('id')
+        ->firstOrFail();
+    $notification = $admin->notifications()->firstOrFail();
+
+    expect($notification->type)->toBe(LeaveRequestSubmitted::class)
+        ->and($notification->data['panel'])->toBe('admin')
+        ->and($notification->data['title'])->toBe('New time-off request from Notification Employee')
+        ->and($notification->data['body'])->toContain('Vacation')
+        ->and($notification->data['leave_request_id'])->toBe($request->getKey())
+        ->and($notification->data['actions'][0]['url'])->toContain("/leave-requests/{$request->getKey()}/edit")
+        ->and($superAdmin->notifications()->where('type', LeaveRequestSubmitted::class)->count())->toBe(1)
+        ->and($manager->notifications()->count())->toBe(0);
+});
+
+it('shows the number of pending requests in the admin sidebar', function (): void {
+    [, $employee] = teamUserWithEmployee('Badge Employee');
+
+    insertLeaveRequest($employee->getKey());
+    insertLeaveRequest($employee->getKey());
+    insertLeaveRequest($employee->getKey(), 'approved');
+
+    expect(AdminLeaveRequestResource::getNavigationBadge())->toBe('2')
+        ->and(AdminLeaveRequestResource::getNavigationBadgeColor())->toBe('warning')
+        ->and(AdminLeaveRequestResource::getNavigationBadgeTooltip())->toBe('Pending time-off requests');
 });

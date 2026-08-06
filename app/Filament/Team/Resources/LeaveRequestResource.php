@@ -6,11 +6,12 @@ use App\Filament\Team\Resources\LeaveRequestResource\Pages\CreateLeaveRequest;
 use App\Filament\Team\Resources\LeaveRequestResource\Pages\EditLeaveRequest;
 use App\Filament\Team\Resources\LeaveRequestResource\Pages\ListLeaveRequests;
 use App\Models\LeaveRequest;
+use App\Rules\WeekdayDateRange;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -20,6 +21,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Malzariey\FilamentDaterangepickerFilter\Fields\DateRangePicker;
 
 class LeaveRequestResource extends Resource
 {
@@ -53,16 +55,50 @@ class LeaveRequestResource extends Resource
                                 'other' => 'Other',
                             ])
                             ->required(),
-                        DatePicker::make('start_date')
-                            ->native(false)
-                            ->minDate(today())
+                        ToggleButtons::make('duration')
+                            ->label('How much time?')
+                            ->options([
+                                'full_day' => 'Full day(s)',
+                                'specific_hours' => 'Specific hours',
+                            ])
+                            ->icons([
+                                'full_day' => 'heroicon-o-calendar-days',
+                                'specific_hours' => 'heroicon-o-clock',
+                            ])
+                            ->default('full_day')
+                            ->grouped()
                             ->live()
+                            ->dehydrated(false)
                             ->required(),
-                        DatePicker::make('end_date')
-                            ->native(false)
-                            ->minDate(fn (Get $get) => $get('start_date') ?: today())
-                            ->afterOrEqual('start_date')
-                            ->required(),
+                        DateRangePicker::make('date_range')
+                            ->label('Dates')
+                            ->format(LeaveRequest::DATE_RANGE_FORMAT)
+                            ->rangeSeparator(LeaveRequest::DATE_RANGE_SEPARATOR)
+                            ->minDate(today()->toDateString())
+                            ->disableRanges()
+                            ->autoApply()
+                            ->firstDayOfWeek(0)
+                            ->placeholder('Select start and end dates')
+                            ->helperText('Choose the first and last weekday you need off. Weekend dates cannot be selected.')
+                            ->rules([new WeekdayDateRange])
+                            ->required(fn (Get $get): bool => $get('duration') === 'full_day')
+                            ->hidden(fn (Get $get): bool => $get('duration') !== 'full_day')
+                            ->dehydratedWhenHidden(false),
+                        DateRangePicker::make('date_time_range')
+                            ->label('Dates and times')
+                            ->format(LeaveRequest::DATE_TIME_RANGE_FORMAT)
+                            ->rangeSeparator(LeaveRequest::DATE_RANGE_SEPARATOR)
+                            ->minDate(today()->toDateString())
+                            ->disableRanges()
+                            ->timePicker()
+                            ->timePickerIncrement(30)
+                            ->firstDayOfWeek(0)
+                            ->placeholder('Select start and end times')
+                            ->helperText('Choose the exact weekday and time your absence begins and ends.')
+                            ->rules([new WeekdayDateRange(includesTime: true)])
+                            ->required(fn (Get $get): bool => $get('duration') === 'specific_hours')
+                            ->hidden(fn (Get $get): bool => $get('duration') !== 'specific_hours')
+                            ->dehydratedWhenHidden(false),
                         Textarea::make('reason')
                             ->label('Notes')
                             ->helperText('Optional. Add anything the office should know when reviewing the request.')
@@ -82,9 +118,7 @@ class LeaveRequestResource extends Resource
                     ->badge(),
                 TextColumn::make('date_range')
                     ->label('Dates')
-                    ->state(fn (LeaveRequest $record): string => $record->start_date->isSameDay($record->end_date)
-                        ? $record->start_date->format('D, M j, Y')
-                        : $record->start_date->format('M j').' – '.$record->end_date->format('M j, Y'))
+                    ->state(fn (LeaveRequest $record): string => $record->dateSummary())
                     ->wrap(),
                 TextColumn::make('status')
                     ->formatStateUsing(fn (string $state): string => str($state)->headline())

@@ -60,6 +60,7 @@ class AppServiceProvider extends ServiceProvider
 
         FilamentAsset::register([
             Css::make('calendar-styles', resource_path('css/calendar.css')),
+            Css::make('date-range-overrides', resource_path('css/filament-date-range.css')),
             Css::make('office-manager-dashboard-styles', resource_path('css/office-manager-dashboard.css')),
         ]);
 
