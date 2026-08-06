@@ -27,6 +27,8 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
 
     protected static ?int $sort = 1;
 
+    protected static bool $isLazy = false;
+
     protected int|string|array $columnSpan = 'full';
 
     public static function canView(): bool
