@@ -11,8 +11,13 @@ class Position extends Model
         'display_name',
     ];
 
-       public function employees()
-   {
-       return $this->belongsToMany(Employee::class, 'employee_position', 'position_id', 'employee_id');
-   }
-} 
+    public function employees()
+    {
+        return $this->belongsToMany(Employee::class, 'employee_position', 'position_id', 'employee_id');
+    }
+
+    public function standardOperatingProcedures()
+    {
+        return $this->belongsToMany(StandardOperatingProcedure::class)->withTimestamps();
+    }
+}

@@ -1,19 +1,19 @@
 <?php
 
-use App\Models\User;
-use App\Notifications\MaintenanceRequestSubmitted;
-use App\Support\PanelSwitcher;
 use App\Filament\Team\Pages\Schedule;
 use App\Filament\Team\Widgets\EmployeeOverviewWidget;
 use App\Filament\Team\Widgets\TodaysDeliveriesWidget;
+use App\Models\User;
+use App\Notifications\MaintenanceRequestSubmitted;
+use App\Support\PanelSwitcher;
 use Filament\Facades\Filament;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Foundation\Vite;
 use Illuminate\Support\Str;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 uses(DatabaseTransactions::class);
 
@@ -26,6 +26,15 @@ it('enables database notifications in the team panel', function (): void {
 
     expect($panel->hasDatabaseNotifications())->toBeTrue()
         ->and($panel->getDatabaseNotificationsPollingInterval())->toBe('30s');
+});
+
+it('matches the admin sidebar size and desktop collapse behavior', function (): void {
+    $adminPanel = Filament::getPanel('admin');
+    $teamPanel = Filament::getPanel('team');
+
+    expect($teamPanel->isSidebarCollapsibleOnDesktop())->toBeTrue()
+        ->and($teamPanel->getSidebarWidth())->toBe($adminPanel->getSidebarWidth())
+        ->and($teamPanel->getSidebarWidth())->toBe('13rem');
 });
 
 it('preloads the team theme and guards its initial paint', function (): void {

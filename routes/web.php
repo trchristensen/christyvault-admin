@@ -3,22 +3,21 @@
 use App\Http\Controllers\CalendarFeedController;
 use App\Http\Controllers\DeliveryCalendarPrintController;
 use App\Http\Controllers\DeliveryTagController;
-use App\Http\Controllers\LeaveCalendarFeedController;
 use App\Http\Controllers\KanbanCardController;
-use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\LeaveCalendarFeedController;
 use App\Http\Controllers\MaintenanceAssetPortalController;
 use App\Http\Controllers\MaintenanceWorkOrderPrintController;
-use App\Http\Controllers\InventoryItemController;
-use App\Http\Controllers\OrderController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderCalendarController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProcedurePortalController;
 use App\Http\Controllers\TripLoadSummaryPrintController;
+use App\Models\Driver;
 use App\Models\KanbanCard;
 use App\Models\Order;
-use App\Models\Driver;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Http\Request;
-
 
 // Laravel auth middleware expects a route named 'login'
 Route::get('/auth/login', function () {
@@ -32,10 +31,21 @@ Route::prefix('asset')->middleware('throttle:30,1')->group(function (): void {
     Route::get('{token}/label', [MaintenanceAssetPortalController::class, 'label'])->name('maintenance.assets.label');
 });
 
+Route::prefix('procedures')->middleware('throttle:60,1')->group(function (): void {
+    Route::get('{token}/attachments/{attachment}', [ProcedurePortalController::class, 'publicAttachment'])
+        ->name('procedures.public.attachments.show');
+    Route::get('{token}', [ProcedurePortalController::class, 'show'])->name('procedures.public.show');
+    Route::get('{token}/qr.svg', [ProcedurePortalController::class, 'qr'])->name('procedures.public.qr');
+    Route::get('{token}/label', [ProcedurePortalController::class, 'label'])->name('procedures.public.label');
+});
+
+Route::get('procedure-attachments/{procedure}/{attachment}', [ProcedurePortalController::class, 'attachment'])
+    ->middleware('auth')
+    ->name('procedures.attachments.show');
+
 Route::get('/maintenance/work-orders/{workOrder}/print', MaintenanceWorkOrderPrintController::class)
     ->name('maintenance.work-orders.print')
     ->middleware('auth');
-
 
 // Secure delivery link generator
 Route::get('/generate-delivery-link/{order}', function (Order $order) {
@@ -60,12 +70,12 @@ Route::get('/generate-delivery-link/{order}', function (Order $order) {
     parse_str($completeParts['query'], $completeParams);
 
     // Build the PWA URL with order ID and both signatures
-    $pwaUrl = config('app.pwa_url') . '?' . http_build_query([
+    $pwaUrl = config('app.pwa_url').'?'.http_build_query([
         'order' => $order->id,
         'show_expires' => $showParams['expires'],
         'show_signature' => $showParams['signature'],
         'complete_expires' => $completeParams['expires'],
-        'complete_signature' => $completeParams['signature']
+        'complete_signature' => $completeParams['signature'],
     ]);
 
     return response()->json([
@@ -74,7 +84,7 @@ Route::get('/generate-delivery-link/{order}', function (Order $order) {
         'delivery_url' => $pwaUrl,
         'show_url' => $showUrl, // Include for debugging
         'complete_url' => $completeUrl, // Include for debugging
-        'expires' => now()->addDays(7)->format('Y-m-d H:i:s')
+        'expires' => now()->addDays(7)->format('Y-m-d H:i:s'),
     ]);
 })->middleware(['auth']);
 
@@ -148,12 +158,12 @@ Route::get('/delivery/{order}/{token}', function (Order $order, string $token) {
     parse_str($completeParts['query'], $completeParams);
 
     // Build the PWA URL with order ID and both signatures
-    $pwaUrl = config('app.pwa_url') . '?' . http_build_query([
+    $pwaUrl = config('app.pwa_url').'?'.http_build_query([
         'order' => $order->id,
         'show_expires' => $showParams['expires'],
         'show_signature' => $showParams['signature'],
         'complete_expires' => $completeParams['expires'],
-        'complete_signature' => $completeParams['signature']
+        'complete_signature' => $completeParams['signature'],
     ]);
 
     return redirect($pwaUrl);
@@ -170,7 +180,6 @@ Route::get('/trips/{trip}/load-summary/print', TripLoadSummaryPrintController::c
     ->name('trips.load-summary.print')
     ->middleware('auth');
 
-
 Route::get('/calendar-events', [OrderCalendarController::class, 'events'])
     ->middleware('auth');
 Route::post('/orders/assign-date', [OrderCalendarController::class, 'assignDate'])
@@ -183,9 +192,8 @@ Route::get('calendar/feed/{token}', [CalendarFeedController::class, 'download'])
     ->name('calendar.feed')
     ->middleware('signed');
 
-
-Route::get('calendar', fn() => view('calendar', [
-    'url' => auth()->user()?->getCalendarFeedUrl()
+Route::get('calendar', fn () => view('calendar', [
+    'url' => auth()->user()?->getCalendarFeedUrl(),
 ]));
 
 Route::get('calendar/leave-feed/{token}', [LeaveCalendarFeedController::class, 'download'])
@@ -198,14 +206,13 @@ Route::get('/kanban-cards/{kanbanCard}/qr-code', [KanbanCardController::class, '
 Route::get('kanban-cards/{id}/scan', [KanbanCardController::class, 'scan'])->name('kanban-cards.scan');
 Route::post('kanban-cards/{id}/scan', [KanbanCardController::class, 'scan']);
 
-
 Route::get('/kanban-cards/{kanbanCard}/print', [KanbanCardController::class, 'print'])
     ->name('kanban-cards.print');
 
 Route::get('/kanban-cards/{kanbanCard}/component', function (KanbanCard $kanbanCard) {
     return view('components.printable-kanban-card', [
         'kanbanCard' => $kanbanCard,
-        'size' => request('size', 'standard')
+        'size' => request('size', 'standard'),
     ]);
 });
 
@@ -257,7 +264,7 @@ Route::get('/admin/orders/{record}/duplicate', [OrderController::class, 'duplica
 //         'sms_consent_given' => true,
 //         'sms_consent_at' => now()
 //     ]);
-    
+
 //     return response()->json([
 //         'success' => true,
 //         'message' => 'SMS consent recorded for ' . $driver->employee->name
@@ -277,7 +284,7 @@ Route::get('/admin/orders/{record}/duplicate', [OrderController::class, 'duplica
 //         'phone_number' => 'required|string|max:20',
 //         'work_email' => 'required|email|max:255',
 //     ]);
-    
+
 //     // Save the demo submission
 //     \App\Models\SmsConsentDemo::create([
 //         'employee_name' => $data['employee_name'],
@@ -287,7 +294,7 @@ Route::get('/admin/orders/{record}/duplicate', [OrderController::class, 'duplica
 //         'ip_address' => $request->ip(),
 //         'user_agent' => $request->userAgent(),
 //     ]);
-    
+
 //     return response()->json([
 //         'success' => true,
 //         'message' => 'SMS consent recorded successfully',

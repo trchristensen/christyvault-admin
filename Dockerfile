@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.04 AS app-base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -72,6 +72,22 @@ RUN mkdir -p /var/www/storage/app/temp \
     && mkdir -p /var/www/storage/logs \
     && chown -R www-data:www-data /var/www \
     && chmod -R 775 /var/www/storage
+
+# Build the Vite manifest and panel themes from the same application source and
+# Filament vendor files that will ship in the final image. public/build is
+# intentionally gitignored, so it must be produced for every deployment.
+FROM node:22-alpine AS frontend
+
+WORKDIR /var/www
+
+COPY --from=app-base /var/www /var/www
+
+RUN npm ci \
+    && npm run build
+
+FROM app-base AS app
+
+COPY --from=frontend --chown=www-data:www-data /var/www/public/build /var/www/public/build
 
 # Expose port 8000 for Laravel dev server
 EXPOSE 8000

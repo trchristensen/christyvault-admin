@@ -16,7 +16,7 @@ use SpykApp\PasswordlessLogin\Traits\HasMagicLogin;
 
 class User extends Authenticatable implements FilamentUser
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, HasSuperAdmin, HasMagicLogin;
+    use HasApiTokens, HasFactory, HasMagicLogin, HasRoles, HasSuperAdmin, Notifiable;
 
     public const TEAM_DELIVERY_SCHEDULE_ROLES = [
         'admin',
@@ -26,6 +26,16 @@ class User extends Authenticatable implements FilamentUser
         'driver',
         'tulare-driver',
     ];
+
+    public const TEAM_CONTENT_MANAGER_ROLES = [
+        'admin',
+        'super-admin',
+        'manager',
+    ];
+
+    public const VIEW_PROCEDURES_PERMISSION = 'view procedures';
+
+    public const MANAGE_PROCEDURES_PERMISSION = 'manage procedures';
 
     public function canAccessPanel(Panel $panel): bool
     {
@@ -47,6 +57,22 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasAnyRole(self::TEAM_DELIVERY_SCHEDULE_ROLES)
             && $this->can('view team delivery schedule');
+    }
+
+    public function canManageTeamContent(): bool
+    {
+        return $this->hasAnyRole(self::TEAM_CONTENT_MANAGER_ROLES);
+    }
+
+    public function canViewProcedures(): bool
+    {
+        return $this->can(self::VIEW_PROCEDURES_PERMISSION);
+    }
+
+    public function canManageProcedures(): bool
+    {
+        return $this->canViewProcedures()
+            && $this->can(self::MANAGE_PROCEDURES_PERMISSION);
     }
 
     /**
@@ -105,14 +131,14 @@ class User extends Authenticatable implements FilamentUser
     public function getCalendarFeedUrl(): string
     {
         return url()->signedRoute('calendar.feed', [
-            'token' => $this->id
+            'token' => $this->id,
         ], now()->addYears(10)); // Expire in 10 years instead of 24 hours
     }
 
     public function getLeaveCalendarFeedUrl(): string
     {
         return url()->signedRoute('calendar.leave-feed', [
-            'token' => $this->id
+            'token' => $this->id,
         ], now()->addYears(10)); // Expire in 10 years instead of 24 hours
     }
 }

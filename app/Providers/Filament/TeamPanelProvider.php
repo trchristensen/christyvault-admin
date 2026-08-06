@@ -84,6 +84,8 @@ class TeamPanelProvider extends PanelProvider
             ])
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
+            ->sidebarCollapsibleOnDesktop()
+            ->sidebarWidth('13rem')
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
