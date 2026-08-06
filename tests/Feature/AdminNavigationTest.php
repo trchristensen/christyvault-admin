@@ -14,16 +14,35 @@ use App\Filament\Resources\RackTypeResource;
 use App\Filament\Resources\UserResource;
 use App\Filament\Resources\VehicleConfigurationResource;
 use Filament\Facades\Filament;
+use SpykApp\FilamentPasswordlessLogin\Pages\MagicLinkLogin;
 
-it('only registers magic-link management in the admin panel', function (): void {
-    expect(Filament::getPanel('admin')->getPlugin('filament-passwordless-login')->hasResource())->toBeTrue()
-        ->and(Filament::getPanel('team')->getPlugin('filament-passwordless-login')->hasResource())->toBeFalse()
-        ->and(Filament::getPanel('maintenance')->getPlugin('filament-passwordless-login')->hasResource())->toBeFalse();
+it('uses magic-link login everywhere while managing links only in admin', function (): void {
+    foreach (['admin', 'team', 'maintenance', 'operations', 'sales'] as $panelId) {
+        $panel = Filament::getPanel($panelId);
+        $plugin = $panel->getPlugin('filament-passwordless-login');
+
+        expect($panel->getLoginRouteAction())->toBe(MagicLinkLogin::class)
+            ->and($panel->hasPasswordReset())->toBeFalse()
+            ->and($plugin->hasPasswordLoginLink())->toBeFalse()
+            ->and($plugin->hasResource())->toBe($panelId === 'admin');
+    }
+});
+
+it('keeps profile information without password controls', function (): void {
+    foreach (['admin', 'team', 'maintenance', 'operations', 'sales'] as $panelId) {
+        $panel = Filament::getPanel($panelId);
+        $plugin = $panel->getPlugin('filament-breezy');
+        $plugin->boot($panel);
+        $components = $plugin->getRegisteredMyProfileComponents();
+
+        expect($panel->hasProfile())->toBeFalse()
+            ->and($components)->toHaveKey('personal_info')
+            ->and($components)->not->toHaveKey('update_password');
+    }
 });
 
 it('nests related admin navigation without changing page routes', function (): void {
     $parents = [
-        BulkDeliveryTagProcessor::class => 'Orders',
         CalendarDayResource::class => 'Delivery Setup',
         DeliveryRateResource::class => 'Delivery Setup',
         LoadingProfileResource::class => 'Delivery Setup',
@@ -40,7 +59,8 @@ it('nests related admin navigation without changing page routes', function (): v
     }
 
     expect(DeliveryCalendar::getNavigationParentItem())->toBeNull()
-        ->and(DeliveryCalendar::getNavigationSort())->toBe(-100);
+        ->and(DeliveryCalendar::getNavigationSort())->toBe(-100)
+        ->and(BulkDeliveryTagProcessor::shouldRegisterNavigation())->toBeFalse();
 
     $customItems = collect(Filament::getPanel('admin')->getNavigationItems())
         ->map(fn ($item): string => $item->getLabel());

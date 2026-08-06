@@ -2,16 +2,16 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Pages\Dashboard;
-use Filament\Support\Enums\Width;
+use App\Support\Filament\SharedProfile;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages;
+use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\Width;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -19,6 +19,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use SpykApp\FilamentPasswordlessLogin\FilamentPasswordlessLoginPlugin;
 
 class SalesPanelProvider extends PanelProvider
 {
@@ -28,13 +29,17 @@ class SalesPanelProvider extends PanelProvider
             ->id('sales')
             ->path('sales')
             ->login()
-            ->passwordReset()
-            ->profile()
             ->spa()
             ->colors([
                 'primary' => Color::Green,
             ])
-            ->brandLogo(fn() => view('filament.logo'))
+            ->plugins([
+                FilamentPasswordlessLoginPlugin::make()
+                    ->showPasswordLoginLink(false)
+                    ->resource(false),
+                SharedProfile::make(),
+            ])
+            ->brandLogo(fn () => view('filament.logo'))
             ->brandLogoHeight('60px')
             ->colors([
                 'primary' => Color::Green,

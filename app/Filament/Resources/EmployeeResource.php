@@ -2,46 +2,40 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\Select;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Grouping\Group;
-use Filament\Tables\Filters\TrashedFilter;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\ForceDeleteAction;
-use Filament\Actions\RestoreAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\ForceDeleteBulkAction;
-use Filament\Actions\RestoreBulkAction;
-use App\Filament\Resources\EmployeeResource\Pages\ListEmployees;
 use App\Filament\Resources\EmployeeResource\Pages\CreateEmployee;
 use App\Filament\Resources\EmployeeResource\Pages\EditEmployee;
-use App\Filament\Resources\EmployeeResource\Pages;
-use App\Filament\Resources\EmployeeResource\RelationManagers;
+use App\Filament\Resources\EmployeeResource\Pages\ListEmployees;
 use App\Models\Driver;
 use App\Models\Employee;
+use App\Models\Position;
 use App\Models\User;
-use Filament\Forms;
-use Filament\Navigation\NavigationGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Hash;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
-use Ysfkaya\FilamentPhoneInput\Infolists\PhoneEntry;
 use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
 use Ysfkaya\FilamentPhoneInput\Tables\PhoneColumn;
 
@@ -49,9 +43,9 @@ class EmployeeResource extends Resource
 {
     protected static ?string $model = Employee::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Directories';
+    protected static string|\UnitEnum|null $navigationGroup = 'Directories';
 
     protected static ?string $navigationParentItem = 'People';
 
@@ -59,41 +53,16 @@ class EmployeeResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('User Association')
-                    ->description('Select an existing user account to link to this employee')
-                    ->schema([
-                        Select::make('user_id')
-                            ->label('Associated User Account')
-                            ->relationship('user', 'name')
-                            ->preload()
-                            ->searchable()
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(function (Get $get, Set $set, ?string $state) {
-                                if (!$state) return;
-
-                                $user = User::find($state);
-                                if (!$user) return;
-
-                                // Only set values if they're empty
-                                if (empty($get('name'))) {
-                                    $set('name', $user->name);
-                                }
-                                if (empty($get('email'))) {
-                                    $set('email', $user->email);
-                                }
-                            }),
-                    ])->columnSpanFull(),
-
                 Section::make('Employee Details')
                     ->schema([
                         TextInput::make('name')
                             ->required()
-                            ->readOnly(fn(Get $get): bool => (bool) $get('user_id')),
+                            ->maxLength(255),
                         TextInput::make('email')
                             ->email()
-                            ->required()
-                            ->readOnly(fn(Get $get): bool => (bool) $get('user_id')),
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255)
+                            ->helperText('Optional. This is contact information, not the employee\'s login.'),
                         PhoneInput::make('phone')->defaultCountry('US'),
                         TextInput::make('address'),
                         Select::make('positions')
@@ -106,8 +75,8 @@ class EmployeeResource extends Resource
                             ->searchable()
                             ->required()
                             ->live()
+                            ->helperText('Positions describe job responsibilities. User roles separately control application access.')
                             ->dehydrated(true),
-
 
                         Select::make('christy_location')
                             ->options([
@@ -116,17 +85,63 @@ class EmployeeResource extends Resource
                             ])
                             ->required(),
                         DatePicker::make('hire_date')
-                            ->required(),
+                            ->helperText('Optional. Add it when the official date is known.'),
                         DatePicker::make('birth_date')
                             ->label('Birthdate')
-                            ->required(),
+                            ->helperText('Optional.'),
                         Checkbox::make('is_active')
-                            ->default('TRUE')
-                            ->label('Active')
-                            ->dehydrateStateUsing(fn($state) => $state ? 'TRUE' : 'FALSE'),
-                    ])->columns(2),
+                            ->default(true)
+                            ->label('Active'),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
 
-                Section::make('Driver Details')
+                Section::make('Account Access')
+                    ->description('Optional. Link an existing user when this employee needs to sign in. This can be done later.')
+                    ->schema([
+                        Select::make('user_id')
+                            ->label('User Account')
+                            ->relationship(
+                                name: 'user',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: fn (Builder $query, ?Employee $record): Builder => $query
+                                    ->where(function (Builder $query) use ($record): void {
+                                        $query->whereDoesntHave('employee')
+                                            ->when(
+                                                $record?->user_id,
+                                                fn (Builder $query, int $userId): Builder => $query->orWhereKey($userId),
+                                            );
+                                    }),
+                            )
+                            ->preload()
+                            ->searchable()
+                            ->unique(ignoreRecord: true)
+                            ->placeholder('No account linked')
+                            ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set, ?string $state) {
+                                if (! $state) {
+                                    return;
+                                }
+
+                                $user = User::find($state);
+                                if (! $user) {
+                                    return;
+                                }
+
+                                if (empty($get('name'))) {
+                                    $set('name', $user->name);
+                                }
+                                if (empty($get('email'))) {
+                                    $set('email', $user->email);
+                                }
+                            }),
+                    ])
+                    ->collapsible()
+                    ->collapsed()
+                    ->columnSpanFull(),
+
+                Section::make('Driver License Details')
+                    ->description('Optional. Trips use the Driver position; these fields are only for license information you want to retain.')
                     ->schema([
                         TextInput::make('driver.license_number')
                             ->label('License Number'),
@@ -135,14 +150,11 @@ class EmployeeResource extends Resource
                         Textarea::make('driver.notes')
                             ->label('Notes'),
                     ])
-                    ->visible(function (Get $get): bool {
-                        return collect($get('positions'))->contains(
-                            fn($position) =>
-                            $position === 'driver' ||
-                                (is_array($position) && ($position['name'] ?? null) === 'driver')
-                        );
-                    })
-                    ->columns(2),
+                    ->visible(fn (Get $get, ?Employee $record): bool => static::selectedPositionsIncludeDriver($get('positions') ?? []) ||
+                        $record?->driver()->exists()
+                    )
+                    ->columns(2)
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -156,13 +168,18 @@ class EmployeeResource extends Resource
                     ->searchable(),
                 PhoneColumn::make('phone')
                     ->displayFormat(PhoneInputNumberType::INTERNATIONAL),
+                IconColumn::make('user_id')
+                    ->label('Account')
+                    ->boolean()
+                    ->state(fn (Employee $record): bool => filled($record->user_id))
+                    ->tooltip(fn (Employee $record): string => filled($record->user_id) ? 'User account linked' : 'No user account linked'),
                 TextColumn::make('positions.display_name')
                     ->badge()
                     ->separator(',')
                     ->searchable(),
                 TextColumn::make('christy_location')
                     ->label('Location')
-                    ->formatStateUsing(fn(string $state): string => ucfirst($state))
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
                     ->badge(),
                 IconColumn::make('is_active')
                     ->boolean(),
@@ -182,11 +199,11 @@ class EmployeeResource extends Resource
             ->groups([
                 Group::make('christy_location')
                     ->label('Location')
-                    ->getTitleFromRecordUsing(fn(Employee $record): string => ucfirst($record->christy_location))
+                    ->getTitleFromRecordUsing(fn (Employee $record): string => ucfirst($record->christy_location))
                     ->collapsible(),
                 Group::make('positions.name')
                     ->label('Position')
-                    ->getTitleFromRecordUsing(fn(Employee $record): string => $record->positions->pluck('display_name')->join(', '))
+                    ->getTitleFromRecordUsing(fn (Employee $record): string => $record->positions->pluck('display_name')->join(', '))
                     ->collapsible(),
             ])
             ->defaultGroup('christy_location')
@@ -237,7 +254,10 @@ class EmployeeResource extends Resource
         $employee = static::getModel()::create($data);
 
         // If positions include driver, create driver record
-        if (isset($data['positions']) && in_array('driver', $data['positions'])) {
+        if (
+            static::selectedPositionsIncludeDriver($data['positions'] ?? []) &&
+            static::hasDriverDetails($data['driver'] ?? [])
+        ) {
             $driverData = [
                 'employee_id' => $employee->id,
                 'license_number' => $data['driver']['license_number'] ?? null,
@@ -248,5 +268,31 @@ class EmployeeResource extends Resource
         }
 
         return $employee;
+    }
+
+    /**
+     * @param  array<int, int|string|array<string, mixed>>  $positions
+     */
+    public static function selectedPositionsIncludeDriver(array $positions): bool
+    {
+        $positionIds = collect($positions)
+            ->map(fn ($position) => is_array($position) ? ($position['id'] ?? null) : $position)
+            ->filter()
+            ->all();
+
+        return $positionIds !== [] && Position::query()
+            ->whereKey($positionIds)
+            ->where('name', 'driver')
+            ->exists();
+    }
+
+    /**
+     * @param  array<string, mixed>  $driverData
+     */
+    public static function hasDriverDetails(array $driverData): bool
+    {
+        return collect($driverData)
+            ->only(['license_number', 'license_expiration', 'notes'])
+            ->contains(fn ($value): bool => filled($value));
     }
 }

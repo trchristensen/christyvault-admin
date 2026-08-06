@@ -2,37 +2,33 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\CheckboxList;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Actions\EditAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\UserResource\Pages\ListUsers;
+use App\Enums\PlantLocation;
 use App\Filament\Resources\UserResource\Pages\CreateUser;
 use App\Filament\Resources\UserResource\Pages\EditUser;
-use App\Enums\PlantLocation;
-use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
+use App\Filament\Resources\UserResource\Pages\ListUsers;
 use App\Models\User;
-use Filament\Forms;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
-    protected static string | \UnitEnum | null $navigationGroup = 'Directories';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Directories';
 
     protected static ?string $navigationParentItem = 'People';
-
 
     public static function form(Schema $schema): Schema
     {
@@ -49,9 +45,11 @@ class UserResource extends Resource
                         DateTimePicker::make('email_verified_at')
                             ->disabled(),
                         TextInput::make('password')
+                            ->label('Testing Password')
                             ->password()
-                            ->dehydrated(fn($state) => filled($state))
-                            ->required(fn(string $context): bool => $context === 'create'),
+                            ->dehydrated(fn ($state) => filled($state))
+                            ->helperText('Optional local/testing fallback. Production users sign in with a magic link.')
+                            ->visible(fn (): bool => app()->environment(['local', 'testing'])),
                     ])->columns(2),
 
                 Section::make('Team Schedule Access')
@@ -61,7 +59,7 @@ class UserResource extends Resource
                             ->label('Visible Delivery Types')
                             ->options(
                                 collect(PlantLocation::cases())
-                                    ->mapWithKeys(fn(PlantLocation $location) => [
+                                    ->mapWithKeys(fn (PlantLocation $location) => [
                                         $location->value => $location->getLabel(),
                                     ])
                                     ->toArray()
@@ -79,6 +77,7 @@ class UserResource extends Resource
                     ->columns(2),
 
                 Section::make('Roles & Relationships')
+                    ->description('Roles control application access. Employee positions describe job responsibilities and are managed on the employee record.')
                     ->columnSpanFull()
                     ->schema([
                         Select::make('roles')
@@ -89,11 +88,12 @@ class UserResource extends Resource
                             ->label('Associated Employee')
                             ->relationship('employee', 'name')
                             ->preload()
-                            ->disabled()
+                            ->disabled(),
 
                     ])->columns(2),
             ]);
     }
+
     public static function table(Table $table): Table
     {
         return $table

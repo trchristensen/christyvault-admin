@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\EmployeeResource\Pages;
 
 use App\Filament\Resources\EmployeeResource;
-use Filament\Resources\Pages\CreateRecord;
 use App\Models\Driver;
+use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -17,14 +17,18 @@ class CreateEmployee extends CreateRecord
     {
         return DB::transaction(function () use ($data) {
             $employee = static::getModel()::create($data);
-            
+
             // Sync positions
             if (isset($data['positions'])) {
                 $employee->positions()->sync($data['positions']);
             }
 
-            // Create driver record if needed
-            if (isset($data['positions']) && in_array('driver', $data['positions']) && isset($data['driver'])) {
+            // License details are optional. A driver position alone does not need
+            // an otherwise-empty driver profile.
+            if (
+                EmployeeResource::selectedPositionsIncludeDriver($data['positions'] ?? []) &&
+                EmployeeResource::hasDriverDetails($data['driver'] ?? [])
+            ) {
                 $this->createDriverRecord($employee, $data['driver']);
             }
 

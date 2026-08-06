@@ -2,13 +2,14 @@
 
 namespace App\Providers\Filament;
 
+use Althinect\FilamentSpatieRolesPermissions\FilamentSpatieRolesPermissionsPlugin;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\SystemAdmin;
 use App\Filament\Resources\OrderResource\Pages\DeliveryCalendar;
 use App\Filament\Widgets\OfficeManagerAttentionWidget;
 use App\Filament\Widgets\PlanningOpportunitiesWidget;
 use App\Filament\Widgets\TodayTomorrowBriefingWidget;
-use Althinect\FilamentSpatieRolesPermissions\FilamentSpatieRolesPermissionsPlugin;
+use App\Support\Filament\SharedProfile;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -25,7 +26,6 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 use SpykApp\FilamentPasswordlessLogin\FilamentPasswordlessLoginPlugin;
 
@@ -34,14 +34,12 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->brandLogo(fn() => view('filament.logo'))
+            ->brandLogo(fn () => view('filament.logo'))
             ->brandLogoHeight('60px')
             ->default()
             ->id('admin')
             ->path('')
             ->login()
-            ->passwordReset()
-            ->profile()
             // ->spa()
             ->colors([
                 // 'primary' => '#1c3366',
@@ -82,16 +80,16 @@ class AdminPanelProvider extends PanelProvider
             // ->collapsedSidebarWidth('5rem')
             ->plugins([
                 FilamentPasswordlessLoginPlugin::make()
+                    ->showPasswordLoginLink(false)
                     ->navigationGroup('System'),
                 FilamentSpatieRolesPermissionsPlugin::make(),
-                BreezyCore::make()
-                    ->myProfile(),
+                SharedProfile::make(),
                 // FilamentSpatieRolesPermissionsPlugin::make(),
                 FilamentFullCalendarPlugin::make()
                     ->plugins([
                         'dayGrid',
                         'timeGrid',
-                        'multiMonth'
+                        'multiMonth',
                     ])
                     ->config([
                         'eventDisplay' => 'block', // Force block display
@@ -101,7 +99,7 @@ class AdminPanelProvider extends PanelProvider
                         // 'height' => 'auto', // Allow calendar to expand to fit all events
                     ])
                     ->selectable()
-                    ->editable()
+                    ->editable(),
             ])
             // ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([

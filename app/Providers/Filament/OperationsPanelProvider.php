@@ -2,16 +2,19 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Support\Enums\Width;
-use Filament\Pages\Dashboard;
+use App\Filament\Operations\Pages\Notifications;
+use App\Filament\Operations\Widgets\InventoryStatsWidget;
+use App\Filament\Operations\Widgets\LatestNotificationsWidget;
+use App\Filament\Operations\Widgets\RecentPurchaseOrdersWidget;
+use App\Support\Filament\SharedProfile;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages;
+use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets;
+use Filament\Support\Enums\Width;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -19,14 +22,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use App\Filament\Operations\Pages\Notifications;
-use App\Livewire\NotificationsDropdown;
-use Illuminate\Support\Facades\Blade;
-use Jeffgreco13\FilamentBreezy\BreezyCore;
-use Livewire\Livewire;
-use App\Filament\Operations\Widgets\InventoryStatsWidget;
-use App\Filament\Operations\Widgets\LatestNotificationsWidget;
-use App\Filament\Operations\Widgets\RecentPurchaseOrdersWidget;
+use SpykApp\FilamentPasswordlessLogin\FilamentPasswordlessLoginPlugin;
 
 class OperationsPanelProvider extends PanelProvider
 {
@@ -36,21 +32,21 @@ class OperationsPanelProvider extends PanelProvider
             ->id('operations')
             ->path('operations')
             ->login()
-            ->passwordReset()
-            ->profile()
             ->spa()
             ->colors([
                 'primary' => Color::Amber,
             ])
-            ->brandLogo(fn() => view('filament.logo'))
+            ->brandLogo(fn () => view('filament.logo'))
             ->brandLogoHeight('60px')
             ->maxContentWidth(Width::Full)
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('13rem')
             // ->collapsedSidebarWidth('5rem')
             ->plugins([
-                BreezyCore::make()
-                    ->myProfile(),
+                FilamentPasswordlessLoginPlugin::make()
+                    ->showPasswordLoginLink(false)
+                    ->resource(false),
+                SharedProfile::make(),
             ])
             ->discoverResources(in: app_path('Filament/Operations/Resources'), for: 'App\\Filament\\Operations\\Resources')
             ->discoverPages(in: app_path('Filament/Operations/Pages'), for: 'App\\Filament\\Operations\\Pages')

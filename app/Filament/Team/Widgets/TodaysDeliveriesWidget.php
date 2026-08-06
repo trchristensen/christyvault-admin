@@ -29,7 +29,7 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
 
     public static function canView(): bool
     {
-        return auth()->user()?->can('view team delivery schedule') ?? false;
+        return auth()->user()?->canViewTeamDeliverySchedule() ?? false;
     }
 
     protected function getViewData(): array

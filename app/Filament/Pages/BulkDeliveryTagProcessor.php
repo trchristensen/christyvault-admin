@@ -27,6 +27,8 @@ class BulkDeliveryTagProcessor extends Page implements HasForms
     use InteractsWithForms;
     use InteractsWithFormActions;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-duplicate';
 
     protected string $view = 'filament.pages.bulk-delivery-tag-processor';

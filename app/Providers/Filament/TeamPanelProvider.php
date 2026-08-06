@@ -2,22 +2,25 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Pages\Dashboard;
+use App\Filament\Team\Pages\Dashboard;
+use App\Filament\Team\Widgets\EmployeeOverviewWidget;
 use App\Filament\Team\Widgets\TodaysDeliveriesWidget;
+use App\Support\Filament\SharedProfile;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Foundation\Vite;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 use SpykApp\FilamentPasswordlessLogin\FilamentPasswordlessLoginPlugin;
@@ -31,10 +34,34 @@ class TeamPanelProvider extends PanelProvider
             ->login()
             ->path('team')
             ->viteTheme('resources/css/filament/team/theme.css')
+            ->renderHook(PanelsRenderHook::HEAD_START, function (): HtmlString {
+                $themeUrl = e(app(Vite::class)->asset('resources/css/filament/team/theme.css'));
+
+                return new HtmlString(<<<HTML
+                    <style>
+                        html.team-theme-loading body { visibility: hidden; }
+                    </style>
+                    <script>
+                        (() => {
+                            document.documentElement.classList.add('team-theme-loading');
+
+                            const revealTeamPanel = () => {
+                                window.requestAnimationFrame(() => {
+                                    document.documentElement.classList.remove('team-theme-loading');
+                                });
+                            };
+
+                            window.addEventListener('DOMContentLoaded', revealTeamPanel, { once: true });
+                            window.setTimeout(revealTeamPanel, 2500);
+                        })();
+                    </script>
+                    <link rel="preload" as="style" href="{$themeUrl}" fetchpriority="high">
+                    HTML);
+            })
             ->colors([
                 'primary' => Color::Blue,
             ])
-            ->brandLogo(fn() => view('filament.logo'))
+            ->brandLogo(fn () => view('filament.logo'))
             ->brandLogoHeight('60px')
             ->discoverResources(in: app_path('Filament/Team/Resources'), for: 'App\\Filament\\Team\\Resources')
             ->discoverPages(in: app_path('Filament/Team/Pages'), for: 'App\\Filament\\Team\\Pages')
@@ -42,13 +69,17 @@ class TeamPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->plugins([
-                FilamentPasswordlessLoginPlugin::make()->resource(false),
+                FilamentPasswordlessLoginPlugin::make()
+                    ->showPasswordLoginLink(false)
+                    ->resource(false),
+                SharedProfile::make(),
                 FilamentFullCalendarPlugin::make()
                     ->selectable()
-                    ->editable()
+                    ->editable(),
             ])
             ->discoverWidgets(in: app_path('Filament/Team/Widgets'), for: 'App\\Filament\\Team\\Widgets')
             ->widgets([
+                EmployeeOverviewWidget::class,
                 TodaysDeliveriesWidget::class,
             ])
             ->databaseNotifications()

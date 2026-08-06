@@ -6,6 +6,7 @@ use App\Filament\Maintenance\Pages\Dashboard;
 use App\Filament\Maintenance\Widgets\AssetReliabilityWidget;
 use App\Filament\Maintenance\Widgets\MaintenanceStatsWidget;
 use App\Filament\Maintenance\Widgets\OpenWorkOrdersWidget;
+use App\Support\Filament\SharedProfile;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -20,7 +21,6 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Jeffgreco13\FilamentBreezy\BreezyCore;
 use SpykApp\FilamentPasswordlessLogin\FilamentPasswordlessLoginPlugin;
 
 class MaintenancePanelProvider extends PanelProvider
@@ -31,8 +31,6 @@ class MaintenancePanelProvider extends PanelProvider
             ->id('maintenance')
             ->path('maintenance')
             ->login()
-            ->passwordReset()
-            ->profile()
             ->spa()
             ->brandLogo(fn () => view('filament.logo'))
             ->brandLogoHeight('60px')
@@ -55,8 +53,10 @@ class MaintenancePanelProvider extends PanelProvider
             )
             ->widgets([MaintenanceStatsWidget::class, OpenWorkOrdersWidget::class, AssetReliabilityWidget::class])
             ->plugins([
-                FilamentPasswordlessLoginPlugin::make()->resource(false),
-                BreezyCore::make()->myProfile(),
+                FilamentPasswordlessLoginPlugin::make()
+                    ->showPasswordLoginLink(false)
+                    ->resource(false),
+                SharedProfile::make(),
             ])
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')

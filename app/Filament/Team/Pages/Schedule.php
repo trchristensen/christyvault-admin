@@ -24,7 +24,7 @@ class Schedule extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->can('view team delivery schedule') ?? false;
+        return auth()->user()?->canViewTeamDeliverySchedule() ?? false;
     }
 
     // don't display title on page

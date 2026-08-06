@@ -18,6 +18,15 @@ class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles, HasSuperAdmin, HasMagicLogin;
 
+    public const TEAM_DELIVERY_SCHEDULE_ROLES = [
+        'admin',
+        'super-admin',
+        'manager',
+        'foreman',
+        'driver',
+        'tulare-driver',
+    ];
+
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->canAccessPanelById($panel->getId());
@@ -27,11 +36,17 @@ class User extends Authenticatable implements FilamentUser
     {
         return match ($panelId) {
             'admin', 'operations' => $this->hasRole(['admin', 'super-admin']),
-            'team' => $this->hasRole(['admin', 'super-admin', 'employee', 'foreman', 'driver']),
+            'team' => $this->hasRole(['admin', 'super-admin', 'manager', 'employee', 'foreman', 'driver', 'tulare-driver']),
             'sales' => $this->hasRole(['admin', 'super-admin', 'sales']),
             'maintenance' => $this->hasRole(['admin', 'super-admin', 'maintenance-manager', 'maintenance-technician']),
             default => false,
         };
+    }
+
+    public function canViewTeamDeliverySchedule(): bool
+    {
+        return $this->hasAnyRole(self::TEAM_DELIVERY_SCHEDULE_ROLES)
+            && $this->can('view team delivery schedule');
     }
 
     /**

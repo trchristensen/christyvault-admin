@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Employee extends Model
 {
     use HasFactory, SoftDeletes;
+
     protected $fillable = [
         'user_id',
         'name',
@@ -23,8 +24,9 @@ class Employee extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'hire_date' => 'date',
+        'birth_date' => 'date',
     ];
-
 
     // ... other properties and methods ...
 
@@ -55,7 +57,7 @@ class Employee extends Model
 
     public function isDriver()
     {
-        return $this->positions()->where('name', 'driver')->exists() && $this->driver()->exists();
+        return $this->positions()->where('name', 'driver')->exists();
     }
 
     public function hasPosition(string $position): bool
@@ -66,6 +68,6 @@ class Employee extends Model
     public function christyVaultLocation()
     {
         return Location::where('location_type', 'christy_vault')
-            ->where('name', 'like', '%' . $this->christy_location . '%');
+            ->where('name', 'like', '%'.$this->christy_location.'%');
     }
 }

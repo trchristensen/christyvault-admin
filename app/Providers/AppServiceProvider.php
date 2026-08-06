@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Livewire\Profile\AccountInformation;
+use App\Livewire\Profile\EmployeeInformation;
 use App\Models\Location;
 use App\Models\MaintenanceMeterReading;
 use App\Models\MaintenanceRequest;
@@ -46,7 +48,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Super admins bypass all policy and permission checks.
-        Gate::before(fn($user) => $user->hasRole('super-admin') ? true : null);
+        Gate::before(fn ($user) => $user->hasRole('super-admin') ? true : null);
 
         // This vendor model cannot rely on application policy auto-discovery.
         Gate::policy(MagicLoginToken::class, MagicLoginTokenPolicy::class);
@@ -54,7 +56,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(Permission::class, PermissionPolicy::class);
 
-        Gate::define('viewLogViewer', fn(User $user): bool => $user->hasRole('super-admin'));
+        Gate::define('viewLogViewer', fn (User $user): bool => $user->hasRole('super-admin'));
 
         FilamentAsset::register([
             Css::make('calendar-styles', resource_path('css/calendar.css')),
@@ -65,6 +67,9 @@ class AppServiceProvider extends ServiceProvider
             PanelsRenderHook::SIDEBAR_NAV_START,
             fn () => view('filament.components.panel-switcher'),
         );
+
+        Livewire::component('profile-account-information', AccountInformation::class);
+        Livewire::component('profile-employee-information', EmployeeInformation::class);
 
         // Livewire::component('notifications-dropdown', NotificationsDropdown::class);
 

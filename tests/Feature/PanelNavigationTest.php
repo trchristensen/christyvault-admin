@@ -3,12 +3,17 @@
 use App\Models\User;
 use App\Notifications\MaintenanceRequestSubmitted;
 use App\Support\PanelSwitcher;
+use App\Filament\Team\Pages\Schedule;
+use App\Filament\Team\Widgets\EmployeeOverviewWidget;
+use App\Filament\Team\Widgets\TodaysDeliveriesWidget;
 use Filament\Facades\Filament;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Vite;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 uses(DatabaseTransactions::class);
 
@@ -21,6 +26,60 @@ it('enables database notifications in the team panel', function (): void {
 
     expect($panel->hasDatabaseNotifications())->toBeTrue()
         ->and($panel->getDatabaseNotificationsPollingInterval())->toBe('30s');
+});
+
+it('preloads the team theme and guards its initial paint', function (): void {
+    $user = User::factory()->create();
+    $user->assignRole(Role::findOrCreate('employee', 'web'));
+
+    $response = $this->actingAs($user)->get('/team');
+    $html = $response->getContent();
+
+    $response
+        ->assertOk()
+        ->assertSee('Welcome, '.str($user->name)->before(' '))
+        ->assertSee('Upcoming Company Dates')
+        ->assertSee('My Time Off')
+        ->assertDontSee("Today's Deliveries");
+    expect($html)
+        ->toContain('rel="preload"')
+        ->toContain(app(Vite::class)->asset('resources/css/filament/team/theme.css'))
+        ->toContain('team-theme-loading')
+        ->toContain('DOMContentLoaded');
+});
+
+it('shows the employee overview on the team dashboard', function (): void {
+    expect(Filament::getPanel('team')->getWidgets())
+        ->toContain(EmployeeOverviewWidget::class);
+});
+
+it('keeps the delivery schedule hidden from ordinary employees even with an accidental permission grant', function (): void {
+    $permission = Permission::findOrCreate('view team delivery schedule', 'web');
+    $user = User::factory()->create();
+    $user->assignRole(Role::findOrCreate('employee', 'web'));
+    $user->givePermissionTo($permission);
+
+    $this->actingAs($user);
+
+    expect($user->can('view team delivery schedule'))->toBeTrue()
+        ->and($user->canViewTeamDeliverySchedule())->toBeFalse()
+        ->and(Schedule::canAccess())->toBeFalse()
+        ->and(TodaysDeliveriesWidget::canView())->toBeFalse();
+
+    $this->get('/team/schedule')->assertForbidden();
+});
+
+it('allows authorized delivery roles to see the team schedule', function (): void {
+    $permission = Permission::findOrCreate('view team delivery schedule', 'web');
+    $user = User::factory()->create();
+    $user->assignRole(Role::findOrCreate('driver', 'web'));
+    $user->givePermissionTo($permission);
+
+    $this->actingAs($user);
+
+    expect($user->canViewTeamDeliverySchedule())->toBeTrue()
+        ->and(Schedule::canAccess())->toBeTrue()
+        ->and(TodaysDeliveriesWidget::canView())->toBeTrue();
 });
 
 it('shows administrators every other panel in the panel switcher', function (): void {
