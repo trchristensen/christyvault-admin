@@ -72,6 +72,11 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
             ->orderBy('id')
             ->get();
 
+        $currentEmployeeId = auth()->user()?->employee?->getKey();
+        $orders = $orders
+            ->sortBy(fn (Order $order): int => $order->isAssignedToEmployee($currentEmployeeId) ? 0 : 1)
+            ->values();
+
         $canViewUnprintedProductLines = auth()->user()?->can(Order::VIEW_UNPRINTED_PRODUCT_LINES_PERMISSION) ?? false;
 
         // Product lines are operational loading instructions. Only load them
@@ -135,6 +140,7 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
      */
     protected function groupOrdersByPlant(Collection $orders): Collection
     {
+        $currentEmployeeId = auth()->user()?->employee?->getKey();
         $effectivePlant = function (Order $order): string {
             $tripOrders = $order->trip && ! $order->trip->trashed()
                 ? $order->trip->orderedDeliveryOrders()
@@ -149,7 +155,11 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
             'colma_main' => $orders->filter(fn (Order $order): bool => $effectivePlant($order) === 'colma_main'),
             'colma_locals' => $orders->filter(fn (Order $order): bool => $effectivePlant($order) === 'colma_locals'),
             'tulare_plant' => $orders->filter(fn (Order $order): bool => $effectivePlant($order) === 'tulare_plant'),
-        ])->filter(fn (Collection $group): bool => $group->isNotEmpty());
+        ])
+            ->filter(fn (Collection $group): bool => $group->isNotEmpty())
+            ->sortBy(fn (Collection $group): int => $group->contains(
+                fn (Order $order): bool => $order->isAssignedToEmployee($currentEmployeeId),
+            ) ? 0 : 1);
     }
 
     protected function allowedDeliveryTypes(): array

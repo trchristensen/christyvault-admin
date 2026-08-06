@@ -396,6 +396,18 @@
     @apply !m-0 !rounded-none !border-0 !bg-transparent text-gray-600 !shadow-none hover:!bg-gray-50 hover:text-primary-600 focus-visible:relative focus-visible:z-10 dark:text-gray-300 dark:hover:!bg-gray-800 dark:hover:text-primary-400;
 }
 
+@media (max-width: 639px) {
+    .team-load-summary-modal {
+        position: fixed !important;
+        inset: 0.5rem !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: calc(100dvh - 1rem) !important;
+        margin: 0 !important;
+        overflow-y: auto;
+    }
+}
+
 .delivery-camera-field .filepond--root {
     @apply mb-0;
 }

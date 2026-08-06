@@ -37,6 +37,8 @@ trait ManagesDeliveryTripDispatch
             })
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Close')
+            ->extraModalWindowAttributes(['class' => 'team-load-summary-modal'])
+            ->stickyModalHeader()
             ->modalWidth('7xl');
     }
 

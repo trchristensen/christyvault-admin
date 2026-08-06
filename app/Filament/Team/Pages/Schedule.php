@@ -16,7 +16,7 @@ class Schedule extends Page
     use ManagesDeliveryPhotos;
     use ManagesDeliveryTripDispatch;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
     protected string $view = 'filament.team.pages.schedule';
 
@@ -33,10 +33,12 @@ class Schedule extends Page
         return '';
     }
 
-
     public array $dates = [];
+
     public string $selectedDate;
+
     public $orders;
+
     public array $selectedCalendarDays = [];
 
     public function mount()
@@ -50,17 +52,17 @@ class Schedule extends Page
             ->whereDate('date', '<=', $end->toDateString())
             ->orderBy('name')
             ->get()
-            ->groupBy(fn(CalendarDay $calendarDay): string => $calendarDay->date->toDateString());
+            ->groupBy(fn (CalendarDay $calendarDay): string => $calendarDay->date->toDateString());
         $deliveryCounts = Order::query()
             ->selectRaw('assigned_delivery_date, plant_location, COUNT(*) as total')
             ->whereDate('assigned_delivery_date', '>=', $start->toDateString())
             ->whereDate('assigned_delivery_date', '<=', $end->toDateString())
             ->whereNotNull('assigned_delivery_date')
-            ->when($allowedDeliveryTypes !== [], fn($query) => $query->whereIn('plant_location', $allowedDeliveryTypes))
+            ->when($allowedDeliveryTypes !== [], fn ($query) => $query->whereIn('plant_location', $allowedDeliveryTypes))
             ->groupBy('assigned_delivery_date', 'plant_location')
             ->get()
-            ->groupBy(fn($row): string => Carbon::parse($row->assigned_delivery_date)->toDateString())
-            ->map(fn($rows) => $rows->pluck('total', 'plant_location'));
+            ->groupBy(fn ($row): string => Carbon::parse($row->assigned_delivery_date)->toDateString())
+            ->map(fn ($rows) => $rows->pluck('total', 'plant_location'));
 
         for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
             if ($date->isWeekend()) {
@@ -69,7 +71,7 @@ class Schedule extends Page
 
             $dateCalendarDays = $calendarDays
                 ->get($date->toDateString(), collect())
-                ->map(fn(CalendarDay $calendarDay): array => [
+                ->map(fn (CalendarDay $calendarDay): array => [
                     'name' => $calendarDay->name,
                     'type' => $calendarDay->type,
                     'type_label' => $calendarDay->type_label,
@@ -100,7 +102,7 @@ class Schedule extends Page
                     'class' => 'delivery-marker-tulare',
                 ],
             ])
-                ->filter(fn(array $marker): bool => $marker['count'] > 0)
+                ->filter(fn (array $marker): bool => $marker['count'] > 0)
                 ->values()
                 ->toArray();
 
@@ -128,9 +130,16 @@ class Schedule extends Page
 
     protected function labelFor(Carbon $date, Carbon $today): string
     {
-        if ($date->isToday()) return 'Today';
-        if ($date->isTomorrow()) return 'Tomorrow';
-        if ($date->isYesterday()) return 'Yesterday';
+        if ($date->isToday()) {
+            return 'Today';
+        }
+        if ($date->isTomorrow()) {
+            return 'Tomorrow';
+        }
+        if ($date->isYesterday()) {
+            return 'Yesterday';
+        }
+
         return '';
     }
 
@@ -171,7 +180,7 @@ class Schedule extends Page
         $types = auth()->user()?->team_schedule_delivery_types ?? [];
 
         return collect($types)
-            ->filter(fn($type): bool => PlantLocation::tryFrom((string) $type) !== null)
+            ->filter(fn ($type): bool => PlantLocation::tryFrom((string) $type) !== null)
             ->values()
             ->toArray();
     }
@@ -212,7 +221,7 @@ class Schedule extends Page
             ->orderByDesc('blocks_delivery')
             ->orderBy('name')
             ->get()
-            ->map(fn(CalendarDay $calendarDay): array => [
+            ->map(fn (CalendarDay $calendarDay): array => [
                 'name' => $calendarDay->name,
                 'type' => $calendarDay->type,
                 'type_label' => $calendarDay->type_label,
@@ -263,10 +272,12 @@ class Schedule extends Page
                 ? ($tripOrders->sortBy('stop_number')->first()?->plant_location ?? $order->plant_location)
                 : $order->plant_location);
         };
+        $currentEmployeeId = auth()->user()?->employee?->getKey();
 
         // Keep the stops in a delivery trip next to each other and in stop order.
         $sorted = $orders->sortBy(fn (Order $order): string => sprintf(
-            '%03d-%s-%03d-%010d',
+            '%01d-%03d-%s-%03d-%010d',
+            $order->isAssignedToEmployee($currentEmployeeId) ? 0 : 1,
             $plantOrder[$effectivePlant($order)] ?? 999,
             $order->trip_id ? 'trip-'.str_pad((string) $order->trip_id, 10, '0', STR_PAD_LEFT) : 'order-'.str_pad((string) $order->id, 10, '0', STR_PAD_LEFT),
             $order->activeTripStop?->sequence ?? $order->stop_number ?? 0,
@@ -278,7 +289,11 @@ class Schedule extends Page
             'colma_main' => $sorted->filter(fn (Order $order): bool => $effectivePlant($order) === 'colma_main'),
             'colma_locals' => $sorted->filter(fn (Order $order): bool => $effectivePlant($order) === 'colma_locals'),
             'tulare_plant' => $sorted->filter(fn (Order $order): bool => $effectivePlant($order) === 'tulare_plant'),
-        ])->filter(fn ($group) => $group->isNotEmpty());
+        ])
+            ->filter(fn ($group) => $group->isNotEmpty())
+            ->sortBy(fn ($group): int => $group->contains(
+                fn (Order $order): bool => $order->isAssignedToEmployee($currentEmployeeId),
+            ) ? 0 : 1);
     }
 
     protected function deliveryTripDispatchIsInScope(Trip $trip): bool

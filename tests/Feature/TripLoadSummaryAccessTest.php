@@ -2,6 +2,7 @@
 
 use App\Filament\Actions\TripLoadSummaryAction;
 use App\Filament\Resources\OrderResource\Pages\DeliveryCalendar;
+use App\Filament\Team\Widgets\TodaysDeliveriesWidget;
 use App\Http\Controllers\TripLoadSummaryPrintController;
 use App\Livewire\OrderModal;
 use App\Models\Order;
@@ -166,6 +167,14 @@ it('shows the team schedule load summary trigger only with permission', function
         ->and($allowedHtml)->toContain('viewDeliveryTripLoadSummary')
         ->and($allowedHtml)->toContain('trip: 42')
         ->and($allowedHtml)->toContain('Load summary');
+});
+
+it('anchors the team load summary modal to the mobile viewport', function () {
+    $action = (new TodaysDeliveriesWidget)->viewDeliveryTripLoadSummaryAction();
+
+    expect($action->isModalHeaderSticky())->toBeTrue()
+        ->and($action->getExtraModalWindowAttributes())
+        ->toMatchArray(['class' => 'team-load-summary-modal']);
 });
 
 it('restricts the standalone print view to admin-panel roles', function (): void {

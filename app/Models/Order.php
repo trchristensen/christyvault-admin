@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\OrderStatus;
 use App\Services\DeliveryCalendarAvailability;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,14 +12,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
-use App\Enums\OrderStatus;
-use Filament\Support\Colors\Color;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Order extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity;
+    use HasFactory, LogsActivity, SoftDeletes;
 
     public const VIEW_UNPRINTED_PRODUCT_LINES_PERMISSION = 'view unprinted delivery product lines';
 
@@ -81,7 +80,7 @@ class Order extends Model
             $lastNumber = 0;
             if ($latestOrder && $latestOrder->order_number) {
                 preg_match('/ORD-(\d+)/', $latestOrder->order_number, $matches);
-                $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+                $lastNumber = isset($matches[1]) ? (int) $matches[1] : 0;
             }
 
             $nextNumber = $lastNumber + 1;
@@ -99,7 +98,6 @@ class Order extends Model
             }
         });
     }
-
 
     public function location(): BelongsTo
     {
@@ -158,6 +156,23 @@ class Order extends Model
         return $this->belongsTo(Trip::class)->withTrashed();
     }
 
+    public function assignedDeliveryDriverId(): ?int
+    {
+        $trip = $this->trip;
+
+        if ($trip && ! $trip->trashed() && $trip->driver_id) {
+            return (int) $trip->driver_id;
+        }
+
+        return $this->driver_id ? (int) $this->driver_id : null;
+    }
+
+    public function isAssignedToEmployee(?int $employeeId): bool
+    {
+        return $employeeId !== null
+            && $this->assignedDeliveryDriverId() === $employeeId;
+    }
+
     public function getStatusColorAttribute(): array
     {
         $colors = [
@@ -211,7 +226,6 @@ class Order extends Model
                 900 => 'rgb(17 24 39)',     // gray-900
             ],
         ];
-
 
         $getColor = function (string $color, int $shade) use ($colors) {
             return $colors[$color][$shade] ?? '#000000';
