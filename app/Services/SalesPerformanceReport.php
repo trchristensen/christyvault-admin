@@ -341,7 +341,11 @@ class SalesPerformanceReport
             ->join('order_product', 'orders.id', '=', 'order_product.order_id')
             ->leftJoin('products', 'order_product.product_id', '=', 'products.id')
             ->whereNull('orders.deleted_at')
-            ->where('orders.status', '!=', OrderStatus::CANCELLED->value)
+            ->whereNotIn('orders.status', [
+                OrderStatus::CANCELLED->value,
+                OrderStatus::TRANSFER->value,
+                OrderStatus::TRANSFERRED->value,
+            ])
             ->whereNotNull('orders.order_date')
             ->whereBetween('orders.order_date', [
                 $start->toDateString(),

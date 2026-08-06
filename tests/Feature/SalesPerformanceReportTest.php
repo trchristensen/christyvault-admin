@@ -145,6 +145,23 @@ beforeEach(function (): void {
                 'created_at' => '2026-06-20 08:00:00',
                 'updated_at' => '2026-06-20 08:00:00',
             ],
+            [
+                'id' => 8,
+                'order_date' => '2026-07-29',
+                'location_id' => 2,
+                'plant_location' => 'tulare_plant',
+                'status' => 'plant transfer',
+                'created_at' => '2026-07-29 08:00:00',
+                'updated_at' => '2026-07-29 08:00:00',
+            ],
+            [
+                'id' => 9,
+                'order_date' => '2025-07-20',
+                'location_id' => 1,
+                'status' => 'plant transferred',
+                'created_at' => '2025-07-20 08:00:00',
+                'updated_at' => '2025-07-20 08:00:00',
+            ],
         ],
     ));
 
@@ -214,6 +231,20 @@ beforeEach(function (): void {
                 'fill_load' => false,
                 'price' => 50,
             ],
+            [
+                'order_id' => 8,
+                'product_id' => 1,
+                'quantity' => 1000,
+                'fill_load' => false,
+                'price' => 100,
+            ],
+            [
+                'order_id' => 9,
+                'product_id' => 2,
+                'quantity' => 1000,
+                'fill_load' => false,
+                'price' => 200,
+            ],
         ],
     ));
 
@@ -253,7 +284,7 @@ beforeEach(function (): void {
     ]);
 });
 
-it('builds a year-over-year report from order dates and excludes cancelled orders', function (): void {
+it('builds a year-over-year report from order dates and excludes cancelled and plant transfer orders', function (): void {
     $report = app(SalesPerformanceReport::class)->build(
         locationId: '1',
         asOf: CarbonImmutable::parse('2026-07-30 12:00:00'),
