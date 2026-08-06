@@ -25,6 +25,8 @@ it('hides employee settings for a user without an employee profile', function ()
 
     Livewire::test(EditUser::class, ['record' => $user->getRouteKey()])
         ->assertSuccessful()
+        ->assertSee('Display Name')
+        ->assertSee('Login Email')
         ->assertSee('Access')
         ->assertDontSee('Employee Settings')
         ->assertDontSee('Visible Delivery Types');

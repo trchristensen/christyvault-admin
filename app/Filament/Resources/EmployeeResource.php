@@ -55,9 +55,21 @@ class EmployeeResource extends Resource
             ->components([
                 Section::make('Employee Details')
                     ->schema([
-                        TextInput::make('name')
+                        TextInput::make('first_name')
+                            ->label('First Name')
                             ->required()
                             ->maxLength(255),
+                        TextInput::make('middle_name')
+                            ->label('Middle Name')
+                            ->maxLength(255),
+                        TextInput::make('last_name')
+                            ->label('Last Name')
+                            ->required()
+                            ->maxLength(255),
+                        TextInput::make('suffix')
+                            ->label('Suffix')
+                            ->placeholder('Jr., Sr., II, III')
+                            ->maxLength(20),
                         TextInput::make('email')
                             ->email()
                             ->unique(ignoreRecord: true)
@@ -131,8 +143,12 @@ class EmployeeResource extends Resource
                                     return;
                                 }
 
-                                if (empty($get('name'))) {
-                                    $set('name', $user->name);
+                                $name = Employee::splitName($user->name);
+
+                                foreach ($name as $field => $value) {
+                                    if (empty($get($field)) && filled($value)) {
+                                        $set($field, $value);
+                                    }
                                 }
                                 if (empty($get('email'))) {
                                     $set('email', $user->email);

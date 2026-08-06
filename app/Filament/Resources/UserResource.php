@@ -38,8 +38,12 @@ class UserResource extends Resource
                     ->columnSpanFull()
                     ->schema([
                         TextInput::make('name')
-                            ->required(),
+                            ->label('Display Name')
+                            ->helperText('The name shown throughout the application. This can be a preferred name or nickname.')
+                            ->required()
+                            ->maxLength(255),
                         TextInput::make('email')
+                            ->label('Login Email')
                             ->email()
                             ->required(),
                         DateTimePicker::make('email_verified_at')
@@ -103,6 +107,7 @@ class UserResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->label('Display Name')
                     ->searchable(),
                 TextColumn::make('email')
                     ->searchable(),

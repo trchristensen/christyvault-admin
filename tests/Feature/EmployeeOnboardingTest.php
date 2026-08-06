@@ -47,11 +47,15 @@ it('creates an employee before contact details or a user account are available',
         ['display_name' => 'Production'],
     );
     $name = 'Optional Onboarding '.str()->uuid();
+    [$firstName, $lastName] = explode(' ', $name, 2);
 
     Livewire::test(CreateEmployee::class)
         ->fillForm([
             'user_id' => null,
-            'name' => $name,
+            'first_name' => $firstName,
+            'middle_name' => null,
+            'last_name' => $lastName,
+            'suffix' => null,
             'email' => null,
             'phone' => null,
             'address' => null,
@@ -80,10 +84,12 @@ it('uses the driver position without requiring an empty driver profile', functio
         ['display_name' => 'Driver'],
     );
     $name = 'Position Driver '.str()->uuid();
+    [$firstName, $lastName] = explode(' ', $name, 2);
 
     Livewire::test(CreateEmployee::class)
         ->fillForm([
-            'name' => $name,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
             'positions' => [$driverPosition->getKey()],
             'christy_location' => 'tulare',
             'is_active' => true,
@@ -109,10 +115,12 @@ it('retains optional license details when they are provided for a driver', funct
         ['display_name' => 'Driver'],
     );
     $name = 'Licensed Driver '.str()->uuid();
+    [$firstName, $lastName] = explode(' ', $name, 2);
 
     Livewire::test(CreateEmployee::class)
         ->fillForm([
-            'name' => $name,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
             'positions' => [$driverPosition->getKey()],
             'christy_location' => 'colma',
             'is_active' => true,
@@ -130,4 +138,25 @@ it('retains optional license details when they are provided for a driver', funct
     expect($employee->driver)->not->toBeNull()
         ->and($employee->driver->license_number)->toBe('TEST-LICENSE-123')
         ->and($employee->driver->license_expiration->toDateString())->toBe('2030-01-15');
+});
+
+it('keeps structured and legacy employee names synchronized', function (): void {
+    $employee = Employee::query()->create([
+        'first_name' => 'Samuel',
+        'middle_name' => 'Robert',
+        'last_name' => 'Avelar',
+        'suffix' => 'Jr.',
+        'christy_location' => 'colma',
+        'is_active' => true,
+    ]);
+
+    expect($employee->name)->toBe('Samuel Robert Avelar Jr.');
+
+    $employee->update(['name' => 'Frank Xavier Salazar Sr.']);
+
+    expect($employee->refresh()->first_name)->toBe('Frank')
+        ->and($employee->middle_name)->toBe('Xavier')
+        ->and($employee->last_name)->toBe('Salazar')
+        ->and($employee->suffix)->toBe('Sr.')
+        ->and($employee->name)->toBe('Frank Xavier Salazar Sr.');
 });
