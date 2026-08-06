@@ -346,43 +346,43 @@
 .order-status-badge,
 .delivery-tag-badge,
 .delivery-photo-badge {
-    @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-5 whitespace-nowrap;
+    @apply inline-flex items-center gap-1 text-[11px] font-semibold leading-5 whitespace-nowrap;
 }
 
 .order-status-badge {
-    @apply border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300;
+    @apply text-gray-700 dark:text-gray-300;
 }
 
 .order-status-will_call,
 .order-status-picked_up {
-    @apply border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-200;
+    @apply text-amber-700 dark:text-amber-300;
 }
 
 .order-status-cancelled {
-    @apply border-red-300 bg-red-100 text-red-800 dark:border-red-800 dark:bg-red-950/60 dark:text-red-200;
+    @apply text-red-700 dark:text-red-300;
 }
 
 .order-status-delivered,
 .order-status-completed {
-    @apply border-green-300 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-950/60 dark:text-green-200;
+    @apply text-green-700 dark:text-green-300;
 }
 
 .order-status-confirmed,
 .order-status-ready_for_delivery,
 .order-status-out_for_delivery {
-    @apply border-blue-300 bg-blue-100 text-blue-800 dark:border-blue-800 dark:bg-blue-950/60 dark:text-blue-200;
+    @apply text-blue-700 dark:text-blue-300;
 }
 
 .delivery-tag-printed {
-    @apply border-green-300 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-950/60 dark:text-green-200;
+    @apply text-green-700 dark:text-green-300;
 }
 
 .delivery-tag-not-printed {
-    @apply border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-200;
+    @apply text-amber-700 dark:text-amber-300;
 }
 
 .delivery-photo-badge {
-    @apply border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-200;
+    @apply text-blue-700 dark:text-blue-300;
 }
 
 .delivery-tag-badge svg,
