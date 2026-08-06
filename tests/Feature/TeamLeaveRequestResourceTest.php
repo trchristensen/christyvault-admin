@@ -53,7 +53,9 @@ it('shows time off requests in the team sidebar for linked employees', function 
     $response
         ->assertOk()
         ->assertSee('Welcome, Taylor')
-        ->assertSee('Time Off Requests');
+        ->assertSee('Time Off Requests')
+        ->assertSee('Request time off')
+        ->assertSee('href="'.LeaveRequestResource::getUrl('create', panel: 'team').'"', false);
 
     $this->get('/team/time-off-requests')->assertOk();
     $this->get('/team/time-off-requests/create')->assertOk();

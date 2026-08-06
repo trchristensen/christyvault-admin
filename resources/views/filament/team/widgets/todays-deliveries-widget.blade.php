@@ -1,96 +1,105 @@
 <x-filament-widgets::widget>
-    <x-filament::section>
-        <x-slot name="heading">Today's Deliveries</x-slot>
+    <div
+        class="team-deliveries-carousel"
+        data-initial-slide="{{ $initialSlide }}"
+        x-data="{
+            active: {{ $initialSlide }},
+            slideLeft(index) {
+                const track = this.$refs.track;
+                const firstSlide = track?.children[0];
+                const slide = track?.children[index];
 
-        <x-slot name="description">
-            {{ now()->format('D, M j') }} · {{ $total }} {{ \Illuminate\Support\Str::plural('delivery', $total) }}
-        </x-slot>
+                return track && firstSlide && slide
+                    ? slide.offsetLeft - firstSlide.offsetLeft
+                    : 0;
+            },
+            select(index, behavior = 'smooth') {
+                const track = this.$refs.track;
+                const slide = track?.children[index];
 
-        <x-slot name="afterHeader">
-            <a
-                href="{{ $scheduleUrl }}"
-                class="text-sm font-semibold text-primary-600 hover:text-primary-500 dark:text-primary-400"
-            >
-                View schedule →
-            </a>
-        </x-slot>
+                if (! track || ! slide) return;
 
-        @if ($groupedOrders->isEmpty())
-            <div class="rounded-lg border border-dashed border-gray-300 px-4 py-8 text-center dark:border-gray-700">
-                <x-filament::icon
-                    icon="heroicon-o-truck"
-                    class="mx-auto mb-2 h-8 w-8 text-gray-400"
-                />
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-300">No deliveries scheduled today.</p>
-            </div>
-        @else
-            <div class="team-deliveries-widget space-y-6">
-                @foreach ($groupedOrders as $plant => $orders)
-                    <div>
-                        <h3 class="mb-2 text-sm font-bold text-gray-950 dark:text-white">
-                            {{ match ($plant) {
-                                'colma_main' => 'Colma',
-                                'colma_locals' => 'Locals (Colma)',
-                                'tulare_plant' => 'Tulare',
-                                default => \Illuminate\Support\Str::headline($plant),
-                            } }}
-                        </h3>
+                this.active = index;
+                track.scrollTo({ left: this.slideLeft(index), behavior });
+            },
+            syncFromScroll() {
+                const track = this.$refs.track;
 
-                        <ul class="delivery-widget-order-list">
-                            @php
-                                $deliveryGroups = $orders
-                                    ->groupBy(fn ($order) => $order->trip && !$order->trip->trashed() && $order->trip->deliveryStopCount() > 1
-                                        ? 'trip-'.$order->trip_id
-                                        : 'order-'.$order->id)
-                                    ->map(function ($group) {
-                                        $trip = $group->first()?->trip;
-                                        $stopOrderConfirmed = ! $trip
-                                            || $group->count() <= 1
-                                            || $trip->isStopOrderConfirmed();
+                if (! track) return;
 
-                                        return $group
-                                            ->sortBy($stopOrderConfirmed ? 'stop_number' : 'id')
-                                            ->values();
-                                    });
-                            @endphp
+                const slides = Array.from(track.children);
+                const closest = slides.reduce((best, slide, index) => {
+                    const distance = Math.abs(this.slideLeft(index) - track.scrollLeft);
 
-                            @foreach ($deliveryGroups as $deliveryGroup)
-                                @php
-                                    $deliveryTrip = $deliveryGroup->count() > 1 ? $deliveryGroup->first()->trip : null;
-                                    $isDeliveryTrip = $deliveryTrip !== null;
-                                    $stopOrderConfirmed = ! $isDeliveryTrip || $deliveryTrip->isStopOrderConfirmed();
-                                @endphp
+                    return distance < best.distance ? { index, distance } : best;
+                }, { index: 0, distance: Number.POSITIVE_INFINITY });
 
-                                <li class="{{ $isDeliveryTrip ? 'delivery-trip-group-card delivery-widget-trip-item' : 'delivery-widget-order-item' }}">
-                                    @if ($isDeliveryTrip)
-                                        <x-delivery-trip-header
-                                            :trip="$deliveryTrip"
-                                            :stop-count="$deliveryGroup->count()"
-                                        />
-                                    @endif
-
-                                    <div class="{{ $isDeliveryTrip ? 'delivery-trip-group-stops' : '' }}">
-                                    @foreach ($deliveryGroup as $order)
-                                <div class="delivery-order-card {{ $isDeliveryTrip ? 'delivery-trip-stop-card' : 'delivery-order-card-embedded' }}">
-                                    <x-delivery-order-summary
-                                        :order="$order"
-                                        :is-delivery-trip="$isDeliveryTrip"
-                                        :stop-order-confirmed="$stopOrderConfirmed"
-                                        :stop-count="$deliveryGroup->count()"
-                                    />
-
-                                    <x-delivery-order-products :order="$order" />
-                                </div>
-                                    @endforeach
-                                    </div>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
+                this.active = closest.index;
+            },
+        }"
+        x-init="$nextTick(() => select(active, 'auto'))"
+        @keydown.left.prevent="select(Math.max(0, active - 1))"
+        @keydown.right.prevent="select(Math.min({{ count($deliveryDays) - 1 }}, active + 1))"
+    >
+        <div class="team-deliveries-carousel-toolbar">
+            <div class="team-deliveries-carousel-tabs" role="tablist" aria-label="Delivery day">
+                @foreach ($deliveryDays as $index => $day)
+                    <button
+                        type="button"
+                        role="tab"
+                        class="team-deliveries-carousel-tab"
+                        :class="{ 'is-active': active === {{ $index }} }"
+                        :aria-selected="active === {{ $index }}"
+                        @click="select({{ $index }})"
+                    >
+                        <span>{{ $day['label'] }}</span>
+                        <span class="team-deliveries-carousel-count">{{ $day['total'] }}</span>
+                    </button>
                 @endforeach
             </div>
-        @endif
-    </x-filament::section>
+
+            <div class="team-deliveries-carousel-arrows" aria-label="Change delivery day">
+                <button
+                    type="button"
+                    aria-label="Show previous day"
+                    :disabled="active === 0"
+                    @click="select(Math.max(0, active - 1))"
+                >
+                    <x-filament::icon icon="heroicon-m-chevron-left" />
+                </button>
+                <button
+                    type="button"
+                    aria-label="Show next day"
+                    :disabled="active === {{ count($deliveryDays) - 1 }}"
+                    @click="select(Math.min({{ count($deliveryDays) - 1 }}, active + 1))"
+                >
+                    <x-filament::icon icon="heroicon-m-chevron-right" />
+                </button>
+            </div>
+        </div>
+
+        <div
+            class="team-deliveries-carousel-track"
+            x-ref="track"
+            tabindex="0"
+            @scroll.debounce.100ms="syncFromScroll()"
+        >
+            @foreach ($deliveryDays as $index => $day)
+                <div
+                    class="team-deliveries-carousel-slide"
+                    role="tabpanel"
+                    :aria-hidden="active !== {{ $index }}"
+                >
+                    @include('filament.team.widgets.partials.delivery-day', [
+                        'day' => $day,
+                        'scheduleUrl' => $scheduleUrl,
+                    ])
+                </div>
+            @endforeach
+        </div>
+
+        <p class="team-deliveries-carousel-hint">Swipe, scroll, or use the day buttons to change days.</p>
+    </div>
 
     <x-filament-actions::modals />
 </x-filament-widgets::widget>

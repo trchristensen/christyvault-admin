@@ -2,6 +2,7 @@
 
 namespace App\Filament\Team\Widgets;
 
+use App\Filament\Team\Resources\LeaveRequestResource;
 use App\Models\CalendarDay;
 use Filament\Widgets\Widget;
 
@@ -37,6 +38,9 @@ class EmployeeOverviewWidget extends Widget
             'calendarDays' => $calendarDays,
             'employee' => $employee,
             'leaveRequests' => $leaveRequests,
+            'timeOffRequestUrl' => $employee
+                ? LeaveRequestResource::getUrl('create', panel: 'team')
+                : null,
         ];
     }
 }

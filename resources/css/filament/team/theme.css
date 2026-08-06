@@ -149,6 +149,79 @@
     }
 }
 
+.team-deliveries-carousel {
+    @apply min-w-0;
+}
+
+.team-deliveries-carousel-toolbar {
+    @apply mb-3 flex items-center justify-between gap-3;
+}
+
+.team-deliveries-carousel-tabs {
+    @apply inline-flex min-w-0 items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-white/5;
+}
+
+.team-deliveries-carousel-tab {
+    @apply inline-flex min-w-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-gray-600 transition hover:text-gray-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 dark:text-gray-300 dark:hover:text-white;
+}
+
+.team-deliveries-carousel-tab.is-active {
+    @apply bg-white text-primary-700 shadow-sm ring-1 ring-gray-950/5 dark:bg-white/10 dark:text-primary-300 dark:ring-white/10;
+}
+
+.team-deliveries-carousel-count {
+    @apply inline-flex min-w-6 items-center justify-center rounded-full bg-gray-200 px-1.5 py-0.5 text-xs tabular-nums text-gray-700 dark:bg-white/10 dark:text-gray-200;
+}
+
+.team-deliveries-carousel-tab.is-active .team-deliveries-carousel-count {
+    @apply bg-primary-50 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300;
+}
+
+.team-deliveries-carousel-arrows {
+    @apply inline-flex shrink-0 overflow-hidden rounded-lg border border-gray-300 bg-white shadow-sm divide-x divide-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:divide-gray-600;
+}
+
+.team-deliveries-carousel-arrows button {
+    @apply flex size-9 items-center justify-center text-gray-600 transition hover:bg-gray-50 hover:text-gray-950 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed disabled:opacity-35 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white;
+}
+
+.team-deliveries-carousel-arrows svg {
+    @apply size-4;
+}
+
+.team-deliveries-carousel-track {
+    display: flex;
+    min-width: 0;
+    gap: 1rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.team-deliveries-carousel-track::-webkit-scrollbar {
+    display: none;
+}
+
+.team-deliveries-carousel-slide {
+    flex: 0 0 100%;
+    min-width: 0;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+}
+
+.team-deliveries-carousel-hint {
+    @apply mt-2 text-center text-xs text-gray-500 dark:text-gray-400;
+}
+
+@media (min-width: 48rem) {
+    .team-deliveries-carousel-hint {
+        @apply sr-only;
+    }
+}
+
 .delivery-order-card {
     @apply rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900;
 }

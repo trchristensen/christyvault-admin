@@ -13,6 +13,8 @@ use Filament\Actions\Contracts\HasActions;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Widgets\Widget;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
 {
@@ -35,9 +37,13 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
     protected function getViewData(): array
     {
         $allowedDeliveryTypes = $this->allowedDeliveryTypes();
+        [$today, $tomorrow] = $this->dashboardDeliveryDates();
 
         $query = Order::query()
-            ->whereDate('assigned_delivery_date', today())
+            ->whereBetween('assigned_delivery_date', [
+                $today->toDateString(),
+                $tomorrow->toDateString(),
+            ])
             ->when(
                 $allowedDeliveryTypes !== [],
                 fn ($query) => $query->whereIn('plant_location', $allowedDeliveryTypes),
@@ -74,6 +80,61 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
             ->filter(fn (Order $order): bool => $order->is_printed || $canViewUnprintedProductLines)
             ->load('orderProducts.product');
 
+        $ordersByDate = $orders->groupBy(
+            fn (Order $order): string => $order->assigned_delivery_date?->toDateString() ?? '',
+        );
+        $pacificNow = now('America/Los_Angeles');
+
+        return [
+            'deliveryDays' => collect([
+                [
+                    'key' => 'today',
+                    'label' => 'Today',
+                    'heading' => "Today's Deliveries",
+                    'empty_message' => 'No deliveries scheduled today.',
+                    'date' => $today,
+                    'is_today' => true,
+                ],
+                [
+                    'key' => 'tomorrow',
+                    'label' => 'Tomorrow',
+                    'heading' => "Tomorrow's Deliveries",
+                    'empty_message' => 'No deliveries scheduled tomorrow.',
+                    'date' => $tomorrow,
+                    'is_today' => false,
+                ],
+            ])->map(function (array $day) use ($ordersByDate): array {
+                $dayOrders = $ordersByDate->get($day['date']->toDateString(), collect());
+
+                return [
+                    ...$day,
+                    'grouped_orders' => $this->groupOrdersByPlant($dayOrders),
+                    'total' => $dayOrders->count(),
+                ];
+            })->all(),
+            'initialSlide' => $pacificNow->greaterThanOrEqualTo(
+                $pacificNow->copy()->setTime(16, 30),
+            ) ? 1 : 0,
+            'scheduleUrl' => Schedule::getUrl(panel: 'team'),
+        ];
+    }
+
+    /**
+     * @return array{Carbon, Carbon}
+     */
+    protected function dashboardDeliveryDates(): array
+    {
+        $today = now('America/Los_Angeles')->startOfDay();
+
+        return [$today, $today->copy()->addDay()];
+    }
+
+    /**
+     * @param  Collection<int, Order>  $orders
+     * @return Collection<string, Collection<int, Order>>
+     */
+    protected function groupOrdersByPlant(Collection $orders): Collection
+    {
         $effectivePlant = function (Order $order): string {
             $tripOrders = $order->trip && ! $order->trip->trashed()
                 ? $order->trip->orderedDeliveryOrders()
@@ -84,17 +145,11 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
                 : $order->plant_location);
         };
 
-        $groupedOrders = collect([
+        return collect([
             'colma_main' => $orders->filter(fn (Order $order): bool => $effectivePlant($order) === 'colma_main'),
             'colma_locals' => $orders->filter(fn (Order $order): bool => $effectivePlant($order) === 'colma_locals'),
             'tulare_plant' => $orders->filter(fn (Order $order): bool => $effectivePlant($order) === 'tulare_plant'),
-        ])->filter(fn ($group) => $group->isNotEmpty());
-
-        return [
-            'groupedOrders' => $groupedOrders,
-            'total' => $orders->count(),
-            'scheduleUrl' => Schedule::getUrl(panel: 'team'),
-        ];
+        ])->filter(fn (Collection $group): bool => $group->isNotEmpty());
     }
 
     protected function allowedDeliveryTypes(): array
@@ -107,7 +162,10 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
 
     protected function deliveryTripDispatchIsInScope(Trip $trip): bool
     {
-        if ($trip->scheduled_date?->toDateString() !== today()->toDateString()) {
+        $visibleDates = collect($this->dashboardDeliveryDates())
+            ->map(fn (Carbon $date): string => $date->toDateString());
+
+        if (! $visibleDates->contains($trip->scheduled_date?->toDateString())) {
             return false;
         }
 
@@ -129,7 +187,9 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
             return false;
         }
 
-        if (! $order->assigned_delivery_date || ! $order->assigned_delivery_date->isToday()) {
+        [$today] = $this->dashboardDeliveryDates();
+
+        if ($order->assigned_delivery_date?->toDateString() !== $today->toDateString()) {
             return false;
         }
 

@@ -65,6 +65,17 @@
 
             <x-slot name="description">Your upcoming approved and pending requests.</x-slot>
 
+            @if ($timeOffRequestUrl)
+                <x-slot name="afterHeader">
+                    <a
+                        href="{{ $timeOffRequestUrl }}"
+                        class="text-sm font-semibold text-primary-600 hover:text-primary-500 dark:text-primary-400"
+                    >
+                        Request time off →
+                    </a>
+                </x-slot>
+            @endif
+
             @if (! $employee)
                 <div class="rounded-lg border border-dashed border-gray-300 px-4 py-7 text-center dark:border-gray-700">
                     <x-filament::icon

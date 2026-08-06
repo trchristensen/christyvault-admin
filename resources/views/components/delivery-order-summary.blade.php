@@ -3,6 +3,7 @@
     'isDeliveryTrip' => false,
     'stopOrderConfirmed' => true,
     'stopCount' => null,
+    'showPhotoAction' => true,
 ])
 
 @php
@@ -43,7 +44,9 @@
                 <x-delivery-trip-dispatch-button :trip="$activeTrip" />
             @endif
 
-            <x-delivery-order-photo-button :order="$order" />
+            @if ($showPhotoAction)
+                <x-delivery-order-photo-button :order="$order" />
+            @endif
         </div>
     </div>
 
