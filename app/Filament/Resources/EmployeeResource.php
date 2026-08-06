@@ -109,7 +109,10 @@ class EmployeeResource extends Resource
                                         $query->whereDoesntHave('employee')
                                             ->when(
                                                 $record?->user_id,
-                                                fn (Builder $query, int $userId): Builder => $query->orWhereKey($userId),
+                                                fn (Builder $query, int $userId): Builder => $query->orWhere(
+                                                    $query->getModel()->qualifyColumn($query->getModel()->getKeyName()),
+                                                    $userId,
+                                                ),
                                             );
                                     }),
                             )

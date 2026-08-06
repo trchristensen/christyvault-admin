@@ -1,6 +1,7 @@
 <?php
 
 use App\Filament\Resources\EmployeeResource\Pages\CreateEmployee;
+use App\Filament\Resources\EmployeeResource\Pages\EditEmployee;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\User;
@@ -21,6 +22,23 @@ function signInForEmployeeOnboarding(): User
 
     return $user;
 }
+
+it('renders the edit form when the employee already has a user account', function (): void {
+    signInForEmployeeOnboarding();
+    $linkedUser = User::factory()->create();
+    $employee = Employee::query()->create([
+        'user_id' => $linkedUser->getKey(),
+        'name' => 'Linked Employee '.str()->uuid(),
+        'christy_location' => 'colma',
+        'is_active' => true,
+    ]);
+
+    Livewire::test(EditEmployee::class, ['record' => $employee->getRouteKey()])
+        ->assertSuccessful()
+        ->assertFormSet([
+            'user_id' => $linkedUser->getKey(),
+        ]);
+});
 
 it('creates an employee before contact details or a user account are available', function (): void {
     signInForEmployeeOnboarding();

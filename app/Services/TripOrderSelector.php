@@ -61,7 +61,10 @@ class TripOrderSelector
                 $query->whereNull('trip_id');
 
                 if ($currentOrder) {
-                    $query->orWhereKey($currentOrder->getKey());
+                    $query->orWhere(
+                        $query->getModel()->qualifyColumn($query->getModel()->getKeyName()),
+                        $currentOrder->getKey(),
+                    );
                 }
 
                 if ($currentTrip) {

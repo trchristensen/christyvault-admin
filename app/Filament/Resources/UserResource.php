@@ -52,9 +52,28 @@ class UserResource extends Resource
                             ->visible(fn (): bool => app()->environment(['local', 'testing'])),
                     ])->columns(2),
 
-                Section::make('Team Schedule Access')
+                Section::make('Access')
+                    ->description('Roles control which application panels and features this account can use.')
                     ->columnSpanFull()
                     ->schema([
+                        Select::make('roles')
+                            ->multiple()
+                            ->relationship('roles', 'name')
+                            ->preload(),
+                    ]),
+
+                Section::make('Employee Settings')
+                    ->description('These settings apply only because this account is linked to an employee profile.')
+                    ->columnSpanFull()
+                    ->visible(fn (?User $record): bool => $record?->employee !== null)
+                    ->schema([
+                        Select::make('employee.id')
+                            ->label('Associated Employee')
+                            ->relationship('employee', 'name')
+                            ->helperText('Employee links are managed from the employee record.')
+                            ->preload()
+                            ->disabled()
+                            ->columnSpanFull(),
                         CheckboxList::make('team_schedule_delivery_types')
                             ->label('Visible Delivery Types')
                             ->options(
@@ -64,8 +83,9 @@ class UserResource extends Resource
                                     ])
                                     ->toArray()
                             )
-                            ->helperText('Leave blank to show all delivery types.')
-                            ->columns(3),
+                            ->helperText('Applies only when this employee has permission to view the delivery schedule. Leave blank to show all delivery types.')
+                            ->columns(3)
+                            ->columnSpanFull(),
                         TextInput::make('team_schedule_days_ahead')
                             ->label('Days Ahead')
                             ->numeric()
@@ -75,22 +95,6 @@ class UserResource extends Resource
                             ->helperText('Leave blank to use 14 days.'),
                     ])
                     ->columns(2),
-
-                Section::make('Roles & Relationships')
-                    ->description('Roles control application access. Employee positions describe job responsibilities and are managed on the employee record.')
-                    ->columnSpanFull()
-                    ->schema([
-                        Select::make('roles')
-                            ->multiple()
-                            ->relationship('roles', 'name')
-                            ->preload(),
-                        Select::make('employee.id')  // Change from employee_id to employee.id
-                            ->label('Associated Employee')
-                            ->relationship('employee', 'name')
-                            ->preload()
-                            ->disabled(),
-
-                    ])->columns(2),
             ]);
     }
 
