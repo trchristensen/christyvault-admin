@@ -31,6 +31,19 @@ class EditLeaveRequest extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
+        $user = auth()->user();
+
+        if ($user?->canManagePlantTimeOffRequests() && $this->record->isManageableBy($user)) {
+            $status = $data['status'] ?? $this->record->status;
+
+            return [
+                ...$data,
+                'employee_id' => $this->record->employee_id,
+                'status' => $status,
+                'reviewed_by' => $status === 'pending' ? null : $user->getKey(),
+            ];
+        }
+
         return [
             ...$data,
             'employee_id' => $this->record->employee_id,

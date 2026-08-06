@@ -65,7 +65,7 @@
 
             <x-slot name="description">
                 {{ $showsTeamTimeOff
-                    ? 'Pending requests and approved upcoming absences for all active employees.'
+                    ? 'Pending requests and approved upcoming absences for employees in your assigned scope.'
                     : 'Your upcoming approved and pending requests.' }}
             </x-slot>
 

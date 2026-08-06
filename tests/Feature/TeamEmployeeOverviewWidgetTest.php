@@ -5,6 +5,7 @@ use App\Models\LeaveRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 uses(DatabaseTransactions::class);
@@ -48,22 +49,37 @@ function insertOverviewLeave(
     return LeaveRequest::findOrFail($id);
 }
 
-it('gives only the designated leadership roles the team time-off overview', function (): void {
-    foreach (['super-admin', 'admin', 'manager', 'foreman'] as $role) {
-        [$user] = overviewUser("{$role} User", $role, withEmployee: false);
+it('uses scoped permissions rather than role names for the team time-off overview', function (): void {
+    $viewPlant = Permission::findOrCreate(User::VIEW_PLANT_TIME_OFF_REQUESTS_PERMISSION, 'web');
+    $viewAll = Permission::findOrCreate(User::VIEW_ALL_TIME_OFF_REQUESTS_PERMISSION, 'web');
+    $managePlant = Permission::findOrCreate(User::MANAGE_PLANT_TIME_OFF_REQUESTS_PERMISSION, 'web');
+    [$ordinaryEmployee] = overviewUser('Ordinary Employee');
+    [$plantViewer] = overviewUser('Plant Viewer', 'driver');
+    [$plantApprover] = overviewUser('Plant Approver', 'foreman');
+    [$companyViewer] = overviewUser('Company Viewer', 'manager', withEmployee: false);
+    [$unlinkedPlantViewer] = overviewUser('Unlinked Plant Viewer', 'manager', withEmployee: false);
 
-        expect($user->canViewTeamTimeOffOverview())->toBeTrue();
-    }
+    $plantViewer->givePermissionTo($viewPlant);
+    $plantApprover->givePermissionTo($managePlant);
+    $companyViewer->givePermissionTo($viewAll);
+    $unlinkedPlantViewer->givePermissionTo($viewPlant);
 
-    foreach (['employee', 'driver', 'tulare-driver'] as $role) {
-        [$user] = overviewUser("{$role} User", $role);
-
-        expect($user->canViewTeamTimeOffOverview())->toBeFalse();
-    }
+    expect($ordinaryEmployee->canViewTeamTimeOffOverview())->toBeFalse()
+        ->and($plantViewer->canViewTeamTimeOffOverview())->toBeTrue()
+        ->and($plantApprover->canViewTeamTimeOffOverview())->toBeTrue()
+        ->and($companyViewer->canViewTeamTimeOffOverview())->toBeTrue()
+        ->and($unlinkedPlantViewer->canViewTeamTimeOffOverview())->toBeFalse();
 });
 
 it('shows leadership pending requests and approved absences for all active employees', function (string $role): void {
-    [$leader] = overviewUser('Team Leader', $role, withEmployee: false);
+    $usesCompanyScope = in_array($role, ['admin', 'super-admin'], true);
+    [$leader] = overviewUser('Team Leader', $role, withEmployee: ! $usesCompanyScope);
+    $leader->givePermissionTo(Permission::findOrCreate(
+        $usesCompanyScope
+            ? User::VIEW_ALL_TIME_OFF_REQUESTS_PERMISSION
+            : User::VIEW_PLANT_TIME_OFF_REQUESTS_PERMISSION,
+        'web',
+    ));
     [, $pendingEmployee] = overviewUser('Alex Pending');
     [, $approvedEmployee] = overviewUser('Bailey Approved');
     [, $inactiveEmployee] = overviewUser('Inactive Employee', active: false);
@@ -73,8 +89,9 @@ it('shows leadership pending requests and approved absences for all active emplo
     insertOverviewLeave($inactiveEmployee, 'approved', 'unpaid', startsInDays: 12);
     insertOverviewLeave($approvedEmployee, 'rejected', 'other', startsInDays: 14);
 
-    $this->actingAs($leader)
-        ->get('/team')
+    $response = $this->actingAs($leader)->get('/team');
+
+    $response
         ->assertOk()
         ->assertSee('Team Time Off')
         ->assertSee('Pending requests')
@@ -86,9 +103,33 @@ it('shows leadership pending requests and approved absences for all active emplo
         ->assertDontSee('Inactive Employee')
         ->assertDontSee('Pending private details')
         ->assertDontSee('Approved private details')
-        ->assertDontSee('Request time off')
         ->assertDontSee('No employee profile is linked');
+
+    if ($usesCompanyScope) {
+        $response->assertDontSee('Request time off');
+    } else {
+        $response->assertSee('Request time off');
+    }
 })->with(['super-admin', 'admin', 'manager', 'foreman']);
+
+it('keeps plant-scoped time off inside the viewers plant', function (): void {
+    [$foreman] = overviewUser('Tulare Foreman', 'foreman');
+    $foreman->employee->update(['christy_location' => 'tulare']);
+    $foreman->givePermissionTo(Permission::findOrCreate(User::VIEW_PLANT_TIME_OFF_REQUESTS_PERMISSION, 'web'));
+    [, $tulareEmployee] = overviewUser('Tulare Employee');
+    $tulareEmployee->update(['christy_location' => 'tulare']);
+    [, $colmaEmployee] = overviewUser('Colma Employee');
+
+    insertOverviewLeave($tulareEmployee, 'pending', 'vacation');
+    insertOverviewLeave($colmaEmployee, 'pending', 'sick');
+
+    $this->actingAs($foreman)
+        ->get('/team')
+        ->assertOk()
+        ->assertSee('Team Time Off')
+        ->assertSee('Tulare Employee')
+        ->assertDontSee('Colma Employee');
+});
 
 it('keeps ordinary employees on their personal time-off view', function (): void {
     [$user, $employee] = overviewUser('Taylor Employee');

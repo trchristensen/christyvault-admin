@@ -13,21 +13,22 @@ use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 uses(DatabaseTransactions::class);
 
-function teamUserWithEmployee(string $name): array
+function teamUserWithEmployee(string $name, string $role = 'employee', string $location = 'colma'): array
 {
     $user = User::factory()->create(['name' => $name]);
-    $user->assignRole(Role::findOrCreate('employee', 'web'));
+    $user->assignRole(Role::findOrCreate($role, 'web'));
 
     $employee = Employee::create([
         'user_id' => $user->getKey(),
         'name' => $name,
         'email' => $user->email,
         'is_active' => true,
-        'christy_location' => 'colma',
+        'christy_location' => $location,
         'hire_date' => '2020-01-01',
         'birth_date' => '1990-01-01',
     ]);
@@ -283,13 +284,19 @@ it('hydrates specific hours when editing a pending request', function (): void {
         ]);
 });
 
-it('notifies admin panel users when an employee submits time off', function (): void {
+it('notifies only approvers whose permission scope includes the request', function (): void {
+    $viewPlant = Permission::findOrCreate(User::VIEW_PLANT_TIME_OFF_REQUESTS_PERMISSION, 'web');
+    $managePlant = Permission::findOrCreate(User::MANAGE_PLANT_TIME_OFF_REQUESTS_PERMISSION, 'web');
+    $manageAll = Permission::findOrCreate(User::MANAGE_ALL_TIME_OFF_REQUESTS_PERMISSION, 'web');
     $admin = User::factory()->create();
     $admin->assignRole(Role::findOrCreate('admin', 'web'));
-    $superAdmin = User::factory()->create();
-    $superAdmin->assignRole(Role::findOrCreate('super-admin', 'web'));
-    $manager = User::factory()->create();
-    $manager->assignRole(Role::findOrCreate('manager', 'web'));
+    $admin->givePermissionTo($manageAll);
+    [$plantApprover] = teamUserWithEmployee('Colma Approver', 'foreman', 'colma');
+    $plantApprover->givePermissionTo($managePlant);
+    [$plantViewer] = teamUserWithEmployee('Colma Viewer', 'manager', 'colma');
+    $plantViewer->givePermissionTo($viewPlant);
+    [$otherPlantApprover] = teamUserWithEmployee('Tulare Approver', 'foreman', 'tulare');
+    $otherPlantApprover->givePermissionTo($managePlant);
     [$employeeUser, $employee] = teamUserWithEmployee('Notification Employee');
     $startDate = today()->next(CarbonInterface::MONDAY);
     $endDate = $startDate->copy()->addDays(2);
@@ -310,6 +317,7 @@ it('notifies admin panel users when an employee submits time off', function (): 
         ->latest('id')
         ->firstOrFail();
     $notification = $admin->notifications()->firstOrFail();
+    $plantNotification = $plantApprover->notifications()->firstOrFail();
 
     expect($notification->type)->toBe(LeaveRequestSubmitted::class)
         ->and($notification->data['panel'])->toBe('admin')
@@ -317,16 +325,60 @@ it('notifies admin panel users when an employee submits time off', function (): 
         ->and($notification->data['body'])->toContain('Vacation')
         ->and($notification->data['leave_request_id'])->toBe($request->getKey())
         ->and($notification->data['actions'][0]['url'])->toContain("/leave-requests/{$request->getKey()}/edit")
-        ->and($superAdmin->notifications()->where('type', LeaveRequestSubmitted::class)->count())->toBe(1)
-        ->and($manager->notifications()->count())->toBe(0);
+        ->and($plantNotification->data['panel'])->toBe('team')
+        ->and($plantNotification->data['actions'][0]['url'])->toContain("/team/time-off-requests/{$request->getKey()}/edit")
+        ->and($plantViewer->notifications()->count())->toBe(0)
+        ->and($otherPlantApprover->notifications()->count())->toBe(0);
+});
+
+it('scopes viewing and management permissions by plant', function (): void {
+    $viewPlant = Permission::findOrCreate(User::VIEW_PLANT_TIME_OFF_REQUESTS_PERMISSION, 'web');
+    $managePlant = Permission::findOrCreate(User::MANAGE_PLANT_TIME_OFF_REQUESTS_PERMISSION, 'web');
+    [$foreman] = teamUserWithEmployee('Tulare Permission Foreman', 'foreman', 'tulare');
+    [, $tulareEmployee] = teamUserWithEmployee('Tulare Permission Employee', location: 'tulare');
+    [, $colmaEmployee] = teamUserWithEmployee('Colma Permission Employee');
+    $tulareRequest = insertLeaveRequest($tulareEmployee->getKey());
+    $colmaRequest = insertLeaveRequest($colmaEmployee->getKey());
+    $foreman->givePermissionTo($viewPlant);
+
+    $this->actingAs($foreman);
+    Filament::setCurrentPanel('team');
+
+    expect(LeaveRequestResource::getEloquentQuery()->pluck('id')->all())->toBe([$tulareRequest->getKey()])
+        ->and(LeaveRequestResource::canEdit($tulareRequest))->toBeFalse()
+        ->and(LeaveRequestResource::canEdit($colmaRequest))->toBeFalse();
+
+    $foreman->givePermissionTo($managePlant);
+
+    expect(LeaveRequestResource::canEdit($tulareRequest))->toBeTrue()
+        ->and(LeaveRequestResource::canEdit($colmaRequest))->toBeFalse();
+
+    Livewire::test(EditLeaveRequest::class, ['record' => $tulareRequest->getRouteKey()])
+        ->fillForm([
+            'status' => 'approved',
+            'review_notes' => 'Coverage confirmed.',
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $tulareRequest->refresh();
+
+    expect($tulareRequest->status)->toBe('approved')
+        ->and($tulareRequest->reviewed_by)->toBe($foreman->getKey())
+        ->and($tulareRequest->review_notes)->toBe('Coverage confirmed.');
 });
 
 it('shows the number of pending requests in the admin sidebar', function (): void {
+    $admin = User::factory()->create();
+    $admin->assignRole(Role::findOrCreate('admin', 'web'));
+    $admin->givePermissionTo(Permission::findOrCreate(User::MANAGE_ALL_TIME_OFF_REQUESTS_PERMISSION, 'web'));
     [, $employee] = teamUserWithEmployee('Badge Employee');
 
     insertLeaveRequest($employee->getKey());
     insertLeaveRequest($employee->getKey());
     insertLeaveRequest($employee->getKey(), 'approved');
+
+    $this->actingAs($admin);
 
     expect(AdminLeaveRequestResource::getNavigationBadge())->toBe('2')
         ->and(AdminLeaveRequestResource::getNavigationBadgeColor())->toBe('warning')

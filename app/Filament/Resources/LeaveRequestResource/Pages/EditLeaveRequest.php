@@ -20,6 +20,16 @@ class EditLeaveRequest extends EditRecord
         ];
     }
 
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $status = $data['status'] ?? $this->record->status;
+
+        return [
+            ...$data,
+            'reviewed_by' => $status === 'pending' ? null : auth()->id(),
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [

@@ -3,7 +3,9 @@
 namespace App\Notifications;
 
 use App\Filament\Resources\LeaveRequestResource;
+use App\Filament\Team\Resources\LeaveRequestResource as TeamLeaveRequestResource;
 use App\Models\LeaveRequest;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Notifications\Notification;
@@ -21,6 +23,9 @@ class LeaveRequestSubmitted extends Notification
     {
         $employee = $this->leaveRequest->employee?->name ?? 'An employee';
         $type = str($this->leaveRequest->type)->headline()->toString();
+        $usesAdminPanel = $notifiable instanceof User && $notifiable->canAccessPanelById('admin');
+        $resource = $usesAdminPanel ? LeaveRequestResource::class : TeamLeaveRequestResource::class;
+        $panel = $usesAdminPanel ? 'admin' : 'team';
 
         return [
             ...FilamentNotification::make()
@@ -32,13 +37,13 @@ class LeaveRequestSubmitted extends Notification
                     Action::make('review')
                         ->label('Review request')
                         ->button()
-                        ->url(LeaveRequestResource::getUrl('edit', [
+                        ->url($resource::getUrl('edit', [
                             'record' => $this->leaveRequest,
-                        ], panel: 'admin'))
+                        ], panel: $panel))
                         ->markAsRead(),
                 ])
                 ->getDatabaseMessage(),
-            'panel' => 'admin',
+            'panel' => $panel,
             'leave_request_id' => $this->leaveRequest->getKey(),
         ];
     }

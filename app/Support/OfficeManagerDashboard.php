@@ -31,6 +31,7 @@ final class OfficeManagerDashboard
         $nextWorkday = $this->nextWorkday($today);
         $items = collect();
         $approvedLeave = LeaveRequest::query()
+            ->visibleTo(auth()->user())
             ->where('status', 'approved')
             ->where('start_date', '<=', $nextWorkday->copy()->endOfDay())
             ->where('end_date', '>=', $today->copy()->startOfDay())
@@ -128,7 +129,10 @@ final class OfficeManagerDashboard
             ]);
         }
 
-        $pendingLeave = LeaveRequest::query()->where('status', 'pending')->count();
+        $pendingLeave = LeaveRequest::query()
+            ->visibleTo(auth()->user())
+            ->where('status', 'pending')
+            ->count();
 
         if ($pendingLeave > 0) {
             $items->push([
@@ -191,6 +195,7 @@ final class OfficeManagerDashboard
                 });
 
             $absences = LeaveRequest::query()
+                ->visibleTo(auth()->user())
                 ->with('employee.positions')
                 ->where('status', 'approved')
                 ->where('start_date', '<=', $date->copy()->endOfDay())

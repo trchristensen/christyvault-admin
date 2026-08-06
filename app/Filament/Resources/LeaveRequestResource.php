@@ -19,6 +19,8 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Malzariey\FilamentDaterangepickerFilter\Fields\DateRangePicker;
 
 class LeaveRequestResource extends Resource
@@ -33,12 +35,13 @@ class LeaveRequestResource extends Resource
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->hasRole(['admin', 'super-admin']) ?? false;
+        return auth()->user()?->canViewTeamTimeOffOverview() ?? false;
     }
 
     public static function getNavigationBadge(): ?string
     {
         $pendingRequests = static::getModel()::query()
+            ->visibleTo(auth()->user())
             ->where('status', 'pending')
             ->count();
 
@@ -60,7 +63,19 @@ class LeaveRequestResource extends Resource
         return $schema
             ->components([
                 Select::make('employee_id')
-                    ->relationship(name: 'employee', titleAttribute: 'name')
+                    ->relationship(
+                        name: 'employee',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: function (Builder $query): Builder {
+                            $user = auth()->user();
+
+                            if ($user?->canManageAllTimeOffRequests()) {
+                                return $query;
+                            }
+
+                            return $query->where('christy_location', $user?->employee?->christy_location);
+                        },
+                    )
                     ->required(),
                 Select::make('type')
                     ->options([
@@ -130,6 +145,48 @@ class LeaveRequestResource extends Resource
                 Textarea::make('review_notes')
                     ->columnSpanFull(),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->visibleTo(auth()->user());
+    }
+
+    public static function canViewAny(): bool
+    {
+        return static::canAccess();
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return $record instanceof LeaveRequest
+            && auth()->user()
+            && $record->isVisibleTo(auth()->user());
+    }
+
+    public static function canCreate(): bool
+    {
+        $user = auth()->user();
+
+        return $user?->canManageAllTimeOffRequests()
+            || ($user?->canManagePlantTimeOffRequests() && filled($user->employee?->christy_location));
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return $record instanceof LeaveRequest
+            && auth()->user()
+            && $record->isManageableBy(auth()->user());
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return static::canEdit($record);
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->canManagePlantTimeOffRequests() ?? false;
     }
 
     public static function table(Table $table): Table

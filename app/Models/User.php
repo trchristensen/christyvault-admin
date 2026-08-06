@@ -33,13 +33,6 @@ class User extends Authenticatable implements FilamentUser
         'manager',
     ];
 
-    public const TEAM_TIME_OFF_OVERVIEW_ROLES = [
-        'admin',
-        'super-admin',
-        'manager',
-        'foreman',
-    ];
-
     public const VIEW_PROCEDURES_PERMISSION = 'view procedures';
 
     public const MANAGE_PROCEDURES_PERMISSION = 'manage procedures';
@@ -47,6 +40,14 @@ class User extends Authenticatable implements FilamentUser
     public const VIEW_PROGRAMS_PERMISSION = 'view programs';
 
     public const MANAGE_PROGRAMS_PERMISSION = 'manage programs';
+
+    public const VIEW_PLANT_TIME_OFF_REQUESTS_PERMISSION = 'view plant time off requests';
+
+    public const VIEW_ALL_TIME_OFF_REQUESTS_PERMISSION = 'view all time off requests';
+
+    public const MANAGE_PLANT_TIME_OFF_REQUESTS_PERMISSION = 'manage plant time off requests';
+
+    public const MANAGE_ALL_TIME_OFF_REQUESTS_PERMISSION = 'manage all time off requests';
 
     public function canAccessPanel(Panel $panel): bool
     {
@@ -77,7 +78,32 @@ class User extends Authenticatable implements FilamentUser
 
     public function canViewTeamTimeOffOverview(): bool
     {
-        return $this->hasAnyRole(self::TEAM_TIME_OFF_OVERVIEW_ROLES);
+        return $this->canViewAllTimeOffRequests()
+            || ($this->canViewPlantTimeOffRequests() && filled($this->employee?->christy_location));
+    }
+
+    public function canViewPlantTimeOffRequests(): bool
+    {
+        return $this->canViewAllTimeOffRequests()
+            || $this->can(self::VIEW_PLANT_TIME_OFF_REQUESTS_PERMISSION)
+            || $this->canManagePlantTimeOffRequests();
+    }
+
+    public function canViewAllTimeOffRequests(): bool
+    {
+        return $this->can(self::VIEW_ALL_TIME_OFF_REQUESTS_PERMISSION)
+            || $this->canManageAllTimeOffRequests();
+    }
+
+    public function canManagePlantTimeOffRequests(): bool
+    {
+        return $this->canManageAllTimeOffRequests()
+            || $this->can(self::MANAGE_PLANT_TIME_OFF_REQUESTS_PERMISSION);
+    }
+
+    public function canManageAllTimeOffRequests(): bool
+    {
+        return $this->can(self::MANAGE_ALL_TIME_OFF_REQUESTS_PERMISSION);
     }
 
     public function canViewProcedures(): bool

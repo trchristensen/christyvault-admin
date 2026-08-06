@@ -32,6 +32,7 @@ class EmployeeOverviewWidget extends Widget
         $showsTeamTimeOff = $user?->canViewTeamTimeOffOverview() ?? false;
         $leaveRequests = $showsTeamTimeOff
             ? LeaveRequest::query()
+                ->visibleTo($user)
                 ->with('employee')
                 ->whereHas('employee', fn ($query) => $query->where('is_active', true))
                 ->whereDate('end_date', '>=', today()->toDateString())

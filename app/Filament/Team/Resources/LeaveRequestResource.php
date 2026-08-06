@@ -99,6 +99,23 @@ class LeaveRequestResource extends Resource
                             ->required(fn (Get $get): bool => $get('duration') === 'specific_hours')
                             ->hidden(fn (Get $get): bool => $get('duration') !== 'specific_hours')
                             ->dehydratedWhenHidden(false),
+                        Select::make('status')
+                            ->label('Decision')
+                            ->options([
+                                'pending' => 'Pending',
+                                'approved' => 'Approved',
+                                'rejected' => 'Rejected',
+                            ])
+                            ->required()
+                            ->visible(fn (string $operation): bool => $operation === 'edit'
+                                && (auth()->user()?->canManagePlantTimeOffRequests() ?? false)),
+                        Textarea::make('review_notes')
+                            ->label('Review notes')
+                            ->helperText('Optional internal context about the decision.')
+                            ->rows(3)
+                            ->maxLength(1000)
+                            ->visible(fn (string $operation): bool => $operation === 'edit'
+                                && (auth()->user()?->canManagePlantTimeOffRequests() ?? false)),
                         Textarea::make('reason')
                             ->label('Notes')
                             ->helperText('Optional. Add anything the office should know when reviewing the request.')
@@ -113,6 +130,11 @@ class LeaveRequestResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('employee.name')
+                    ->label('Employee')
+                    ->searchable()
+                    ->sortable()
+                    ->visible(fn (): bool => auth()->user()?->canViewTeamTimeOffOverview() ?? false),
                 TextColumn::make('type')
                     ->formatStateUsing(fn (string $state): string => str($state)->headline())
                     ->badge(),
@@ -157,19 +179,21 @@ class LeaveRequestResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $employeeId = auth()->user()?->employee?->getKey();
-
-        return parent::getEloquentQuery()
-            ->when(
-                $employeeId,
-                fn (Builder $query): Builder => $query->where('employee_id', $employeeId),
-                fn (Builder $query): Builder => $query->whereRaw('1 = 0'),
-            );
+        return parent::getEloquentQuery()->visibleTo(auth()->user());
     }
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->employee !== null;
+        $user = auth()->user();
+
+        return $user && ($user->employee !== null || $user->canViewTeamTimeOffOverview());
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return $record instanceof LeaveRequest
+            && auth()->user()
+            && $record->isVisibleTo(auth()->user());
     }
 
     public static function canCreate(): bool
@@ -179,7 +203,10 @@ class LeaveRequestResource extends Resource
 
     public static function canEdit(Model $record): bool
     {
-        return static::ownsPendingRequest($record);
+        return ($record instanceof LeaveRequest
+                && auth()->user()
+                && $record->isManageableBy(auth()->user()))
+            || static::ownsPendingRequest($record);
     }
 
     public static function canDelete(Model $record): bool
