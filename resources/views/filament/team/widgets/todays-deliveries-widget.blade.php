@@ -1,4 +1,4 @@
-<x-filament-widgets::widget>
+<x-filament-widgets::widget class="team-dashboard-deliveries-widget">
     <div
         class="team-deliveries-carousel"
         data-initial-slide="{{ $initialSlide }}"
