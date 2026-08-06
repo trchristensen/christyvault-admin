@@ -791,6 +791,28 @@ class RackDiagramService
         $unitsPerPosition = max(1, (int) ($item['units_per_rack_position'] ?? 1));
         $placed = 0;
 
+        if (! $honorPreferredRackLevels
+            && ($item['preferred_rack_level'] ?? null) === LoadingProfile::LEVEL_BOTTOM
+            && $this->pairingCategory($item) === self::PAIRING_WILBERT_VAULT) {
+            $matchingBoundaryRackIndex = $this->matchingProductBoundaryRackIndex(
+                $racks,
+                $item,
+                (int) $stop['sequence'],
+                $allowedRackTypes,
+            );
+
+            if ($matchingBoundaryRackIndex !== null) {
+                $placed = $this->fillStandardRack(
+                    $racks[$matchingBoundaryRackIndex],
+                    $item,
+                    $stop,
+                    $code,
+                    $unitsPerPosition,
+                    $placed,
+                );
+            }
+        }
+
         if ($honorPreferredRackLevels
             && ($item['preferred_rack_level'] ?? null) === LoadingProfile::LEVEL_BOTTOM) {
             $placed = $this->fillPreferredBottomRackLevels(
@@ -1289,6 +1311,45 @@ class RackDiagramService
         $candidateIndexes = collect($racks)
             ->keys()
             ->filter(fn (int $rackIndex): bool => $racks[$rackIndex]['stop_sequences'] === [$laterStopSequence])
+            ->sortDesc()
+            ->values();
+
+        foreach ($candidateIndexes as $rackIndex) {
+            if (in_array($racks[$rackIndex]['type_code'], $allowedRackTypes, true)
+                && $this->rackHasOpenLevelForItem($racks[$rackIndex], $item)) {
+                return $rackIndex;
+            }
+
+            if ($this->convertBoundaryRackForItem($racks[$rackIndex], $item)
+                && $this->rackHasOpenLevelForItem($racks[$rackIndex], $item)) {
+                return $rackIndex;
+            }
+        }
+
+        return null;
+    }
+
+    private function matchingProductBoundaryRackIndex(
+        array &$racks,
+        array $item,
+        int $stopSequence,
+        array $allowedRackTypes,
+    ): ?int {
+        $laterStopSequence = $stopSequence + 1;
+        $candidateIndexes = collect($racks)
+            ->keys()
+            ->filter(function (int $rackIndex) use ($racks, $item, $laterStopSequence): bool {
+                if ($racks[$rackIndex]['stop_sequences'] !== [$laterStopSequence]) {
+                    return false;
+                }
+
+                $occupiedCells = collect($racks[$rackIndex]['cells'])->filter();
+
+                return $occupiedCells->isNotEmpty()
+                    && $occupiedCells->every(
+                        fn (array $cell): bool => ($cell['sku'] ?? null) === ($item['sku'] ?? null),
+                    );
+            })
             ->sortDesc()
             ->values();
 

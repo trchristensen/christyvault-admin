@@ -444,6 +444,65 @@ it('relaxes preferred Wilbert bottom placement rather than leaving products off 
         ]);
 });
 
+it('consolidates matching Wilberts across an unload-safe boundary to free a three-high fill rack', function (): void {
+    $twoHigh = [
+        'required_rack_type' => 'standard_2_high',
+        'required_rack_level_count' => 2,
+        'allowed_rack_type_codes' => ['standard_2_high'],
+    ];
+    $wilbert = [
+        ...$twoHigh,
+        'sku' => 'W3086-M',
+        'name' => 'Monticello',
+        'preferred_rack_level' => 'bottom',
+        'unit_weight_lbs' => 2190,
+        'loading_profile' => 'regular_burial_vault',
+    ];
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem([...$wilbert, 'quantity' => 5]),
+            rackDiagramItem([
+                'sku' => 'V3086-1',
+                'name' => 'Christy Vault',
+                'quantity' => 9,
+                'required_rack_type' => 'standard_3_high',
+                'required_rack_level_count' => 3,
+                'allowed_rack_type_codes' => ['standard_2_high', 'standard_3_high'],
+                'unit_weight_lbs' => 1288,
+                'loading_profile' => 'standard_three_high_box',
+            ]),
+        ]),
+        rackDiagramStop(2, [
+            rackDiagramItem([
+                ...$twoHigh,
+                'sku' => 'W3086-CT',
+                'name' => 'Copper Triune',
+                'quantity' => 1,
+                'required_rack_level' => 'bottom',
+                'unit_weight_lbs' => 2690,
+                'loading_profile' => 'regular_burial_vault_triune',
+            ]),
+            rackDiagramItem([...$wilbert, 'quantity' => 4]),
+        ]),
+    ]));
+
+    expect($diagram['placed_units'])->toBe(19)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($diagram['mixed_stop_racks'])->toBe(1)
+        ->and(collect($diagram['racks'][2]['cells'])->pluck('sku')->all())->toBe([
+            'W3086-M',
+            'W3086-M',
+        ])
+        ->and(collect($diagram['racks'][2]['cells'])->pluck('stop_sequence')->all())->toBe([2, 1])
+        ->and($diagram['racks'][2]['product_weight_lbs'])->toBe(4380.0)
+        ->and(collect($diagram['racks'][7]['cells'])->pluck('sku')->all())->toBe([
+            'V3086-1',
+            'V3086-1',
+            'V3086-1',
+        ])
+        ->and($diagram['racks'][7]['product_weight_lbs'])->toBe(3864.0);
+});
+
 it('keeps Wilberts on bottom ahead of G5 and V1 pairing while fitting an additional V1', function (): void {
     $g5 = [
         'sku' => 'G3086-5',

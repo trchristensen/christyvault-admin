@@ -281,6 +281,53 @@ it('adds a fourth V1 after preferred-bottom Wilberts take priority over G5 and V
         ->and($stopTwoWilberts->pluck('level')->unique()->values()->all())->toBe([1]);
 });
 
+it('adds a ninth V1 by consolidating Monticellos at an unload-safe stop boundary', function (): void {
+    $twoHigh = new RackType(['code' => 'standard_2_high', 'level_count' => 2]);
+    $twoHigh->id = 1;
+    $threeHigh = new RackType(['code' => 'standard_3_high', 'level_count' => 3]);
+    $threeHigh->id = 2;
+    $v1Profile = fillPlanProfile('standard_three_high_box', $threeHigh, 22);
+    $v1Profile->setRelation('allowedRackTypes', new Collection([$twoHigh, $threeHigh]));
+    $wilbertProfile = fillPlanProfile('regular_burial_vault', $twoHigh, 15);
+    $wilbertProfile->preferred_rack_level = LoadingProfile::LEVEL_BOTTOM;
+    $triuneProfile = fillPlanProfile(
+        'regular_burial_vault_triune',
+        $twoHigh,
+        15,
+        level: LoadingProfile::LEVEL_BOTTOM,
+    );
+
+    $stopOne = fillPlanOrder(1, 'ORD-02255', [
+        fillPlanLine(1, fillPlanProduct('W3086-M', 2190, $wilbertProfile), 5),
+        fillPlanLine(2, fillPlanProduct('V3086-1', 1288, $v1Profile), null, true, priority: 1),
+    ]);
+    $stopTwo = fillPlanOrder(2, 'ORD-02254', [
+        fillPlanLine(3, fillPlanProduct('W3086-CT', 2690, $triuneProfile), 1),
+        fillPlanLine(4, fillPlanProduct('W3086-M', 2190, $wilbertProfile), 4),
+    ]);
+
+    $plan = fillPlanner()->forTrip(fillPlanTrip([$stopOne, $stopTwo]));
+
+    expect($plan['fill_allocations'][0])->toMatchArray([
+        'sku' => 'V3086-1',
+        'planned_quantity' => 9,
+        'resolved' => true,
+        'source' => 'automatic',
+    ])->and($plan['demand']->summary['product_units'])->toBe(19)
+        ->and($plan['demand']->summary['known_weight_lbs'])->toBe(33992.0)
+        ->and($plan['demand']->summary['remaining_product_weight_lbs'])->toBe(4508.0)
+        ->and($plan['diagram']['unplaced'])->toBeEmpty()
+        ->and(collect($plan['diagram']['racks'][2]['cells'])->pluck('sku')->all())->toBe([
+            'W3086-M',
+            'W3086-M',
+        ])
+        ->and(collect($plan['diagram']['racks'][7]['cells'])->pluck('sku')->all())->toBe([
+            'V3086-1',
+            'V3086-1',
+            'V3086-1',
+        ]);
+});
+
 it('moves eligible fixed products to the flatbed to maximize the reviewed V1 fill load', function (): void {
     $twoHigh = new RackType([
         'code' => 'standard_2_high',
