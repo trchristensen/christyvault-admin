@@ -1,5 +1,5 @@
 <x-filament-widgets::widget>
-    <div class="grid gap-6 lg:grid-cols-2">
+    <div class="team-employee-overview-grid">
         <x-filament::section>
             <x-slot name="heading">Upcoming Company Dates</x-slot>
 

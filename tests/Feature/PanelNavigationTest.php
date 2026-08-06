@@ -49,6 +49,7 @@ it('preloads the team theme and guards its initial paint', function (): void {
         ->assertSee('Welcome, '.str($user->name)->before(' '))
         ->assertSee('Upcoming Company Dates')
         ->assertSee('My Time Off')
+        ->assertSee('team-employee-overview-grid', false)
         ->assertDontSee("Today's Deliveries");
     expect($html)
         ->toContain('rel="preload"')

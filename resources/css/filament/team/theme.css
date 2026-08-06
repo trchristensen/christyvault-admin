@@ -4,6 +4,24 @@
 @source '../../../../resources/views/filament/team/**/*';
 @source '../../../../resources/views/components/*.blade.php';
 
+.team-employee-overview-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.team-employee-overview-grid > .fi-section {
+    min-width: 0;
+    height: 100%;
+}
+
+@media (min-width: 48rem) {
+    .team-employee-overview-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 .procedure-library-table .fi-ta-search-field {
     width: min(36rem, calc(100vw - 4rem));
 }
