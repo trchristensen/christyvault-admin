@@ -332,7 +332,21 @@
 }
 
 .delivery-order-statuses {
-    @apply mt-3 flex flex-wrap items-center gap-2;
+    @apply mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1;
+}
+
+.delivery-order-statuses > :not(:first-child)::before {
+    content: '';
+    width: 0.25rem;
+    height: 0.25rem;
+    flex-shrink: 0;
+    margin-right: 0.125rem;
+    border-radius: 9999px;
+    background-color: var(--gray-300);
+}
+
+.dark .delivery-order-statuses > :not(:first-child)::before {
+    background-color: var(--gray-600);
 }
 
 .delivery-trip-stop-label {
@@ -346,7 +360,7 @@
 .order-status-badge,
 .delivery-tag-badge,
 .delivery-photo-badge {
-    @apply inline-flex items-center gap-1 text-[11px] font-semibold leading-5 whitespace-nowrap;
+    @apply inline-flex items-center gap-1 text-xs font-semibold leading-5 whitespace-nowrap;
 }
 
 .order-status-badge {
@@ -387,7 +401,7 @@
 
 .delivery-tag-badge svg,
 .delivery-photo-badge svg {
-    @apply size-3.5 shrink-0;
+    @apply size-4 shrink-0;
 }
 
 .delivery-trip-dispatch-trigger,
