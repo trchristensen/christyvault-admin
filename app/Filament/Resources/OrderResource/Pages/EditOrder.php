@@ -2,10 +2,14 @@
 
 namespace App\Filament\Resources\OrderResource\Pages;
 
+use App\Filament\Actions\TripLoadSummaryAction;
 use App\Filament\Resources\OrderResource;
+use App\Models\Order;
 use App\Services\DeliveryTripService;
 use App\Services\LoadPlanning\TripLoadPlanService;
 use App\Services\TripVehicleConfigurationResolver;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -18,8 +22,66 @@ class EditOrder extends EditRecord
 
     protected function getHeaderActions(): array
     {
+        $save = $this->getSaveFormAction()
+            ->label('Save changes')
+            ->icon('heroicon-o-check')
+            ->color('primary')
+            ->size('lg')
+            ->formId('form');
+
+        $cancel = $this->getCancelFormAction()
+            ->label('Cancel changes')
+            ->icon('heroicon-o-x-mark')
+            ->color('gray')
+            ->size('lg')
+            ->hiddenLabel()
+            ->tooltip('Cancel changes');
+
+        $loadSummary = TripLoadSummaryAction::make()
+            ->size('lg')
+            ->hiddenLabel()
+            ->tooltip('Load summary');
+
+        $printTag = Action::make('printDeliveryTag')
+            ->label('Print delivery tag')
+            ->icon('heroicon-o-printer')
+            ->color('gray')
+            ->size('lg')
+            ->hiddenLabel()
+            ->tooltip('Print delivery tag')
+            ->url(fn (Order $record): string => route('orders.print', ['order' => $record]))
+            ->openUrlInNewTab();
+
+        $previewTag = Action::make('previewDeliveryTag')
+            ->label('Preview delivery tag')
+            ->icon('heroicon-o-eye')
+            ->color('gray')
+            ->size('lg')
+            ->hiddenLabel()
+            ->tooltip('Preview delivery tag')
+            ->url(fn (Order $record): string => route('orders.print.formbg', ['order' => $record]))
+            ->openUrlInNewTab();
+
+        $delete = DeleteAction::make()
+            ->label('Delete order')
+            ->icon('heroicon-o-trash')
+            ->color('danger')
+            ->size('lg')
+            ->hiddenLabel()
+            ->tooltip('Delete order')
+            ->modalHeading('Delete this order?')
+            ->modalDescription(fn (Order $record): string => "{$record->order_number} will be removed from active orders. You can restore it later.")
+            ->modalSubmitActionLabel('Delete order');
+
         return [
-            DeleteAction::make(),
+            ActionGroup::make([
+                $save,
+                $cancel,
+                $loadSummary,
+                $printTag,
+                $previewTag,
+                $delete,
+            ])->buttonGroup(),
         ];
     }
 
