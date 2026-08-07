@@ -1,6 +1,8 @@
 @php
     use Propaganistas\LaravelPhone\PhoneNumber;
     use Illuminate\Support\Facades\Storage;
+
+    $showIdentitySummary = $showIdentitySummary ?? true;
 @endphp
 <!-- add css -->
 <style>
@@ -227,6 +229,10 @@
 
     .order-container .justify-between {
         justify-content: space-between;
+    }
+
+    .order-container .justify-end {
+        justify-content: flex-end;
     }
 
     .order-container .gap-0 {
@@ -663,49 +669,54 @@
     }
 </style>
 <div class="p-4 order-container">
-    <div class="flex items-start justify-between mb-4">
-        <div>
-            <h2 class="font-bold text-gray-400 dark:text-gray-600 dark:text-white">{{ $record->order_number }}</h2>
-
-        </div>
-        <div class="flex items-center gap-4">
-            {{-- get the label, not the value --}}
-            <p class="text-sm font-bold text-gray-600 dark:text-gray-400">
-                {{ App\Enums\PlantLocation::from($record->plant_location)->getLabel() }}</p>
-
-            {{-- Delivery Tag Status --}}
-            @if ($record->is_printed)
-                <span
-                    class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full dark:bg-green-900 dark:text-green-200">
-                    <x-heroicon-s-check-circle class="w-3 h-3" />
-                    Printed
-                </span>
-            @else
-                <span
-                    class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-800 bg-gray-100 rounded-full dark:bg-gray-700 dark:text-gray-200">
-                    <x-heroicon-o-printer class="w-3 h-3" />
-                    Not Printed
-                </span>
+    @if ($showIdentitySummary || $record->delivery_tag_url)
+        <div class="flex items-start {{ $showIdentitySummary ? 'justify-between' : 'justify-end' }} mb-4">
+            @if ($showIdentitySummary)
+                <div>
+                    <h2 class="font-bold text-gray-400 dark:text-gray-600 dark:text-white">{{ $record->order_number }}</h2>
+                </div>
             @endif
 
-            {{-- Delivery Tag Attachment Status --}}
-            @if ($record->delivery_tag_url)
-                <button @click="$dispatch('toggle-delivery-tag')"
-                    class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full hover:bg-blue-200 transition-colors cursor-pointer dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
-                    title="Click to view delivery tag" x-data="{ showTag: false }"
-                    x-on:toggle-delivery-tag.window="showTag = !showTag">
-                    <x-heroicon-s-document-text class="w-3 h-3" />
-                    <span x-text="showTag ? 'Hide Tag' : 'View Tag'"></span>
-                </button>
-            @endif
+            <div class="flex items-center gap-4">
+                @if ($showIdentitySummary)
+                    <p class="text-sm font-bold text-gray-600 dark:text-gray-400">
+                        {{ App\Enums\PlantLocation::from($record->plant_location)->getLabel() }}
+                    </p>
 
-            <div class="px-2 py-1 text-sm font-medium text-gray-800 border rounded-full"
-                style="background-color: {{ $record->status_color['background'] }}; color: {{ $record->status_color['text'] }}; border-color: {{ $record->status_color['border'] }}">
-                {{-- get the status label (it's an enum) --}}
-                {{ App\Enums\OrderStatus::from($record->status)->label() }}
+                    @if ($record->is_printed)
+                        <span
+                            class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full dark:bg-green-900 dark:text-green-200">
+                            <x-heroicon-s-check-circle class="w-3 h-3" />
+                            Printed
+                        </span>
+                    @else
+                        <span
+                            class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-800 bg-gray-100 rounded-full dark:bg-gray-700 dark:text-gray-200">
+                            <x-heroicon-o-printer class="w-3 h-3" />
+                            Not Printed
+                        </span>
+                    @endif
+                @endif
+
+                @if ($record->delivery_tag_url)
+                    <button @click="$dispatch('toggle-delivery-tag')"
+                        class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full hover:bg-blue-200 transition-colors cursor-pointer dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
+                        title="Click to view delivery tag" x-data="{ showTag: false }"
+                        x-on:toggle-delivery-tag.window="showTag = !showTag">
+                        <x-heroicon-s-document-text class="w-3 h-3" />
+                        <span x-text="showTag ? 'Hide Tag' : 'View Tag'"></span>
+                    </button>
+                @endif
+
+                @if ($showIdentitySummary)
+                    <div class="px-2 py-1 text-sm font-medium text-gray-800 border rounded-full"
+                        style="background-color: {{ $record->status_color['background'] }}; color: {{ $record->status_color['text'] }}; border-color: {{ $record->status_color['border'] }}">
+                        {{ App\Enums\OrderStatus::from($record->status)->label() }}
+                    </div>
+                @endif
             </div>
         </div>
-    </div>
+    @endif
 
     {{-- Expandable Delivery Tag Preview --}}
     @if ($record->delivery_tag_url)

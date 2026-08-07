@@ -11,36 +11,50 @@
                 style="min-width: min(90vw, 800px);"
             >
                 <!-- Sticky Header -->
-                <div class="sticky top-0 z-20 flex items-center justify-between p-6 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 rounded-t-lg">
-                    <div class="flex items-center space-x-4">
-                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-                            {{ $showLoadSummary ? 'Load summary' : 'View order' }}
+                <div class="sticky top-0 z-20 flex items-center justify-between gap-3 px-5 py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 rounded-t-lg">
+                    <div class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+                        <h2 class="text-lg font-semibold leading-tight text-gray-900 dark:text-white">
+                            {{ $showLoadSummary ? 'Load summary' : ($order?->order_number ?? 'Order') }}
                         </h2>
                         @if($order)
-                            <div class="flex items-center space-x-2">
+                            <div class="flex flex-wrap items-center gap-2 text-xs">
                                 @if($showLoadSummary)
                                     <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ $order->trip?->trip_number }}</span>
                                     <span class="text-sm text-gray-400 dark:text-gray-500">•</span>
                                     <span class="text-sm text-gray-500 dark:text-gray-400">{{ $order->order_number }}</span>
                                 @else
-                                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ $order->order_number }}</span>
-                                    <span class="text-sm text-gray-400 dark:text-gray-500">•</span>
-                                    <span class="text-sm font-medium text-gray-600 dark:text-gray-300">
-                                        {{ $order->location->city ?? 'Unknown' }}, {{ $order->location->state ?? '' }}
+                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                        {{ \App\Enums\PlantLocation::from($order->plant_location)->getLabel() }}
                                     </span>
-                                    <div class="px-2 py-1 text-xs font-medium rounded-full border"
-                                         style="background-color: {{ $order->status_color['background'] ?? '#f3f4f6' }};
-                                                color: {{ $order->status_color['text'] ?? '#374151' }};
-                                                border-color: {{ $order->status_color['border'] ?? '#d1d5db' }}">
-                                        {{ ucfirst($order->status) }}
-                                    </div>
+                                    <span class="inline-flex items-center rounded-full border px-2.5 py-1 font-medium"
+                                        style="background-color: {{ $order->status_color['background'] ?? '#f3f4f6' }};
+                                               color: {{ $order->status_color['text'] ?? '#374151' }};
+                                               border-color: {{ $order->status_color['border'] ?? '#d1d5db' }}">
+                                        {{ \App\Enums\OrderStatus::tryFrom($order->status)?->label() ?? \Illuminate\Support\Str::headline($order->status) }}
+                                    </span>
+                                    @if ($order->is_printed)
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
+                                            <x-heroicon-s-check-circle class="h-3.5 w-3.5" />
+                                            Tag printed
+                                        </span>
+                                    @elseif ($order->requiresPrintedDeliveryTag())
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 font-medium text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                                            <x-heroicon-s-exclamation-triangle class="h-3.5 w-3.5" />
+                                            Tag not printed
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                            <x-heroicon-s-pencil-square class="h-3.5 w-3.5" />
+                                            Handwritten tag
+                                        </span>
+                                    @endif
                                 @endif
                             </div>
                         @endif
                     </div>
                     <button 
                         wire:click="closeModal"
-                        class="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                        class="shrink-0 p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
                         title="Close"
                     >
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,7 +71,10 @@
                                 @include('filament.resources.trip-resource.load-summary', $loadSummary)
                             </div>
                         @else
-                            @include('filament.resources.order-resource.custom-view', ['record' => $order])
+                            @include('filament.resources.order-resource.custom-view', [
+                                'record' => $order,
+                                'showIdentitySummary' => false,
+                            ])
                         @endif
                     @endif
                 </div>
