@@ -25,6 +25,40 @@
     font-size: 0.875rem;
 }
 
+.delivery-calendar-unassigned-group + .delivery-calendar-unassigned-group {
+    margin-top: 0.875rem;
+}
+
+.delivery-calendar-unassigned-group-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.375rem;
+    padding: 0.25rem 0.375rem;
+    color: #374151;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.025em;
+}
+
+.delivery-calendar-unassigned-group-count {
+    display: inline-flex;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: #f3f4f6;
+    color: #4b5563;
+    font-size: 0.6875rem;
+}
+
+.delivery-calendar-unassigned-group-orders {
+    display: grid;
+    gap: 0.25rem;
+}
+
 /* Show our custom content */
 .fc-event-main>div {
     display: block !important;
