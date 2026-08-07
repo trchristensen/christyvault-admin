@@ -1,5 +1,5 @@
 <x-filament-widgets::widget>
-    <x-filament::section>
+    <x-filament::section class="admin-dashboard-attention-section">
         <x-slot name="heading">Needs attention</x-slot>
 
         <x-slot name="description">

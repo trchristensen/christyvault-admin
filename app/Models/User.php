@@ -71,6 +71,12 @@ class User extends Authenticatable implements FilamentUser
             && $this->can('view team delivery schedule');
     }
 
+    public function shouldPrioritizeTeamDashboardDeliveries(): bool
+    {
+        return $this->hasAnyRole(['driver', 'tulare-driver'])
+            && ! $this->hasAnyRole(['admin', 'super-admin', 'manager', 'foreman']);
+    }
+
     public function canManageTeamContent(): bool
     {
         return $this->hasAnyRole(self::TEAM_CONTENT_MANAGER_ROLES);

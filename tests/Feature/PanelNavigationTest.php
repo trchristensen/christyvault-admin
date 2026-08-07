@@ -93,6 +93,28 @@ it('allows authorized delivery roles to see the team schedule', function (): voi
         ->and(TodaysDeliveriesWidget::canView())->toBeTrue();
 });
 
+it('only moves team dashboard deliveries ahead of employee content for drivers on mobile', function (): void {
+    $permission = Permission::findOrCreate('view team delivery schedule', 'web');
+    $driver = User::factory()->create();
+    $driver->assignRole(Role::findOrCreate('driver', 'web'));
+    $driver->givePermissionTo($permission);
+
+    $foreman = User::factory()->create();
+    $foreman->assignRole(Role::findOrCreate('foreman', 'web'));
+    $foreman->givePermissionTo($permission);
+
+    $this->actingAs($driver)
+        ->get('/team')
+        ->assertOk()
+        ->assertSee('team-dashboard-deliveries-widget--driver-first', false);
+
+    $this->actingAs($foreman)
+        ->get('/team')
+        ->assertOk()
+        ->assertSee("Today's Deliveries")
+        ->assertDontSee('team-dashboard-deliveries-widget--driver-first', false);
+});
+
 it('shows administrators every other panel in the panel switcher', function (): void {
     $user = User::factory()->create();
     $user->assignRole(Role::findOrCreate('admin', 'web'));

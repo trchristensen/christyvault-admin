@@ -58,10 +58,21 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('viewLogViewer', fn (User $user): bool => $user->hasRole('super-admin'));
 
+        $filamentStylePaths = [
+            'calendar' => resource_path('css/calendar.css'),
+            'dateRange' => resource_path('css/filament-date-range.css'),
+            'adminDashboard' => resource_path('css/admin-dashboard.css'),
+        ];
+
+        FilamentAsset::appVersion(substr(hash('sha256', implode('|', array_map(
+            static fn (string $path): string => hash_file('sha256', $path),
+            $filamentStylePaths,
+        ))), 0, 12));
+
         FilamentAsset::register([
-            Css::make('calendar-styles', resource_path('css/calendar.css')),
-            Css::make('date-range-overrides', resource_path('css/filament-date-range.css')),
-            Css::make('office-manager-dashboard-styles', resource_path('css/office-manager-dashboard.css')),
+            Css::make('calendar-styles', $filamentStylePaths['calendar']),
+            Css::make('date-range-overrides', $filamentStylePaths['dateRange']),
+            Css::make('admin-dashboard-styles', $filamentStylePaths['adminDashboard']),
         ]);
 
         FilamentView::registerRenderHook(

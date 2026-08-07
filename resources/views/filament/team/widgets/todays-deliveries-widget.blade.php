@@ -1,4 +1,9 @@
-<x-filament-widgets::widget class="team-dashboard-deliveries-widget">
+<x-filament-widgets::widget
+    @class([
+        'team-dashboard-deliveries-widget',
+        'team-dashboard-deliveries-widget--driver-first' => auth()->user()?->shouldPrioritizeTeamDashboardDeliveries(),
+    ])
+>
     <div
         class="team-deliveries-carousel"
         data-initial-slide="{{ $initialSlide }}"

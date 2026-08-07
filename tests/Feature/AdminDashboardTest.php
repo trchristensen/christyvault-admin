@@ -27,7 +27,7 @@ it('opens the admin dashboard instead of redirecting to the delivery calendar', 
     $this->actingAs($user)
         ->get('/')
         ->assertOk()
-        ->assertSee('office-manager-dashboard-styles.css', false)
+        ->assertSee('admin-dashboard-styles.css', false)
         ->assertSee('Your daily briefing across deliveries, employees, and customer follow-up.')
         ->assertSee('Delivery calendar')
         ->assertSee('New order');
@@ -50,7 +50,8 @@ it('registers and renders the useful admin dashboard widgets', function (): void
 
     Livewire::test(OfficeManagerAttentionWidget::class)
         ->assertOk()
-        ->assertSee('Needs attention');
+        ->assertSee('Needs attention')
+        ->assertSeeHtml('admin-dashboard-attention-section');
 
     Livewire::test(TodayTomorrowBriefingWidget::class)
         ->assertOk()

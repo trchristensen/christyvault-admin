@@ -17,7 +17,7 @@
 }
 
 @media (max-width: 47.999rem) {
-    .team-dashboard-deliveries-widget {
+    .team-dashboard-deliveries-widget--driver-first {
         order: -1;
     }
 }
