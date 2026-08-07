@@ -29,30 +29,39 @@
 
             <h3 class="delivery-calendar-unassigned-heading font-bold mb-2">Unassigned Orders</h3>
             <div id="unassigned-orders-list" class="delivery-calendar-unassigned-list">
-                @forelse($unassignedOrders as $order)
-                    <div
-                        class="fc-draggable-order"
-                        data-order-id="{{ $order->id }}"
-                        draggable="true"
-                        wire:click="openOrderModal({{ $order->id }})"
-                        style="margin-bottom: 4px; cursor: grab;"
-                    >
-                        <div class="order-container status-{{ strtolower($order->status) }}">
-                            <div class="order-title">{{ $order->location->name ?? $order->order_number }}</div>
-                            @if($order->location)
-                                <div class="order-address">{{ $order->location->city }}, {{ $order->location->state }}</div>
-                            @endif
-                            <div class="order-status">
-                                <span>{{ \App\Enums\OrderStatus::tryFrom($order->status)?->label() ?? ucfirst(str_replace('_', ' ', $order->status)) }}</span>
-                                @if($order->order_number)
-                                    <span class="order-number">#{{ ltrim($order->order_number, 'ORD-') }}</span>
-                                @endif
-                            </div>
-                            <div class="order-status mt-2">Order Date: {{ $order->order_date->format('m/d') }}</div>
-                            {{-- requested date --}}
-                            <div class="order-status">Requested by: {{ $order->order_date->format('m/d') }}</div>
+                @forelse($unassignedOrderGroups as $group)
+                    <section class="delivery-calendar-unassigned-group" data-plant-location="{{ $group['key'] }}">
+                        <div class="delivery-calendar-unassigned-group-heading">
+                            <span>{{ $group['label'] }}</span>
+                            <span class="delivery-calendar-unassigned-group-count">{{ $group['orders']->count() }}</span>
                         </div>
-                    </div>
+
+                        <div class="delivery-calendar-unassigned-group-orders">
+                            @foreach($group['orders'] as $order)
+                                <div
+                                    class="fc-draggable-order"
+                                    data-order-id="{{ $order->id }}"
+                                    draggable="true"
+                                    wire:click="openOrderModal({{ $order->id }})"
+                                >
+                                    <div class="order-container status-{{ strtolower($order->status) }}">
+                                        <div class="order-title">{{ $order->location->name ?? $order->order_number }}</div>
+                                        @if($order->location)
+                                            <div class="order-address">{{ $order->location->city }}, {{ $order->location->state }}</div>
+                                        @endif
+                                        <div class="order-status">
+                                            <span>{{ \App\Enums\OrderStatus::tryFrom($order->status)?->label() ?? ucfirst(str_replace('_', ' ', $order->status)) }}</span>
+                                            @if($order->order_number)
+                                                <span class="order-number">#{{ ltrim($order->order_number, 'ORD-') }}</span>
+                                            @endif
+                                        </div>
+                                        <div class="order-status mt-2">Order date: {{ $order->order_date?->format('m/d') ?? '—' }}</div>
+                                        <div class="order-status">Requested: {{ $order->requested_delivery_date?->format('m/d') ?? 'Not set' }}</div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </section>
                 @empty
                     <p class="delivery-calendar-unassigned-empty">No unassigned orders.</p>
                 @endforelse

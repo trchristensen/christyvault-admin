@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Enums\OrderStatus;
+use App\Enums\PlantLocation;
 use App\Filament\Actions\TripLoadSummaryAction;
 use App\Filament\Resources\OrderResource;
 use App\Filament\Resources\Traits\HasOrderForm;
@@ -393,20 +394,39 @@ class DeliveryCalendar extends Page
 
     public function getViewData(): array
     {
+        $unassignedOrders = Order::query()
+            ->with('location')
+            ->whereNull('assigned_delivery_date')
+            ->whereIn('status', [
+                OrderStatus::PENDING->value,
+                OrderStatus::CONFIRMED->value,
+                OrderStatus::WILL_CALL->value,
+                OrderStatus::IN_PRODUCTION->value,
+                OrderStatus::PREBURY->value,
+                OrderStatus::READY_FOR_DELIVERY->value,
+                OrderStatus::TRANSFER->value,
+            ])
+            ->orderByRaw('CASE WHEN requested_delivery_date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('requested_delivery_date')
+            ->orderBy('order_date')
+            ->orderBy('created_at')
+            ->get();
+
+        $ordersByPlant = $unassignedOrders->groupBy(fn (Order $order): string => PlantLocation::tryFrom((string) $order->plant_location)?->value
+            ?? PlantLocation::COLMA_MAIN->value);
+
+        $unassignedOrderGroups = collect([
+            ['key' => PlantLocation::COLMA_MAIN->value, 'label' => 'Colma'],
+            ['key' => PlantLocation::COLMA_LOCALS->value, 'label' => 'Locals'],
+            ['key' => PlantLocation::TULARE_PLANT->value, 'label' => 'Tulare'],
+        ])->map(fn (array $group): array => [
+            ...$group,
+            'orders' => $ordersByPlant->get($group['key'], collect()),
+        ])->filter(fn (array $group): bool => $group['orders']->isNotEmpty())->values();
+
         return [
-            'unassignedOrders' => Order::whereNull('assigned_delivery_date')
-                ->whereIn('status', [
-                    OrderStatus::PENDING->value,
-                    OrderStatus::CONFIRMED->value,
-                    OrderStatus::WILL_CALL->value,
-                    OrderStatus::IN_PRODUCTION->value,
-                    OrderStatus::PREBURY->value,
-                    OrderStatus::READY_FOR_DELIVERY->value,
-                    OrderStatus::TRANSFER->value,
-                ])
-                ->orderBy('created_at', 'desc')
-                ->limit(20)
-                ->get(),
+            'unassignedOrders' => $unassignedOrders,
+            'unassignedOrderGroups' => $unassignedOrderGroups,
         ];
     }
 
