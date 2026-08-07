@@ -115,7 +115,15 @@ it('shows the load summary in the saved trip edit modal with the same permission
         public function tripEditorActionForTest(): Action
         {
             return collect($this->getHeaderActions())
+                ->flatMap(fn (Action|ActionGroup $action): array => $action instanceof ActionGroup
+                    ? array_values($action->getFlatActions())
+                    : [$action])
                 ->first(fn (Action $action): bool => $action->getName() === 'createSplitLoad');
+        }
+
+        public function headerActionsForTest(): array
+        {
+            return $this->getHeaderActions();
         }
 
         protected function tripForLoadSummary(int $tripId): Trip
@@ -126,6 +134,26 @@ it('shows the load summary in the saved trip edit modal with the same permission
     $page->tripForTest = tripWithDeliveryTagStates(true);
     $user = loadSummaryViewer(false);
     auth()->setUser($user);
+    $headerActions = $page->headerActionsForTest();
+    $calendarActions = $headerActions[0];
+    $calendarActions->getActions();
+    $flatCalendarActions = $calendarActions->getFlatActions();
+
+    expect($calendarActions)->toBeInstanceOf(ActionGroup::class)
+        ->and($calendarActions->isButtonGroup())->toBeTrue()
+        ->and(array_keys($flatCalendarActions))->toBe([
+            'createOrder',
+            'createSplitLoad',
+            'Print Calendar',
+        ])
+        ->and($flatCalendarActions['createOrder']->getIcon())->toBe('heroicon-o-plus')
+        ->and($flatCalendarActions['createOrder']->isButton())->toBeTrue()
+        ->and($flatCalendarActions['createOrder']->isLabelHidden())->toBeFalse()
+        ->and($flatCalendarActions['createSplitLoad']->isButton())->toBeTrue()
+        ->and($flatCalendarActions['createSplitLoad']->isLabelHidden())->toBeTrue()
+        ->and($flatCalendarActions['Print Calendar']->isButton())->toBeTrue()
+        ->and($flatCalendarActions['Print Calendar']->isLabelHidden())->toBeTrue();
+
     $tripActionGroup = $page->tripEditorActionForTest()
         ->livewire($page)
         ->getExtraModalFooterActions()[0];
