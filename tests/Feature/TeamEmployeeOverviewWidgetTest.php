@@ -95,7 +95,7 @@ it('shows leadership pending requests and approved absences for all active emplo
         ->assertOk()
         ->assertSee('Team Time Off')
         ->assertSee('Pending requests')
-        ->assertSee('Approved time off')
+        ->assertSee('Upcoming approved time off')
         ->assertSee('Alex Pending')
         ->assertSee('Bailey Approved')
         ->assertSee('Vacation')
@@ -111,6 +111,29 @@ it('shows leadership pending requests and approved absences for all active emplo
         $response->assertSee('Request time off');
     }
 })->with(['super-admin', 'admin', 'manager', 'foreman']);
+
+it('separates employees who are off today from upcoming approved time off', function (): void {
+    [$foreman] = overviewUser('Time Off Foreman', 'foreman');
+    $foreman->givePermissionTo(Permission::findOrCreate(User::VIEW_PLANT_TIME_OFF_REQUESTS_PERMISSION, 'web'));
+    [, $currentEmployee] = overviewUser('Currently Away');
+    [, $futureEmployee] = overviewUser('Away Later');
+
+    insertOverviewLeave($currentEmployee, 'approved', 'vacation', startsInDays: -1);
+    insertOverviewLeave($futureEmployee, 'approved', 'vacation', startsInDays: 7);
+
+    $this->actingAs($foreman)
+        ->get('/team')
+        ->assertOk()
+        ->assertSee('Employees off today')
+        ->assertSee('Off today')
+        ->assertSee('Upcoming approved time off')
+        ->assertSeeInOrder([
+            'Employees off today',
+            'Currently Away',
+            'Upcoming approved time off',
+            'Away Later',
+        ]);
+});
 
 it('keeps plant-scoped time off inside the viewers plant', function (): void {
     [$foreman] = overviewUser('Tulare Foreman', 'foreman');

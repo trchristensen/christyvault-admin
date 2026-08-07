@@ -65,7 +65,7 @@
 
             <x-slot name="description">
                 {{ $showsTeamTimeOff
-                    ? 'Pending requests and approved upcoming absences for employees in your assigned scope.'
+                    ? 'Employees off today, pending requests, and upcoming approved absences in your assigned scope.'
                     : 'Your upcoming approved and pending requests.' }}
             </x-slot>
 
@@ -101,13 +101,31 @@
             @else
                 @if ($showsTeamTimeOff)
                     <div class="space-y-5">
-                        @foreach (['pending' => 'Pending requests', 'approved' => 'Approved time off'] as $status => $label)
-                            @php($requestsForStatus = $leaveRequests->where('status', $status))
+                        @php
+                            $currentTimeOff = $leaveRequests->filter(
+                                fn ($leaveRequest) => $leaveRequest->status === 'approved' && $leaveRequest->isHappeningAt(),
+                            );
+                            $timeOffGroups = [
+                                'current' => ['label' => 'Employees off today', 'requests' => $currentTimeOff],
+                                'pending' => ['label' => 'Pending requests', 'requests' => $leaveRequests->where('status', 'pending')],
+                                'approved' => [
+                                    'label' => 'Upcoming approved time off',
+                                    'requests' => $leaveRequests->where('status', 'approved')->diff($currentTimeOff),
+                                ],
+                            ];
+                        @endphp
+
+                        @foreach ($timeOffGroups as $group => $timeOffGroup)
+                            @php($requestsForStatus = $timeOffGroup['requests'])
 
                             @if ($requestsForStatus->isNotEmpty())
                                 <section>
                                     <div class="mb-2 flex items-center justify-between gap-3">
-                                        <h3 class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ $label }}</h3>
+                                        <h3 @class([
+                                            'text-xs font-bold uppercase tracking-wide',
+                                            'text-danger-600 dark:text-danger-400' => $group === 'current',
+                                            'text-gray-500 dark:text-gray-400' => $group !== 'current',
+                                        ])>{{ $timeOffGroup['label'] }}</h3>
                                         <span class="text-xs font-semibold tabular-nums text-gray-400 dark:text-gray-500">{{ $requestsForStatus->count() }}</span>
                                     </div>
 
@@ -126,8 +144,16 @@
                                                     </p>
                                                 </div>
 
-                                                <x-filament::badge :color="$status === 'approved' ? 'success' : 'warning'">
-                                                    {{ str($status)->headline() }}
+                                                <x-filament::badge :color="match ($group) {
+                                                    'current' => 'danger',
+                                                    'approved' => 'success',
+                                                    default => 'warning',
+                                                }">
+                                                    {{ match ($group) {
+                                                        'current' => 'Off today',
+                                                        'approved' => 'Approved',
+                                                        default => 'Pending',
+                                                    } }}
                                                 </x-filament::badge>
                                             </div>
                                         @endforeach
@@ -149,8 +175,9 @@
                                     </p>
                                 </div>
 
-                                <x-filament::badge :color="$leaveRequest->status === 'approved' ? 'success' : 'warning'">
-                                    {{ str($leaveRequest->status)->headline() }}
+                                @php($isCurrentlyOff = $leaveRequest->status === 'approved' && $leaveRequest->isHappeningAt())
+                                <x-filament::badge :color="$isCurrentlyOff ? 'danger' : ($leaveRequest->status === 'approved' ? 'success' : 'warning')">
+                                    {{ $isCurrentlyOff ? 'Off today' : str($leaveRequest->status)->headline() }}
                                 </x-filament::badge>
                             </div>
                         @endforeach

@@ -132,6 +132,24 @@ class LeaveRequest extends Model
             : $this->start_date->format('M j').' – '.$this->end_date->format('M j, Y');
     }
 
+    public function isHappeningAt(?Carbon $moment = null): bool
+    {
+        if (! $this->start_date || ! $this->end_date) {
+            return false;
+        }
+
+        $moment ??= now();
+
+        if ($this->hasSpecificTimes()) {
+            return $moment->betweenIncluded($this->start_date, $this->end_date);
+        }
+
+        return $moment->betweenIncluded(
+            $this->start_date->copy()->startOfDay(),
+            $this->end_date->copy()->endOfDay(),
+        );
+    }
+
     public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
         if (! $user) {
