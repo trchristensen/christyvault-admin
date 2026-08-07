@@ -5,6 +5,7 @@ namespace App\Filament\Team\Widgets;
 use App\Enums\PlantLocation;
 use App\Filament\Team\Concerns\ManagesDeliveryPhotos;
 use App\Filament\Team\Concerns\ManagesDeliveryTripDispatch;
+use App\Filament\Team\Concerns\ManagesTripPreTripInspections;
 use App\Filament\Team\Pages\Schedule;
 use App\Models\Order;
 use App\Models\Trip;
@@ -22,6 +23,7 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
     use InteractsWithSchemas;
     use ManagesDeliveryPhotos;
     use ManagesDeliveryTripDispatch;
+    use ManagesTripPreTripInspections;
 
     protected string $view = 'filament.team.widgets.todays-deliveries-widget';
 
@@ -57,6 +59,8 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
                 'driver',
                 'activeTripStop',
                 'trip.driver',
+                'trip.vehicleConfiguration',
+                'trip.preTripInspections.inspectionDefects',
                 'trip.orders:id,trip_id,plant_location,stop_number,is_printed',
                 'trip.stops.order:id,plant_location,is_printed',
             ])
@@ -192,6 +196,13 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
     }
 
     protected function refreshDeliveryTripDispatchView(): void {}
+
+    protected function deliveryTripPreTripInspectionIsInScope(Trip $trip): bool
+    {
+        return $this->deliveryTripDispatchIsInScope($trip);
+    }
+
+    protected function refreshTripPreTripInspectionView(): void {}
 
     protected function deliveryPhotoOrderIsInScope(Order $order): bool
     {

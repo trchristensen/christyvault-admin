@@ -288,6 +288,8 @@ it('renders every maintenance panel workflow for an authorized manager', functio
         "/maintenance/service-vendors/{$vendor->id}/edit",
         '/maintenance/meter-readings',
         '/maintenance/meter-readings/create',
+        '/maintenance/vehicle-inspections',
+        '/maintenance/inspection-defects',
     ] as $path) {
         $this->get($path)->assertOk();
     }

@@ -7,6 +7,7 @@ use App\Filament\Maintenance\Resources\MaintenanceAssetResource\Pages\EditMainte
 use App\Filament\Maintenance\Resources\MaintenanceAssetResource\Pages\ListMaintenanceAssets;
 use App\Filament\Maintenance\Resources\MaintenanceAssetResource\RelationManagers\MeterReadingsRelationManager;
 use App\Filament\Maintenance\Resources\MaintenanceAssetResource\RelationManagers\PlansRelationManager;
+use App\Filament\Maintenance\Resources\MaintenanceAssetResource\RelationManagers\VehicleInspectionReportsRelationManager;
 use App\Filament\Maintenance\Resources\MaintenanceAssetResource\RelationManagers\WorkOrdersRelationManager;
 use App\Models\MaintenanceAsset;
 use App\Support\MaintenanceOptions;
@@ -119,7 +120,12 @@ class MaintenanceAssetResource extends Resource
 
     public static function getRelations(): array
     {
-        return [WorkOrdersRelationManager::class, PlansRelationManager::class, MeterReadingsRelationManager::class];
+        return [
+            WorkOrdersRelationManager::class,
+            VehicleInspectionReportsRelationManager::class,
+            PlansRelationManager::class,
+            MeterReadingsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

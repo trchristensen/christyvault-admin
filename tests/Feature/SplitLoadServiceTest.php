@@ -185,6 +185,15 @@ beforeEach(function (): void {
         $table->softDeletes();
     });
 
+    Schema::create('trip_pre_trip_inspections', function (Blueprint $table): void {
+        $table->id();
+        $table->unsignedBigInteger('trip_id');
+        $table->unsignedBigInteger('driver_id')->nullable();
+        $table->unsignedBigInteger('vehicle_configuration_id')->nullable();
+        $table->timestamp('completed_at')->nullable();
+        $table->timestamps();
+    });
+
     Schema::create('locations', function (Blueprint $table): void {
         $table->id();
         $table->string('city')->nullable();

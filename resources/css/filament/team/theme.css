@@ -416,15 +416,71 @@
     @apply !m-0 !rounded-none !border-0 !bg-transparent text-gray-600 !shadow-none hover:!bg-gray-50 hover:text-primary-600 focus-visible:relative focus-visible:z-10 dark:text-gray-300 dark:hover:!bg-gray-800 dark:hover:text-primary-400;
 }
 
+.delivery-trip-pre-trip-action {
+    @apply mt-3 flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-left text-gray-700 shadow-sm transition hover:border-primary-300 hover:bg-primary-50/60 hover:text-primary-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:pointer-events-none disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-primary-700 dark:hover:bg-primary-950/40 dark:hover:text-primary-300;
+}
+
+.delivery-trip-pre-trip-action-icon {
+    @apply flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300;
+}
+
+.delivery-trip-pre-trip-action-icon svg {
+    @apply size-5;
+}
+
+.delivery-trip-pre-trip-action-copy {
+    @apply flex min-w-0 flex-1 flex-col;
+}
+
+.delivery-trip-pre-trip-action-label {
+    @apply text-sm font-semibold leading-5;
+}
+
+.delivery-trip-pre-trip-action-hint {
+    @apply truncate text-xs leading-4 text-gray-500 dark:text-gray-400;
+}
+
+.delivery-trip-pre-trip-action-arrow {
+    @apply size-4 shrink-0 text-gray-400;
+}
+
+.delivery-trip-pre-trip-action-complete {
+    @apply border-success-200 text-success-700 hover:border-success-300 hover:bg-success-50 hover:text-success-800 dark:border-success-800 dark:text-success-300 dark:hover:border-success-700 dark:hover:bg-success-950/30;
+}
+
+.delivery-trip-pre-trip-action-complete .delivery-trip-pre-trip-action-icon {
+    @apply bg-success-50 text-success-600 dark:bg-success-950/50 dark:text-success-400;
+}
+
+.delivery-trip-pre-trip-action-defect {
+    @apply border-danger-200 text-danger-700 hover:border-danger-300 hover:bg-danger-50 hover:text-danger-800 dark:border-danger-800 dark:text-danger-300 dark:hover:border-danger-700 dark:hover:bg-danger-950/30;
+}
+
+.delivery-trip-pre-trip-action-defect .delivery-trip-pre-trip-action-icon {
+    @apply bg-danger-50 text-danger-600 dark:bg-danger-950/50 dark:text-danger-400;
+}
+
+.delivery-trip-pre-trip-action-review {
+    @apply border-warning-200 text-warning-700 hover:border-warning-300 hover:bg-warning-50 hover:text-warning-800 dark:border-warning-800 dark:text-warning-300 dark:hover:border-warning-700 dark:hover:bg-warning-950/30;
+}
+
+.delivery-trip-pre-trip-action-review .delivery-trip-pre-trip-action-icon {
+    @apply bg-warning-50 text-warning-600 dark:bg-warning-950/50 dark:text-warning-400;
+}
+
 @media (max-width: 639px) {
-    .team-load-summary-modal {
-        position: fixed !important;
-        inset: 0.5rem !important;
-        width: auto !important;
-        max-width: none !important;
+    .fi-modal:not(.fi-modal-slide-over) > .fi-modal-window-ctn {
+        grid-template-rows: auto minmax(0, 1fr) !important;
+        align-content: start !important;
+        padding: 0.5rem !important;
+    }
+
+    .fi-modal:not(.fi-modal-slide-over) > .fi-modal-window-ctn > .fi-modal-window {
+        grid-row-start: 1 !important;
+        width: 100% !important;
         max-height: calc(100dvh - 1rem) !important;
-        margin: 0 !important;
-        overflow-y: auto;
+        margin: 0 auto !important;
+        overflow-y: auto !important;
     }
 }
 

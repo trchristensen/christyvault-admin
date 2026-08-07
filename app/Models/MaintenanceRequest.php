@@ -51,4 +51,9 @@ class MaintenanceRequest extends Model
     {
         return $this->hasOne(MaintenanceWorkOrder::class, 'request_id');
     }
+
+    public function vehicleInspectionDefects()
+    {
+        return $this->hasMany(TripPreTripInspectionDefect::class, 'maintenance_request_id');
+    }
 }

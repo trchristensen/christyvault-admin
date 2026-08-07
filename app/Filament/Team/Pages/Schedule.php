@@ -5,6 +5,7 @@ namespace App\Filament\Team\Pages;
 use App\Enums\PlantLocation;
 use App\Filament\Team\Concerns\ManagesDeliveryPhotos;
 use App\Filament\Team\Concerns\ManagesDeliveryTripDispatch;
+use App\Filament\Team\Concerns\ManagesTripPreTripInspections;
 use App\Models\CalendarDay;
 use App\Models\Order;
 use App\Models\Trip;
@@ -15,6 +16,7 @@ class Schedule extends Page
 {
     use ManagesDeliveryPhotos;
     use ManagesDeliveryTripDispatch;
+    use ManagesTripPreTripInspections;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
@@ -118,7 +120,20 @@ class Schedule extends Page
             ];
         }
 
+        $requestedDate = request()->query('date');
         $initialDate = $today->copy();
+
+        if (filled($requestedDate)) {
+            try {
+                $initialDate = Carbon::createFromFormat('Y-m-d', (string) $requestedDate)->startOfDay();
+            } catch (\Throwable) {
+                $initialDate = $today->copy();
+            }
+        }
+
+        if ($initialDate->lt($start) || $initialDate->gt($end)) {
+            $initialDate = $today->copy();
+        }
 
         while ($initialDate->isWeekend()) {
             $initialDate->subDay();
@@ -241,6 +256,8 @@ class Schedule extends Page
                 'driver',
                 'activeTripStop',
                 'trip.driver',
+                'trip.vehicleConfiguration',
+                'trip.preTripInspections.inspectionDefects',
                 'trip.orders:id,trip_id,plant_location,stop_number,is_printed',
                 'trip.stops.order:id,plant_location,is_printed',
                 'deliveryPhotos.uploadedBy',
@@ -313,6 +330,16 @@ class Schedule extends Page
     }
 
     protected function refreshDeliveryTripDispatchView(): void
+    {
+        $this->loadOrdersFor($this->selectedDate);
+    }
+
+    protected function deliveryTripPreTripInspectionIsInScope(Trip $trip): bool
+    {
+        return $this->deliveryTripDispatchIsInScope($trip);
+    }
+
+    protected function refreshTripPreTripInspectionView(): void
     {
         $this->loadOrdersFor($this->selectedDate);
     }

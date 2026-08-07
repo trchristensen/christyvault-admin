@@ -172,9 +172,7 @@ class MaintenanceWorkOrderResource extends Resource
                 Action::make('complete')->icon('heroicon-o-check-circle')->color('success')->visible(fn (MaintenanceWorkOrder $record) => in_array($record->status, ['in_progress', 'on_hold', 'waiting_on_parts']))->requiresConfirmation()->action(fn (MaintenanceWorkOrder $record) => $record->complete(auth()->user())),
                 Action::make('verify')->label('Verify & close')->icon('heroicon-o-shield-check')->color('success')->visible(fn (MaintenanceWorkOrder $record) => $record->status === 'pending_verification' && auth()->user()?->hasRole(['admin', 'super-admin', 'maintenance-manager']))->requiresConfirmation()->action(function (MaintenanceWorkOrder $record): void {
                     $record->verify(auth()->user());
-                    if ($record->asset?->status !== 'retired') {
-                        $record->asset?->update(['status' => 'operational']);
-                    } Notification::make()->title('Work order closed')->success()->send();
+                    Notification::make()->title('Work order closed')->success()->send();
                 }),
                 Action::make('out_of_service')->label('Take out of service')->icon('heroicon-o-no-symbol')->color('danger')->visible(fn (MaintenanceWorkOrder $record) => $record->asset && $record->asset->status !== 'out_of_service')->requiresConfirmation()->action(function (MaintenanceWorkOrder $record): void {
                     $record->asset->update(['status' => 'out_of_service']);

@@ -114,6 +114,11 @@ class MaintenanceWorkOrder extends Model
         return $this->hasMany(MaintenanceWorkOrderPart::class, 'work_order_id');
     }
 
+    public function vehicleInspectionDefects(): HasMany
+    {
+        return $this->hasMany(TripPreTripInspectionDefect::class, 'maintenance_work_order_id');
+    }
+
     public function scopeOpen(Builder $query): Builder
     {
         return $query->whereNotIn('status', ['completed', 'canceled']);
@@ -167,5 +172,26 @@ class MaintenanceWorkOrder extends Model
             'downtime_ended_at' => $this->downtime_started_at ? ($this->downtime_ended_at ?? now()) : null,
             'downtime_minutes' => $downtimeMinutes,
         ]);
+
+        $this->vehicleInspectionDefects()
+            ->where('status', TripPreTripInspectionDefect::STATUS_OPEN)
+            ->get()
+            ->each(fn (TripPreTripInspectionDefect $defect) => $defect->update([
+                'status' => TripPreTripInspectionDefect::STATUS_CORRECTED,
+                'operating_decision' => TripPreTripInspectionDefect::OPERATING_DECISION_MAY_OPERATE,
+                'reviewed_by_user_id' => $user->getKey(),
+                'reviewed_at' => now(),
+                'review_notes' => $this->work_performed ?: $this->completion_notes,
+                'resolved_by_user_id' => $user->getKey(),
+                'resolved_at' => now(),
+                'resolution_notes' => $this->work_performed ?: $this->completion_notes,
+                'resolution_certification' => "Corrected under {$this->number} and verified by {$user->name}.",
+            ]));
+
+        if ($this->asset
+            && $this->asset->status !== 'retired'
+            && ! $this->asset->vehicleInspectionDefects()->where('status', TripPreTripInspectionDefect::STATUS_OPEN)->exists()) {
+            $this->asset->update(['status' => 'operational']);
+        }
     }
 }

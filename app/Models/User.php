@@ -181,6 +181,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(MaintenanceWorkOrder::class, 'assigned_to_user_id');
     }
 
+    public function tripPreTripInspections()
+    {
+        return $this->hasMany(TripPreTripInspection::class);
+    }
+
     public function getCalendarFeedUrl(): string
     {
         return url()->signedRoute('calendar.feed', [

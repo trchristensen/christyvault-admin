@@ -19,6 +19,8 @@
         {{ $trip->trip_number }} · {{ $trip->driver?->name ?? 'Driver unassigned' }}
     </div>
 
+    <x-delivery-trip-pre-trip-inspection-button :trip="$trip" />
+
     @if ($deliveryPlanNeedsReview)
         <div class="delivery-trip-unconfirmed-badge">
             <x-heroicon-o-exclamation-triangle />

@@ -96,4 +96,8 @@
             </span>
         @endif
     </div>
+
+    @if (! $isDeliveryTrip && $activeTrip)
+        <x-delivery-trip-pre-trip-inspection-button :trip="$activeTrip" />
+    @endif
 </div>

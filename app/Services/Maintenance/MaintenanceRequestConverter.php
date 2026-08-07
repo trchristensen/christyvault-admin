@@ -37,6 +37,8 @@ class MaintenanceRequestConverter
                 'triaged_at' => now(),
             ]);
 
+            app(VehicleInspectionReportService::class)->linkRequestWorkOrder($request->refresh());
+
             return $workOrder;
         });
     }

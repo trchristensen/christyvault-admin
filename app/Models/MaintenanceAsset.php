@@ -10,6 +10,7 @@ use Endroid\QrCode\Writer\SvgWriter;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -83,6 +84,21 @@ class MaintenanceAsset extends Model
     public function meterReadings(): HasMany
     {
         return $this->hasMany(MaintenanceMeterReading::class, 'asset_id');
+    }
+
+    public function vehicleInspectionReports(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            TripPreTripInspection::class,
+            'trip_pre_trip_inspection_assets',
+            'maintenance_asset_id',
+            'inspection_id',
+        )->withPivot(['role', 'asset_snapshot'])->withTimestamps();
+    }
+
+    public function vehicleInspectionDefects(): HasMany
+    {
+        return $this->hasMany(TripPreTripInspectionDefect::class, 'maintenance_asset_id');
     }
 
     public function partsUsed(): HasManyThrough

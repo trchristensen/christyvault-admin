@@ -197,6 +197,108 @@ class Trip extends Model
         return $this->belongsTo(User::class, 'dispatch_confirmed_by_user_id');
     }
 
+    public function preTripInspections(): HasMany
+    {
+        return $this->hasMany(TripPreTripInspection::class);
+    }
+
+    public function isAssignedDriver(?User $user): bool
+    {
+        return $user?->employee?->getKey() !== null
+            && (int) $this->driver_id === (int) $user->employee->getKey();
+    }
+
+    public function currentPreTripInspection(): ?TripPreTripInspection
+    {
+        if (! $this->driver_id) {
+            return null;
+        }
+
+        $inspections = $this->relationLoaded('preTripInspections')
+            ? $this->preTripInspections
+            : $this->preTripInspections()->get();
+
+        return $inspections
+            ->where('driver_id', $this->driver_id)
+            ->where('vehicle_configuration_id', $this->vehicle_configuration_id)
+            ->where('report_type', TripPreTripInspection::TYPE_PRE_TRIP)
+            ->sortByDesc(fn (TripPreTripInspection $inspection): string => sprintf(
+                '%s-%010d',
+                $inspection->completed_at?->format('Y-m-d H:i:s.u') ?? '',
+                $inspection->getKey(),
+            ))
+            ->first();
+    }
+
+    public function currentDailyVehicleReport(): ?TripPreTripInspection
+    {
+        if (! $this->driver_id) {
+            return null;
+        }
+
+        $inspections = $this->relationLoaded('preTripInspections')
+            ? $this->preTripInspections
+            : $this->preTripInspections()->get();
+
+        $report = $inspections
+            ->where('driver_id', $this->driver_id)
+            ->where('report_type', TripPreTripInspection::TYPE_DAILY_REPORT)
+            ->sortByDesc(fn (TripPreTripInspection $inspection): string => sprintf(
+                '%s-%010d',
+                $inspection->completed_at?->format('Y-m-d H:i:s.u') ?? '',
+                $inspection->getKey(),
+            ))
+            ->first();
+
+        if ($report) {
+            return $report;
+        }
+
+        $preTrip = $this->currentPreTripInspection();
+
+        if (! $preTrip) {
+            return null;
+        }
+
+        return TripPreTripInspection::query()
+            ->where('driver_id', $this->driver_id)
+            ->where('report_type', TripPreTripInspection::TYPE_DAILY_REPORT)
+            ->whereDate('scheduled_date', $this->scheduled_date?->toDateString())
+            ->where('truck_asset_id', $preTrip->truck_asset_id)
+            ->where('trailer_asset_id', $preTrip->trailer_asset_id)
+            ->where('piggyback_asset_id', $preTrip->piggyback_asset_id)
+            ->latest('completed_at')
+            ->first();
+    }
+
+    public function reusablePreTripInspection(): ?TripPreTripInspection
+    {
+        if (! $this->driver_id || ! $this->vehicle_configuration_id || $this->currentPreTripInspection()) {
+            return null;
+        }
+
+        $inspection = TripPreTripInspection::query()
+            ->where('driver_id', $this->driver_id)
+            ->where('vehicle_configuration_id', $this->vehicle_configuration_id)
+            ->where('report_type', TripPreTripInspection::TYPE_PRE_TRIP)
+            ->whereDate('inspection_date', now('America/Los_Angeles')->toDateString())
+            ->where('safe_to_operate', true)
+            ->whereDoesntHave('inspectionDefects', fn ($query) => $query->where('status', TripPreTripInspectionDefect::STATUS_OPEN))
+            ->with(['truckAsset', 'trailerAsset', 'piggybackAsset', 'assets', 'inspectionDefects'])
+            ->latest('completed_at')
+            ->first();
+
+        if (! $inspection) {
+            return null;
+        }
+
+        $assets = collect([$inspection->truckAsset, $inspection->trailerAsset, $inspection->piggybackAsset])->filter();
+
+        return $assets->every(fn (MaintenanceAsset $asset): bool => in_array($asset->status, ['operational', 'restricted'], true))
+            ? $inspection
+            : null;
+    }
+
     public static function generateTripNumber()
     {
         return DB::transaction(function () {
