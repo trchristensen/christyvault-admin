@@ -1,5 +1,6 @@
 <?php
 
+use App\Filament\Sales\Pages\SalesPerformance;
 use App\Services\SalesPerformanceReport;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Schema\Blueprint;
@@ -359,4 +360,20 @@ it('filters every sales metric by each explicit plant location', function (): vo
         ->and($tulare['summary']['completedVisits'])->toBe(1)
         ->and($tulare['breakdown']['rows'])->toHaveCount(1)
         ->and($tulare['breakdown']['rows'][0]['key'])->toBe('Wilbert Urn Vaults');
+});
+
+it('preserves database ids in the sales performance location options', function (): void {
+    $page = new class extends SalesPerformance
+    {
+        public function locationOptionsForTest(): array
+        {
+            return $this->locationOptions();
+        }
+    };
+
+    $options = $page->locationOptionsForTest();
+
+    expect(array_keys($options))->toBe(['all', 1, 2])
+        ->and($options[1])->toBe('Cypress Lawn')
+        ->and($options[2])->toBe('Other Cemetery');
 });

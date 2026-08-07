@@ -144,7 +144,7 @@ class VehicleInspectionReportService
             return null;
         }
 
-        $tripNumber = $inspection->trip?->trip_number ?? 'vehicle report';
+        $reportContext = $inspection->trip?->trip_number ?? $inspection->report_type_label;
         $details = $entries
             ->map(fn (array $entry): string => "- {$entry['component_label']}: {$entry['description']}")
             ->join("\n");
@@ -158,8 +158,10 @@ class VehicleInspectionReportService
             'location_id' => $asset->location_id,
             'requested_by_user_id' => $inspection->user_id,
             'requester_name' => $inspection->driver_name,
-            'title' => "Vehicle inspection issue — {$asset->asset_tag}",
-            'description' => "Reported on {$inspection->report_type_label} for {$tripNumber}.\n\n{$details}",
+            'title' => ($inspection->report_type === TripPreTripInspection::TYPE_EQUIPMENT_CARE
+                ? "Equipment care issue — {$asset->asset_tag}"
+                : "Vehicle inspection issue — {$asset->asset_tag}"),
+            'description' => "Reported on {$reportContext}.\n\n{$details}",
             'priority' => $requiresStop ? 'urgent' : 'high',
             'safety_related' => true,
             'status' => 'new',

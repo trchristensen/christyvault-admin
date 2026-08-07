@@ -44,6 +44,7 @@ class VehicleInspectionReportResource extends Resource
                 SelectFilter::make('report_type')->label('Report type')->options([
                     TripPreTripInspection::TYPE_PRE_TRIP => 'Pre-trip inspection',
                     TripPreTripInspection::TYPE_DAILY_REPORT => 'End-of-day vehicle report',
+                    TripPreTripInspection::TYPE_EQUIPMENT_CARE => 'Optional equipment care',
                 ]),
                 SelectFilter::make('safe_to_operate')->label('Result')->options([
                     1 => 'No defects reported',
@@ -54,7 +55,10 @@ class VehicleInspectionReportResource extends Resource
                 Action::make('details')
                     ->label('View report')
                     ->icon('heroicon-o-eye')
-                    ->modalHeading(fn (TripPreTripInspection $record): string => "{$record->report_type_label} — {$record->trip?->trip_number}")
+                    ->modalHeading(fn (TripPreTripInspection $record): string => collect([
+                        $record->report_type_label,
+                        $record->trip?->trip_number ?? $record->assets->first()?->display_name,
+                    ])->filter()->join(' — '))
                     ->modalContent(fn (TripPreTripInspection $record) => view('filament.maintenance.vehicle-inspection-report', [
                         'report' => $record->loadMissing(['assets', 'inspectionDefects.asset', 'inspectionDefects.resolvedBy', 'inspectionDefects.workOrder']),
                     ]))

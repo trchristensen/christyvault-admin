@@ -1,6 +1,7 @@
 <?php
 
 use App\Filament\Team\Pages\Schedule;
+use App\Filament\Team\Widgets\EquipmentCareWidget;
 use App\Filament\Team\Widgets\TodaysDeliveriesWidget;
 use App\Models\Employee;
 use App\Models\Location;
@@ -14,6 +15,7 @@ use App\Models\User;
 use App\Models\VehicleConfiguration;
 use App\Notifications\TripPreTripDefectReported;
 use App\Services\Maintenance\MaintenanceRequestConverter;
+use App\Support\EquipmentCareChecklist;
 use App\Support\TripDailyVehicleReportChecklist;
 use App\Support\TripPreTripChecklist;
 use Filament\Facades\Filament;
@@ -148,6 +150,93 @@ it('shows only the equipment sections required by the selected trip configuratio
         ->and(collect(TripPreTripChecklist::sections($withoutPiggyback))->pluck('key')->all())
         ->toContain('truck', 'trailer')
         ->not->toContain('piggyback');
+});
+
+it('records an optional equipment care check without requiring a trip', function (): void {
+    [$user, $driver] = preTripUser('Careful Driver');
+    $tractor = preTripAsset('CARE-TRACTOR', 'tractor');
+
+    $this->actingAs($user);
+
+    expect(data_get(EquipmentCareChecklist::items($tractor)->all(), 'engine_oil_level.description'))
+        ->toContain('below or above the safe marks')
+        ->and(data_get(EquipmentCareChecklist::items($tractor)->all(), 'manual_air_tanks.description'))
+        ->toContain('excessive water or oil');
+
+    Livewire::test(EquipmentCareWidget::class)
+        ->assertSee('Equipment Care')
+        ->callAction('submitEquipmentCare', [
+            'asset_id' => $tractor->getKey(),
+            'meter_reading' => 123456,
+            'completed_tasks' => ['engine_oil_level', 'manual_air_tanks', 'tire_pressures'],
+            'tire_readings' => [[
+                'position' => 'Steer left',
+                'psi' => 108,
+                'target_psi' => 110,
+            ]],
+            'care_notes' => 'Drained the manual tanks and found only a small amount of moisture.',
+            'has_issue' => false,
+            'certification' => true,
+        ])
+        ->assertHasNoActionErrors();
+
+    $inspection = TripPreTripInspection::query()
+        ->where('report_type', TripPreTripInspection::TYPE_EQUIPMENT_CARE)
+        ->sole();
+
+    expect($inspection->trip_id)->toBeNull()
+        ->and($inspection->user_id)->toBe($user->getKey())
+        ->and($inspection->driver_id)->toBe($driver->getKey())
+        ->and($inspection->safe_to_operate)->toBeTrue()
+        ->and($inspection->truck_asset_id)->toBe($tractor->getKey())
+        ->and($inspection->checklist_version)->toBe(EquipmentCareChecklist::VERSION)
+        ->and(data_get($inspection->responses, 'completed_tasks'))->toHaveCount(3)
+        ->and(data_get($inspection->responses, 'tire_readings.0.position'))->toBe('Steer left')
+        ->and($inspection->assets)->toHaveCount(1);
+});
+
+it('routes a problem found during optional equipment care into maintenance', function (): void {
+    NotificationFacade::fake();
+    [$user] = preTripUser('Care Issue Driver');
+    [$manager] = preTripUser('Care Issue Manager', 'manager');
+    $manager->givePermissionTo(Permission::findOrCreate('manage delivery trip dispatch', 'web'));
+    $trailer = preTripAsset('CARE-TRAILER', 'trailer');
+
+    $this->actingAs($user);
+
+    Livewire::test(EquipmentCareWidget::class)
+        ->callAction('submitEquipmentCare', [
+            'asset_id' => $trailer->getKey(),
+            'completed_tasks' => ['tires_wheels'],
+            'has_issue' => true,
+            'issue_component' => 'Left rear tire',
+            'issue_description' => 'Found a deep sidewall cut while checking the tire.',
+            'operating_concern' => TripPreTripInspectionDefect::DRIVER_ASSESSMENT_STOP,
+            'certification' => true,
+        ])
+        ->assertHasNoActionErrors();
+
+    $inspection = TripPreTripInspection::query()
+        ->where('report_type', TripPreTripInspection::TYPE_EQUIPMENT_CARE)
+        ->sole();
+    $defect = $inspection->inspectionDefects()->sole();
+    $request = MaintenanceRequest::query()->where('asset_id', $trailer->getKey())->sole();
+
+    expect($inspection->safe_to_operate)->toBeFalse()
+        ->and($inspection->trip_id)->toBeNull()
+        ->and($defect->component_label)->toBe('Left rear tire')
+        ->and($defect->driver_assessment)->toBe(TripPreTripInspectionDefect::DRIVER_ASSESSMENT_STOP)
+        ->and($trailer->refresh()->status)->toBe('out_of_service')
+        ->and($request->title)->toBe('Equipment care issue — CARE-TRAILER')
+        ->and($request->description)->toContain('Optional equipment care');
+
+    NotificationFacade::assertSentTo($manager, TripPreTripDefectReported::class);
+
+    $notification = (new TripPreTripDefectReported($inspection))->toDatabase($manager);
+
+    expect($notification['title'])->toContain('Optional equipment care issue')
+        ->and($notification['maintenance_asset_id'])->toBe($trailer->getKey())
+        ->and($notification['trip_id'])->toBeNull();
 });
 
 it('allows only the assigned driver to submit and persists the equipment and certification snapshot', function (): void {

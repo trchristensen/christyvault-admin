@@ -17,6 +17,8 @@ class TripPreTripInspection extends Model
 
     public const TYPE_DAILY_REPORT = 'daily_report';
 
+    public const TYPE_EQUIPMENT_CARE = 'equipment_care';
+
     protected $fillable = [
         'trip_id',
         'user_id',
@@ -109,9 +111,11 @@ class TripPreTripInspection extends Model
 
     public function getReportTypeLabelAttribute(): string
     {
-        return $this->report_type === self::TYPE_DAILY_REPORT
-            ? 'End-of-day vehicle report'
-            : 'Pre-trip inspection';
+        return match ($this->report_type) {
+            self::TYPE_DAILY_REPORT => 'End-of-day vehicle report',
+            self::TYPE_EQUIPMENT_CARE => 'Optional equipment care',
+            default => 'Pre-trip inspection',
+        };
     }
 
     public function hasOpenIssues(): bool

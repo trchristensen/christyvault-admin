@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Team\Pages\Dashboard;
 use App\Filament\Team\Widgets\EmployeeOverviewWidget;
+use App\Filament\Team\Widgets\EquipmentCareWidget;
 use App\Filament\Team\Widgets\TodaysDeliveriesWidget;
 use App\Support\Filament\SharedProfile;
 use Filament\Http\Middleware\Authenticate;
@@ -81,6 +82,7 @@ class TeamPanelProvider extends PanelProvider
             ->widgets([
                 EmployeeOverviewWidget::class,
                 TodaysDeliveriesWidget::class,
+                EquipmentCareWidget::class,
             ])
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')

@@ -59,14 +59,7 @@ class SalesPerformance extends Page implements HasForms
             ->components([
                 Select::make('locationId')
                     ->label('Location')
-                    ->options(fn (): array => [
-                        'all' => 'All Locations',
-                        ...Location::query()
-                            ->orderBy('name')
-                            ->pluck('name', 'id')
-                            ->mapWithKeys(fn (string $name, int $id): array => [(string) $id => trim($name)])
-                            ->all(),
-                    ])
+                    ->options(fn (): array => $this->locationOptions())
                     ->searchable()
                     ->live()
                     ->afterStateUpdated(function ($state): void {
@@ -238,5 +231,14 @@ class SalesPerformance extends Page implements HasForms
             'all' => 'All Product Categories',
             ...$types,
         ];
+    }
+
+    protected function locationOptions(): array
+    {
+        return ['all' => 'All Locations'] + Location::query()
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->map(fn (string $name): string => trim($name))
+            ->all();
     }
 }

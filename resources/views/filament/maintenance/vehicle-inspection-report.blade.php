@@ -31,6 +31,62 @@
         </div>
     @endif
 
+    @if ($report->report_type === \App\Models\TripPreTripInspection::TYPE_EQUIPMENT_CARE)
+        @php
+            $completedTasks = collect(data_get($report->responses, 'completed_tasks', []));
+            $tireReadings = collect(data_get($report->responses, 'tire_readings', []));
+            $careNotes = data_get($report->responses, 'care_notes');
+            $meterReading = data_get($report->responses, 'meter_reading');
+        @endphp
+
+        <div class="rounded-xl border border-gray-200 p-4 dark:border-white/10">
+            <div class="font-semibold">Optional care completed</div>
+
+            @if ($completedTasks->isEmpty())
+                <p class="mt-2 text-sm text-gray-500">No care task was selected; this report records an observed issue.</p>
+            @else
+                <ul class="mt-2 space-y-2 text-sm">
+                    @foreach ($completedTasks as $task)
+                        <li class="flex items-start gap-2">
+                            <x-filament::icon icon="heroicon-m-check-circle" class="mt-0.5 size-4 shrink-0 text-success-600" />
+                            <span>{{ data_get($task, 'label') }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+
+            @if (filled($meterReading))
+                <p class="mt-3 text-sm"><span class="font-medium">Meter:</span> {{ number_format((float) $meterReading, 1) }}</p>
+            @endif
+
+            @if ($tireReadings->isNotEmpty())
+                <div class="mt-4 overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="text-xs uppercase text-gray-500">
+                            <tr><th class="pb-2 pr-4">Tire position</th><th class="pb-2 pr-4">Measured</th><th class="pb-2">Target</th></tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-white/10">
+                            @foreach ($tireReadings as $reading)
+                                <tr>
+                                    <td class="py-2 pr-4">{{ data_get($reading, 'position') }}</td>
+                                    <td class="py-2 pr-4">{{ data_get($reading, 'psi') }} PSI</td>
+                                    <td class="py-2">{{ filled(data_get($reading, 'target_psi')) ? data_get($reading, 'target_psi').' PSI' : '—' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+
+            @if (filled($careNotes))
+                <div class="mt-4 rounded-lg bg-gray-50 p-3 text-sm dark:bg-white/5">
+                    <div class="font-medium">Notes</div>
+                    <p class="mt-1 whitespace-pre-line">{{ $careNotes }}</p>
+                </div>
+            @endif
+        </div>
+    @endif
+
     <div class="rounded-xl bg-gray-50 p-4 text-sm dark:bg-white/5">
         <div class="font-semibold">Driver certification</div>
         <p class="mt-1">{{ $report->certification_text }}</p>
