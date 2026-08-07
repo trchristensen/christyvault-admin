@@ -513,6 +513,18 @@ it('keeps an ordinary driver observation in manager review instead of automatica
 
     $this->actingAs($manager);
 
+    Livewire::test(Schedule::class)
+        ->mountAction('viewTripPreTripInspection', ['inspection' => $defect->inspection_id])
+        ->assertActionMounted('viewTripPreTripInspection')
+        ->mountAction('reviewTripInspectionIssue', ['issue' => $defect->getKey()])
+        ->assertActionMounted('reviewTripInspectionIssue');
+
+    Livewire::test(Schedule::class)
+        ->mountAction('viewTripVehicleInspectionHistory', ['trip' => $trip->getKey()])
+        ->assertActionMounted('viewTripVehicleInspectionHistory')
+        ->mountAction('reviewTripInspectionIssue', ['issue' => $defect->getKey()])
+        ->assertActionMounted('reviewTripInspectionIssue');
+
     Livewire::test(Schedule::class)->callAction('reviewTripInspectionIssue', [
         'operating_decision' => TripPreTripInspectionDefect::OPERATING_DECISION_MAY_OPERATE,
         'review_notes' => 'Marker light was inspected in daylight and is functioning normally. No repair is required before dispatch.',

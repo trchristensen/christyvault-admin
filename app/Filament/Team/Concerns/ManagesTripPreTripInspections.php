@@ -242,6 +242,9 @@ trait ManagesTripPreTripInspections
     public function viewTripPreTripInspectionAction(): Action
     {
         return Action::make('viewTripPreTripInspection')
+            ->registerModalActions([
+                $this->reviewTripInspectionIssueAction(),
+            ])
             ->modalHeading(function (Action $action): string {
                 $inspection = $this->tripPreTripInspectionForView((int) ($action->getArguments()['inspection'] ?? 0));
 
@@ -554,6 +557,9 @@ trait ManagesTripPreTripInspections
     public function viewTripVehicleInspectionHistoryAction(): Action
     {
         return Action::make('viewTripVehicleInspectionHistory')
+            ->registerModalActions([
+                $this->reviewTripInspectionIssueAction(),
+            ])
             ->modalHeading('Previous vehicle inspection reports')
             ->modalContent(function (Action $action) {
                 $trip = $this->tripForInspectionHistory((int) ($action->getArguments()['trip'] ?? 0));
