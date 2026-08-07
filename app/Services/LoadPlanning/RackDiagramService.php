@@ -123,6 +123,16 @@ class RackDiagramService
                         return $constraintOrder;
                     }
 
+                    if (($left['placement_strategy'] ?? null) === LoadingProfile::PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR
+                        && ($right['placement_strategy'] ?? null) === LoadingProfile::PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR) {
+                        $wholeDoubleOrder = $this->wholeDoublePlacementPriority($left)
+                            <=> $this->wholeDoublePlacementPriority($right);
+
+                        if ($wholeDoubleOrder !== 0) {
+                            return $wholeDoubleOrder;
+                        }
+                    }
+
                     $weightOrder = ($right['unit_weight_lbs'] ?? -1) <=> ($left['unit_weight_lbs'] ?? -1);
 
                     return $weightOrder !== 0
@@ -1083,7 +1093,7 @@ class RackDiagramService
             ->filter(fn (int $rackIndex): bool => in_array($racks[$rackIndex]['type_code'], $allowedRackTypes, true)
                 && $this->rackCanAcceptStop($racks[$rackIndex], (int) $stop['sequence'])
                 && ($racks[$rackIndex]['cells'][0] ?? null) === null
-                && data_get($racks[$rackIndex], 'cells.1.sku') === $item['sku']
+                && data_get($racks[$rackIndex], 'cells.1.pairing_category') === self::PAIRING_GARDEN_DOUBLE
                 && data_get($racks[$rackIndex], 'cells.1.component') === 'whole')
             ->values();
         $splitPair = 0;
@@ -1191,6 +1201,18 @@ class RackDiagramService
         return match ($item['required_rack_level'] ?? LoadingProfile::LEVEL_ANY) {
             LoadingProfile::LEVEL_BOTTOM => 0,
             default => 1,
+        };
+    }
+
+    private function wholeDoublePlacementPriority(array $item): int
+    {
+        // Whole products are assigned first. Keeping G4 ahead of G5 therefore
+        // makes G5 the product that is split when a mixed load needs the lower
+        // paired positions; G4 is more difficult to split in the yard.
+        return match (mb_strtoupper(trim((string) ($item['sku'] ?? '')))) {
+            'G3086-4' => 0,
+            'G3086-5' => 1,
+            default => 2,
         };
     }
 

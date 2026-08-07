@@ -961,6 +961,44 @@ it('places twelve doubles as eight whole tops and four split bottom pairs', func
         ->and($diagram['racks'][1]['cells'][0]['split_pair'])->toBe(1);
 });
 
+it('splits G5 before G4 when a mixed double load must be compacted', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem([
+                'sku' => 'G3086-4',
+                'name' => 'Double Garden Crypt',
+                'quantity' => 4,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'placement_strategy' => 'full_top_split_bottom_pair',
+                'unit_weight_lbs' => 3455,
+                'loading_profile' => 'double_garden_crypt',
+            ]),
+            rackDiagramItem([
+                'sku' => 'G3086-5',
+                'name' => 'Companion Garden Crypt',
+                'quantity' => 8,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'placement_strategy' => 'full_top_split_bottom_pair',
+                'unit_weight_lbs' => 2520,
+                'loading_profile' => 'double_garden_crypt',
+            ]),
+        ]),
+    ]));
+    $cells = collect($diagram['racks'])
+        ->flatMap(fn (array $rack): array => $rack['cells'])
+        ->filter();
+
+    expect($diagram['placed_units'])->toBe(12)
+        ->and($diagram['used_rack_spots'])->toBe(8)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($cells->where('sku', 'G3086-4')->where('component', 'whole'))->toHaveCount(4)
+        ->and($cells->where('sku', 'G3086-4')->where('component', 'half'))->toBeEmpty()
+        ->and($cells->where('sku', 'G3086-5')->where('component', 'whole'))->toHaveCount(4)
+        ->and($cells->where('sku', 'G3086-5')->where('component', 'half'))->toHaveCount(8);
+});
+
 it('pairs same-stop V1 below whole G5 products before splitting either stop', function (): void {
     $g5 = [
         'sku' => 'G3086-5',
