@@ -3,11 +3,17 @@
         $procedure = $this->getRecord();
         $revision = $procedure->currentRevision;
         $canManage = auth()->user()?->canManageProcedures() ?? false;
+        $documentLabel = $revision
+            ? (\App\Models\StandardOperatingProcedure::typeOptions()[$revision->document_type] ?? 'Document')
+            : $procedure->document_label;
+        $myAcknowledgement = ! $canManage && $revision
+            ? $revision->acknowledgementFor(auth()->user()?->employee)
+            : null;
     @endphp
 
     @if (! $revision)
         <x-filament::section icon="heroicon-o-pencil-square" icon-color="warning">
-            <x-slot name="heading">This procedure is still a draft</x-slot>
+            <x-slot name="heading">This {{ strtolower($procedure->document_label) }} is still a draft</x-slot>
             <x-slot name="description">It is not visible to employees or through a QR code yet.</x-slot>
 
             @if ($canManage)
@@ -43,6 +49,7 @@
                 </div>
 
                 <div class="flex flex-wrap gap-2">
+                    <x-filament::badge color="primary">{{ $documentLabel }}</x-filament::badge>
                     <x-filament::badge color="success">Current published version</x-filament::badge>
                     <x-filament::badge color="gray">
                         {{ \App\Models\StandardOperatingProcedure::categoryOptions()[$revision->category] ?? str($revision->category)->headline() }}
@@ -63,6 +70,63 @@
                 {{ $revision->renderedContent() }}
             </div>
         </x-filament::section>
+
+        @if ($revision->acknowledgement_required)
+            <x-filament::section
+                icon="{{ $myAcknowledgement ? 'heroicon-o-check-badge' : 'heroicon-o-pencil-square' }}"
+                icon-color="{{ $myAcknowledgement ? 'success' : 'warning' }}"
+            >
+                <x-slot name="heading">Policy acknowledgment</x-slot>
+
+                @if ($canManage)
+                    <x-slot name="description">Acknowledgments always remain tied to {{ $revision->version_label }}.</x-slot>
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <div class="text-3xl font-bold text-gray-950 dark:text-white">{{ $revision->acknowledgements()->count() }}</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">employee acknowledgments recorded</div>
+                        </div>
+                        <p class="max-w-3xl text-sm leading-6 text-gray-600 dark:text-gray-300">{{ $revision->acknowledgement_text }}</p>
+                    </div>
+                    @if ($revision->acknowledgements()->exists())
+                        <div class="mt-5 divide-y divide-gray-200 border-t border-gray-200 pt-2 dark:divide-white/10 dark:border-white/10">
+                            @foreach ($revision->acknowledgements()->with(['employee', 'recordedBy'])->latest('acknowledged_at')->get() as $acknowledgement)
+                                <div class="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <div class="font-semibold text-gray-950 dark:text-white">{{ $acknowledgement->employee?->name ?? $acknowledgement->signed_name }}</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                                            {{ $acknowledgement->acknowledged_at->format('M j, Y g:i A') }}
+                                            · {{ $acknowledgement->method === \App\Models\DocumentAcknowledgement::METHOD_PAPER_IMPORT ? 'Paper acknowledgment' : 'Authenticated online acknowledgment' }}
+                                            @if ($acknowledgement->recordedBy)
+                                                · Recorded by {{ $acknowledgement->recordedBy->name }}
+                                            @endif
+                                        </div>
+                                    </div>
+                                    @if ($acknowledgement->evidence_file_path)
+                                        <a
+                                            href="{{ route('policy-acknowledgements.evidence.show', $acknowledgement) }}"
+                                            target="_blank"
+                                            rel="noopener"
+                                            class="text-sm font-semibold text-primary-600 hover:text-primary-500 dark:text-primary-400"
+                                        >
+                                            Open signed scan →
+                                        </a>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                @elseif ($myAcknowledgement)
+                    <x-slot name="description">Your acknowledgment is recorded for this exact version.</x-slot>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                        Acknowledged as <strong>{{ $myAcknowledgement->signed_name }}</strong>
+                        on {{ $myAcknowledgement->acknowledged_at->format('M j, Y g:i A') }}.
+                    </p>
+                @else
+                    <x-slot name="description">Review the complete policy, then use “Acknowledge policy” above.</x-slot>
+                    <p class="text-sm leading-6 text-gray-600 dark:text-gray-300">{{ $revision->acknowledgement_text }}</p>
+                @endif
+            </x-filament::section>
+        @endif
 
         @if ($revision->attachmentItems()->isNotEmpty())
             <x-filament::section icon="heroicon-o-paper-clip">

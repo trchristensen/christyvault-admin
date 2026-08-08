@@ -16,6 +16,8 @@ use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\GlobalSearch\GlobalSearchResult;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -26,6 +28,7 @@ use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class EmployeeProgramResource extends Resource
 {
@@ -142,12 +145,15 @@ class EmployeeProgramResource extends Resource
                                         ->native(false)
                                         ->live(),
                                     Select::make('standard_operating_procedure_id')
-                                        ->label('Procedure')
+                                        ->label('Policy or procedure')
                                         ->options(fn (): array => StandardOperatingProcedure::query()
                                             ->whereNull('archived_at')
                                             ->whereNotNull('current_revision_id')
                                             ->orderBy('title')
-                                            ->pluck('title', 'id')
+                                            ->get()
+                                            ->mapWithKeys(fn (StandardOperatingProcedure $document): array => [
+                                                $document->getKey() => "{$document->document_label} · {$document->code} · {$document->title}",
+                                            ])
                                             ->all())
                                         ->searchable()
                                         ->preload()
@@ -196,6 +202,9 @@ class EmployeeProgramResource extends Resource
                                         ->label('Why this is included')
                                         ->rows(2)
                                         ->maxLength(1000),
+                                    Toggle::make('required_for_completion')
+                                        ->label('Required for training completion')
+                                        ->helperText('For acknowledgment policies, the employee must acknowledge the exact current revision before completing an assignment.'),
                                 ])
                                 ->itemLabel(function (array $state): string {
                                     if (filled($state['title'] ?? null)) {
@@ -221,6 +230,76 @@ class EmployeeProgramResource extends Resource
                         ->reorderable()
                         ->defaultItems(0),
                 ]),
+
+            Section::make('Training and questionnaire')
+                ->description('A program is the content employees review. Enable training here so managers can assign that program to specific employees and track completion.')
+                ->schema([
+                    Toggle::make('training_enabled')
+                        ->label('Make this program assignable as training')
+                        ->helperText('This does not automatically require anyone to complete it. After publishing, use Team → Training → Assign training to select employees.')
+                        ->default(false)
+                        ->live(),
+                    TextInput::make('estimated_minutes')
+                        ->label('Estimated time')
+                        ->suffix('minutes')
+                        ->numeric()
+                        ->minValue(1)
+                        ->maxValue(1440)
+                        ->visible(fn (Get $get): bool => (bool) $get('training_enabled')),
+                    TextInput::make('passing_score')
+                        ->label('Passing score')
+                        ->suffix('%')
+                        ->numeric()
+                        ->minValue(1)
+                        ->maxValue(100)
+                        ->default(80)
+                        ->required(fn (Get $get): bool => (bool) $get('training_enabled'))
+                        ->visible(fn (Get $get): bool => (bool) $get('training_enabled')),
+                    Repeater::make('trainingQuestions')
+                        ->label('Questionnaire')
+                        ->helperText('Optional. Assigned employees must reach the passing score before the training can be completed.')
+                        ->relationship()
+                        ->orderColumn('sort_order')
+                        ->visible(fn (Get $get): bool => (bool) $get('training_enabled'))
+                        ->schema([
+                            Textarea::make('prompt')
+                                ->label('Question')
+                                ->rows(2)
+                                ->required()
+                                ->columnSpanFull(),
+                            Repeater::make('options')
+                                ->label('Answer choices')
+                                ->schema([
+                                    TextInput::make('label')
+                                        ->label('Answer')
+                                        ->required()
+                                        ->maxLength(1000),
+                                    Toggle::make('correct')
+                                        ->label('Correct answer'),
+                                ])
+                                ->columns(['default' => 1, 'md' => 2])
+                                ->minItems(2)
+                                ->defaultItems(2)
+                                ->addActionLabel('Add answer choice')
+                                ->reorderable()
+                                ->columnSpanFull(),
+                            Textarea::make('explanation')
+                                ->label('Answer explanation')
+                                ->helperText('Keep the reason for the correct answer with the question. This can be used in review and future feedback screens.')
+                                ->rows(2)
+                                ->columnSpanFull(),
+                            Toggle::make('is_active')
+                                ->label('Include this question')
+                                ->default(true),
+                        ])
+                        ->itemLabel(fn (array $state): string => str((string) ($state['prompt'] ?? 'New question'))->limit(80)->toString())
+                        ->addActionLabel('Add question')
+                        ->collapsible()
+                        ->reorderable()
+                        ->defaultItems(0)
+                        ->columnSpanFull(),
+                ])
+                ->columns(['default' => 1, 'md' => 2]),
         ]);
     }
 
@@ -339,6 +418,65 @@ class EmployeeProgramResource extends Resource
                 'positions',
                 'sections.items.procedure.currentRevision',
             ]);
+    }
+
+    public static function getGlobalSearchResults(string $search): Collection
+    {
+        $query = static::getGlobalSearchEloquentQuery();
+        $terms = str($search)->squish()->lower()->explode(' ')->filter();
+
+        foreach ($terms as $word) {
+            $term = '%'.addcslashes((string) $word, '%_\\').'%';
+
+            $query->where(function (Builder $searchQuery) use ($term): void {
+                $searchQuery
+                    ->whereRaw('LOWER(title) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(summary) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(category) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(CAST(introduction AS TEXT)) LIKE ?', [$term])
+                    ->orWhereHas('sections', fn (Builder $sectionQuery): Builder => $sectionQuery
+                        ->whereRaw('LOWER(title) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(description) LIKE ?', [$term])
+                        ->orWhereHas('items', fn (Builder $itemQuery): Builder => $itemQuery
+                            ->whereRaw('LOWER(title) LIKE ?', [$term])
+                            ->orWhereRaw('LOWER(description) LIKE ?', [$term])
+                            ->orWhereRaw('LOWER(original_name) LIKE ?', [$term])
+                            ->orWhereHas('procedure', fn (Builder $procedureQuery): Builder => $procedureQuery
+                                ->visibleTo(auth()->user())
+                                ->where(function (Builder $visibleProcedureQuery) use ($term): void {
+                                    $visibleProcedureQuery
+                                        ->whereRaw('LOWER(code) LIKE ?', [$term])
+                                        ->orWhereRaw('LOWER(title) LIKE ?', [$term])
+                                        ->orWhereRaw('LOWER(summary) LIKE ?', [$term])
+                                        ->orWhereHas('currentRevision', fn (Builder $revisionQuery): Builder => $revisionQuery
+                                            ->whereRaw('LOWER(code) LIKE ?', [$term])
+                                            ->orWhereRaw('LOWER(title) LIKE ?', [$term])
+                                            ->orWhereRaw('LOWER(summary) LIKE ?', [$term]));
+                                }))));
+            });
+        }
+
+        return $query
+            ->limit(static::getGlobalSearchResultsLimit())
+            ->get()
+            ->map(function (EmployeeProgram $record): ?GlobalSearchResult {
+                $url = static::getGlobalSearchResultUrl($record);
+
+                if (blank($url)) {
+                    return null;
+                }
+
+                return new GlobalSearchResult(
+                    title: static::getGlobalSearchResultTitle($record),
+                    url: $url,
+                    details: [
+                        'Topic' => EmployeeProgram::categoryOptions()[$record->category]
+                            ?? str($record->category)->headline()->toString(),
+                    ],
+                );
+            })
+            ->filter()
+            ->values();
     }
 
     public static function canViewAny(): bool

@@ -11,6 +11,7 @@ use App\Http\Controllers\MaintenanceWorkOrderPrintController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderCalendarController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PolicyAcknowledgementEvidenceController;
 use App\Http\Controllers\ProcedurePortalController;
 use App\Http\Controllers\TripLoadSummaryPrintController;
 use App\Models\Driver;
@@ -43,6 +44,10 @@ Route::prefix('procedures')->middleware('throttle:60,1')->group(function (): voi
 Route::get('procedure-attachments/{procedure}/{attachment}', [ProcedurePortalController::class, 'attachment'])
     ->middleware('auth')
     ->name('procedures.attachments.show');
+
+Route::get('policy-acknowledgements/{acknowledgement}/evidence', PolicyAcknowledgementEvidenceController::class)
+    ->middleware('auth')
+    ->name('policy-acknowledgements.evidence.show');
 
 Route::get('program-materials/{item}', EmployeeProgramMaterialController::class)
     ->middleware('auth')

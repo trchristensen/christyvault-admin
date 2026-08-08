@@ -9,6 +9,7 @@ use App\Filament\Team\Concerns\ManagesTripPreTripInspections;
 use App\Filament\Team\Pages\Schedule;
 use App\Models\Order;
 use App\Models\Trip;
+use App\Services\DeliveryCalendarAvailability;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
@@ -41,12 +42,12 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
     protected function getViewData(): array
     {
         $allowedDeliveryTypes = $this->allowedDeliveryTypes();
-        [$today, $tomorrow] = $this->dashboardDeliveryDates();
+        [$today, $nextWorkingDay] = $this->dashboardDeliveryDates();
 
         $query = Order::query()
-            ->whereBetween('assigned_delivery_date', [
+            ->whereIn('assigned_delivery_date', [
                 $today->toDateString(),
-                $tomorrow->toDateString(),
+                $nextWorkingDay->toDateString(),
             ])
             ->when(
                 $allowedDeliveryTypes !== [],
@@ -107,11 +108,11 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
                     'is_today' => true,
                 ],
                 [
-                    'key' => 'tomorrow',
-                    'label' => 'Tomorrow',
-                    'heading' => "Tomorrow's Deliveries",
-                    'empty_message' => 'No deliveries scheduled tomorrow.',
-                    'date' => $tomorrow,
+                    'key' => 'next_working_day',
+                    'label' => $nextWorkingDay->format('l'),
+                    'heading' => $nextWorkingDay->format('l').'’s Deliveries',
+                    'empty_message' => 'No deliveries scheduled '.$nextWorkingDay->format('l').'.',
+                    'date' => $nextWorkingDay,
                     'is_today' => false,
                 ],
             ])->map(function (array $day) use ($ordersByDate): array {
@@ -137,7 +138,10 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
     {
         $today = now('America/Los_Angeles')->startOfDay();
 
-        return [$today, $today->copy()->addDay()];
+        return [
+            $today,
+            app(DeliveryCalendarAvailability::class)->nextOpenDateAfter($today),
+        ];
     }
 
     /**

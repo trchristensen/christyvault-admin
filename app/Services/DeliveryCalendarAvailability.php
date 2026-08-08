@@ -10,17 +10,32 @@ use Illuminate\Validation\ValidationException;
 
 class DeliveryCalendarAvailability
 {
+    public function nextOpenDateAfter($date): Carbon
+    {
+        $candidate = Carbon::parse($date)->startOfDay();
+
+        for ($daysChecked = 0; $daysChecked < 366; $daysChecked++) {
+            $candidate->addDay();
+
+            if (! $this->isBlocked($candidate)) {
+                return $candidate->copy();
+            }
+        }
+
+        throw new \RuntimeException('No open delivery date was found within the next year.');
+    }
+
     public function isBlocked($date): bool
     {
         $date = Carbon::parse($date)->toDateString();
         $rules = $this->calendarDaysForDate($date);
 
-        if ($rules->contains(fn(CalendarDay $day): bool => $day->blocks_delivery)) {
+        if ($rules->contains(fn (CalendarDay $day): bool => $day->blocks_delivery)) {
             return true;
         }
 
         if (Carbon::parse($date)->isWeekend()) {
-            return ! $rules->contains(fn(CalendarDay $day): bool => $day->opens_delivery);
+            return ! $rules->contains(fn (CalendarDay $day): bool => $day->opens_delivery);
         }
 
         return false;
@@ -30,13 +45,13 @@ class DeliveryCalendarAvailability
     {
         $date = Carbon::parse($date)->toDateString();
         $rules = $this->calendarDaysForDate($date);
-        $blockingRules = $rules->filter(fn(CalendarDay $day): bool => $day->blocks_delivery);
+        $blockingRules = $rules->filter(fn (CalendarDay $day): bool => $day->blocks_delivery);
 
         if ($blockingRules->isNotEmpty()) {
             return $blockingRules->pluck('name')->join(', ');
         }
 
-        if (Carbon::parse($date)->isWeekend() && ! $rules->contains(fn(CalendarDay $day): bool => $day->opens_delivery)) {
+        if (Carbon::parse($date)->isWeekend() && ! $rules->contains(fn (CalendarDay $day): bool => $day->opens_delivery)) {
             return 'Weekend';
         }
 
@@ -82,14 +97,14 @@ class DeliveryCalendarAvailability
         $startDate = Carbon::parse($start)->startOfDay();
         $endDate = Carbon::parse($end)->startOfDay();
         $calendarDays = $this->calendarDaysForRange($startDate, $endDate);
-        $calendarDaysByDate = $calendarDays->groupBy(fn(CalendarDay $day): string => $day->date->toDateString());
+        $calendarDaysByDate = $calendarDays->groupBy(fn (CalendarDay $day): string => $day->date->toDateString());
         $events = [];
 
         foreach (CarbonPeriod::create($startDate, $endDate) as $date) {
             $dateString = $date->toDateString();
             $dayRules = $calendarDaysByDate->get($dateString, collect());
-            $hasOpenOverride = $dayRules->contains(fn(CalendarDay $day): bool => $day->opens_delivery);
-            $hasBlockingRule = $dayRules->contains(fn(CalendarDay $day): bool => $day->blocks_delivery);
+            $hasOpenOverride = $dayRules->contains(fn (CalendarDay $day): bool => $day->opens_delivery);
+            $hasBlockingRule = $dayRules->contains(fn (CalendarDay $day): bool => $day->blocks_delivery);
 
             if ($date->isWeekend() && ! $hasOpenOverride && ! $hasBlockingRule) {
                 $events[] = [

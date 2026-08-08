@@ -41,6 +41,10 @@ class User extends Authenticatable implements FilamentUser
 
     public const MANAGE_PROGRAMS_PERMISSION = 'manage programs';
 
+    public const VIEW_TRAINING_PERMISSION = 'view training';
+
+    public const MANAGE_TRAINING_PERMISSION = 'manage training';
+
     public const VIEW_PLANT_TIME_OFF_REQUESTS_PERMISSION = 'view plant time off requests';
 
     public const VIEW_ALL_TIME_OFF_REQUESTS_PERMISSION = 'view all time off requests';
@@ -132,6 +136,17 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->canViewPrograms()
             && $this->can(self::MANAGE_PROGRAMS_PERMISSION);
+    }
+
+    public function canViewTraining(): bool
+    {
+        return $this->can(self::VIEW_TRAINING_PERMISSION);
+    }
+
+    public function canManageTraining(): bool
+    {
+        return $this->canViewTraining()
+            && $this->can(self::MANAGE_TRAINING_PERMISSION);
     }
 
     /**

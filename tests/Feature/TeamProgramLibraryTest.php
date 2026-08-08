@@ -259,6 +259,47 @@ it('searches program sections and linked procedures in the card library', functi
         ->assertDontSee('Unrelated Program');
 });
 
+it('searches program sections and linked procedures from the team menu without widening access', function (): void {
+    $manager = employeeProgramUser('manager');
+    $driver = allowProgramViewing(employeeProgramUser('driver', 'colma', ['driver']));
+    $driver->givePermissionTo(User::VIEW_PROCEDURES_PERMISSION);
+    $procedure = publishedTestProcedure($manager, 'Compressed Air Moisture Procedure');
+
+    $visible = testEmployeeProgram($manager, ['title' => 'Colma Vehicle Care']);
+    $visibleSection = $visible->sections()->create([
+        'title' => 'Air system upkeep',
+        'description' => 'Downtime checks for moisture prevention and reservoir care.',
+    ]);
+    $visibleSection->items()->create([
+        'type' => EmployeeProgramItem::TYPE_PROCEDURE,
+        'standard_operating_procedure_id' => $procedure->getKey(),
+    ]);
+    $visible->publish();
+
+    $hidden = testEmployeeProgram($manager, [
+        'title' => 'Tulare Vehicle Care',
+        'plant_locations' => ['tulare'],
+    ]);
+    $hidden->sections()->create([
+        'title' => 'Air system upkeep',
+        'description' => 'Downtime checks for moisture prevention and reservoir care.',
+    ])->items()->create([
+        'type' => EmployeeProgramItem::TYPE_LINK,
+        'title' => 'Moisture reference',
+        'external_url' => 'https://example.com/moisture',
+    ]);
+    $hidden->publish();
+
+    $this->actingAs($driver);
+
+    $sectionResults = EmployeeProgramResource::getGlobalSearchResults('moisture reservoir');
+    $procedureResults = EmployeeProgramResource::getGlobalSearchResults('Compressed Air Moisture');
+
+    expect($sectionResults->pluck('title')->all())->toBe(['Colma Vehicle Care'])
+        ->and($procedureResults->pluck('title')->all())->toBe(['Colma Vehicle Care'])
+        ->and($sectionResults->first()?->details)->toBe(['Topic' => 'Safety']);
+});
+
 it('keeps linked procedure permissions authoritative inside programs', function (): void {
     $manager = employeeProgramUser('manager');
     $employee = allowProgramViewing(employeeProgramUser('employee', 'colma'));

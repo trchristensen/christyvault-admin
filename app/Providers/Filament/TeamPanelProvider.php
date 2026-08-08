@@ -6,6 +6,7 @@ use App\Filament\Team\Pages\Dashboard;
 use App\Filament\Team\Widgets\EmployeeOverviewWidget;
 use App\Filament\Team\Widgets\EquipmentCareWidget;
 use App\Filament\Team\Widgets\TodaysDeliveriesWidget;
+use App\Filament\Team\Widgets\TrainingOverviewWidget;
 use App\Support\Filament\SharedProfile;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -81,6 +82,7 @@ class TeamPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Team/Widgets'), for: 'App\\Filament\\Team\\Widgets')
             ->widgets([
                 EmployeeOverviewWidget::class,
+                TrainingOverviewWidget::class,
                 TodaysDeliveriesWidget::class,
                 EquipmentCareWidget::class,
             ])

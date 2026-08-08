@@ -180,6 +180,38 @@ it('searches procedure content inside the grouped card library', function (): vo
         ->assertDontSee('Unrelated Procedure');
 });
 
+it('searches published procedure details and content from the team menu without widening access', function (): void {
+    $manager = sopUser('manager');
+    $driver = allowProcedureViewing(sopUser('driver', 'colma', ['driver']));
+    $visible = sopProcedure($manager, [
+        'code' => 'SOP-AIR-DRY',
+        'title' => 'Colma Air System Care',
+        'summary' => 'Moisture prevention for vehicle air systems.',
+        'category' => 'equipment',
+        'draft_content' => sopContent('Drain each applicable manual reservoir and report excessive compressor oil.'),
+    ]);
+    $visible->publishDraft($manager);
+
+    $hidden = sopProcedure($manager, [
+        'title' => 'Tulare Air System Care',
+        'plant_locations' => ['tulare'],
+        'draft_content' => sopContent('Drain each applicable manual reservoir and report excessive compressor oil.'),
+    ]);
+    $hidden->publishDraft($manager);
+
+    $this->actingAs($driver);
+
+    $contentResults = StandardOperatingProcedureResource::getGlobalSearchResults('manual reservoir compressor');
+    $codeResults = StandardOperatingProcedureResource::getGlobalSearchResults('SOP-AIR-DRY');
+
+    expect($contentResults->pluck('title')->all())->toBe(['Colma Air System Care'])
+        ->and($codeResults->pluck('title')->all())->toBe(['Colma Air System Care'])
+        ->and($contentResults->first()?->details)->toMatchArray([
+            'Procedure' => 'SOP-AIR-DRY',
+            'Topic' => 'Equipment',
+        ]);
+});
+
 it('shows employees only published procedures for their plant and position', function (): void {
     $manager = sopUser('manager');
     $driver = allowProcedureViewing(sopUser('driver', 'colma', ['driver']));

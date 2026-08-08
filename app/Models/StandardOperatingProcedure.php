@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -22,6 +23,10 @@ class StandardOperatingProcedure extends Model
 {
     use HasFactory;
 
+    public const TYPE_PROCEDURE = 'procedure';
+
+    public const TYPE_POLICY = 'policy';
+
     public const AUDIENCE_ALL_EMPLOYEES = 'all_employees';
 
     public const AUDIENCE_SELECTED_POSITIONS = 'selected_positions';
@@ -29,6 +34,7 @@ class StandardOperatingProcedure extends Model
     public const AUDIENCE_MANAGEMENT = 'management';
 
     protected $fillable = [
+        'document_type',
         'code',
         'title',
         'slug',
@@ -37,14 +43,17 @@ class StandardOperatingProcedure extends Model
         'audience',
         'plant_locations',
         'public_qr_enabled',
+        'acknowledgement_required',
         'qr_token',
         'owner_user_id',
         'current_revision_id',
         'draft_content',
         'draft_attachments',
+        'draft_acknowledgement_text',
         'draft_change_summary',
         'draft_effective_date',
         'draft_review_due_date',
+        'default_locale',
         'archived_at',
     ];
 
@@ -66,6 +75,11 @@ class StandardOperatingProcedure extends Model
             if ($procedure->audience === self::AUDIENCE_MANAGEMENT) {
                 $procedure->public_qr_enabled = false;
             }
+
+            if ($procedure->document_type !== self::TYPE_POLICY) {
+                $procedure->acknowledgement_required = false;
+                $procedure->draft_acknowledgement_text = null;
+            }
         });
     }
 
@@ -74,6 +88,7 @@ class StandardOperatingProcedure extends Model
         return [
             'plant_locations' => 'array',
             'public_qr_enabled' => 'boolean',
+            'acknowledgement_required' => 'boolean',
             'draft_content' => 'array',
             'draft_attachments' => 'array',
             'draft_effective_date' => 'date',
@@ -88,6 +103,14 @@ class StandardOperatingProcedure extends Model
             self::AUDIENCE_ALL_EMPLOYEES => 'All employees',
             self::AUDIENCE_SELECTED_POSITIONS => 'Selected positions',
             self::AUDIENCE_MANAGEMENT => 'Management only',
+        ];
+    }
+
+    public static function typeOptions(): array
+    {
+        return [
+            self::TYPE_PROCEDURE => 'Procedure',
+            self::TYPE_POLICY => 'Policy',
         ];
     }
 
@@ -142,6 +165,16 @@ class StandardOperatingProcedure extends Model
     public function revisions(): HasMany
     {
         return $this->hasMany(StandardOperatingProcedureRevision::class)->latest('version');
+    }
+
+    public function acknowledgements(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            DocumentAcknowledgement::class,
+            StandardOperatingProcedureRevision::class,
+            'standard_operating_procedure_id',
+            'standard_operating_procedure_revision_id',
+        );
     }
 
     public function positions(): BelongsToMany
@@ -212,6 +245,14 @@ class StandardOperatingProcedure extends Model
             ]);
         }
 
+        if ($this->document_type === self::TYPE_POLICY
+            && $this->acknowledgement_required
+            && blank($this->draft_acknowledgement_text)) {
+            throw ValidationException::withMessages([
+                'draft_acknowledgement_text' => 'Add the exact employee acknowledgment statement before publishing this policy.',
+            ]);
+        }
+
         if ($this->archived_at) {
             throw ValidationException::withMessages([
                 'publish' => 'Restore this procedure before publishing another version.',
@@ -241,12 +282,16 @@ class StandardOperatingProcedure extends Model
             $revision = $procedure->revisions()->create([
                 'version' => ((int) $procedure->revisions()->max('version')) + 1,
                 'status' => StandardOperatingProcedureRevision::STATUS_PUBLISHED,
+                'document_type' => $procedure->document_type,
                 'code' => $procedure->code,
                 'title' => $procedure->title,
                 'category' => $procedure->category,
                 'summary' => $procedure->summary,
                 'content' => $procedure->draft_content,
                 'attachments' => $procedure->normalizedDraftAttachments(),
+                'acknowledgement_required' => $procedure->acknowledgement_required,
+                'acknowledgement_text' => $procedure->draft_acknowledgement_text,
+                'locale' => $procedure->default_locale ?: 'en',
                 'content_hash' => $contentHash,
                 'change_summary' => $procedure->draft_change_summary,
                 'effective_date' => $procedure->draft_effective_date ?? today(),
@@ -279,6 +324,11 @@ class StandardOperatingProcedure extends Model
         }
 
         return $this->hasUnpublishedChanges() ? 'Published · changes pending' : 'Published';
+    }
+
+    public function getDocumentLabelAttribute(): string
+    {
+        return self::typeOptions()[$this->document_type] ?? 'Document';
     }
 
     public function getQrUrlAttribute(): string
@@ -317,12 +367,16 @@ class StandardOperatingProcedure extends Model
     private function draftHash(): string
     {
         return hash('sha256', json_encode([
+            'document_type' => $this->document_type,
             'code' => $this->code,
             'title' => $this->title,
             'category' => $this->category,
             'summary' => $this->summary,
             'content' => $this->draft_content,
             'attachments' => $this->normalizedDraftAttachments(),
+            'acknowledgement_required' => $this->acknowledgement_required,
+            'acknowledgement_text' => $this->draft_acknowledgement_text,
+            'locale' => $this->default_locale,
             'effective_date' => $this->draft_effective_date?->toDateString(),
             'review_due_date' => $this->draft_review_due_date?->toDateString(),
         ], JSON_THROW_ON_ERROR));

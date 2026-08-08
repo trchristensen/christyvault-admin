@@ -22,6 +22,7 @@ class Employee extends Model
         'phone',
         'is_active',
         'christy_location',
+        'preferred_locale',
         'hire_date',
         'birth_date',
     ];
@@ -112,6 +113,16 @@ class Employee extends Model
     public function positions()
     {
         return $this->belongsToMany(Position::class)->withTimestamps();
+    }
+
+    public function trainingAssignments()
+    {
+        return $this->hasMany(TrainingAssignment::class);
+    }
+
+    public function documentAcknowledgements()
+    {
+        return $this->hasMany(DocumentAcknowledgement::class);
     }
 
     public function isDriver()

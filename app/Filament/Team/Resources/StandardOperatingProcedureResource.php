@@ -16,6 +16,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\GlobalSearch\GlobalSearchResult;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -28,6 +29,7 @@ use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class StandardOperatingProcedureResource extends Resource
 {
@@ -39,11 +41,11 @@ class StandardOperatingProcedureResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Employee Resources';
 
-    protected static ?string $navigationLabel = 'Procedures';
+    protected static ?string $navigationLabel = 'Policies & Procedures';
 
-    protected static ?string $modelLabel = 'procedure';
+    protected static ?string $modelLabel = 'policy or procedure';
 
-    protected static ?string $pluralModelLabel = 'Procedures';
+    protected static ?string $pluralModelLabel = 'Policies & Procedures';
 
     protected static ?string $recordTitleAttribute = 'title';
 
@@ -52,11 +54,18 @@ class StandardOperatingProcedureResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Procedure details')
+            Section::make('Document details')
                 ->description('The code remains stable while published revisions preserve exactly what employees were shown.')
                 ->schema([
+                    Select::make('document_type')
+                        ->label('Document type')
+                        ->options(StandardOperatingProcedure::typeOptions())
+                        ->default(StandardOperatingProcedure::TYPE_PROCEDURE)
+                        ->required()
+                        ->native(false)
+                        ->live(),
                     TextInput::make('code')
-                        ->label('Procedure number')
+                        ->label('Document number')
                         ->placeholder('SOP-DRV-001')
                         ->helperText('Use a short permanent identifier, such as SOP-DRV-001.')
                         ->required()
@@ -75,7 +84,7 @@ class StandardOperatingProcedureResource extends Resource
                         ->relationship('owner', 'name')
                         ->searchable()
                         ->preload()
-                        ->helperText('The manager responsible for reviewing this procedure.'),
+                        ->helperText('The manager responsible for reviewing this document.'),
                     Textarea::make('summary')
                         ->rows(3)
                         ->maxLength(1000)
@@ -114,7 +123,7 @@ class StandardOperatingProcedureResource extends Resource
                     Toggle::make('public_qr_enabled')
                         ->label('Allow public QR access')
                         ->visible(fn (Get $get): bool => $get('audience') !== StandardOperatingProcedure::AUDIENCE_MANAGEMENT)
-                        ->helperText('Anyone with this procedure’s QR code can read its current published version without signing in. Use only for non-sensitive content.'),
+                        ->helperText('Anyone with this document’s QR code can read its current published version without signing in. Use only for non-sensitive content.'),
                 ])
                 ->columns(['default' => 1, 'xl' => 2]),
 
@@ -122,8 +131,8 @@ class StandardOperatingProcedureResource extends Resource
                 ->description('Saving updates the draft only. Employees continue seeing the previous published version until a manager publishes these changes.')
                 ->schema([
                     RichEditor::make('draft_content')
-                        ->label('Procedure')
-                        ->helperText('Use this as the full procedure workspace. Drag the bottom-right corner to make the editor taller or shorter.')
+                        ->label('Document')
+                        ->helperText('Use this as the full document workspace. Drag the bottom-right corner to make the editor taller or shorter.')
                         ->json()
                         ->extraInputAttributes([
                             'style' => 'height: 36rem; min-height: 28rem; resize: vertical; overflow: auto;',
@@ -156,6 +165,24 @@ class StandardOperatingProcedureResource extends Resource
                         ->native(false),
                 ])
                 ->columns(['default' => 1, 'xl' => 2]),
+
+            Section::make('Employee acknowledgment')
+                ->description('Use this for policies employees must personally acknowledge. The exact statement is preserved with every published revision and signature.')
+                ->visible(fn (Get $get): bool => $get('document_type') === StandardOperatingProcedure::TYPE_POLICY)
+                ->schema([
+                    Toggle::make('acknowledgement_required')
+                        ->label('Require employee acknowledgment')
+                        ->helperText('Employees acknowledge the current published revision. Publishing a new revision requires a new acknowledgment.')
+                        ->live(),
+                    Textarea::make('draft_acknowledgement_text')
+                        ->label('Acknowledgment statement')
+                        ->placeholder('I acknowledge that I received and had an opportunity to review this policy. I understand that I am expected to follow it and know whom to contact with questions.')
+                        ->helperText('Write this as acknowledgment of receipt and understanding, not as a claim that the employee agrees with every term.')
+                        ->rows(5)
+                        ->required(fn (Get $get): bool => (bool) $get('acknowledgement_required'))
+                        ->visible(fn (Get $get): bool => (bool) $get('acknowledgement_required'))
+                        ->columnSpanFull(),
+                ]),
 
             Section::make('Draft attachments')
                 ->description('Images, videos, and documents publish with this revision. Removing one from a later draft does not remove it from an older published version.')
@@ -229,7 +256,7 @@ class StandardOperatingProcedureResource extends Resource
             ->recordUrl(fn (StandardOperatingProcedure $record): string => static::getUrl('view', ['record' => $record]))
             ->searchable()
             ->searchDebounce('300ms')
-            ->searchPlaceholder('Search procedures, topics, or words in the content…')
+            ->searchPlaceholder('Search policies, procedures, topics, or content…')
             ->searchUsing(function (Builder $query, string $search): void {
                 $terms = str($search)->squish()->explode(' ')->filter();
 
@@ -275,6 +302,9 @@ class StandardOperatingProcedureResource extends Resource
             ])
             ->groupingSettingsHidden()
             ->filters([
+                SelectFilter::make('document_type')
+                    ->label('Document type')
+                    ->options(StandardOperatingProcedure::typeOptions()),
                 SelectFilter::make('category')
                     ->label('Topic')
                     ->options(StandardOperatingProcedure::categoryOptions())
@@ -367,10 +397,10 @@ class StandardOperatingProcedureResource extends Resource
             ->persistFiltersInSession()
             ->paginationPageOptions([18, 36, 72])
             ->defaultPaginationPageOption(18)
-            ->emptyStateHeading('No procedures available')
+            ->emptyStateHeading('No policies or procedures available')
             ->emptyStateDescription(fn (): string => auth()->user()?->canManageProcedures()
-                ? 'Create the first standard operating procedure for your team.'
-                : 'No published procedures currently apply to you.');
+                ? 'Create the first policy or standard operating procedure for your team.'
+                : 'No published policies or procedures currently apply to you.');
     }
 
     public static function libraryCategory(StandardOperatingProcedure $record): string
@@ -385,6 +415,70 @@ class StandardOperatingProcedureResource extends Resource
         return parent::getEloquentQuery()
             ->visibleTo(auth()->user())
             ->with(['currentRevision', 'positions']);
+    }
+
+    public static function getGlobalSearchResults(string $search): Collection
+    {
+        $query = static::getGlobalSearchEloquentQuery();
+        $terms = str($search)->squish()->lower()->explode(' ')->filter();
+
+        foreach ($terms as $word) {
+            $term = '%'.addcslashes((string) $word, '%_\\').'%';
+
+            if (auth()->user()?->canManageProcedures()) {
+                $query->where(function (Builder $searchQuery) use ($term): void {
+                    $searchQuery
+                        ->whereRaw('LOWER(code) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(title) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(summary) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(category) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(document_type) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(CAST(draft_content AS TEXT)) LIKE ?', [$term])
+                        ->orWhereHas('currentRevision', fn (Builder $revisionQuery): Builder => $revisionQuery
+                            ->whereRaw('LOWER(code) LIKE ?', [$term])
+                            ->orWhereRaw('LOWER(title) LIKE ?', [$term])
+                            ->orWhereRaw('LOWER(summary) LIKE ?', [$term])
+                            ->orWhereRaw('LOWER(category) LIKE ?', [$term])
+                            ->orWhereRaw('LOWER(document_type) LIKE ?', [$term])
+                            ->orWhereRaw('LOWER(CAST(content AS TEXT)) LIKE ?', [$term]));
+                });
+
+                continue;
+            }
+
+            $query->whereHas('currentRevision', fn (Builder $revisionQuery): Builder => $revisionQuery
+                ->whereRaw('LOWER(code) LIKE ?', [$term])
+                ->orWhereRaw('LOWER(title) LIKE ?', [$term])
+                ->orWhereRaw('LOWER(summary) LIKE ?', [$term])
+                ->orWhereRaw('LOWER(category) LIKE ?', [$term])
+                ->orWhereRaw('LOWER(document_type) LIKE ?', [$term])
+                ->orWhereRaw('LOWER(CAST(content AS TEXT)) LIKE ?', [$term]));
+        }
+
+        return $query
+            ->limit(static::getGlobalSearchResultsLimit())
+            ->get()
+            ->map(function (StandardOperatingProcedure $record): ?GlobalSearchResult {
+                $url = static::getGlobalSearchResultUrl($record);
+
+                if (blank($url)) {
+                    return null;
+                }
+
+                $revision = auth()->user()?->canManageProcedures() ? null : $record->currentRevision;
+
+                return new GlobalSearchResult(
+                    title: static::getGlobalSearchResultTitle($record),
+                    url: $url,
+                    details: [
+                        StandardOperatingProcedure::typeOptions()[$revision?->document_type ?? $record->document_type] ?? 'Document' => $revision?->code ?? $record->code,
+                        'Topic' => StandardOperatingProcedure::categoryOptions()[$revision?->category ?? $record->category]
+                            ?? str($revision?->category ?? $record->category)->headline()->toString(),
+                    ],
+                );
+            })
+            ->filter()
+            ->values();
     }
 
     public static function canViewAny(): bool

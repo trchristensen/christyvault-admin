@@ -28,7 +28,7 @@
         <h1>{{ $revision->title }}</h1>
         <div class="code">{{ $revision->code }}</div>
         <div class="qr">{!! $procedure->generateQrCode(900) !!}</div>
-        <div class="scan">Scan to view the current procedure</div>
+        <div class="scan">Scan to view the current {{ strtolower(\App\Models\StandardOperatingProcedure::typeOptions()[$revision->document_type] ?? 'document') }}</div>
         <div class="detail">The QR code always opens the latest published version. Do not rely on an outdated printed copy.</div>
         <div class="version">Posted for public QR access · Current at printing: {{ $revision->version_label }}, effective {{ $revision->effective_date->format('M j, Y') }}</div>
     </div>

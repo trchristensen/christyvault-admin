@@ -61,7 +61,7 @@
     <header>
         <div class="header-inner">
             <div class="brand">Christy Vault Company</div>
-            <div class="current">Current published procedure</div>
+            <div class="current">Current published {{ strtolower(\App\Models\StandardOperatingProcedure::typeOptions()[$revision->document_type] ?? 'document') }}</div>
         </div>
     </header>
 
@@ -120,7 +120,7 @@
             @endif
 
             <div class="document-footer">
-                Verify the procedure number and version before using a printed copy.
+                Verify the document number and version before using a printed copy.
                 @if ($revision->review_due_date)
                     Review due {{ $revision->review_due_date->format('M j, Y') }}.
                 @endif

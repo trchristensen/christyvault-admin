@@ -18,6 +18,8 @@
     $title = $canManage ? $procedure->title : ($revision?->title ?? $procedure->title);
     $summary = $canManage ? $procedure->summary : ($revision?->summary ?? $procedure->summary);
     $code = $canManage ? $procedure->code : ($revision?->code ?? $procedure->code);
+    $documentType = $canManage ? $procedure->document_type : ($revision?->document_type ?? $procedure->document_type);
+    $documentLabel = \App\Models\StandardOperatingProcedure::typeOptions()[$documentType] ?? 'Document';
     $status = $procedure->status_label;
     $statusColor = match ($status) {
         'Published' => 'success',
@@ -39,7 +41,7 @@
                 <x-filament::icon :icon="$categoryIcon" />
             </span>
             <div class="procedure-card-identity-text">
-                <div class="procedure-card-category">{{ $categoryLabel }}</div>
+                <div class="procedure-card-category">{{ $documentLabel }} · {{ $categoryLabel }}</div>
                 <div class="procedure-card-code">{{ $code }}</div>
             </div>
         </div>
@@ -54,7 +56,7 @@
     <h3 class="procedure-card-title">{{ $title }}</h3>
 
     <p class="procedure-card-summary">
-        {{ $summary ?: 'Open this procedure to read the complete instructions.' }}
+        {{ $summary ?: 'Open this document to read the complete information.' }}
     </p>
 
     <div class="procedure-card-scope">
@@ -88,7 +90,7 @@
         </div>
 
         <span class="procedure-card-open">
-            View procedure
+            View {{ strtolower($documentLabel) }}
             <x-filament::icon icon="heroicon-m-arrow-right" />
         </span>
     </div>

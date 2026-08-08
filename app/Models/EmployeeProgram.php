@@ -39,6 +39,11 @@ class EmployeeProgram extends Model
         'plant_locations',
         'owner_user_id',
         'status',
+        'training_enabled',
+        'passing_score',
+        'estimated_minutes',
+        'content_version',
+        'default_locale',
         'published_at',
         'archived_at',
     ];
@@ -57,6 +62,10 @@ class EmployeeProgram extends Model
             'plant_locations' => 'array',
             'published_at' => 'datetime',
             'archived_at' => 'datetime',
+            'training_enabled' => 'boolean',
+            'passing_score' => 'integer',
+            'estimated_minutes' => 'integer',
+            'content_version' => 'integer',
         ];
     }
 
@@ -106,6 +115,16 @@ class EmployeeProgram extends Model
         return $this->hasMany(EmployeeProgramSection::class)->orderBy('sort_order')->orderBy('id');
     }
 
+    public function trainingQuestions(): HasMany
+    {
+        return $this->hasMany(TrainingQuestion::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function trainingAssignments(): HasMany
+    {
+        return $this->hasMany(TrainingAssignment::class);
+    }
+
     public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
         if (! $user?->canViewPrograms()) {
@@ -152,6 +171,27 @@ class EmployeeProgram extends Model
             ->exists();
     }
 
+    public function appliesToEmployee(Employee $employee): bool
+    {
+        if (! $employee->is_active || $this->status !== self::STATUS_PUBLISHED || ! $this->training_enabled) {
+            return false;
+        }
+
+        if (filled($this->plant_locations)
+            && ! in_array($employee->christy_location, $this->plant_locations, true)) {
+            return false;
+        }
+
+        return match ($this->audience) {
+            self::AUDIENCE_ALL_EMPLOYEES => true,
+            self::AUDIENCE_SELECTED_POSITIONS => $employee->positions()
+                ->whereKey($this->positions()->pluck('positions.id'))
+                ->exists(),
+            self::AUDIENCE_MANAGEMENT => $employee->user?->canManagePrograms() ?? false,
+            default => false,
+        };
+    }
+
     public function renderedIntroduction(): ?Htmlable
     {
         return filled($this->introduction)
@@ -167,11 +207,77 @@ class EmployeeProgram extends Model
             ]);
         }
 
+        if ($this->training_enabled) {
+            foreach ($this->trainingQuestions()->where('is_active', true)->get() as $question) {
+                $options = collect($question->normalizedOptions());
+
+                if ($options->count() < 2 || $options->where('correct', true)->count() !== 1) {
+                    throw ValidationException::withMessages([
+                        'trainingQuestions' => 'Every active training question needs at least two choices and exactly one correct answer.',
+                    ]);
+                }
+            }
+        }
+
         $this->update([
             'status' => self::STATUS_PUBLISHED,
             'published_at' => now(),
             'archived_at' => null,
+            'content_version' => max(1, ((int) $this->content_version) + 1),
         ]);
+    }
+
+    public function trainingSnapshot(): array
+    {
+        $this->loadMissing(['sections.items.procedure.currentRevision', 'trainingQuestions']);
+
+        $requiredPolicyRevisions = $this->sections
+            ->flatMap->items
+            ->filter(fn (EmployeeProgramItem $item): bool => $item->required_for_completion
+                && $item->type === EmployeeProgramItem::TYPE_PROCEDURE
+                && $item->procedure?->document_type === StandardOperatingProcedure::TYPE_POLICY
+                && $item->procedure?->currentRevision?->acknowledgement_required)
+            ->pluck('procedure.current_revision_id')
+            ->filter()
+            ->map(fn (mixed $id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $requiredMaterials = $this->sections
+            ->flatMap->items
+            ->filter(fn (EmployeeProgramItem $item): bool => $item->required_for_completion)
+            ->values()
+            ->map(fn (EmployeeProgramItem $item): array => [
+                'item_id' => $item->getKey(),
+                'type' => $item->type,
+                'title' => $item->display_title,
+                'media_type' => $item->media_type,
+                'document_revision_id' => $item->procedure?->current_revision_id,
+            ])
+            ->all();
+
+        return [
+            'program_id' => $this->getKey(),
+            'program_title' => $this->title,
+            'program_version' => max(1, (int) $this->content_version),
+            'passing_score' => (int) $this->passing_score,
+            'estimated_minutes' => $this->estimated_minutes,
+            'locale' => $this->default_locale ?: 'en',
+            'required_policy_revisions' => $requiredPolicyRevisions,
+            'required_materials' => $requiredMaterials,
+            'questions' => $this->trainingQuestions
+                ->where('is_active', true)
+                ->values()
+                ->map(fn (TrainingQuestion $question, int $index): array => [
+                    'key' => (string) $index,
+                    'prompt' => $question->prompt,
+                    'options' => $question->normalizedOptions(),
+                    'explanation' => $question->explanation,
+                    'locale' => $question->locale ?: $this->default_locale ?: 'en',
+                ])
+                ->all(),
+        ];
     }
 
     public function moveToDraft(): void

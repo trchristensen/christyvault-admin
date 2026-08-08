@@ -44,6 +44,9 @@
         @if ($canManage)
             <x-filament::badge :color="$statusColor" size="sm">{{ str($program->status)->headline() }}</x-filament::badge>
         @endif
+        @if ($program->training_enabled)
+            <x-filament::badge color="primary" size="sm">Assignable training</x-filament::badge>
+        @endif
     </div>
 
     <h3 class="procedure-card-title">{{ $program->title }}</h3>
@@ -71,7 +74,7 @@
     <div class="procedure-card-footer">
         <div class="procedure-card-dates">
             @if ($program->published_at)
-                <span>Published {{ $program->published_at->format('M j, Y') }}</span>
+                <span>Version {{ max(1, $program->content_version) }} · Published {{ $program->published_at->format('M j, Y') }}</span>
             @else
                 <span>Not published yet</span>
             @endif

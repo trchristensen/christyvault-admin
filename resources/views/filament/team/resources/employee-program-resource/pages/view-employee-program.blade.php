@@ -48,7 +48,12 @@
             </div>
 
             @if ($program->status === \App\Models\EmployeeProgram::STATUS_PUBLISHED)
-                <x-filament::badge color="success">Published reference program</x-filament::badge>
+                <div class="flex flex-wrap gap-2">
+                    <x-filament::badge color="success">Published program</x-filament::badge>
+                    @if ($program->training_enabled)
+                        <x-filament::badge color="primary">Can be assigned as training</x-filament::badge>
+                    @endif
+                </div>
             @endif
         </div>
     </x-filament::section>
@@ -129,7 +134,7 @@
                                 <div class="mt-4 flex flex-wrap items-center gap-3 border-t border-gray-100 pt-3 dark:border-white/10">
                                     @if ($procedureUrl)
                                         <a href="{{ $procedureUrl }}" class="inline-flex items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-500 dark:text-primary-400">
-                                            Open procedure
+                                            Open {{ strtolower($item->procedure->document_label) }}
                                             <x-filament::icon icon="heroicon-m-arrow-right" class="size-4" />
                                         </a>
                                     @elseif ($item->type === \App\Models\EmployeeProgramItem::TYPE_LINK)
@@ -173,6 +178,12 @@
                 <div>
                     <dt class="font-medium text-gray-500 dark:text-gray-400">Published</dt>
                     <dd class="mt-1 text-gray-950 dark:text-white">{{ $program->published_at?->format('M j, Y g:i A') ?? 'Not published' }}</dd>
+                </div>
+                <div>
+                    <dt class="font-medium text-gray-500 dark:text-gray-400">Training</dt>
+                    <dd class="mt-1 text-gray-950 dark:text-white">
+                        {{ $program->training_enabled ? 'Enabled · '.count($program->trainingSnapshot()['questions']).' questions' : 'Reference only' }}
+                    </dd>
                 </div>
                 <div>
                     <dt class="font-medium text-gray-500 dark:text-gray-400">Audience</dt>

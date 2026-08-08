@@ -23,7 +23,7 @@ class EditStandardOperatingProcedure extends EditRecord
                 ->color('success')
                 ->requiresConfirmation()
                 ->modalHeading('Publish this saved draft?')
-                ->modalDescription('Employees will immediately see this as the current procedure. Save any unsaved form changes before publishing.')
+                ->modalDescription('Employees will immediately see this as the current document. Save any unsaved form changes before publishing.')
                 ->disabled(fn (StandardOperatingProcedure $record): bool => ! $record->hasUnpublishedChanges())
                 ->visible(fn (StandardOperatingProcedure $record): bool => ! $record->archived_at)
                 ->action(function (StandardOperatingProcedure $record): void {
@@ -32,7 +32,7 @@ class EditStandardOperatingProcedure extends EditRecord
                     Notification::make()
                         ->success()
                         ->title("Published {$revision->version_label}")
-                        ->body('Employees with access can now read this procedure.')
+                        ->body('Employees with access can now read this document.')
                         ->send();
 
                     $this->redirect(StandardOperatingProcedureResource::getUrl('view', ['record' => $record]));
@@ -42,7 +42,7 @@ class EditStandardOperatingProcedure extends EditRecord
                 ->icon('heroicon-o-archive-box')
                 ->color('danger')
                 ->requiresConfirmation()
-                ->modalHeading('Retire this procedure?')
+                ->modalHeading('Retire this document?')
                 ->modalDescription('Employees and QR visitors will lose access, but every revision will be preserved.')
                 ->action(function (StandardOperatingProcedure $record): void {
                     $record->archive();

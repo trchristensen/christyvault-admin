@@ -28,8 +28,16 @@ class EmployeeProgramItem extends Model
         'mime_type',
         'media_type',
         'external_url',
+        'required_for_completion',
         'sort_order',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'required_for_completion' => 'boolean',
+        ];
+    }
 
     protected static function booted(): void
     {
@@ -77,7 +85,7 @@ class EmployeeProgramItem extends Model
     public static function typeOptions(): array
     {
         return [
-            self::TYPE_PROCEDURE => 'Procedure',
+            self::TYPE_PROCEDURE => 'Policy or procedure',
             self::TYPE_FILE => 'File or video',
             self::TYPE_LINK => 'External link',
         ];
