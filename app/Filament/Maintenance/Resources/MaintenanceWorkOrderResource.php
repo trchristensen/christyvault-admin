@@ -5,6 +5,7 @@ namespace App\Filament\Maintenance\Resources;
 use App\Filament\Maintenance\Resources\MaintenanceWorkOrderResource\Pages\CreateMaintenanceWorkOrder;
 use App\Filament\Maintenance\Resources\MaintenanceWorkOrderResource\Pages\EditMaintenanceWorkOrder;
 use App\Filament\Maintenance\Resources\MaintenanceWorkOrderResource\Pages\ListMaintenanceWorkOrders;
+use App\Filament\Maintenance\Resources\MaintenanceWorkOrderResource\Pages\ViewMaintenanceWorkOrder;
 use App\Filament\Maintenance\Resources\MaintenanceWorkOrderResource\RelationManagers\LaborEntriesRelationManager;
 use App\Filament\Maintenance\Resources\MaintenanceWorkOrderResource\RelationManagers\PartsRelationManager;
 use App\Models\MaintenanceAsset;
@@ -14,6 +15,7 @@ use App\Support\MaintenanceOptions;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
@@ -21,8 +23,13 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Infolists\Components\IconEntry;
+use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
@@ -123,8 +130,135 @@ class MaintenanceWorkOrderResource extends Resource
                 Textarea::make('findings')->rows(4),
                 Textarea::make('work_performed')->rows(4),
                 Textarea::make('completion_notes')->rows(4)->columnSpanFull(),
-                FileUpload::make('attachment_paths')->label('Photos and documents')->disk('public')->directory('maintenance/work-orders')->multiple()->columnSpanFull(),
+                FileUpload::make('attachment_paths')
+                    ->label('Photos and documents')
+                    ->disk('public')
+                    ->directory('maintenance/work-orders')
+                    ->multiple()
+                    ->openable()
+                    ->downloadable()
+                    ->columnSpanFull(),
             ])->columns(['default' => 1, 'xl' => 2]),
+        ]);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->components([
+            Section::make('Work order')->schema([
+                Grid::make(['default' => 1, 'md' => 2, 'xl' => 4])->schema([
+                    TextEntry::make('number')
+                        ->copyable()
+                        ->weight('bold'),
+                    TextEntry::make('asset.display_name')
+                        ->label('Asset')
+                        ->placeholder('No asset assigned'),
+                    TextEntry::make('status')
+                        ->formatStateUsing(fn ($state) => MaintenanceOptions::workOrderStatuses()[$state] ?? $state)
+                        ->badge()
+                        ->color(fn ($state): string => match ($state) {
+                            'completed' => 'success',
+                            'in_progress' => 'info',
+                            'waiting_on_parts', 'on_hold', 'pending_verification' => 'warning',
+                            'canceled' => 'gray',
+                            default => 'primary',
+                        }),
+                    TextEntry::make('priority')
+                        ->formatStateUsing(fn ($state) => MaintenanceOptions::priorities()[$state] ?? $state)
+                        ->badge()
+                        ->color(fn ($state): string => MaintenanceOptions::colorForPriority($state)),
+                    TextEntry::make('title')
+                        ->label('Work summary')
+                        ->weight('bold')
+                        ->columnSpan(['default' => 1, 'md' => 2, 'xl' => 3]),
+                    TextEntry::make('type')
+                        ->label('Primary work type')
+                        ->formatStateUsing(fn ($state) => MaintenanceOptions::workOrderTypes()[$state] ?? $state)
+                        ->badge(),
+                    TextEntry::make('assignedTo.name')
+                        ->label('Assigned owner / technician')
+                        ->placeholder('Unassigned'),
+                    TextEntry::make('estimated_hours')
+                        ->label('Estimated hours')
+                        ->suffix(' hours')
+                        ->placeholder('Not estimated'),
+                    IconEntry::make('safety_related')
+                        ->label('Safety-related')
+                        ->boolean(),
+                    TextEntry::make('description')
+                        ->placeholder('No description provided.')
+                        ->columnSpanFull(),
+                ]),
+            ]),
+            Section::make('Schedule and downtime')->schema([
+                Grid::make(['default' => 1, 'md' => 2, 'xl' => 4])->schema([
+                    TextEntry::make('scheduled_at')->label('Scheduled')->dateTime('M j, Y g:i A')->placeholder('Not scheduled'),
+                    TextEntry::make('due_at')->label('Due')->dateTime('M j, Y g:i A')->placeholder('No due date'),
+                    TextEntry::make('started_at')->label('Started')->dateTime('M j, Y g:i A')->placeholder('Not started'),
+                    TextEntry::make('completed_at')->label('Completed')->dateTime('M j, Y g:i A')->placeholder('Not completed'),
+                    TextEntry::make('downtime_started_at')->label('Downtime started')->dateTime('M j, Y g:i A')->placeholder('Not recorded'),
+                    TextEntry::make('downtime_ended_at')->label('Downtime ended')->dateTime('M j, Y g:i A')->placeholder('Not recorded'),
+                    TextEntry::make('downtime_minutes')
+                        ->label('Total downtime')
+                        ->formatStateUsing(fn ($state): string => $state === null ? 'Not recorded' : number_format(((int) $state) / 60, 1).' hours'),
+                    TextEntry::make('verified_at')->label('Verified')->dateTime('M j, Y g:i A')->placeholder('Not verified'),
+                ]),
+            ])->collapsible(),
+            Section::make('Outside service provider')->schema([
+                Grid::make(['default' => 1, 'md' => 2, 'xl' => 3])->schema([
+                    TextEntry::make('service_provider')->label('Company')->placeholder('Not provided'),
+                    TextEntry::make('service_contact_name')->label('Contact name')->placeholder('Not provided'),
+                    TextEntry::make('service_phone')->label('Phone')->placeholder('Not provided'),
+                    TextEntry::make('vendor_reference')->label('Vendor ticket / reference')->placeholder('Not provided'),
+                    TextEntry::make('purchase_order_number')->label('Purchase order')->placeholder('Not provided'),
+                    TextEntry::make('authorization_limit')->label('Do not exceed')->money('USD')->placeholder('Not provided'),
+                ]),
+            ])
+                ->collapsible()
+                ->visible(fn (MaintenanceWorkOrder $record): bool => collect([
+                    $record->service_provider,
+                    $record->service_contact_name,
+                    $record->service_phone,
+                    $record->vendor_reference,
+                    $record->purchase_order_number,
+                    $record->authorization_limit,
+                ])->contains(fn ($value): bool => filled($value))),
+            Section::make('Procedure checklist')->schema([
+                RepeatableEntry::make('checklist')
+                    ->hiddenLabel()
+                    ->placeholder('No checklist items.')
+                    ->schema([
+                        Grid::make(['default' => 1, 'md' => 4])->schema([
+                            IconEntry::make('completed')->label('Done')->boolean(),
+                            TextEntry::make('task')->label('Task')->weight('bold')->columnSpan(['default' => 1, 'md' => 3]),
+                            TextEntry::make('notes')->placeholder('No notes')->columnSpanFull(),
+                        ]),
+                    ])
+                    ->columnSpanFull(),
+            ])->collapsible(),
+            Section::make('Completion record')->schema([
+                Grid::make(['default' => 1, 'xl' => 3])->schema([
+                    TextEntry::make('findings')->placeholder('No findings recorded.'),
+                    TextEntry::make('work_performed')->label('Work performed')->placeholder('No work recorded.'),
+                    TextEntry::make('completion_notes')->label('Completion notes')->placeholder('No completion notes.'),
+                ]),
+            ]),
+            Section::make('Photos and documents')
+                ->description('Select a photo to view it full size. PDFs can be read directly below or opened in a new tab.')
+                ->schema([
+                    ViewEntry::make('attachment_paths')
+                        ->hiddenLabel()
+                        ->view('filament.maintenance.resources.maintenance-work-order-resource.entries.attachments')
+                        ->columnSpanFull(),
+                ]),
+            Section::make('Record details')->schema([
+                Grid::make(['default' => 1, 'md' => 2, 'xl' => 4])->schema([
+                    TextEntry::make('createdBy.name')->label('Created by')->placeholder('Unknown'),
+                    TextEntry::make('created_at')->label('Created')->dateTime('M j, Y g:i A'),
+                    TextEntry::make('verifiedBy.name')->label('Verified by')->placeholder('Not verified'),
+                    TextEntry::make('updated_at')->label('Last updated')->dateTime('M j, Y g:i A'),
+                ]),
+            ])->collapsed(),
         ]);
     }
 
@@ -157,6 +291,7 @@ class MaintenanceWorkOrderResource extends Resource
             SelectFilter::make('type')->options(MaintenanceOptions::workOrderTypes()),
             SelectFilter::make('assigned_to_user_id')->relationship('assignedTo', 'name')->label('Technician'),
         ])->recordActions([
+            ViewAction::make(),
             EditAction::make(),
             ActionGroup::make([
                 Action::make('print_for_vendor')
@@ -195,6 +330,7 @@ class MaintenanceWorkOrderResource extends Resource
         return [
             'index' => ListMaintenanceWorkOrders::route('/'),
             'create' => CreateMaintenanceWorkOrder::route('/create'),
+            'view' => ViewMaintenanceWorkOrder::route('/{record}'),
             'edit' => EditMaintenanceWorkOrder::route('/{record}/edit'),
         ];
     }

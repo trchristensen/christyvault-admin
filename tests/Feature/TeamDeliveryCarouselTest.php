@@ -57,6 +57,8 @@ it('renders today and the next working day as a manual swipe carousel', function
 
     $carousel = Livewire::test(TodaysDeliveriesWidget::class)
         ->assertSee('team-deliveries-carousel-track', false)
+        ->assertSee('ResizeObserver', false)
+        ->assertSee(':style="trackHeight ? { height: trackHeight } : {}"', false)
         ->assertSee('data-initial-slide="1"', false)
         ->assertSee("Today's Deliveries")
         ->assertSee('Friday’s Deliveries')

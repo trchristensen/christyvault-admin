@@ -9,6 +9,8 @@
         data-initial-slide="{{ $initialSlide }}"
         x-data="{
             active: {{ $initialSlide }},
+            trackHeight: null,
+            heightObserver: null,
             slideLeft(index) {
                 const track = this.$refs.track;
                 const firstSlide = track?.children[0];
@@ -26,6 +28,16 @@
 
                 this.active = index;
                 track.scrollTo({ left: this.slideLeft(index), behavior });
+                window.requestAnimationFrame(() => this.syncHeight(index));
+            },
+            syncHeight(index = this.active) {
+                const slide = this.$refs.track?.children[index];
+
+                if (! slide) return;
+
+                const height = slide.scrollHeight;
+
+                if (height > 0) this.trackHeight = `${height}px`;
             },
             syncFromScroll() {
                 const track = this.$refs.track;
@@ -40,9 +52,17 @@
                 }, { index: 0, distance: Number.POSITIVE_INFINITY });
 
                 this.active = closest.index;
+                this.syncHeight(closest.index);
             },
         }"
-        x-init="$nextTick(() => select(active, 'auto'))"
+        x-init="$nextTick(() => {
+            select(active, 'auto');
+
+            if ('ResizeObserver' in window) {
+                heightObserver = new ResizeObserver(() => syncHeight(active));
+                Array.from($refs.track.children).forEach((slide) => heightObserver.observe(slide));
+            }
+        })"
         @keydown.left.prevent="select(Math.max(0, active - 1))"
         @keydown.right.prevent="select(Math.min({{ count($deliveryDays) - 1 }}, active + 1))"
     >
@@ -86,6 +106,7 @@
         <div
             class="team-deliveries-carousel-track"
             x-ref="track"
+            :style="trackHeight ? { height: trackHeight } : {}"
             tabindex="0"
             @scroll.debounce.100ms="syncFromScroll()"
         >

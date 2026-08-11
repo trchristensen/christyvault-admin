@@ -23,7 +23,7 @@ class WorkOrdersRelationManager extends RelationManager
             TextColumn::make('assignedTo.name')->label('Technician'),
             TextColumn::make('due_at')->dateTime(),
         ])->defaultSort('created_at', 'desc')->recordActions([
-            Action::make('open')->icon('heroicon-o-arrow-top-right-on-square')->url(fn (MaintenanceWorkOrder $record) => MaintenanceWorkOrderResource::getUrl('edit', ['record' => $record])),
+            Action::make('open')->icon('heroicon-o-arrow-top-right-on-square')->url(fn (MaintenanceWorkOrder $record) => MaintenanceWorkOrderResource::getUrl('view', ['record' => $record])),
         ]);
     }
 }

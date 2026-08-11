@@ -1,5 +1,6 @@
 <?php
 
+use App\Filament\Maintenance\Resources\MaintenanceWorkOrderResource;
 use App\Models\Location;
 use App\Models\MaintenanceAsset;
 use App\Models\MaintenanceFleetPlan;
@@ -213,6 +214,43 @@ it('prints a vendor-facing work order without exposing it publicly', function ()
     $this->actingAs($unauthorized)
         ->get(route('maintenance.work-orders.print', $workOrder))
         ->assertForbidden();
+});
+
+it('shows a work order with photo and inline PDF attachment previews', function (): void {
+    Storage::fake('public');
+
+    $manager = User::factory()->create();
+    $manager->assignRole(Role::findOrCreate('maintenance-manager', 'web'));
+    $asset = MaintenanceAsset::create([
+        'asset_tag' => 'VIEW-'.uniqid(),
+        'name' => 'Attachment preview asset',
+        'category' => 'truck',
+    ]);
+
+    Storage::disk('public')->put('maintenance/work-orders/photo.jpg', 'photo');
+    Storage::disk('public')->put('maintenance/work-orders/report.pdf', '%PDF-1.4 report');
+
+    $workOrder = MaintenanceWorkOrder::create([
+        'asset_id' => $asset->id,
+        'title' => 'Review completed repair',
+        'description' => 'Confirm the repair documentation.',
+        'attachment_paths' => [
+            'maintenance/work-orders/photo.jpg',
+            'maintenance/work-orders/report.pdf',
+        ],
+    ]);
+
+    $this->actingAs($manager)
+        ->get(MaintenanceWorkOrderResource::getUrl('view', ['record' => $workOrder], panel: 'maintenance'))
+        ->assertOk()
+        ->assertSee($workOrder->number)
+        ->assertSee('Review completed repair')
+        ->assertSee('Photos and documents')
+        ->assertSee('Photo 1')
+        ->assertSee('PDF document 1')
+        ->assertSee('maintenance/work-orders/photo.jpg', false)
+        ->assertSee('maintenance/work-orders/report.pdf', false)
+        ->assertSee('<iframe', false);
 });
 
 it('fills saved vendor details while preserving the work order snapshot', function (): void {

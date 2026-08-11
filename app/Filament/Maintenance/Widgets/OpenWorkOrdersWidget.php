@@ -42,6 +42,6 @@ class OpenWorkOrdersWidget extends TableWidget
 
     protected function getTableActions(): array
     {
-        return [Action::make('open')->url(fn (MaintenanceWorkOrder $record) => MaintenanceWorkOrderResource::getUrl('edit', ['record' => $record]))];
+        return [Action::make('open')->url(fn (MaintenanceWorkOrder $record) => MaintenanceWorkOrderResource::getUrl('view', ['record' => $record]))];
     }
 }
