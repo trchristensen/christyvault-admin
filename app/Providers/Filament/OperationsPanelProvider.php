@@ -6,8 +6,9 @@ use App\Filament\Operations\Pages\Notifications;
 use App\Filament\Operations\Widgets\InventoryStatsWidget;
 use App\Filament\Operations\Widgets\LatestNotificationsWidget;
 use App\Filament\Operations\Widgets\RecentPurchaseOrdersWidget;
+use App\Http\Middleware\AuthenticatePanel;
 use App\Support\Filament\SharedProfile;
-use Filament\Http\Middleware\Authenticate;
+use App\Support\FilamentLoginMode;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages\Dashboard;
@@ -43,9 +44,10 @@ class OperationsPanelProvider extends PanelProvider
             ->sidebarWidth('13rem')
             // ->collapsedSidebarWidth('5rem')
             ->plugins([
-                FilamentPasswordlessLoginPlugin::make()
-                    ->showPasswordLoginLink(false)
-                    ->resource(false),
+                FilamentLoginMode::configure(
+                    FilamentPasswordlessLoginPlugin::make()
+                        ->resource(false),
+                ),
                 SharedProfile::make(),
             ])
             ->discoverResources(in: app_path('Filament/Operations/Resources'), for: 'App\\Filament\\Operations\\Resources')
@@ -72,7 +74,7 @@ class OperationsPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                AuthenticatePanel::class,
             ])
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s');

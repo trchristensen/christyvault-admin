@@ -2,20 +2,46 @@
 
 use App\Filament\Resources\UserResource\Pages\CreateUser;
 use App\Models\User;
+use App\Support\FilamentLoginMode;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
+use SpykApp\FilamentPasswordlessLogin\Pages\Login;
 
 uses(DatabaseTransactions::class);
 
-it('renders magic-link-only login forms for every panel', function (): void {
+it('offers password and magic-link login for every panel outside production', function (): void {
     foreach (['/login', '/team/login', '/maintenance/login', '/operations/login', '/sales/login'] as $path) {
         $this->get($path)
             ->assertOk()
             ->assertSee('Send Magic Link')
-            ->assertDontSee('type="password"', false);
+            ->assertSee('id="form.password"', false);
     }
+});
+
+it('enables password login everywhere except production', function (): void {
+    expect(FilamentLoginMode::passwordLoginEnabled('local'))->toBeTrue()
+        ->and(FilamentLoginMode::passwordLoginEnabled('testing'))->toBeTrue()
+        ->and(FilamentLoginMode::passwordLoginEnabled('staging'))->toBeTrue()
+        ->and(FilamentLoginMode::passwordLoginEnabled('production'))->toBeFalse();
+});
+
+it('authenticates a development user with a password', function (): void {
+    $user = User::factory()->create();
+    $user->assignRole(Role::findOrCreate('maintenance-manager', 'web'));
+    Filament::setCurrentPanel('maintenance');
+
+    Livewire::test(Login::class)
+        ->fillForm([
+            'email' => $user->email,
+            'password' => 'password',
+            'remember' => false,
+        ])
+        ->call('authenticate')
+        ->assertHasNoFormErrors();
+
+    $this->assertAuthenticatedAs($user);
 });
 
 it('creates a production-style user without a password', function (): void {

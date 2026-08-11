@@ -9,8 +9,9 @@ use App\Filament\Resources\OrderResource\Pages\DeliveryCalendar;
 use App\Filament\Widgets\OfficeManagerAttentionWidget;
 use App\Filament\Widgets\PlanningOpportunitiesWidget;
 use App\Filament\Widgets\TodayTomorrowBriefingWidget;
+use App\Http\Middleware\AuthenticatePanel;
 use App\Support\Filament\SharedProfile;
-use Filament\Http\Middleware\Authenticate;
+use App\Support\FilamentLoginMode;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
@@ -79,9 +80,10 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarWidth('13rem')
             // ->collapsedSidebarWidth('5rem')
             ->plugins([
-                FilamentPasswordlessLoginPlugin::make()
-                    ->showPasswordLoginLink(false)
-                    ->navigationGroup('System'),
+                FilamentLoginMode::configure(
+                    FilamentPasswordlessLoginPlugin::make()
+                        ->navigationGroup('System'),
+                ),
                 FilamentSpatieRolesPermissionsPlugin::make(),
                 SharedProfile::make(),
                 // FilamentSpatieRolesPermissionsPlugin::make(),
@@ -119,7 +121,7 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                AuthenticatePanel::class,
             ]);
     }
 }

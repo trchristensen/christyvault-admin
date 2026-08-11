@@ -22,11 +22,13 @@ use App\Policies\ActivityPolicy;
 use App\Policies\MagicLoginTokenPolicy;
 use App\Policies\PermissionPolicy;
 use App\Policies\RolePolicy;
+use App\Support\ImpersonationAuditLogger;
 use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -34,6 +36,8 @@ use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use SpykApp\PasswordlessLogin\Models\MagicLoginToken;
+use STS\FilamentImpersonate\Events\EnterImpersonation;
+use STS\FilamentImpersonate\Events\LeaveImpersonation;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -57,6 +61,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Permission::class, PermissionPolicy::class);
 
         Gate::define('viewLogViewer', fn (User $user): bool => $user->hasRole('super-admin'));
+
+        Event::listen(EnterImpersonation::class, [ImpersonationAuditLogger::class, 'started']);
+        Event::listen(LeaveImpersonation::class, [ImpersonationAuditLogger::class, 'ended']);
 
         $filamentStylePaths = [
             'calendar' => resource_path('css/calendar.css'),

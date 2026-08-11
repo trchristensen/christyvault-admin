@@ -7,8 +7,9 @@ use App\Filament\Team\Widgets\EmployeeOverviewWidget;
 use App\Filament\Team\Widgets\EquipmentCareWidget;
 use App\Filament\Team\Widgets\TodaysDeliveriesWidget;
 use App\Filament\Team\Widgets\TrainingOverviewWidget;
+use App\Http\Middleware\AuthenticatePanel;
 use App\Support\Filament\SharedProfile;
-use Filament\Http\Middleware\Authenticate;
+use App\Support\FilamentLoginMode;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
@@ -71,9 +72,10 @@ class TeamPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->plugins([
-                FilamentPasswordlessLoginPlugin::make()
-                    ->showPasswordLoginLink(false)
-                    ->resource(false),
+                FilamentLoginMode::configure(
+                    FilamentPasswordlessLoginPlugin::make()
+                        ->resource(false),
+                ),
                 SharedProfile::make(),
                 FilamentFullCalendarPlugin::make()
                     ->selectable()
@@ -102,7 +104,7 @@ class TeamPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                AuthenticatePanel::class,
             ]);
     }
 }

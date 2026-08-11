@@ -2,8 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\AuthenticatePanel;
 use App\Support\Filament\SharedProfile;
-use Filament\Http\Middleware\Authenticate;
+use App\Support\FilamentLoginMode;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -34,9 +35,10 @@ class SalesPanelProvider extends PanelProvider
                 'primary' => Color::Green,
             ])
             ->plugins([
-                FilamentPasswordlessLoginPlugin::make()
-                    ->showPasswordLoginLink(false)
-                    ->resource(false),
+                FilamentLoginMode::configure(
+                    FilamentPasswordlessLoginPlugin::make()
+                        ->resource(false),
+                ),
                 SharedProfile::make(),
             ])
             ->brandLogo(fn () => view('filament.logo'))
@@ -70,7 +72,7 @@ class SalesPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                AuthenticatePanel::class,
             ]);
     }
 }

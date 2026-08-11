@@ -31,6 +31,14 @@
             ...$document,
             'label' => ($document['is_pdf'] ? 'PDF document ' : 'Document ').($index + 1),
         ]);
+    $photoViewerItems = $photos
+        ->map(fn (array $photo): array => [
+            'url' => $photo['url'],
+            'thumbnailUrl' => $photo['url'],
+            'displayUrl' => $photo['url'],
+            'title' => $photo['label'],
+        ])
+        ->all();
 @endphp
 
 <div class="space-y-8">
@@ -38,57 +46,34 @@
         <div>
             <h3 class="mb-3 text-sm font-semibold text-gray-950 dark:text-white">Photos</h3>
 
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                @foreach ($photos as $photo)
-                    <article class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-white/10 dark:bg-gray-900">
-                        <a
-                            href="{{ $photo['url'] }}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="group block bg-gray-100 dark:bg-gray-950"
-                            title="Open {{ $photo['label'] }} full size"
+            <x-delivery-photo-viewer
+                :photos="$photoViewerItems"
+                heading="Work order photo"
+                item-label="Work order photo"
+                :show-metadata="false"
+            >
+                <div class="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
+                    @foreach ($photos as $photo)
+                        <button
+                            type="button"
+                            class="group overflow-hidden rounded-lg border border-gray-200 bg-white text-left shadow-sm transition hover:border-primary-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-white/10 dark:bg-gray-900"
+                            x-on:click="openDeliveryPhotoViewer({{ $loop->index }})"
+                            title="View {{ $photo['label'] }}"
                         >
                             <img
                                 src="{{ $photo['url'] }}"
                                 alt="{{ $photo['label'] }}"
                                 loading="lazy"
-                                class="h-72 w-full object-contain transition duration-200 group-hover:scale-[1.02]"
+                                decoding="async"
+                                class="h-32 w-full bg-gray-100 object-cover transition duration-200 group-hover:scale-[1.03] dark:bg-gray-950"
                             >
-                        </a>
-
-                        <div class="flex items-center justify-between gap-3 p-3">
-                            <div class="min-w-0">
-                                <p class="font-medium text-gray-950 dark:text-white">{{ $photo['label'] }}</p>
-                                <p class="truncate text-xs text-gray-500 dark:text-gray-400">{{ $photo['name'] }}</p>
-                            </div>
-
-                            <div class="flex shrink-0 gap-2">
-                                <x-filament::button
-                                    tag="a"
-                                    :href="$photo['url']"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    size="sm"
-                                    color="gray"
-                                    icon="heroicon-o-arrow-top-right-on-square"
-                                >
-                                    Open
-                                </x-filament::button>
-                                <x-filament::button
-                                    tag="a"
-                                    :href="$photo['url']"
-                                    download
-                                    size="sm"
-                                    color="gray"
-                                    icon="heroicon-o-arrow-down-tray"
-                                >
-                                    Download
-                                </x-filament::button>
-                            </div>
-                        </div>
-                    </article>
-                @endforeach
-            </div>
+                            <span class="block truncate px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200">
+                                {{ $photo['label'] }}
+                            </span>
+                        </button>
+                    @endforeach
+                </div>
+            </x-delivery-photo-viewer>
         </div>
     @endif
 

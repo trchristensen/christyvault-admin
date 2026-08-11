@@ -6,8 +6,9 @@ use App\Filament\Maintenance\Pages\Dashboard;
 use App\Filament\Maintenance\Widgets\AssetReliabilityWidget;
 use App\Filament\Maintenance\Widgets\MaintenanceStatsWidget;
 use App\Filament\Maintenance\Widgets\OpenWorkOrdersWidget;
+use App\Http\Middleware\AuthenticatePanel;
 use App\Support\Filament\SharedProfile;
-use Filament\Http\Middleware\Authenticate;
+use App\Support\FilamentLoginMode;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
@@ -32,6 +33,7 @@ class MaintenancePanelProvider extends PanelProvider
             ->path('maintenance')
             ->login()
             ->spa()
+            ->viteTheme('resources/css/filament/maintenance/theme.css')
             ->brandLogo(fn () => view('filament.logo'))
             ->brandLogoHeight('60px')
             ->colors(['primary' => Color::Orange])
@@ -53,9 +55,10 @@ class MaintenancePanelProvider extends PanelProvider
             )
             ->widgets([MaintenanceStatsWidget::class, OpenWorkOrdersWidget::class, AssetReliabilityWidget::class])
             ->plugins([
-                FilamentPasswordlessLoginPlugin::make()
-                    ->showPasswordLoginLink(false)
-                    ->resource(false),
+                FilamentLoginMode::configure(
+                    FilamentPasswordlessLoginPlugin::make()
+                        ->resource(false),
+                ),
                 SharedProfile::make(),
             ])
             ->databaseNotifications()
@@ -71,6 +74,8 @@ class MaintenancePanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->authMiddleware([Authenticate::class]);
+            ->authMiddleware([
+                AuthenticatePanel::class,
+            ]);
     }
 }

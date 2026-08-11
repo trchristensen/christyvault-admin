@@ -14,18 +14,24 @@ use App\Filament\Resources\RackTypeResource;
 use App\Filament\Resources\UserResource;
 use App\Filament\Resources\VehicleConfigurationResource;
 use Filament\Facades\Filament;
-use SpykApp\FilamentPasswordlessLogin\Pages\MagicLinkLogin;
+use SpykApp\FilamentPasswordlessLogin\Pages\Login;
 
-it('uses magic-link login everywhere while managing links only in admin', function (): void {
+it('offers development password login while managing magic links only in admin', function (): void {
     foreach (['admin', 'team', 'maintenance', 'operations', 'sales'] as $panelId) {
         $panel = Filament::getPanel($panelId);
         $plugin = $panel->getPlugin('filament-passwordless-login');
 
-        expect($panel->getLoginRouteAction())->toBe(MagicLinkLogin::class)
+        expect($panel->getLoginRouteAction())->toBe(Login::class)
             ->and($panel->hasPasswordReset())->toBeFalse()
-            ->and($plugin->hasPasswordLoginLink())->toBeFalse()
+            ->and($plugin->hasPasswordLoginLink())->toBeTrue()
+            ->and($plugin->hasLoginAction())->toBeTrue()
             ->and($plugin->hasResource())->toBe($panelId === 'admin');
     }
+});
+
+it('compiles maintenance views and shared components into the maintenance panel theme', function (): void {
+    expect(Filament::getPanel('maintenance')->getViteTheme())
+        ->toBe('resources/css/filament/maintenance/theme.css');
 });
 
 it('keeps profile information without password controls', function (): void {

@@ -19,6 +19,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use STS\FilamentImpersonate\Actions\Impersonate;
 
 class UserResource extends Resource
 {
@@ -132,6 +133,10 @@ class UserResource extends Resource
                 //
             ])
             ->recordActions([
+                Impersonate::make()
+                    ->redirectTo(fn (User $record): string => $record->getPreferredPanelUrl() ?? static::getUrl('index'))
+                    ->backTo(static::getUrl('index'))
+                    ->withoutSpa(),
                 EditAction::make(),
             ])
             ->toolbarActions([

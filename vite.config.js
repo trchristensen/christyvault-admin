@@ -7,7 +7,12 @@ export default defineConfig({
         tailwindcss(),
 
         laravel({
-            input: ["resources/css/app.css", "resources/js/app.js", "resources/css/filament/team/theme.css"],
+            input: [
+                "resources/css/app.css",
+                "resources/js/app.js",
+                "resources/css/filament/team/theme.css",
+                "resources/css/filament/maintenance/theme.css",
+            ],
             refresh: [...refreshPaths, "app/Livewire/**"],
         }),
     ],

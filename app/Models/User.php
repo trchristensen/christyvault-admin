@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use Althinect\FilamentSpatieRolesPermissions\Concerns\HasSuperAdmin;
+use Filament\Facades\Filament;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -67,6 +68,35 @@ class User extends Authenticatable implements FilamentUser
             'maintenance' => $this->hasRole(['admin', 'super-admin', 'maintenance-manager', 'maintenance-technician']),
             default => false,
         };
+    }
+
+    public function canImpersonate(): bool
+    {
+        return $this->hasRole('super-admin');
+    }
+
+    public function canBeImpersonated(): bool
+    {
+        return ! $this->hasRole('super-admin')
+            && $this->getPreferredPanelId() !== null;
+    }
+
+    public function getPreferredPanelId(): ?string
+    {
+        return match (true) {
+            $this->hasAnyRole(['admin', 'super-admin']) => 'admin',
+            $this->hasAnyRole(['maintenance-manager', 'maintenance-technician']) => 'maintenance',
+            $this->hasRole('sales') => 'sales',
+            $this->hasAnyRole(['manager', 'employee', 'foreman', 'driver', 'tulare-driver']) => 'team',
+            default => null,
+        };
+    }
+
+    public function getPreferredPanelUrl(): ?string
+    {
+        $panelId = $this->getPreferredPanelId();
+
+        return $panelId === null ? null : Filament::getPanel($panelId)->getUrl();
     }
 
     public function canViewTeamDeliverySchedule(): bool

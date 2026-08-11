@@ -32,6 +32,7 @@
         "spatie/pdf-to-image": "^1.2",
         "spatie/pdf-to-text": "^1.54",
         "spykapps/filament-passwordless-login": "^1.0",
+        "stechstudio/filament-impersonate": "^5.6",
         "telnyx/telnyx-php": "^3.0",
         "thiagoalessio/tesseract_ocr": "^2.13",
         "ysfkaya/filament-phone-input": "^4.0"

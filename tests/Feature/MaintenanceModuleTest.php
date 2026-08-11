@@ -23,11 +23,16 @@ use Spatie\Permission\Models\Role;
 
 uses(DatabaseTransactions::class);
 
-it('uses the magic-link login for the maintenance panel', function (): void {
+it('offers password and magic-link login for the maintenance panel in development', function (): void {
     $this->get('/maintenance/login')
         ->assertOk()
-        ->assertSee('Enter your email and we&#039;ll send you a secure login link.', false)
+        ->assertSee('id="form.password"', false)
         ->assertSee('Send Magic Link');
+});
+
+it('generates same-origin URLs for public maintenance files', function (): void {
+    expect(Storage::disk('public')->url('maintenance/work-orders/photo.jpg'))
+        ->toBe('/storage/maintenance/work-orders/photo.jpg');
 });
 
 it('generates a preventive work order when a meter threshold is reached', function (): void {
@@ -250,6 +255,9 @@ it('shows a work order with photo and inline PDF attachment previews', function 
         ->assertSee('PDF document 1')
         ->assertSee('maintenance/work-orders/photo.jpg', false)
         ->assertSee('maintenance/work-orders/report.pdf', false)
+        ->assertSee('openDeliveryPhotoViewer(0)', false)
+        ->assertSee('h-32', false)
+        ->assertDontSee('h-72 w-full object-contain', false)
         ->assertSee('<iframe', false);
 });
 

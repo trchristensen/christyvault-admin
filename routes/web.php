@@ -26,6 +26,14 @@ Route::get('/auth/login', function () {
     return redirect('/login');
 })->name('login');
 
+Route::get('/dashboard', function (Request $request) {
+    $destination = $request->user()?->getPreferredPanelUrl();
+
+    abort_if($destination === null, 403);
+
+    return redirect()->to($destination);
+})->middleware('auth')->name('panel.home');
+
 Route::prefix('asset')->middleware('throttle:30,1')->group(function (): void {
     Route::get('{token}', [MaintenanceAssetPortalController::class, 'show'])->name('maintenance.assets.portal');
     Route::post('{token}/requests', [MaintenanceAssetPortalController::class, 'store'])->name('maintenance.assets.request');

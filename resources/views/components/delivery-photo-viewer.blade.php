@@ -1,8 +1,14 @@
-@props(['photos'])
+@props([
+    'photos',
+    'heading' => 'Delivery photo',
+    'itemLabel' => 'Delivery photo',
+    'showMetadata' => true,
+])
 
 <div {{ $attributes }} x-data="{
     deliveryPhotoViewerOpen: false,
     deliveryPhotoViewerPhotos: @js($photos),
+    deliveryPhotoViewerItemLabel: @js($itemLabel),
     deliveryPhotoViewerIndex: 0,
     displayedPhotoUrl: null,
     displayingPreview: false,
@@ -106,13 +112,13 @@
     <template x-teleport="body">
         <div x-cloak x-show="deliveryPhotoViewerOpen" x-transition.opacity
             class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-3"
-            role="dialog" aria-modal="true" aria-label="Delivery photo viewer"
+            role="dialog" aria-modal="true" aria-label="{{ $heading }} viewer"
             x-on:click.self="closeDeliveryPhotoViewer()">
             <div
                 class="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-gray-900">
                 <div class="flex items-center justify-between gap-4 border-b border-gray-200 p-4 dark:border-gray-700">
                     <div>
-                        <div class="font-semibold text-gray-950 dark:text-white">Delivery photo</div>
+                        <div class="font-semibold text-gray-950 dark:text-white">{{ $heading }}</div>
                         <div class="text-xs text-gray-500 dark:text-gray-400"
                             x-text="deliveryPhotoViewerPhotos.length ? `${deliveryPhotoViewerIndex + 1} of ${deliveryPhotoViewerPhotos.length}` : ''">
                         </div>
@@ -126,7 +132,7 @@
 
                 <div class="relative flex min-h-[50vh] items-center justify-center overflow-hidden bg-gray-950">
                     <img x-show="displayedPhotoUrl" x-bind:src="displayedPhotoUrl"
-                        x-bind:alt="currentDeliveryPhoto().title || 'Delivery photo'"
+                        x-bind:alt="currentDeliveryPhoto().title || deliveryPhotoViewerItemLabel"
                         class="max-h-[70vh] w-auto max-w-full object-contain transition duration-200"
                         x-bind:class="displayingPreview ? 'scale-[1.02] blur-sm opacity-70' : 'scale-100 blur-0 opacity-100'">
 
@@ -164,15 +170,17 @@
 
                 <div class="space-y-1 p-4 text-sm">
                     <div class="font-semibold text-gray-950 dark:text-white"
-                        x-text="currentDeliveryPhoto().title || 'Delivery photo'"></div>
-                    <div class="text-gray-500 dark:text-gray-400">
-                        Uploaded by <span x-text="currentDeliveryPhoto().uploadedBy || 'Unknown uploader'"></span>
-                        <span x-show="currentDeliveryPhoto().uploadedAt">
-                            · <span x-text="currentDeliveryPhoto().uploadedAt"></span>
-                        </span>
-                    </div>
-                    <div class="text-gray-700 dark:text-gray-300" x-show="currentDeliveryPhoto().notes"
-                        x-text="currentDeliveryPhoto().notes"></div>
+                        x-text="currentDeliveryPhoto().title || deliveryPhotoViewerItemLabel"></div>
+                    @if ($showMetadata)
+                        <div class="text-gray-500 dark:text-gray-400">
+                            Uploaded by <span x-text="currentDeliveryPhoto().uploadedBy || 'Unknown uploader'"></span>
+                            <span x-show="currentDeliveryPhoto().uploadedAt">
+                                · <span x-text="currentDeliveryPhoto().uploadedAt"></span>
+                            </span>
+                        </div>
+                        <div class="text-gray-700 dark:text-gray-300" x-show="currentDeliveryPhoto().notes"
+                            x-text="currentDeliveryPhoto().notes"></div>
+                    @endif
                 </div>
             </div>
         </div>
