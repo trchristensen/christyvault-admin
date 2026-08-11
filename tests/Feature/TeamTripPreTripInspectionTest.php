@@ -95,7 +95,7 @@ function preTripConfiguration(bool $piggyback = true): VehicleConfiguration
     ]);
 }
 
-function preTripScheduledTrip(Employee $driver, VehicleConfiguration $configuration): Trip
+function preTripScheduledTrip(Employee $driver, VehicleConfiguration $configuration, string $plant = 'colma_main'): Trip
 {
     $trip = Trip::withoutEvents(fn (): Trip => Trip::create([
         'trip_number' => 'TEST-PRETRIP-'.Str::upper(Str::random(6)),
@@ -114,7 +114,7 @@ function preTripScheduledTrip(Employee $driver, VehicleConfiguration $configurat
         'trip_id' => $trip->getKey(),
         'driver_id' => $driver->getKey(),
         'assigned_delivery_date' => '2026-08-07',
-        'plant_location' => 'colma_main',
+        'plant_location' => $plant,
         'stop_number' => 1,
     ])->saveQuietly();
 
@@ -200,6 +200,10 @@ it('routes a problem found during optional equipment care into maintenance', fun
     [$user] = preTripUser('Care Issue Driver');
     [$manager] = preTripUser('Care Issue Manager', 'manager');
     $manager->givePermissionTo(Permission::findOrCreate('manage delivery trip dispatch', 'web'));
+    $manager->update(['team_schedule_delivery_types' => ['colma_main', 'colma_locals']]);
+    [$tulareForeman] = preTripUser('Tulare Care Foreman', 'foreman');
+    $tulareForeman->givePermissionTo(Permission::findOrCreate('manage delivery trip dispatch', 'web'));
+    $tulareForeman->update(['team_schedule_delivery_types' => ['tulare_plant']]);
     $trailer = preTripAsset('CARE-TRAILER', 'trailer');
 
     $this->actingAs($user);
@@ -231,12 +235,49 @@ it('routes a problem found during optional equipment care into maintenance', fun
         ->and($request->description)->toContain('Optional equipment care');
 
     NotificationFacade::assertSentTo($manager, TripPreTripDefectReported::class);
+    NotificationFacade::assertNotSentTo($tulareForeman, TripPreTripDefectReported::class);
 
     $notification = (new TripPreTripDefectReported($inspection))->toDatabase($manager);
 
     expect($notification['title'])->toContain('Optional equipment care issue')
         ->and($notification['maintenance_asset_id'])->toBe($trailer->getKey())
         ->and($notification['trip_id'])->toBeNull();
+});
+
+it('scopes equipment care alerts by the assets physical plant rather than its order fulfillment default', function (): void {
+    NotificationFacade::fake();
+    [$tulareUser] = preTripUser('Tulare Care Driver');
+    $tulareUser->employee->update(['christy_location' => 'tulare']);
+
+    [$colmaForeman] = preTripUser('Colma Care Foreman', 'foreman');
+    $colmaForeman->givePermissionTo(Permission::findOrCreate('manage delivery trip dispatch', 'web'));
+    $colmaForeman->update(['team_schedule_delivery_types' => ['colma_main', 'colma_locals']]);
+
+    [$tulareForeman] = preTripUser('Tulare Equipment Foreman', 'foreman');
+    $tulareForeman->employee->update(['christy_location' => 'tulare']);
+    $tulareForeman->givePermissionTo(Permission::findOrCreate('manage delivery trip dispatch', 'web'));
+    $tulareForeman->update(['team_schedule_delivery_types' => ['tulare_plant']]);
+
+    $tularePlant = preTripPlant('tulare_plant');
+    $tularePlant->forceFill(['default_plant_location' => 'colma_main'])->saveQuietly();
+    $trailer = preTripAsset('TULARE-CARE-TRAILER', 'trailer', 'tulare_plant');
+
+    $this->actingAs($tulareUser);
+
+    Livewire::test(EquipmentCareWidget::class)
+        ->callAction('submitEquipmentCare', [
+            'asset_id' => $trailer->getKey(),
+            'completed_tasks' => ['tires_wheels'],
+            'has_issue' => true,
+            'issue_component' => 'Right rear tire',
+            'issue_description' => 'Found a sidewall cut while checking the tire.',
+            'operating_concern' => TripPreTripInspectionDefect::DRIVER_ASSESSMENT_STOP,
+            'certification' => true,
+        ])
+        ->assertHasNoActionErrors();
+
+    NotificationFacade::assertSentTo($tulareForeman, TripPreTripDefectReported::class);
+    NotificationFacade::assertNotSentTo($colmaForeman, TripPreTripDefectReported::class);
 });
 
 it('allows only the assigned driver to submit and persists the equipment and certification snapshot', function (): void {
@@ -431,6 +472,12 @@ it('records defects without certifying the vehicle safe and notifies dispatch ma
     [$user, $driver] = preTripUser('Defect Driver');
     [$manager] = preTripUser('Operations Manager', 'manager');
     $manager->givePermissionTo(Permission::findOrCreate('manage delivery trip dispatch', 'web'));
+    $manager->update(['team_schedule_delivery_types' => ['colma_main', 'colma_locals']]);
+    [$tulareForeman] = preTripUser('Tulare Foreman', 'foreman');
+    $tulareForeman->employee->update(['christy_location' => 'tulare']);
+    $tulareForeman->givePermissionTo(Permission::findOrCreate('manage delivery trip dispatch', 'web'));
+    $tulareForeman->update(['team_schedule_delivery_types' => ['tulare_plant']]);
+    [$maintenanceManager] = preTripUser('Maintenance Manager', 'maintenance-manager');
     $configuration = preTripConfiguration();
     $trip = preTripScheduledTrip($driver, $configuration);
     $tractor = preTripAsset('DEFECT-TRACTOR', 'tractor');
@@ -472,6 +519,8 @@ it('records defects without certifying the vehicle safe and notifies dispatch ma
         ->and($request->description)->toContain('Trailer brakes did not hold');
 
     NotificationFacade::assertSentTo($manager, TripPreTripDefectReported::class);
+    NotificationFacade::assertNotSentTo($tulareForeman, TripPreTripDefectReported::class);
+    NotificationFacade::assertSentTo($maintenanceManager, TripPreTripDefectReported::class);
 });
 
 it('records a short end of day report and routes its defects into maintenance', function (): void {

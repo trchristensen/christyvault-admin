@@ -7,9 +7,9 @@ use App\Models\MaintenanceAsset;
 use App\Models\Trip;
 use App\Models\TripPreTripInspection;
 use App\Models\TripPreTripInspectionDefect;
-use App\Models\User;
 use App\Models\VehicleConfiguration;
 use App\Notifications\TripPreTripDefectReported;
+use App\Services\Maintenance\VehicleInspectionNotificationRecipients;
 use App\Services\Maintenance\VehicleInspectionReportService;
 use App\Support\TripDailyVehicleReportChecklist;
 use App\Support\TripPreTripChecklist;
@@ -220,7 +220,8 @@ trait ManagesTripPreTripInspections
                 });
 
                 if (! $safeToOperate) {
-                    $recipients = $this->inspectionDefectNotificationRecipients($user?->getKey());
+                    $recipients = app(VehicleInspectionNotificationRecipients::class)
+                        ->forInspection($inspection, $user?->getKey());
 
                     NotificationFacade::send($recipients, new TripPreTripDefectReported($inspection));
                 }
@@ -545,7 +546,8 @@ trait ManagesTripPreTripInspections
                 });
 
                 if (! $safeToOperate) {
-                    $recipients = $this->inspectionDefectNotificationRecipients($user?->getKey());
+                    $recipients = app(VehicleInspectionNotificationRecipients::class)
+                        ->forInspection($inspection, $user?->getKey());
                     NotificationFacade::send($recipients, new TripPreTripDefectReported($inspection));
                 }
 
@@ -970,15 +972,6 @@ trait ManagesTripPreTripInspections
             ), fn ($query) => $query->where('driver_id', $trip->driver_id))
             ->with(['assets', 'inspectionDefects.asset', 'inspectionDefects.resolvedBy', 'trip'])
             ->latest('completed_at')->limit(20)->get();
-    }
-
-    protected function inspectionDefectNotificationRecipients(?int $exceptUserId)
-    {
-        return User::permission('manage delivery trip dispatch')->get()
-            ->merge(User::role(['admin', 'super-admin', 'maintenance-manager', 'maintenance-technician'])->get())
-            ->when($exceptUserId, fn ($users) => $users->reject(fn (User $user): bool => $user->getKey() === $exceptUserId))
-            ->unique(fn (User $user): int => $user->getKey())
-            ->values();
     }
 
     abstract protected function deliveryTripPreTripInspectionIsInScope(Trip $trip): bool;

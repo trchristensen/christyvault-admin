@@ -71,6 +71,21 @@ class Location extends Model
         return $query->where('location_type', 'christy_vault');
     }
 
+    public function physicalPlantLocation(): ?PlantLocation
+    {
+        if ($this->location_type !== 'christy_vault') {
+            return null;
+        }
+
+        $identity = mb_strtolower(collect([$this->name, $this->city])->filter()->join(' '));
+
+        return match (true) {
+            str_contains($identity, 'tulare') => PlantLocation::TULARE_PLANT,
+            str_contains($identity, 'colma') => PlantLocation::COLMA_MAIN,
+            default => null,
+        };
+    }
+
     public function getCoordinatesAttribute(): ?string
     {
         if ($this->latitude && $this->longitude) {

@@ -6,8 +6,8 @@ use App\Models\Location;
 use App\Models\MaintenanceAsset;
 use App\Models\TripPreTripInspection;
 use App\Models\TripPreTripInspectionDefect;
-use App\Models\User;
 use App\Notifications\TripPreTripDefectReported;
+use App\Services\Maintenance\VehicleInspectionNotificationRecipients;
 use App\Services\Maintenance\VehicleInspectionReportService;
 use App\Support\EquipmentCareChecklist;
 use Filament\Actions\Action;
@@ -248,11 +248,8 @@ class EquipmentCareWidget extends Widget implements HasActions, HasSchemas
                 });
 
                 if (! $safeToOperate) {
-                    $recipients = User::permission('manage delivery trip dispatch')->get()
-                        ->merge(User::role(['admin', 'super-admin', 'maintenance-manager', 'maintenance-technician'])->get())
-                        ->reject(fn (User $recipient): bool => $recipient->getKey() === $user?->getKey())
-                        ->unique(fn (User $recipient): int => $recipient->getKey())
-                        ->values();
+                    $recipients = app(VehicleInspectionNotificationRecipients::class)
+                        ->forInspection($inspection, $user?->getKey());
 
                     NotificationFacade::send($recipients, new TripPreTripDefectReported($inspection));
                 }
