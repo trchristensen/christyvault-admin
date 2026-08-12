@@ -116,11 +116,14 @@ class LeaveRequestResource extends Resource
                     ->columnSpanFull(),
                 DateRangePicker::make('date_time_range')
                     ->label('Dates and times')
-                    ->format(LeaveRequest::DATE_TIME_RANGE_FORMAT)
+                    ->format(LeaveRequest::DATE_TIME_RANGE_FORMAT, enforceFormat: true)
                     ->rangeSeparator(LeaveRequest::DATE_RANGE_SEPARATOR)
                     ->disableRanges()
                     ->timePicker()
                     ->timePickerIncrement(30)
+                    ->extraAlpineAttributes([
+                        'x-init' => 'if (! config.state) { startTime.hour = 8; startTime.minute = 0; endTime.hour = 5; endTime.minute = 0; endTime.second = 0; }',
+                    ])
                     ->firstDayOfWeek(0)
                     ->placeholder('Select start and end times')
                     ->helperText('Choose the exact weekday and time the absence begins and ends.')

@@ -9,6 +9,7 @@ use Carbon\CarbonInterface;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Livewire\Livewire;
+use Malzariey\FilamentDaterangepickerFilter\Fields\DateRangePicker;
 use Spatie\Permission\Models\Role;
 
 uses(DatabaseTransactions::class);
@@ -43,6 +44,21 @@ function adminDateRange(CarbonInterface $startDate, CarbonInterface $endDate, bo
         .LeaveRequest::DATE_RANGE_SEPARATOR
         .$endDate->format($format);
 }
+
+it('configures the admin time range picker with one time segment', function (): void {
+    signInForAdminLeaveRequests();
+
+    $picker = Livewire::test(CreateLeaveRequest::class)
+        ->instance()
+        ->form
+        ->getComponent('date_time_range', withHidden: true);
+
+    expect($picker)->toBeInstanceOf(DateRangePicker::class)
+        ->and($picker->getEnforceFormat())->toBeTrue()
+        ->and($picker->getFormat())->toBe(LeaveRequest::DATE_TIME_RANGE_FORMAT)
+        ->and($picker->getDisplayFormat())->toBe('MMM D, YYYY h:mm A')
+        ->and($picker->getExtraAlpineAttributes()['x-init'])->toContain('endTime.minute = 0');
+});
 
 it('uses the combined date range to create full-day admin requests', function (): void {
     signInForAdminLeaveRequests();
