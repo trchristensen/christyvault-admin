@@ -503,80 +503,66 @@ it('consolidates matching Wilberts across an unload-safe boundary to free a thre
         ->and($diagram['racks'][7]['product_weight_lbs'])->toBe(3864.0);
 });
 
-it('keeps Wilberts on bottom ahead of G5 and V1 pairing while fitting an additional V1', function (): void {
-    $g5 = [
-        'sku' => 'G3086-5',
-        'name' => 'Companion Garden Crypt',
-        'quantity' => 3,
-        'required_rack_type' => 'standard_2_high',
-        'required_rack_level_count' => 2,
-        'placement_strategy' => 'full_top_split_bottom_pair',
-        'unit_weight_lbs' => 2520,
-        'loading_profile' => 'double_garden_crypt',
-    ];
-    $v1 = [
-        'sku' => 'V3086-1',
-        'name' => 'Christy Vault',
-        'required_rack_type' => 'standard_3_high',
-        'required_rack_level_count' => 3,
-        'allowed_rack_type_codes' => ['standard_2_high', 'standard_3_high'],
-        'unit_weight_lbs' => 1288,
-        'loading_profile' => 'standard_three_high_box',
-    ];
-    $wilbert = [
-        'required_rack_type' => 'standard_2_high',
-        'required_rack_level_count' => 2,
-        'preferred_rack_level' => 'bottom',
-        'loading_profile' => 'regular_burial_vault',
-    ];
+it('pairs same-stop V1 below G5 before honoring the Wilbert bottom preference', function (): void {
     $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
         rackDiagramStop(1, [
-            rackDiagramItem($g5),
-            rackDiagramItem([...$v1, 'quantity' => 3]),
-        ]),
-        rackDiagramStop(2, [
-            rackDiagramItem($g5),
-            rackDiagramItem([...$wilbert, ...[
-                'sku' => 'W3086-C',
-                'name' => 'Continental',
-                'quantity' => 1,
-                'unit_weight_lbs' => 2460,
-            ]]),
-            rackDiagramItem([...$wilbert, ...[
+            rackDiagramItem([
+                'sku' => 'G3086-5',
+                'name' => 'Companion Garden Crypt',
+                'quantity' => 2,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'placement_strategy' => 'full_top_split_bottom_pair',
+                'unit_weight_lbs' => 2520,
+                'loading_profile' => 'double_garden_crypt',
+            ]),
+            rackDiagramItem([
                 'sku' => 'W3086-M',
                 'name' => 'Monticello',
-                'quantity' => 3,
+                'quantity' => 10,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'preferred_rack_level' => 'bottom',
                 'unit_weight_lbs' => 2190,
-            ]]),
-            rackDiagramItem([...$v1, 'quantity' => 4]),
+                'loading_profile' => 'regular_burial_vault',
+            ]),
+            rackDiagramItem([
+                'sku' => 'V3086-1',
+                'name' => 'Christy Vault',
+                'quantity' => 4,
+                'required_rack_type' => 'standard_3_high',
+                'required_rack_level_count' => 3,
+                'allowed_rack_type_codes' => ['standard_2_high', 'standard_3_high'],
+                'unit_weight_lbs' => 1288,
+                'loading_profile' => 'standard_three_high_box',
+            ]),
         ]),
     ]));
-    $cells = collect($diagram['racks'])
-        ->flatMap(fn (array $rack): array => $rack['cells'])
-        ->filter();
-    $stopTwoWilberts = $cells
-        ->where('stop_sequence', 2)
-        ->filter(fn (array $cell): bool => str_starts_with($cell['sku'], 'W3086-'));
-    $stopTwoG5WilbertRacks = collect($diagram['racks'])->filter(
-        fn (array $rack): bool => data_get($rack, 'cells.1.sku') === 'G3086-5'
-            && str_starts_with((string) data_get($rack, 'cells.0.sku'), 'W3086-'),
+    $g5Racks = collect($diagram['racks'])->filter(
+        fn (array $rack): bool => data_get($rack, 'cells.1.sku') === 'G3086-5',
     );
-    $stopTwoThreeHighV1Rack = collect($diagram['racks'])->first(
-        fn (array $rack): bool => $rack['level_count'] === 3
-            && $rack['stop_sequences'] === [2],
+    $wilbertOnlyRacks = collect($diagram['racks'])->filter(
+        fn (array $rack): bool => data_get($rack, 'cells.0.sku') === 'W3086-M'
+            && data_get($rack, 'cells.1.sku') === 'W3086-M',
+    );
+    $wilbertV1Racks = collect($diagram['racks'])->filter(
+        fn (array $rack): bool => data_get($rack, 'cells.0.sku') === 'W3086-M'
+            && data_get($rack, 'cells.1.sku') === 'V3086-1',
     );
 
-    expect($diagram['placed_units'])->toBe(17)
+    expect($diagram['placed_units'])->toBe(16)
         ->and($diagram['used_rack_spots'])->toBe(8)
         ->and($diagram['unplaced'])->toBeEmpty()
         ->and($diagram['mixed_stop_racks'])->toBe(0)
         ->and($diagram['split_products'])->toBe(0)
-        ->and($diagram['preferred_level_violations'])->toBe(0)
-        ->and($stopTwoWilberts)->toHaveCount(4)
-        ->and($stopTwoWilberts->pluck('level')->unique()->values()->all())->toBe([1])
-        ->and($stopTwoG5WilbertRacks)->toHaveCount(3)
-        ->and(collect($stopTwoThreeHighV1Rack['cells'])->filter()->where('sku', 'V3086-1'))->toHaveCount(3)
-        ->and($cells->where('stop_sequence', 2)->where('sku', 'V3086-1'))->toHaveCount(4);
+        ->and($diagram['preferred_pairing_violations'])->toBe(0)
+        ->and($diagram['preferred_level_violations'])->toBe(4.0)
+        ->and($g5Racks)->toHaveCount(2)
+        ->and($g5Racks->every(
+            fn (array $rack): bool => data_get($rack, 'cells.0.sku') === 'V3086-1',
+        ))->toBeTrue()
+        ->and($wilbertOnlyRacks)->toHaveCount(4)
+        ->and($wilbertV1Racks)->toHaveCount(2);
 });
 
 it('uses one complete rack spot for each oversized product', function (): void {

@@ -21,20 +21,24 @@ class RackDiagramService
         $flatbedCapacity = max(0, (int) ($demand->vehicleConfiguration['flatbed_pallet_capacity'] ?? 0));
         $compactOptions = $this->hasSplitDoubleItems($demand) ? [false, true] : [false];
         $preferredLevelOptions = $this->hasPreferredRackLevelItems($demand) ? [true, false] : [false];
+        $preferredPairingOptions = $this->hasPreferredGardenDoublePairingItems($demand) ? [true, false] : [false];
         $best = null;
 
         for ($flatbedPalletTarget = 0; $flatbedPalletTarget <= $flatbedCapacity; $flatbedPalletTarget++) {
             foreach ($compactOptions as $compactSplitDoubles) {
                 foreach ($preferredLevelOptions as $honorPreferredRackLevels) {
-                    $candidate = $this->buildDiagram(
-                        $demand,
-                        compactSplitDoubles: $compactSplitDoubles,
-                        flatbedPalletTarget: $flatbedPalletTarget,
-                        honorPreferredRackLevels: $honorPreferredRackLevels,
-                    );
+                    foreach ($preferredPairingOptions as $honorPreferredPairings) {
+                        $candidate = $this->buildDiagram(
+                            $demand,
+                            compactSplitDoubles: $compactSplitDoubles,
+                            flatbedPalletTarget: $flatbedPalletTarget,
+                            honorPreferredRackLevels: $honorPreferredRackLevels,
+                            honorPreferredPairings: $honorPreferredPairings,
+                        );
 
-                    if ($best === null || $this->diagramIsBetter($candidate, $best)) {
-                        $best = $candidate;
+                        if ($best === null || $this->diagramIsBetter($candidate, $best)) {
+                            $best = $candidate;
+                        }
                     }
                 }
             }
@@ -61,6 +65,11 @@ class RackDiagramService
             return ($candidate['split_products'] ?? 0) < ($current['split_products'] ?? 0);
         }
 
+        if (($candidate['preferred_pairing_violations'] ?? 0) !== ($current['preferred_pairing_violations'] ?? 0)) {
+            return ($candidate['preferred_pairing_violations'] ?? 0)
+                < ($current['preferred_pairing_violations'] ?? 0);
+        }
+
         return ($candidate['preferred_level_violations'] ?? 0)
             < ($current['preferred_level_violations'] ?? 0);
     }
@@ -70,6 +79,7 @@ class RackDiagramService
         bool $compactSplitDoubles,
         int $flatbedPalletTarget,
         bool $honorPreferredRackLevels,
+        bool $honorPreferredPairings,
     ): array {
         $vehicle = $demand->vehicleConfiguration;
         $rackSpotCount = (int) ($vehicle['rack_spot_count'] ?? 0);
@@ -207,6 +217,7 @@ class RackDiagramService
                             $stop,
                             $code,
                             $honorPreferredRackLevels,
+                            $honorPreferredPairings,
                         );
 
                     if (($item['placement_strategy'] ?? null) !== LoadingProfile::PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR
@@ -280,6 +291,7 @@ class RackDiagramService
             ->filter(fn (array $cell): bool => ($cell['preferred_rack_level'] ?? null) === LoadingProfile::LEVEL_BOTTOM
                 && (int) ($cell['level'] ?? 0) !== 1)
             ->sum(fn (array $cell): float => (float) ($cell['unit_fraction'] ?? 1));
+        $preferredPairingViolations = $this->preferredGardenDoublePairingViolations($racks);
 
         return [
             'available' => true,
@@ -296,6 +308,7 @@ class RackDiagramService
             'flatbed_pallet_capacity' => $flatbedPalletCapacity,
             'mixed_stop_racks' => $mixedStopRacks,
             'split_products' => $splitProducts,
+            'preferred_pairing_violations' => $preferredPairingViolations,
             'preferred_level_violations' => $preferredLevelViolations,
         ];
     }
@@ -777,6 +790,7 @@ class RackDiagramService
         array $stop,
         string $code,
         bool $honorPreferredRackLevels,
+        bool $honorPreferredPairings,
     ): int {
         $rackType = $item['required_rack_type'];
         $levelCount = (int) ($item['required_rack_level_count'] ?? 0);
@@ -835,6 +849,7 @@ class RackDiagramService
                 $rackType,
                 $levelCount,
                 $allowedRackTypes,
+                $honorPreferredPairings,
             );
         }
 
@@ -1196,6 +1211,17 @@ class RackDiagramService
             ->contains(fn (array $item): bool => filled($item['preferred_rack_level'] ?? null));
     }
 
+    private function hasPreferredGardenDoublePairingItems(LoadDemandResult $demand): bool
+    {
+        return collect($demand->stops)->contains(function (array $stop): bool {
+            $items = collect($stop['items']);
+
+            return $items->contains(fn (array $item): bool => $this->pairingCategory($item)
+                === self::PAIRING_GARDEN_DOUBLE)
+                && $items->contains(fn (array $item): bool => $this->isPreferredGardenDoublePartner($item));
+        });
+    }
+
     private function requiredRackLevelPriority(array $item): int
     {
         return match ($item['required_rack_level'] ?? LoadingProfile::LEVEL_ANY) {
@@ -1226,6 +1252,7 @@ class RackDiagramService
         string $rackType,
         int $levelCount,
         array $allowedRackTypes,
+        bool $honorPreferredPairings,
     ): int {
         $stopSequence = (int) $stop['sequence'];
         $reusableRackIndexes = collect($racks)
@@ -1245,9 +1272,15 @@ class RackDiagramService
                 return $placed;
             }
 
-            // A preferred-bottom product may claim an otherwise discouraged
-            // compatible opening. For regular Wilbert vaults, protection on
-            // the lower level outranks preserving a G4/G5-over-V1 pairing.
+            // Keep the lower bay beneath a whole G4/G5 available for a
+            // preferred lightweight partner such as V1. A preferred-bottom
+            // Wilbert may use that bay later if the remaining rack capacity
+            // is otherwise insufficient.
+            if ($honorPreferredPairings
+                && $this->rackPairingPriority($item, $racks[$rackIndex]) >= self::PAIRING_AVOID) {
+                continue;
+            }
+
             $placed = $this->fillStandardRack(
                 $racks[$rackIndex],
                 $item,
@@ -1588,6 +1621,12 @@ class RackDiagramService
         return mb_strtoupper(trim((string) ($item['sku'] ?? ''))) === 'V3086-1';
     }
 
+    private function isPreferredGardenDoublePartner(array $item): bool
+    {
+        return $this->pairingCategory($item) === self::PAIRING_LINER
+            || $this->prefersWholeGardenDoubleBottomPairing($item);
+    }
+
     private function pairingCategory(array $item): string
     {
         if (($item['placement_strategy'] ?? null) === LoadingProfile::PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR) {
@@ -1640,6 +1679,40 @@ class RackDiagramService
                 $racks[$targetIndex] = $rack;
             }
         }
+    }
+
+    private function preferredGardenDoublePairingViolations(array $racks): int
+    {
+        return collect($racks)
+            ->flatMap(fn (array $rack): array => $rack['stop_sequences'])
+            ->unique()
+            ->sum(function (int $stopSequence) use ($racks): int {
+                $stopCells = collect($racks)
+                    ->flatMap(fn (array $rack): array => $rack['cells'])
+                    ->filter(fn (?array $cell): bool => $cell !== null
+                        && (int) ($cell['stop_sequence'] ?? 0) === $stopSequence);
+                $wholeDoubles = $stopCells->filter(
+                    fn (array $cell): bool => ($cell['pairing_category'] ?? null) === self::PAIRING_GARDEN_DOUBLE
+                        && ($cell['component'] ?? null) === 'whole',
+                )->count();
+                $preferredPartners = $stopCells
+                    ->filter(fn (array $cell): bool => $this->isPreferredGardenDoublePartner($cell))
+                    ->count();
+                $completedPairings = collect($racks)->filter(function (array $rack) use ($stopSequence): bool {
+                    $bottom = $rack['cells'][0] ?? null;
+                    $top = $rack['cells'][1] ?? null;
+
+                    return $bottom !== null
+                        && $top !== null
+                        && (int) ($bottom['stop_sequence'] ?? 0) === $stopSequence
+                        && (int) ($top['stop_sequence'] ?? 0) === $stopSequence
+                        && $this->isPreferredGardenDoublePartner($bottom)
+                        && ($top['pairing_category'] ?? null) === self::PAIRING_GARDEN_DOUBLE
+                        && ($top['component'] ?? null) === 'whole';
+                })->count();
+
+                return max(0, min($wholeDoubles, $preferredPartners) - $completedPairings);
+            });
     }
 
     private function rackWeight(array $rack): float
