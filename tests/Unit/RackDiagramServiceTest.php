@@ -565,6 +565,64 @@ it('pairs same-stop V1 below G5 before honoring the Wilbert bottom preference', 
         ->and($wilbertV1Racks)->toHaveCount(2);
 });
 
+it('packs preferred-bottom Wilberts when that preserves a three-high rack for V1', function (): void {
+    $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
+        rackDiagramStop(1, [
+            rackDiagramItem([
+                'sku' => 'G3086-5',
+                'name' => 'Companion Garden Crypt',
+                'quantity' => 2,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'placement_strategy' => 'full_top_split_bottom_pair',
+                'unit_weight_lbs' => 2520,
+                'loading_profile' => 'double_garden_crypt',
+            ]),
+            rackDiagramItem([
+                'sku' => 'W3086-M',
+                'name' => 'Monticello',
+                'quantity' => 11,
+                'required_rack_type' => 'standard_2_high',
+                'required_rack_level_count' => 2,
+                'preferred_rack_level' => 'bottom',
+                'unit_weight_lbs' => 2190,
+                'loading_profile' => 'regular_burial_vault',
+            ]),
+            rackDiagramItem([
+                'sku' => 'V3086-1',
+                'name' => 'Christy Vault',
+                'quantity' => 4,
+                'required_rack_type' => 'standard_3_high',
+                'required_rack_level_count' => 3,
+                'allowed_rack_type_codes' => ['standard_2_high', 'standard_3_high'],
+                'unit_weight_lbs' => 1288,
+                'loading_profile' => 'standard_three_high_box',
+            ]),
+        ]),
+    ]));
+    $racks = collect($diagram['racks']);
+    $cells = $racks->flatMap(fn (array $rack): array => $rack['cells'])->filter();
+    $threeHighRack = $racks->firstWhere('type_code', 'standard_3_high');
+    $g5Racks = $racks->filter(
+        fn (array $rack): bool => data_get($rack, 'cells.1.sku') === 'G3086-5',
+    );
+
+    expect($diagram['placed_units'])->toBe(17)
+        ->and($diagram['used_rack_spots'])->toBe(8)
+        ->and($diagram['unplaced'])->toBeEmpty()
+        ->and($racks->where('type_code', 'standard_2_high'))->toHaveCount(7)
+        ->and($racks->where('type_code', 'standard_3_high'))->toHaveCount(1)
+        ->and($cells->where('sku', 'W3086-M'))->toHaveCount(11)
+        ->and($cells->where('sku', 'G3086-5'))->toHaveCount(2)
+        ->and($cells->where('sku', 'V3086-1'))->toHaveCount(4)
+        ->and($g5Racks)->toHaveCount(2)
+        ->and($g5Racks->every(
+            fn (array $rack): bool => data_get($rack, 'cells.0.sku') === 'W3086-M',
+        ))->toBeTrue()
+        ->and(collect($threeHighRack['cells'])->where('sku', 'V3086-1'))->toHaveCount(3)
+        ->and($racks->sum('product_weight_lbs'))->toBe(34282.0);
+});
+
 it('uses one complete rack spot for each oversized product', function (): void {
     $diagram = (new RackDiagramService)->forDemand(rackDiagramDemand([
         rackDiagramStop(1, [rackDiagramItem([

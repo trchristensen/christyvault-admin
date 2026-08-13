@@ -22,22 +22,33 @@ class RackDiagramService
         $compactOptions = $this->hasSplitDoubleItems($demand) ? [false, true] : [false];
         $preferredLevelOptions = $this->hasPreferredRackLevelItems($demand) ? [true, false] : [false];
         $preferredPairingOptions = $this->hasPreferredGardenDoublePairingItems($demand) ? [true, false] : [false];
+        $hasPreferredBottomItems = $this->hasPreferredBottomRackLevelItems($demand);
         $best = null;
 
         for ($flatbedPalletTarget = 0; $flatbedPalletTarget <= $flatbedCapacity; $flatbedPalletTarget++) {
             foreach ($compactOptions as $compactSplitDoubles) {
                 foreach ($preferredLevelOptions as $honorPreferredRackLevels) {
                     foreach ($preferredPairingOptions as $honorPreferredPairings) {
-                        $candidate = $this->buildDiagram(
-                            $demand,
-                            compactSplitDoubles: $compactSplitDoubles,
-                            flatbedPalletTarget: $flatbedPalletTarget,
-                            honorPreferredRackLevels: $honorPreferredRackLevels,
-                            honorPreferredPairings: $honorPreferredPairings,
-                        );
+                        // A preferred bottom level is a soft constraint. Try both
+                        // spreading those products across lower bays and packing
+                        // them to preserve an empty spot for a taller rack.
+                        $preferredBottomPackingOptions = $honorPreferredRackLevels && $hasPreferredBottomItems
+                            ? [false, true]
+                            : [false];
 
-                        if ($best === null || $this->diagramIsBetter($candidate, $best)) {
-                            $best = $candidate;
+                        foreach ($preferredBottomPackingOptions as $packPreferredBottomItems) {
+                            $candidate = $this->buildDiagram(
+                                $demand,
+                                compactSplitDoubles: $compactSplitDoubles,
+                                flatbedPalletTarget: $flatbedPalletTarget,
+                                honorPreferredRackLevels: $honorPreferredRackLevels,
+                                honorPreferredPairings: $honorPreferredPairings,
+                                packPreferredBottomItems: $packPreferredBottomItems,
+                            );
+
+                            if ($best === null || $this->diagramIsBetter($candidate, $best)) {
+                                $best = $candidate;
+                            }
                         }
                     }
                 }
@@ -80,6 +91,7 @@ class RackDiagramService
         int $flatbedPalletTarget,
         bool $honorPreferredRackLevels,
         bool $honorPreferredPairings,
+        bool $packPreferredBottomItems,
     ): array {
         $vehicle = $demand->vehicleConfiguration;
         $rackSpotCount = (int) ($vehicle['rack_spot_count'] ?? 0);
@@ -218,6 +230,7 @@ class RackDiagramService
                             $code,
                             $honorPreferredRackLevels,
                             $honorPreferredPairings,
+                            $packPreferredBottomItems,
                         );
 
                     if (($item['placement_strategy'] ?? null) !== LoadingProfile::PLACEMENT_FULL_TOP_SPLIT_BOTTOM_PAIR
@@ -791,6 +804,7 @@ class RackDiagramService
         string $code,
         bool $honorPreferredRackLevels,
         bool $honorPreferredPairings,
+        bool $packPreferredBottomItems,
     ): int {
         $rackType = $item['required_rack_type'];
         $levelCount = (int) ($item['required_rack_level_count'] ?? 0);
@@ -850,6 +864,7 @@ class RackDiagramService
                 $levelCount,
                 $allowedRackTypes,
                 $honorPreferredPairings,
+                $packPreferredBottomItems,
             );
         }
 
@@ -1211,6 +1226,14 @@ class RackDiagramService
             ->contains(fn (array $item): bool => filled($item['preferred_rack_level'] ?? null));
     }
 
+    private function hasPreferredBottomRackLevelItems(LoadDemandResult $demand): bool
+    {
+        return collect($demand->stops)
+            ->flatMap(fn (array $stop): array => $stop['items'])
+            ->contains(fn (array $item): bool => ($item['preferred_rack_level'] ?? null)
+                === LoadingProfile::LEVEL_BOTTOM);
+    }
+
     private function hasPreferredGardenDoublePairingItems(LoadDemandResult $demand): bool
     {
         return collect($demand->stops)->contains(function (array $stop): bool {
@@ -1253,6 +1276,7 @@ class RackDiagramService
         int $levelCount,
         array $allowedRackTypes,
         bool $honorPreferredPairings,
+        bool $packPreferredBottomItems,
     ): int {
         $stopSequence = (int) $stop['sequence'];
         $reusableRackIndexes = collect($racks)
@@ -1314,7 +1338,7 @@ class RackDiagramService
                 $code,
                 $unitsPerPosition,
                 $placed,
-                [0],
+                $packPreferredBottomItems ? null : [0],
             );
         }
 
