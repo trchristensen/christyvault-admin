@@ -481,13 +481,6 @@ final class OfficeManagerDashboard
 
     private function deliveryStatuses(): array
     {
-        return [
-            OrderStatus::PENDING->value,
-            OrderStatus::CONFIRMED->value,
-            OrderStatus::IN_PRODUCTION->value,
-            OrderStatus::READY_FOR_DELIVERY->value,
-            OrderStatus::OUT_FOR_DELIVERY->value,
-            OrderStatus::PREBURY->value,
-        ];
+        return OrderStatus::activeDeliveryValues();
     }
 }

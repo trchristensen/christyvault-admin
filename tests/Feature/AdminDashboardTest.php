@@ -4,6 +4,7 @@ use App\Enums\PlantLocation;
 use App\Filament\Widgets\OfficeManagerAttentionWidget;
 use App\Filament\Widgets\PlanningOpportunitiesWidget;
 use App\Filament\Widgets\TodayTomorrowBriefingWidget;
+use App\Filament\Widgets\WeeklyDeliveryWeatherWidget;
 use App\Models\CalendarDay;
 use App\Models\Employee;
 use App\Models\Location;
@@ -16,10 +17,15 @@ use App\Support\OfficeManagerDashboard;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
 uses(DatabaseTransactions::class);
+
+beforeEach(function (): void {
+    Http::fake(['*' => Http::response([], 503)]);
+});
 
 it('opens the admin dashboard instead of redirecting to the delivery calendar', function (): void {
     $user = User::factory()->create();
@@ -45,6 +51,7 @@ it('registers and renders the useful admin dashboard widgets', function (): void
 
     expect($widgets)->toContain(
         OfficeManagerAttentionWidget::class,
+        WeeklyDeliveryWeatherWidget::class,
         TodayTomorrowBriefingWidget::class,
         PlanningOpportunitiesWidget::class,
     );
@@ -53,6 +60,12 @@ it('registers and renders the useful admin dashboard widgets', function (): void
         ->assertOk()
         ->assertSee('Needs attention')
         ->assertSeeHtml('admin-dashboard-attention-section');
+
+    Livewire::test(WeeklyDeliveryWeatherWidget::class)
+        ->assertOk()
+        ->assertSee('7-day delivery weather')
+        ->assertSee('Colma')
+        ->assertSee('Tulare');
 
     Livewire::test(TodayTomorrowBriefingWidget::class)
         ->assertOk()

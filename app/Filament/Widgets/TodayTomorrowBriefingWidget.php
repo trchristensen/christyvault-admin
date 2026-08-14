@@ -9,7 +9,7 @@ class TodayTomorrowBriefingWidget extends Widget
 {
     protected string $view = 'filament.widgets.today-tomorrow-briefing-widget';
 
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 3;
 
     protected int|string|array $columnSpan = 'full';
 

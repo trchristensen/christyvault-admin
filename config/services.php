@@ -39,6 +39,10 @@ return [
         'api_key' => env('OPENWEATHER_API_KEY'),
     ],
 
+    'national_weather_service' => [
+        'user_agent' => env('NWS_USER_AGENT', env('APP_NAME', 'Christy Vault Admin').' ('.env('APP_URL', 'http://localhost').')'),
+    ],
+
     'openrouteservice' => [
         'api_key' => env('OPENROUTESERVICE_API_KEY'),
         'base_url' => env('OPENROUTESERVICE_BASE_URL', 'https://api.openrouteservice.org'),
@@ -48,7 +52,7 @@ return [
     'census_geocoder' => [
         'base_url' => env('CENSUS_GEOCODER_BASE_URL', 'https://geocoding.geo.census.gov/geocoder'),
         'benchmark' => env('CENSUS_GEOCODER_BENCHMARK', 'Public_AR_Current'),
-        'user_agent' => env('CENSUS_GEOCODER_USER_AGENT', env('APP_NAME', 'Christy Vault Admin') . ' location geocoder'),
+        'user_agent' => env('CENSUS_GEOCODER_USER_AGENT', env('APP_NAME', 'Christy Vault Admin').' location geocoder'),
     ],
 
     'plant_locations' => [

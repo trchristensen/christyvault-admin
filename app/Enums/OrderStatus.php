@@ -22,7 +22,6 @@ enum OrderStatus: string
     case PREBURY_DELIVERED = 'prebury_delivered';
     case SHIPPED = 'shipped';
 
-
     public function label(): string
     {
         return match ($this) {
@@ -33,14 +32,14 @@ enum OrderStatus: string
             self::READY_FOR_DELIVERY => 'Ready for Delivery',
             self::OUT_FOR_DELIVERY => 'Out for Delivery',
             self::PREBURY => 'Prebury',
-            self::TRANSFER => "Plant Transfer",
+            self::TRANSFER => 'Plant Transfer',
             self::PICKED_UP => 'Picked Up',
             self::ARRIVED => 'Arrived',
             self::DELIVERED => 'Delivered',
             self::CANCELLED => 'Cancelled',
             self::COMPLETED => 'Completed',
             self::INVOICED => 'Invoiced',
-            self::TRANSFERRED => "Transferred",
+            self::TRANSFERRED => 'Transferred',
             self::SHIPPED => 'Shipped via Carrier',
             self::PREBURY_DELIVERED => 'Prebury Delivered',
         };
@@ -71,8 +70,20 @@ enum OrderStatus: string
 
     public static function toArray(): array
     {
-        return collect(self::cases())->mapWithKeys(fn($status) => [
-            $status->value => $status->label()
+        return collect(self::cases())->mapWithKeys(fn ($status) => [
+            $status->value => $status->label(),
         ])->toArray();
+    }
+
+    public static function activeDeliveryValues(): array
+    {
+        return [
+            self::PENDING->value,
+            self::CONFIRMED->value,
+            self::IN_PRODUCTION->value,
+            self::READY_FOR_DELIVERY->value,
+            self::OUT_FOR_DELIVERY->value,
+            self::PREBURY->value,
+        ];
     }
 }

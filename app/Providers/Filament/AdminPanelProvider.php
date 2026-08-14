@@ -9,6 +9,7 @@ use App\Filament\Resources\OrderResource\Pages\DeliveryCalendar;
 use App\Filament\Widgets\OfficeManagerAttentionWidget;
 use App\Filament\Widgets\PlanningOpportunitiesWidget;
 use App\Filament\Widgets\TodayTomorrowBriefingWidget;
+use App\Filament\Widgets\WeeklyDeliveryWeatherWidget;
 use App\Http\Middleware\AuthenticatePanel;
 use App\Support\Filament\SharedProfile;
 use App\Support\FilamentLoginMode;
@@ -106,6 +107,7 @@ class AdminPanelProvider extends PanelProvider
             // ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 OfficeManagerAttentionWidget::class,
+                WeeklyDeliveryWeatherWidget::class,
                 TodayTomorrowBriefingWidget::class,
                 PlanningOpportunitiesWidget::class,
             ])
