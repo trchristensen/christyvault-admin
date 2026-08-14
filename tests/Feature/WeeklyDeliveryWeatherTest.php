@@ -4,6 +4,7 @@ use App\Enums\PlantLocation;
 use App\Filament\Widgets\WeeklyDeliveryWeatherWidget;
 use App\Models\Location;
 use App\Models\Order;
+use App\Services\WeatherForecast;
 use App\Support\DeliveryWeatherDashboard;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\Client\Request;
@@ -247,4 +248,34 @@ it('uses the National Weather Service when no OpenWeather key is configured', fu
 
     Http::assertSent(fn (Request $request): bool => $request->hasHeader('User-Agent')
         && str_starts_with($request->url(), 'https://api.weather.gov/'));
+});
+
+it('falls back to the National Weather Service when a configured OpenWeather key fails', function (): void {
+    Http::fake(function (Request $request) {
+        if (str_contains($request->url(), 'openweathermap.org')) {
+            return Http::response(['message' => 'Unauthorized'], 401);
+        }
+
+        if (str_contains($request->url(), '/points/')) {
+            return Http::response([
+                'properties' => [
+                    'forecast' => 'https://api.weather.gov/gridpoints/MTR/88,126/forecast',
+                    'forecastHourly' => 'https://api.weather.gov/gridpoints/MTR/88,126/forecast/hourly',
+                ],
+            ]);
+        }
+
+        if (str_ends_with($request->url(), '/forecast/hourly')) {
+            return Http::response(['properties' => ['periods' => weatherTestNwsCurrentPeriod()]]);
+        }
+
+        return Http::response(['properties' => ['periods' => weatherTestNwsPeriods()]]);
+    });
+
+    $forecast = app(WeatherForecast::class)->dailyFor([
+        'colma' => ['latitude' => 37.6688, 'longitude' => -122.4619],
+    ]);
+
+    expect($forecast['colma'])->toHaveCount(7)
+        ->and($forecast['colma'][today()->toDateString()]['current']['temperature'])->toBe(64);
 });

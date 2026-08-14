@@ -39,9 +39,24 @@ final class WeatherForecast
             return $forecasts;
         }
 
-        $fresh = $provider === 'openweather'
-            ? $this->fetchOpenWeather($missing)
-            : $this->fetchNationalWeatherService($missing);
+        if ($provider === 'openweather') {
+            $fresh = $this->fetchOpenWeather($missing);
+            $fallbackLocations = collect($missing)
+                ->filter(fn (array $_location, string $key): bool => ($fresh[$key] ?? []) === [])
+                ->all();
+
+            if ($fallbackLocations !== []) {
+                $fallback = $this->fetchNationalWeatherService($fallbackLocations);
+
+                foreach ($fallbackLocations as $key => $_location) {
+                    if (($fallback[$key] ?? []) !== []) {
+                        $fresh[$key] = $fallback[$key];
+                    }
+                }
+            }
+        } else {
+            $fresh = $this->fetchNationalWeatherService($missing);
+        }
 
         foreach ($missing as $key => $location) {
             $forecast = $fresh[$key] ?? [];
@@ -440,7 +455,7 @@ final class WeatherForecast
 
     private function cacheKey(string $provider, float $latitude, float $longitude): string
     {
-        return sprintf('delivery-weather:v2:%s:%.4f:%.4f', $provider, $latitude, $longitude);
+        return sprintf('delivery-weather:v3:%s:%.4f:%.4f', $provider, $latitude, $longitude);
     }
 
     private function nwsPointCacheKey(float $latitude, float $longitude): string
