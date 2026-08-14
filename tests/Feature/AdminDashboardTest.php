@@ -8,6 +8,7 @@ use App\Models\CalendarDay;
 use App\Models\Employee;
 use App\Models\Location;
 use App\Models\Order;
+use App\Models\Position;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\VehicleConfiguration;
@@ -91,6 +92,7 @@ it('groups next-workday printing and assignment problems at the trip level', fun
 
     $item = collect(app(OfficeManagerDashboard::class)->attentionItems())
         ->first(fn (array $item): bool => str_starts_with($item['title'], 'TRIP-BRIEFING-TEST'));
+    $printIssue = collect($item['issues'])->firstWhere('type', 'print_tags');
 
     expect($item)->not->toBeNull()
         ->and($item['title'])->toContain($location->name)
@@ -101,7 +103,110 @@ it('groups next-workday printing and assignment problems at the trip level', fun
         ->and($item['orders'][0]['customer_order_number'])->toBe('CUSTOMER-PO-42')
         ->and($item['detail'])->toContain('Driver missing')
         ->and($item['detail'])->toContain('Vehicle missing')
-        ->and($item['detail'])->toContain('1 tag not printed');
+        ->and($item['detail'])->toContain('1 tag not printed')
+        ->and($printIssue['orders'])->toBe([
+            [
+                'number' => $order->order_number,
+                'url' => route('orders.print', ['order' => $order]),
+            ],
+        ]);
+
+    Livewire::test(OfficeManagerAttentionWidget::class)
+        ->assertSee("Print {$order->order_number}")
+        ->assertSeeHtml('href="'.route('orders.print', ['order' => $order]).'"')
+        ->assertSeeHtml('target="_blank"');
+});
+
+it('assigns a missing driver from the attention widget without confirming the stop order', function (): void {
+    $user = User::factory()->create();
+    $user->assignRole(Role::findOrCreate('admin', 'web'));
+
+    $this->actingAs($user);
+    Filament::setCurrentPanel('admin');
+
+    $driver = Employee::query()->forceCreate([
+        'name' => 'Dashboard Driver',
+        'email' => 'dashboard-driver@example.test',
+        'is_active' => true,
+        'christy_location' => 'colma',
+        'hire_date' => today()->subYear(),
+        'birth_date' => today()->subYears(30),
+    ]);
+    $driver->positions()->attach(Position::query()->firstOrCreate(
+        ['name' => 'driver'],
+        ['display_name' => 'Driver'],
+    ));
+    $vehicle = VehicleConfiguration::query()->firstOrCreate(
+        ['code' => 'dashboard-driver-assignment-vehicle'],
+        ['name' => 'Dashboard assignment truck', 'configuration_type' => 'boom_truck', 'is_active' => true],
+    );
+    $trip = Trip::withoutEvents(fn (): Trip => Trip::create([
+        'trip_number' => 'TRIP-DASHBOARD-DRIVER',
+        'uuid' => (string) str()->uuid(),
+        'vehicle_configuration_id' => $vehicle->id,
+        'status' => 'pending',
+        'scheduled_date' => app(OfficeManagerDashboard::class)->nextWorkday(today()),
+    ]));
+    $order = Order::factory()->create([
+        'location_id' => Location::factory()->create()->id,
+        'trip_id' => $trip->id,
+        'assigned_delivery_date' => $trip->scheduled_date,
+        'status' => 'confirmed',
+        'plant_location' => PlantLocation::COLMA_MAIN->value,
+        'is_printed' => true,
+    ]);
+
+    Livewire::test(OfficeManagerAttentionWidget::class)
+        ->assertSee('Driver missing')
+        ->set("driverSelections.{$trip->id}", $driver->id)
+        ->call('assignDriver', $trip->id)
+        ->assertHasNoErrors();
+
+    $attentionItem = collect(app(OfficeManagerDashboard::class)->attentionItems())
+        ->first(fn (array $item): bool => str_starts_with($item['title'], 'TRIP-DASHBOARD-DRIVER'));
+
+    expect($trip->fresh()->driver_id)->toBe($driver->id)
+        ->and($trip->fresh()->dispatch_confirmed_at)->toBeNull()
+        ->and($order->fresh()->driver_id)->toBe($driver->id)
+        ->and($attentionItem)->toBeNull();
+});
+
+it('rejects a non-driver selected from a dashboard driver assignment', function (): void {
+    $user = User::factory()->create();
+    $user->assignRole(Role::findOrCreate('admin', 'web'));
+
+    $this->actingAs($user);
+    Filament::setCurrentPanel('admin');
+
+    $employee = Employee::query()->forceCreate([
+        'name' => 'Not A Driver',
+        'email' => 'not-a-driver@example.test',
+        'is_active' => true,
+        'christy_location' => 'colma',
+        'hire_date' => today()->subYear(),
+        'birth_date' => today()->subYears(30),
+    ]);
+    $trip = Trip::withoutEvents(fn (): Trip => Trip::create([
+        'trip_number' => 'TRIP-DASHBOARD-INVALID-DRIVER',
+        'uuid' => (string) str()->uuid(),
+        'status' => 'pending',
+        'scheduled_date' => app(OfficeManagerDashboard::class)->nextWorkday(today()),
+    ]));
+    Order::factory()->create([
+        'location_id' => Location::factory()->create()->id,
+        'trip_id' => $trip->id,
+        'assigned_delivery_date' => $trip->scheduled_date,
+        'status' => 'confirmed',
+        'plant_location' => PlantLocation::COLMA_MAIN->value,
+        'is_printed' => true,
+    ]);
+
+    Livewire::test(OfficeManagerAttentionWidget::class)
+        ->set("driverSelections.{$trip->id}", $employee->id)
+        ->call('assignDriver', $trip->id)
+        ->assertHasErrors("driverSelections.{$trip->id}");
+
+    expect($trip->fresh()->driver_id)->toBeNull();
 });
 
 it('identifies the actual unscheduled orders and makes the alert title clickable', function (): void {

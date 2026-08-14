@@ -24,7 +24,50 @@
                         <div class="om-attention-copy">
                             <span class="om-eyebrow">{{ $item['eyebrow'] }}</span>
                             <a href="{{ $item['url'] }}" class="om-attention-title">{{ $item['title'] }}</a>
-                            <span class="om-attention-issues">{{ $item['detail'] }}</span>
+                            @if (! empty($item['issues']))
+                                <div class="om-attention-issues-list">
+                                    @foreach ($item['issues'] as $issue)
+                                        <div class="om-attention-issue">
+                                            <span class="om-attention-issues">{{ $issue['label'] }}</span>
+                                            @if (($issue['type'] ?? null) === 'assign_driver')
+                                                <div class="om-inline-action">
+                                                    <label class="sr-only" for="attention-driver-{{ $issue['trip_id'] }}">Driver</label>
+                                                    <select
+                                                        id="attention-driver-{{ $issue['trip_id'] }}"
+                                                        wire:model="driverSelections.{{ $issue['trip_id'] }}"
+                                                    >
+                                                        <option value="">Select driver</option>
+                                                        @foreach ($drivers as $driverId => $driverName)
+                                                            <option value="{{ $driverId }}">{{ $driverName }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <button
+                                                        type="button"
+                                                        wire:click="assignDriver({{ $issue['trip_id'] }})"
+                                                        wire:loading.attr="disabled"
+                                                        wire:target="assignDriver({{ $issue['trip_id'] }})"
+                                                    >
+                                                        Assign
+                                                    </button>
+                                                </div>
+                                                @error('driverSelections.'.$issue['trip_id'])
+                                                    <span class="om-inline-error">{{ $message }}</span>
+                                                @enderror
+                                            @elseif (($issue['type'] ?? null) === 'print_tags')
+                                                <div class="om-inline-links">
+                                                    @foreach ($issue['orders'] as $order)
+                                                        <a href="{{ $order['url'] }}" target="_blank" rel="noopener">
+                                                            Print {{ $order['number'] }}
+                                                        </a>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <span class="om-attention-issues">{{ $item['detail'] }}</span>
+                            @endif
                             @if (! empty($item['summary']))
                                 <span class="om-attention-summary">{{ $item['summary'] }}</span>
                             @endif

@@ -25,6 +25,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -107,15 +108,23 @@ class MaintenanceAssetResource extends Resource
                 ->sortable()
                 ->toggleable(),
             TextColumn::make('work_orders_count')->counts('workOrders')->label('Work orders'),
-        ])->filters([
-            SelectFilter::make('category')->options(MaintenanceOptions::assetCategories()),
-            SelectFilter::make('status')->options(MaintenanceOptions::assetStatuses()),
-            SelectFilter::make('criticality')->options(MaintenanceOptions::criticalities()),
-        ])->recordActions([
-            Action::make('qr')->label('QR page')->icon('heroicon-o-qr-code')->url(fn (MaintenanceAsset $record) => $record->qr_url)->openUrlInNewTab(),
-            Action::make('label')->label('Print label')->icon('heroicon-o-printer')->url(fn (MaintenanceAsset $record) => route('maintenance.assets.label', $record->qr_token))->openUrlInNewTab(),
-            EditAction::make(),
-        ])->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])]);
+        ])->groups([
+            Group::make('category')
+                ->label('Category')
+                ->getTitleFromRecordUsing(fn (MaintenanceAsset $record): string => MaintenanceOptions::assetCategories()[$record->category] ?? $record->category)
+                ->collapsible(),
+        ])->defaultGroup('category')
+            ->filters([
+                SelectFilter::make('category')->options(MaintenanceOptions::assetCategories()),
+                SelectFilter::make('status')->options(MaintenanceOptions::assetStatuses()),
+                SelectFilter::make('criticality')->options(MaintenanceOptions::criticalities()),
+            ])->recordActions([
+                Action::make('qr')->label('QR page')->icon('heroicon-o-qr-code')->url(fn (MaintenanceAsset $record) => $record->qr_url)->openUrlInNewTab(),
+                Action::make('label')->label('Print label')->icon('heroicon-o-printer')->url(fn (MaintenanceAsset $record) => route('maintenance.assets.label', $record->qr_token))->openUrlInNewTab(),
+                EditAction::make(),
+            ])->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])])
+            ->paginationPageOptions([20, 50, 100])
+            ->defaultPaginationPageOption(20);
     }
 
     public static function getRelations(): array

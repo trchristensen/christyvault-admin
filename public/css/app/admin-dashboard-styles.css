@@ -66,6 +66,64 @@
 .om-attention-item.is-danger .om-attention-issues { color: #b91c1c; }
 .om-attention-copy .om-attention-summary { color: #64748b; font-size: .75rem; margin-top: .22rem; }
 
+.om-attention-issues-list {
+    display: flex;
+    flex-direction: column;
+    gap: .42rem;
+    margin-top: .38rem;
+}
+
+.om-attention-issue {
+    align-items: center;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem .65rem;
+    padding-top: .42rem;
+}
+
+.om-attention-issue:first-child { border-top: 0; padding-top: 0; }
+.om-attention-issue > .om-attention-issues { margin-top: 0; }
+
+.om-inline-action,
+.om-inline-links {
+    align-items: center;
+    display: flex;
+    flex: 1 1 18rem;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+
+.om-inline-action select {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: .45rem;
+    color: #334155;
+    flex: 1 1 10rem;
+    font-size: .75rem;
+    min-height: 2rem;
+    padding: .3rem 1.8rem .3rem .55rem;
+}
+
+.om-inline-action button,
+.om-inline-links a {
+    background: #1d4ed8;
+    border: 1px solid #1d4ed8;
+    border-radius: .45rem;
+    color: #fff;
+    cursor: pointer;
+    font-size: .72rem;
+    font-weight: 750;
+    line-height: 1.2;
+    padding: .46rem .65rem;
+    text-decoration: none;
+}
+
+.om-inline-action button:hover,
+.om-inline-links a:hover { background: #1e40af; border-color: #1e40af; }
+.om-inline-action button:disabled { cursor: wait; opacity: .6; }
+.om-inline-error { color: #b91c1c; flex-basis: 100%; font-size: .7rem; font-weight: 650; }
+
 .om-attention-orders {
     display: flex;
     flex-wrap: wrap;
@@ -442,6 +500,8 @@
 .dark .om-calendar-date span,
 .dark .om-calendar-day-copy span { color: #9ca3af; }
 .dark .om-attention-title { color: #93c5fd; }
+.dark .om-attention-issue { border-color: #374151; }
+.dark .om-inline-action select { background: #111827; border-color: #4b5563; color: #f3f4f6; }
 .dark .om-opportunity-card .cv-load-preview__diagram { border-color: #374151; }
 .dark .cv-load-preview__diagram-title,
 .dark .cv-load-preview__rack-label,
@@ -492,6 +552,10 @@
     }
 
     .om-attention-orders a { width: 100%; }
+
+    .om-attention-issue { align-items: flex-start; flex-direction: column; }
+    .om-inline-action,
+    .om-inline-links { flex-basis: auto; width: 100%; }
 
     .om-calendar-day-list { grid-template-columns: 1fr; }
     .om-calendar-day-row:nth-child(even) { border-left: 0; }

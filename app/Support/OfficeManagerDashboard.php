@@ -71,6 +71,7 @@ final class OfficeManagerDashboard
                 'eyebrow' => $trip->scheduled_date->isToday() ? 'Today' : $trip->scheduled_date->format('l, M j'),
                 'title' => $trip->trip_number.($destinationSummary ? " · {$destinationSummary}" : ''),
                 'detail' => collect($issues)->pluck('label')->join(' · '),
+                'issues' => $issues,
                 'summary' => collect([
                     trans_choice(':count order|:count orders', $orders->count(), ['count' => $orders->count()]),
                     $plants->join(' + '),
@@ -315,12 +316,22 @@ final class OfficeManagerDashboard
         $issues = [];
 
         if (! $trip->driver_id) {
-            $issues[] = ['label' => 'Driver missing', 'urgent' => true];
+            $issues[] = [
+                'type' => 'assign_driver',
+                'label' => 'Driver missing',
+                'urgent' => true,
+                'trip_id' => $trip->getKey(),
+            ];
         } elseif ($approvedLeave?->get($trip->driver_id)?->contains(
             fn (LeaveRequest $leave): bool => $leave->start_date->startOfDay()->lte($trip->scheduled_date)
                 && $leave->end_date->endOfDay()->gte($trip->scheduled_date),
         )) {
-            $issues[] = ['label' => 'Assigned driver is approved off', 'urgent' => true];
+            $issues[] = [
+                'type' => 'assign_driver',
+                'label' => 'Assigned driver is approved off',
+                'urgent' => true,
+                'trip_id' => $trip->getKey(),
+            ];
         }
 
         if (! $trip->vehicle_configuration_id) {
@@ -331,15 +342,21 @@ final class OfficeManagerDashboard
             $issues[] = ['label' => 'Stop order not confirmed', 'urgent' => false];
         }
 
-        $unprinted = $trip->orders
+        $unprintedOrders = $trip->orders
             ->where('is_printed', false)
             ->reject(fn (Order $order): bool => $order->plant_location === PlantLocation::TULARE_PLANT->value)
-            ->count();
+            ->values();
+        $unprinted = $unprintedOrders->count();
 
         if ($unprinted > 0) {
             $issues[] = [
+                'type' => 'print_tags',
                 'label' => trans_choice(':count tag not printed|:count tags not printed', $unprinted, ['count' => $unprinted]),
                 'urgent' => $trip->scheduled_date->lte($this->nextWorkday(today())),
+                'orders' => $unprintedOrders->map(fn (Order $order): array => [
+                    'number' => $order->order_number,
+                    'url' => route('orders.print', ['order' => $order]),
+                ])->all(),
             ];
         }
 

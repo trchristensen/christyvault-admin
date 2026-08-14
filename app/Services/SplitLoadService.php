@@ -420,6 +420,40 @@ class SplitLoadService
         });
     }
 
+    public function assignDriver(Trip $trip, int $driverId): Trip
+    {
+        if (! Employee::query()
+            ->whereKey($driverId)
+            ->where('is_active', true)
+            ->whereHas('positions', fn ($query) => $query->where('name', 'driver'))
+            ->exists()) {
+            throw ValidationException::withMessages([
+                'driver_id' => 'Choose an active employee with the driver position.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($trip, $driverId): Trip {
+            $trip = Trip::query()->lockForUpdate()->findOrFail($trip->getKey());
+            $oldDriverId = $trip->driver_id;
+
+            $trip->update(['driver_id' => $driverId]);
+
+            if ($oldDriverId !== $driverId) {
+                activity('trip')
+                    ->performedOn($trip)
+                    ->causedBy(auth()->user())
+                    ->event('driver_assigned')
+                    ->withProperties([
+                        'old' => ['driver_id' => $oldDriverId],
+                        'attributes' => ['driver_id' => $driverId],
+                    ])
+                    ->log('delivery trip driver assigned');
+            }
+
+            return $trip->refresh()->load(['driver', 'orders.location', 'stops.order']);
+        });
+    }
+
     public function dissolve(Trip $trip): void
     {
         $orderIds = DB::transaction(function () use ($trip): array {
