@@ -80,7 +80,9 @@
             ])
             title="{{ collect([$weather['description'], ...$weather['warnings']])->filter()->join(' · ') }}"
         >
-            <span aria-hidden="true">{{ $weather['symbol'] }}</span>
+            @if (filled($weather['symbol']))
+                <span aria-hidden="true">{{ $weather['symbol'] }}</span>
+            @endif
             <span>{{ $weatherDetails }}</span>
         </div>
     @endif

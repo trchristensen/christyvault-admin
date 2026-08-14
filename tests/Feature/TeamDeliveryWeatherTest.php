@@ -58,8 +58,16 @@ function fakeTeamDeliveryWeather(): void
                 'wind_speed' => 9,
                 'wind_gust' => 14,
                 'weather' => [[
-                    'id' => $offset === 0 ? 500 : 800,
-                    'description' => $offset === 0 ? 'light rain' : 'clear sky',
+                    'id' => match ($offset) {
+                        0 => 500,
+                        1 => 0,
+                        default => 800,
+                    },
+                    'description' => match ($offset) {
+                        0 => 'light rain',
+                        1 => 'forecast available',
+                        default => 'clear sky',
+                    },
                 ]],
             ];
         })->all(),
@@ -102,6 +110,7 @@ it('shows a subtle destination forecast beneath addresses on the team dashboard 
         ->assertSee('Dry Forecast Cemetery')
         ->assertSee('L 53° · H 73°')
         ->assertDontSee(' · 0% rain')
+        ->assertDontSee('🌡️')
         ->assertSeeHtml('delivery-order-weather is-warning');
     $dashboardRequestCount = Http::recorded()->count();
 

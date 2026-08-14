@@ -12,7 +12,7 @@ final class DeliveryOrderWeather
 
     /**
      * @param  iterable<int, Order>  $orders
-     * @return array<int, array{symbol: string, high: ?int, low: ?int, rain_chance: int, description: string, warnings: array<int, string>}>
+     * @return array<int, array{symbol: ?string, high: ?int, low: ?int, rain_chance: int, description: string, warnings: array<int, string>}>
      */
     public function forOrders(iterable $orders): array
     {
@@ -48,8 +48,10 @@ final class DeliveryOrderWeather
                     return [];
                 }
 
+                $symbol = $weather['symbol'] ?? null;
+
                 return [$order->getKey() => [
-                    'symbol' => (string) ($weather['symbol'] ?? '🌡️'),
+                    'symbol' => filled($symbol) && $symbol !== '🌡️' ? (string) $symbol : null,
                     'high' => isset($weather['high']) ? (int) $weather['high'] : null,
                     'low' => isset($weather['low']) ? (int) $weather['low'] : null,
                     'rain_chance' => (int) ($weather['rain_chance'] ?? 0),
