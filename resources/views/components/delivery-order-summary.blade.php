@@ -14,7 +14,11 @@
     $activeTrip = $order->trip && ! $order->trip->trashed() ? $order->trip : null;
     $stopNumber = $order->activeTripStop?->sequence ?? $order->stop_number;
     $deliveryTime = $order->delivery_time ?? $order->scheduled_at;
+    $weatherDescription = $weather && filled($weather['description']) && $weather['description'] !== 'Forecast available'
+        ? $weather['description']
+        : null;
     $weatherDetails = collect([
+        $weatherDescription,
         $weather && $weather['low'] !== null ? 'L '.$weather['low'].'°' : null,
         $weather && $weather['high'] !== null ? 'H '.$weather['high'].'°' : null,
         $weather && $weather['rain_chance'] > 0 ? $weather['rain_chance'].'% rain' : null,
@@ -78,7 +82,7 @@
                 'delivery-order-weather',
                 'is-warning' => $weather['warnings'] !== [],
             ])
-            title="{{ collect([$weather['description'], ...$weather['warnings']])->filter()->join(' · ') }}"
+            title="{{ collect($weather['warnings'])->filter()->join(' · ') }}"
         >
             @if (filled($weather['symbol']))
                 <span aria-hidden="true">{{ $weather['symbol'] }}</span>

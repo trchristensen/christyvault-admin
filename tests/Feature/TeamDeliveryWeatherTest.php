@@ -106,9 +106,10 @@ it('shows a subtle destination forecast beneath addresses on the team dashboard 
 
     Livewire::test(TodaysDeliveriesWidget::class)
         ->assertSee('123 Forecast Way')
-        ->assertSee('L 52° · H 72° · 70% rain')
+        ->assertSee('Light rain · L 52° · H 72° · 70% rain')
         ->assertSee('Dry Forecast Cemetery')
         ->assertSee('L 53° · H 73°')
+        ->assertDontSee('Forecast available · L 53°')
         ->assertDontSee(' · 0% rain')
         ->assertDontSee('🌡️')
         ->assertSeeHtml('delivery-order-weather is-warning');
@@ -117,7 +118,7 @@ it('shows a subtle destination forecast beneath addresses on the team dashboard 
     Livewire::test(Schedule::class)
         ->assertSet('selectedDate', '2026-08-10')
         ->assertSee('123 Forecast Way')
-        ->assertSee('L 52° · H 72° · 70% rain')
+        ->assertSee('Light rain · L 52° · H 72° · 70% rain')
         ->assertSeeHtml('delivery-order-weather is-warning');
 
     expect(Http::recorded())->toHaveCount($dashboardRequestCount)
