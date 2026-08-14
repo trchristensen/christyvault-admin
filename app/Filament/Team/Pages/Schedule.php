@@ -9,6 +9,7 @@ use App\Filament\Team\Concerns\ManagesTripPreTripInspections;
 use App\Models\CalendarDay;
 use App\Models\Order;
 use App\Models\Trip;
+use App\Support\DeliveryOrderWeather;
 use Carbon\Carbon;
 use Filament\Pages\Page;
 
@@ -42,6 +43,8 @@ class Schedule extends Page
     public $orders;
 
     public array $selectedCalendarDays = [];
+
+    public array $weatherByOrder = [];
 
     public function mount()
     {
@@ -264,6 +267,7 @@ class Schedule extends Page
             ])
             ->withCount('deliveryPhotos')
             ->get();
+        $this->weatherByOrder = app(DeliveryOrderWeather::class)->forOrders($orders);
 
         $canViewUnprintedProductLines = auth()->user()?->can(Order::VIEW_UNPRINTED_PRODUCT_LINES_PERMISSION) ?? false;
 

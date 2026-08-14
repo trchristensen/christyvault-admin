@@ -73,6 +73,7 @@
                                         <div class="delivery-order-card {{ $isDeliveryTrip ? 'delivery-trip-stop-card' : 'delivery-order-card-embedded' }}">
                                             <x-delivery-order-summary
                                                 :order="$order"
+                                                :weather="$weatherByOrder[$order->getKey()] ?? null"
                                                 :is-delivery-trip="$isDeliveryTrip"
                                                 :stop-order-confirmed="$stopOrderConfirmed"
                                                 :stop-count="$deliveryGroup->count()"

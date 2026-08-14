@@ -1,5 +1,6 @@
 @props([
     'order',
+    'weather' => null,
     'isDeliveryTrip' => false,
     'stopOrderConfirmed' => true,
     'stopCount' => null,
@@ -13,6 +14,11 @@
     $activeTrip = $order->trip && ! $order->trip->trashed() ? $order->trip : null;
     $stopNumber = $order->activeTripStop?->sequence ?? $order->stop_number;
     $deliveryTime = $order->delivery_time ?? $order->scheduled_at;
+    $weatherDetails = collect([
+        $weather && $weather['low'] !== null ? 'L '.$weather['low'].'°' : null,
+        $weather && $weather['high'] !== null ? 'H '.$weather['high'].'°' : null,
+        $weather && $weather['rain_chance'] > 0 ? $weather['rain_chance'].'% rain' : null,
+    ])->filter()->join(' · ');
 @endphp
 
 <div class="delivery-order-summary">
@@ -64,6 +70,19 @@
             <span>{{ $order->location->full_address }}</span>
             <x-heroicon-o-map-pin />
         </a>
+    @endif
+
+    @if ($weather && filled($weatherDetails))
+        <div
+            @class([
+                'delivery-order-weather',
+                'is-warning' => $weather['warnings'] !== [],
+            ])
+            title="{{ collect([$weather['description'], ...$weather['warnings']])->filter()->join(' · ') }}"
+        >
+            <span aria-hidden="true">{{ $weather['symbol'] }}</span>
+            <span>{{ $weatherDetails }}</span>
+        </div>
     @endif
 
     <div class="delivery-order-statuses">

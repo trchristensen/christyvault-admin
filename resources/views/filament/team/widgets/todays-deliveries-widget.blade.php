@@ -119,6 +119,7 @@
                     @include('filament.team.widgets.partials.delivery-day', [
                         'day' => $day,
                         'scheduleUrl' => $scheduleUrl,
+                        'weatherByOrder' => $weatherByOrder,
                     ])
                 </div>
             @endforeach

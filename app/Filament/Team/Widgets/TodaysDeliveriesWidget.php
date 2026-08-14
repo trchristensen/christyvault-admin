@@ -10,6 +10,7 @@ use App\Filament\Team\Pages\Schedule;
 use App\Models\Order;
 use App\Models\Trip;
 use App\Services\DeliveryCalendarAvailability;
+use App\Support\DeliveryOrderWeather;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
@@ -83,6 +84,7 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
         $orders = $orders
             ->sortBy(fn (Order $order): int => $order->isAssignedToEmployee($currentEmployeeId) ? 0 : 1)
             ->values();
+        $weatherByOrder = app(DeliveryOrderWeather::class)->forOrders($orders);
 
         $canViewUnprintedProductLines = auth()->user()?->can(Order::VIEW_UNPRINTED_PRODUCT_LINES_PERMISSION) ?? false;
 
@@ -128,6 +130,7 @@ class TodaysDeliveriesWidget extends Widget implements HasActions, HasSchemas
                 $pacificNow->copy()->setTime(16, 30),
             ) ? 1 : 0,
             'scheduleUrl' => Schedule::getUrl(panel: 'team'),
+            'weatherByOrder' => $weatherByOrder,
         ];
     }
 
