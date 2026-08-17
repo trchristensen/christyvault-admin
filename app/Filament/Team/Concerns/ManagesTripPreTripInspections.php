@@ -259,6 +259,7 @@ trait ManagesTripPreTripInspections
                     'sections' => TripPreTripChecklist::sections($inspection->vehicleConfiguration),
                 ]);
             })
+            ->modalAutofocus(false)
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Close')
             ->modalWidth('4xl')
@@ -570,6 +571,7 @@ trait ManagesTripPreTripInspections
                     'reports' => $this->vehicleInspectionHistoryForTrip($trip),
                 ]);
             })
+            ->modalAutofocus(false)
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Close')
             ->modalWidth('4xl')

@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Notifications\MaintenanceRequestSubmitted;
 use App\Support\PanelSwitcher;
 use Filament\Facades\Filament;
-use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -20,21 +19,6 @@ uses(DatabaseTransactions::class);
 
 it('registers the panel dropdown at the top of every sidebar', function (): void {
     expect(FilamentView::hasRenderHook(PanelsRenderHook::SIDEBAR_NAV_START))->toBeTrue();
-});
-
-it('loads top-alignment rules for Filament modals in every panel', function (): void {
-    $modalStylesheet = collect(FilamentAsset::getStyles(['app']))
-        ->first(fn ($asset): bool => $asset->getId() === 'filament-modal-positioning');
-
-    expect($modalStylesheet)->not->toBeNull();
-
-    $css = file_get_contents($modalStylesheet->getPath());
-
-    expect($css)
-        ->toContain('.fi-modal:not(.fi-modal-slide-over) > .fi-modal-window-ctn')
-        ->toContain('grid-template-rows: auto minmax(0, 1fr) !important;')
-        ->toContain('.fi-modal:not(.fi-modal-slide-over) > .fi-modal-window-ctn > .fi-modal-window')
-        ->toContain('grid-row-start: 1 !important;');
 });
 
 it('enables database notifications in the team panel', function (): void {

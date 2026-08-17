@@ -651,15 +651,23 @@ it('keeps an ordinary driver observation in manager review instead of automatica
 
     $this->actingAs($manager);
 
-    Livewire::test(Schedule::class)
+    $inspectionModal = Livewire::test(Schedule::class)
         ->mountAction('viewTripPreTripInspection', ['inspection' => $defect->inspection_id])
-        ->assertActionMounted('viewTripPreTripInspection')
+        ->assertActionMounted('viewTripPreTripInspection');
+
+    expect($inspectionModal->instance()->getMountedAction()?->isModalAutofocused())->toBeFalse();
+
+    $inspectionModal
         ->mountAction('reviewTripInspectionIssue', ['issue' => $defect->getKey()])
         ->assertActionMounted('reviewTripInspectionIssue');
 
-    Livewire::test(Schedule::class)
+    $historyModal = Livewire::test(Schedule::class)
         ->mountAction('viewTripVehicleInspectionHistory', ['trip' => $trip->getKey()])
-        ->assertActionMounted('viewTripVehicleInspectionHistory')
+        ->assertActionMounted('viewTripVehicleInspectionHistory');
+
+    expect($historyModal->instance()->getMountedAction()?->isModalAutofocused())->toBeFalse();
+
+    $historyModal
         ->mountAction('reviewTripInspectionIssue', ['issue' => $defect->getKey()])
         ->assertActionMounted('reviewTripInspectionIssue');
 
