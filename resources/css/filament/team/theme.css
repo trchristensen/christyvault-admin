@@ -479,22 +479,6 @@
     @apply bg-warning-50 text-warning-600 dark:bg-warning-950/50 dark:text-warning-400;
 }
 
-@media (max-width: 639px) {
-    .fi-modal:not(.fi-modal-slide-over) > .fi-modal-window-ctn {
-        grid-template-rows: auto minmax(0, 1fr) !important;
-        align-content: start !important;
-        padding: 0.5rem !important;
-    }
-
-    .fi-modal:not(.fi-modal-slide-over) > .fi-modal-window-ctn > .fi-modal-window {
-        grid-row-start: 1 !important;
-        width: 100% !important;
-        max-height: calc(100dvh - 1rem) !important;
-        margin: 0 auto !important;
-        overflow-y: auto !important;
-    }
-}
-
 .delivery-camera-field .filepond--root {
     @apply mb-0;
 }

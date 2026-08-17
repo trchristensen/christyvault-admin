@@ -69,6 +69,7 @@ class AppServiceProvider extends ServiceProvider
             'calendar' => resource_path('css/calendar.css'),
             'dateRange' => resource_path('css/filament-date-range.css'),
             'adminDashboard' => resource_path('css/admin-dashboard.css'),
+            'modalPositioning' => resource_path('css/filament-modal-positioning.css'),
         ];
 
         FilamentAsset::appVersion(substr(hash('sha256', implode('|', array_map(
@@ -80,6 +81,7 @@ class AppServiceProvider extends ServiceProvider
             Css::make('calendar-styles', $filamentStylePaths['calendar']),
             Css::make('date-range-overrides', $filamentStylePaths['dateRange']),
             Css::make('admin-dashboard-styles', $filamentStylePaths['adminDashboard']),
+            Css::make('filament-modal-positioning', $filamentStylePaths['modalPositioning']),
         ]);
 
         FilamentView::registerRenderHook(

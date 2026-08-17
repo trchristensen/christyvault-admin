@@ -1,0 +1,26 @@
+/*
+ * Filament centers modal windows with a three-row grid by default. Keep regular
+ * dialogs anchored to the top of the viewport in every panel and at every
+ * breakpoint. Slide-overs retain Filament's native positioning.
+ */
+.fi-modal:not(.fi-modal-slide-over) > .fi-modal-window-ctn {
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    align-content: start !important;
+}
+
+.fi-modal:not(.fi-modal-slide-over) > .fi-modal-window-ctn > .fi-modal-window {
+    grid-row-start: 1 !important;
+}
+
+@media (max-width: 639px) {
+    .fi-modal:not(.fi-modal-slide-over) > .fi-modal-window-ctn {
+        padding: 0.5rem !important;
+    }
+
+    .fi-modal:not(.fi-modal-slide-over) > .fi-modal-window-ctn > .fi-modal-window {
+        width: 100% !important;
+        max-height: calc(100dvh - 1rem) !important;
+        margin: 0 auto !important;
+        overflow-y: auto !important;
+    }
+}
