@@ -197,10 +197,11 @@ it('shows the team schedule load summary trigger only with permission', function
         ->and($allowedHtml)->toContain('Load summary');
 });
 
-it('anchors the team load summary modal to the mobile viewport', function () {
+it('opens the team load summary modal at the top of its content', function () {
     $action = (new TodaysDeliveriesWidget)->viewDeliveryTripLoadSummaryAction();
 
-    expect($action->isModalHeaderSticky())->toBeTrue()
+    expect($action->isModalAutofocused())->toBeFalse()
+        ->and($action->isModalHeaderSticky())->toBeTrue()
         ->and($action->getExtraModalWindowAttributes())
         ->toMatchArray(['class' => 'team-load-summary-modal']);
 });

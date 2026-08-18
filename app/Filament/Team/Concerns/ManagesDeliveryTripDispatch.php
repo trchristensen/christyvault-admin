@@ -35,6 +35,7 @@ trait ManagesDeliveryTripDispatch
                     'fillAllocations' => $plan['fill_allocations'],
                 ]);
             })
+            ->modalAutofocus(false)
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Close')
             ->extraModalWindowAttributes(['class' => 'team-load-summary-modal'])
